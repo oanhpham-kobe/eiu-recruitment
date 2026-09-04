@@ -241,11 +241,11 @@ tasks:
   TASK-S01-004:
     title: "Auth callback route handlers, server session validation, and client auth state hooks"
     slice: SLICE-01
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S01-002, TASK-S01-003]
     prompt: "project_control/prompts/SLICE-01_TASK-004_v1.md"
     prompt_sha256: "ca59a7851ac9929df19d8c77323c9646998e1d6e77e34f16d2b6029a89f6de7f"
-    review_status: "PENDING_INDEPENDENT_REVIEW"
+    review_status: "PASS (TaskS01004ImplReviewer)"
     evidence:
       - "EVIDENCE_INDEX: AUTH-ROUTES-001"
       - "NPM_TYPECHECK: PASS"
