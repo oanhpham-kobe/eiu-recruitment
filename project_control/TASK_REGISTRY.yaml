@@ -177,8 +177,20 @@ tasks:
   TASK-S01-001:
     title: "Identity/Auth schema migration: app_users, candidates, roles, permissions, auth mapping, and RLS"
     slice: SLICE-01
-    status: PLANNED
+    status: REVIEW
     depends_on: [TASK-S00-005]
+    prompt: "project_control/prompts/SLICE-01_TASK-001_v1.md"
+    prompt_sha256: "bff3c1f9ff8afd114de49e24936f4e1812263fed957cb7637e560d73ce379223"
+    review_status: "PENDING_INDEPENDENT_REVIEW"
+    evidence:
+      - "EVIDENCE_INDEX: IDENTITY-001"
+      - "ASSERTION_A_STRUCTURE_CONSTRAINTS: PASS"
+      - "ASSERTION_B_HELPERS: PASS"
+      - "ASSERTION_C_TRIGGERS: PASS"
+      - "ASSERTION_D_RLS_DENIAL_ISOLATION: PASS"
+      - "LOCAL_CLEAN_MIGRATION_REPLAY: PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
   TASK-S01-002:
     title: "Internal Google Workspace OAuth first-login provisioning command"
     slice: SLICE-01
