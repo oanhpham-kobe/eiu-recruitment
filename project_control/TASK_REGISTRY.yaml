@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-00
-current_task: TASK-S00-002
+current_task: TASK-S00-003
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -92,8 +92,46 @@ tasks:
   TASK-S00-003:
     title: "DEV infrastructure: Supabase DEV provisioning/link + migration clean-install/CI foundation + Vercel project link when framework root exists"
     slice: SLICE-00
-    status: PLANNED
+    status: DONE
     depends_on: [TASK-S00-002]
+    acceptance:
+      - S00-003-AC-01 verified canonical baseline start eb64e38
+      - S00-003-AC-02 worktree created via Orca (D:/orca/recruitment/TASK-S00-003-dev-infra)
+      - S00-003-AC-03 Supabase CLI authenticated (account oanhpham-kobe / oanh.pham@eiu.edu.vn)
+      - S00-003-AC-04 Supabase organization inspected/created (EIU Recruitment / clfvovtyobekjaevdewe)
+      - S00-003-AC-05 Supabase DEV project created (eiu-recruitment-dev, ref yrjclhdvjlekwvfeczcj, region ap-southeast-1)
+      - S00-003-AC-06 repository linked to Supabase DEV via supabase link
+      - S00-003-AC-07 database credentials isolated in untracked web/.env.local; zero secrets committed
+      - S00-003-AC-08 migration foundation created (20260904164112_initial_foundation.sql)
+      - S00-003-AC-09 foundational extensions enabled (pgcrypto, citext, pg_trgm, unaccent) in extensions schema
+      - S00-003-AC-10 private internal schema created with strict public/anon/authenticated revokes
+      - S00-003-AC-11 private.touch_version() trigger helper installed and tested
+      - S00-003-AC-12 clean migration replay verified (supabase db push --linked is idempotent)
+      - S00-003-AC-13 Vercel CLI authenticated (account oanhpham-kobe / kobe17)
+      - S00-003-AC-14 Vercel project created/configured (eiu-recruitment, root web, framework nextjs)
+      - S00-003-AC-15 Vercel project linked to repository and web/ without deployment
+      - S00-003-AC-16 Vercel deployment NOT_PERFORMED as authorized
+      - S00-003-AC-17 Supabase DEV MCP enabled in .omp/mcp.json (read_only=true, scoped to DEV project)
+      - S00-003-AC-18 recruitment_webapp source remains 100% untouched
+      - S00-003-AC-19 secret scan PASS; no credentials committed
+      - S00-003-AC-20 TASK-S00-004 remains PLANNED/NOT_STARTED
+    evidence:
+      - "SUPABASE_AUTH: PASS (oanhpham-kobe)"
+      - "SUPABASE_ORG: clfvovtyobekjaevdewe (EIU Recruitment)"
+      - "SUPABASE_DEV_PROJECT: CREATED (eiu-recruitment-dev)"
+      - "SUPABASE_PROJECT_REF: yrjclhdvjlekwvfeczcj"
+      - "SUPABASE_REGION: ap-southeast-1"
+      - "SUPABASE_LINK: PASS"
+      - "MIGRATION_FOUNDATION: PASS (20260904164112_initial_foundation.sql)"
+      - "CLEAN_MIGRATION_REPLAY: PASS"
+      - "DATABASE_VERIFICATION: PASS (extensions + private schema + touch_version trigger)"
+      - "VERCEL_AUTH: PASS (oanhpham-kobe / kobe17)"
+      - "VERCEL_PROJECT: CREATED (eiu-recruitment, prj_9t5t1RBtgZp4hOLuSgEYgv5nt8qY)"
+      - "VERCEL_PROJECT_LINK: PASS (root + web/ linked)"
+      - "VERCEL_DEPLOYMENT: NOT_PERFORMED"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
+      - "EVIDENCE_INDEX: DEV-INFRA-001"
   TASK-S00-004:
     title: Browser/server credential boundary + trusted-command interface + security/logging boundaries
     slice: SLICE-00

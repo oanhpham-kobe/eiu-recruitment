@@ -6,9 +6,9 @@
       "url": "https://mcp.context7.com/mcp/oauth"
     },
     "supabase-dev": {
-      "enabled": false,
+      "enabled": true,
       "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=${SUPABASE_PROJECT_REF}&read_only=true&features=docs,database,debugging,development"
+      "url": "https://mcp.supabase.com/mcp?project_ref=yrjclhdvjlekwvfeczcj&read_only=true&features=docs,database,debugging,development"
     },
     "gitnexus-recruitment": {
       "enabled": true,

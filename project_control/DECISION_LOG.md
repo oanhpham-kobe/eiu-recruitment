@@ -33,3 +33,17 @@ Context: ESLint 9 is EOL since 2026-08-06 and not approved.
 Decision: Use official Next.js supported Biome (`@biomejs/biome`) on the Planner-approved path; reject ESLint 9, `--force`, `--legacy-peer-deps`, and peer overrides.
 Why source behavior is preserved: Preserves clean dependency resolution and zero unsupported transitive peer issues.
 Affected: web/ application tooling.
+
+## IMP-DEC-006 — Supabase DEV infrastructure and region selection
+Date: 2026-09-04
+Context: TASK-S00-003 requires dedicated DEV-only Supabase infrastructure under explicit owner authorization.
+Decision: Provisioned dedicated Supabase DEV project `eiu-recruitment-dev` (ref: `yrjclhdvjlekwvfeczcj`) under organization `EIU Recruitment` (`clfvovtyobekjaevdewe`) in region `ap-southeast-1` (Singapore, the nearest officially supported Southeast Asia region for Vietnam). Pinned PostgreSQL 17 engine. Linked repository worktree via `supabase link`. Stored all non-production database credentials in gitignored `web/.env.local` and `.env.local`. Zero secrets committed.
+Why source behavior is preserved: Satisfies non-production DEV provisioning requirements without modifying production or introducing unapproved paid tiers.
+Affected: Database development, migrations, and local verification.
+
+## IMP-DEC-007 — Migration foundation, schema isolation, and Vercel project linking
+Date: 2026-09-04
+Context: TASK-S00-003 requires reproducible migration foundation, strict schema boundaries, and Vercel project linking without deployment.
+Decision: Established migration foundation `20260904164112_initial_foundation.sql` establishing reviewed extensions (`pgcrypto`, `citext`, `pg_trgm`, `unaccent`) under `extensions` schema, created `private` internal schema with strict revokes from `public`, `anon`, and `authenticated`, and implemented `private.touch_version()` trigger function with `SECURITY DEFINER` and empty `search_path`. Created and linked Vercel project `eiu-recruitment` (`prj_9t5t1RBtgZp4hOLuSgEYgv5nt8qY`) with root directory `web` and framework `nextjs`. Held all preview/production deployments as `NOT_PERFORMED` per explicit owner authorization.
+Why source behavior is preserved: Conforms to `review_pack/database_schema.sql`, `review_pack/40_DATABASE_INVARIANTS.md`, and `review_pack/59_RLS_POLICY_BLUEPRINT.md`.
+Affected: All database migrations, schema boundaries, and Vercel deployment infrastructure.
