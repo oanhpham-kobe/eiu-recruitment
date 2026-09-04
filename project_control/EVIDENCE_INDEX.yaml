@@ -217,3 +217,28 @@ implementation_evidence:
     local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
     source_integrity: "PASS (recruitment_webapp git diff is empty)"
     secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
+
+  CAND-PROVISION-001:
+    task: TASK-S01-003
+    operation: CANDIDATE_IDENTITY_PROVISIONING_COMMAND
+    status: REVIEW
+    prompt: "project_control/prompts/SLICE-01_TASK-003_v1.md"
+    prompt_sha256: "9d9db3c3a68045dec8e2e61e48c5b4ed851022179afa25f5bbd55005f42464fa"
+    migration: "supabase/migrations/20260905050000_candidate_provisioning.sql"
+    command_wrapper: "web/src/lib/auth/candidate.ts"
+    test_suite: "web/src/__tests__/candidate-provisioning.test.ts"
+    functions_created:
+      - "public.provision_candidate_identity() (SECURITY DEFINER, empty search_path, jsonb payload)"
+    assertion_1_unauthenticated: "PASS (rejected unauthenticated caller with UNAUTHENTICATED)"
+    assertion_2_missing_email: "PASS (rejected missing verified email with UNAUTHENTICATED)"
+    assertion_3_inactive_candidate: "PASS (rejected inactive candidate with USER_INACTIVE)"
+    assertion_4_new_candidate: "PASS (first-time registration created candidate row with version_no=1)"
+    assertion_5_subsequent_login: "PASS (idempotent login returned profile without version increment)"
+    assertion_6_safe_rebind: "PASS (rebind on recreated auth session updated auth_user_id, incremented version_no to 2, avoided duplicate candidate)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_lint: "PASS (biome check; 40 files, 0 fixes)"
+    npm_build: "PASS (Next.js production build succeeded)"
+    npm_test: "PASS (46/46 tests pass, 0 fail; 8/8 candidate provisioning tests pass)"
+    local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
+    source_integrity: "PASS (recruitment_webapp git diff is empty)"
+    secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
