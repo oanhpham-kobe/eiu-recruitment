@@ -10,11 +10,19 @@ canonical_baseline:
 
 integration:
   branch: autonomy/continuous-integration-20260905-01
-  head: "d6e3b6630d18437c386094466b879b6bb6a35bd9"
+  head: "29a3f4e0b50221da7ca72480b9d0683c7f118243"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
+  overrides:
+    remote_checkpoint_push:
+      authorized: true
+      scope: autonomy/continuous-integration-20260905-01
+      force_push: false
+      push_main: false
+      create_pr: false
+      merge_pr: false
 
 active_task:
   id: null
