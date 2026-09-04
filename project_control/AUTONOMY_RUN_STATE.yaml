@@ -10,7 +10,7 @@ canonical_baseline:
 
 integration:
   branch: autonomy/continuous-integration-20260905-01
-  head: "f340e0e6730cc726ee258e568b8b1c7552ba0818"
+  head: "d6e3b6630d18437c386094466b879b6bb6a35bd9"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -45,12 +45,17 @@ last_accepted_task:
 blocked_tasks: []
 
 safe_frontier:
-  eligible_tasks: []
-  skipped_due_to_dependency: []
+  eligible_tasks:
+    - TASK-S01-001
+  skipped_due_to_dependency:
+    - TASK-S01-002
+    - TASK-S01-003
+    - TASK-S01-004
+    - TASK-S01-005
 
 stop_state:
   stop_gate: null
   reason: null
   observed_evidence: []
 
-next_action: "Materialize SLICE-01 (Identity / Auth / User Provisioning) tasks from canonical source into TASK_REGISTRY.yaml"
+next_action: "Prepare and independently review task execution prompt for TASK-S01-001 (Identity/Auth schema migration)"

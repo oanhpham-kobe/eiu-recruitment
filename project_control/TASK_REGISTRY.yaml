@@ -174,3 +174,28 @@ tasks:
       - "A11Y_LANDMARKS: PASS (aside, nav, header, main#main-content, skip-link)"
       - "SECRET_SCAN: PASS"
       - "SOURCE_INTEGRITY: PASS"
+  TASK-S01-001:
+    title: "Identity/Auth schema migration: app_users, candidates, roles, permissions, auth mapping, and RLS"
+    slice: SLICE-01
+    status: PLANNED
+    depends_on: [TASK-S00-005]
+  TASK-S01-002:
+    title: "Internal Google Workspace OAuth first-login provisioning command"
+    slice: SLICE-01
+    status: PLANNED
+    depends_on: [TASK-S01-001]
+  TASK-S01-003:
+    title: "Candidate Email OTP identity verification and provisioning command"
+    slice: SLICE-01
+    status: PLANNED
+    depends_on: [TASK-S01-001]
+  TASK-S01-004:
+    title: "Auth callback route handlers, server session validation, and client auth state hooks"
+    slice: SLICE-01
+    status: PLANNED
+    depends_on: [TASK-S01-002, TASK-S01-003]
+  TASK-S01-005:
+    title: "Login UI shell & authentication feedback for Candidate OTP and Internal Google login"
+    slice: SLICE-01
+    status: PLANNED
+    depends_on: [TASK-S01-004]
