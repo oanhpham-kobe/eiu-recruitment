@@ -144,11 +144,11 @@ tasks:
   TASK-S00-004:
     title: Browser/server credential boundary + trusted-command interface + security/logging boundaries
     slice: SLICE-00
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S00-003]
     prompt: "project_control/prompts/SLICE-00_TASK-004_v8.md"
     prompt_sha256: "16939131e33db2f17b1f0b1a0b3e903aeacfcf8dfd1b3762ffcd26f6a6dad31b"
-    review_status: "pending independent implementation review"
+    review_status: "PASS (Task004ImplReviewer)"
     evidence:
       - "EVIDENCE_INDEX: BOUNDARY-001"
       - "NPM_TYPECHECK: PASS"
