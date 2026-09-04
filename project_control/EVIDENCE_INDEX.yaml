@@ -242,3 +242,31 @@ implementation_evidence:
     local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
     source_integrity: "PASS (recruitment_webapp git diff is empty)"
     secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
+
+  AUTH-ROUTES-001:
+    task: TASK-S01-004
+    operation: AUTH_ROUTES_AND_SESSION_VALIDATION
+    status: REVIEW
+    prompt: "project_control/prompts/SLICE-01_TASK-004_v1.md"
+    prompt_sha256: "ca59a7851ac9929df19d8c77323c9646998e1d6e77e34f16d2b6029a89f6de7f"
+    route_handlers:
+      - "web/src/app/auth/callback/route.ts"
+      - "web/src/app/auth/candidate/verify/route.ts"
+      - "web/src/app/auth/signout/route.ts"
+    session_resolver: "web/src/lib/auth/session.ts"
+    client_auth_context: "web/src/lib/auth/context.tsx"
+    test_suite: "web/src/__tests__/auth-routes.test.ts"
+    assertion_1_open_redirect_defense: "PASS (normalized //evil.com, https://evil.com, /\\evil.com, and javascript: to /; preserved valid relative paths)"
+    assertion_2_missing_code_callback: "PASS (rejected missing code with redirect to /login?error=MISSING_CODE; handled exchange failure and provisioning failure with signout)"
+    assertion_3_candidate_otp_csrf_origin: "PASS (rejected missing and mismatched origin with 403 FORBIDDEN; validated JSON payload and token)"
+    assertion_4_candidate_otp_verification: "PASS (verified OTP via Supabase Auth and provisioned candidate identity with structured CommandResult)"
+    assertion_5_signout_flow: "PASS (signed out session via server client and redirected to /login with HTTP 303)"
+    assertion_6_server_session_internal: "PASS (derived internal identity, active state, roles, and permissions strictly from database queries)"
+    assertion_7_server_session_candidate: "PASS (derived candidate identity and default CANDIDATE roles/permissions from candidates table)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_lint: "PASS (biome check; 46 files, 0 fixes)"
+    npm_build: "PASS (Next.js production build succeeded; /auth/callback, /auth/candidate/verify, /auth/signout dynamic routes compiled)"
+    npm_test: "PASS (70/70 tests pass, 0 fail; 24/24 auth route and session tests pass)"
+    react_doctor: "PASS (87/100 Great; 0 errors in new auth files)"
+    source_integrity: "PASS (recruitment_webapp git diff is empty)"
+    secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"

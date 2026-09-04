@@ -8,10 +8,10 @@ Design Version: `Design System v1.8 CURRENT / REVIEWED`
 Implementation Gate: `INDEPENDENT IMPLEMENTATION REVIEW REQUIRED`
 
 Repository Root: `D:/orca/recruitment`
-Worktree: `D:/orca/recruitment/TASK-S01-003-candidate-provisioning`
+Worktree: `D:/orca/recruitment/TASK-S01-004-auth-routes`
 Git: `INITIALIZED`
-Branch: `oanhpham-kobe/TASK-S01-003-candidate-provisioning`
-Local Starting HEAD: `d2412cc0d5175ca4b04100ac5c5b801454289637`
+Branch: `oanhpham-kobe/TASK-S01-004-auth-routes`
+Local Starting HEAD: `33686b362901214b8e6e6201951e366d7e59a091`
 Last Completed Task: `TASK-S01-003`
 Remote: `https://github.com/oanhpham-kobe/eiu-recruitment.git`
 
@@ -20,13 +20,13 @@ SOURCE_PARITY_GATE: `PASS` (87/87 current-required paths verified byte-identical
 Authority Path Resolution: All Full Handover paths resolve relative to `SOURCE_ROOT = recruitment_webapp`.
 
 Current Slice: `SLICE-01 Identity / Auth / User Provisioning` (IN_PROGRESS)
-Current Task: `TASK-S01-003 Candidate Email OTP identity verification and provisioning command`
-Task Status: `DONE`
-Active Prompt: `project_control/prompts/SLICE-01_TASK-003_v1.md`
-Prompt SHA256: `9d9db3c3a68045dec8e2e61e48c5b4ed851022179afa25f5bbd55005f42464fa`
+Current Task: `TASK-S01-004 Auth callback route handlers, server session validation, and client auth state hooks`
+Task Status: `REVIEW`
+Active Prompt: `project_control/prompts/SLICE-01_TASK-004_v1.md`
+Prompt SHA256: `ca59a7851ac9929df19d8c77323c9646998e1d6e77e34f16d2b6029a89f6de7f`
 
-Workflow Release Scope: `TASK-S01-003`
-Workflow Release Status: `ACCEPTED_BY_INDEPENDENT_REVIEW`
+Workflow Release Scope: `TASK-S01-004`
+Workflow Release Status: `PENDING_INDEPENDENT_REVIEW`
 Identities & Tools:
 - GitHub: `oanhpham-kobe/eiu-recruitment` (PUBLIC; origin configured; branch `main` pushed; observed remote HEAD `7c7c2b378c24e64d95a4b25c1c709b2ee6b38756`)
 - Supabase: `authenticated` (account: `oanhpham-kobe` / `oanh.pham@eiu.edu.vn`)
@@ -43,7 +43,7 @@ Identities & Tools:
 - GitNexus: `1.6.10` (NOT_NEEDED for localized schema migration; MCP server normalized to `gitnexus-recruitment`)
 - Graphify: `0.9.47` (DORMANT; future optional discovery tool)
 
-NEXT_ACTION: Author and independently review task execution prompt for TASK-S01-004 (Auth callback route handlers, server session validation, and client auth state hooks).
+NEXT_ACTION: Independent implementation review of TASK-S01-004 on branch `oanhpham-kobe/TASK-S01-004-auth-routes`.
 
-Current Task Status: TASK-S00-001 through TASK-S00-005 are DONE (SLICE-00 COMPLETE). TASK-S01-001 is DONE. TASK-S01-002 is DONE. TASK-S01-003 is DONE. Next Task on Frontier: `TASK-S01-004` (eligible).
-Last Updated: `2026-09-05` (TASK-S01-003 independently accepted and integrated)
+Current Task Status: TASK-S00-001 through TASK-S00-005 are DONE (SLICE-00 COMPLETE). TASK-S01-001 is DONE. TASK-S01-002 is DONE. TASK-S01-003 is DONE. TASK-S01-004 is in REVIEW. Next Task on Frontier: `TASK-S01-005` (pending S01-004 acceptance).
+Last Updated: `2026-09-05` (TASK-S01-004 implemented and verified; awaiting independent review)
