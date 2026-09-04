@@ -10,7 +10,7 @@ canonical_baseline:
 
 integration:
   branch: autonomy/continuous-integration-20260905-01
-  head: "ffe42b7f672ebb153cc0b6b0c49f9b57109af5db"
+  head: "c89c58534908cdf1ec06406abb15c27453c827c7"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -34,31 +34,29 @@ active_task:
   reviewer_status: null
 
 last_accepted_task:
-  id: TASK-S01-002
-  commit: "e00eb20fc7671eae936a923da15eaed5bbbe33ed"
+  id: TASK-S01-003
+  commit: "a8a23f08a781717fbaabd78e7a16ca3936c0531e"
   evidence:
-    - "PROVISION-001: VERIFIED"
+    - "CAND-PROVISION-001: VERIFIED"
     - "prompt_reviewed: PASS"
-    - "prompt_sha256: 093ba61f21a9da10c84e26a320829756d6ca94ede754d34c200e7fd2cfaeabf4"
-    - "executor_commit: e00eb20fc7671eae936a923da15eaed5bbbe33ed"
+    - "prompt_sha256: 9d9db3c3a68045dec8e2e61e48c5b4ed851022179afa25f5bbd55005f42464fa"
+    - "executor_commit: a8a23f08a781717fbaabd78e7a16ca3936c0531e"
     - "implementation_reviewed: PASS"
     - "assertion_1_unauthenticated: PASS"
-    - "assertion_2_forbidden_domain: PASS"
-    - "assertion_3_not_found_user: PASS"
-    - "assertion_4_inactive_user: PASS"
-    - "assertion_5_rebind_defense: PASS"
-    - "assertion_6_first_time_bind: PASS"
-    - "assertion_7_subsequent_login: PASS"
-    - "tests: PASS (38/38)"
+    - "assertion_2_missing_email: PASS"
+    - "assertion_3_inactive_candidate: PASS"
+    - "assertion_4_new_candidate: PASS"
+    - "assertion_5_subsequent_login: PASS"
+    - "assertion_6_safe_rebind: PASS"
+    - "tests: PASS (46/46)"
     - "local_clean_migration_replay: PASS"
 
 blocked_tasks: []
 
 safe_frontier:
   eligible_tasks:
-    - TASK-S01-003
-  skipped_due_to_dependency:
     - TASK-S01-004
+  skipped_due_to_dependency:
     - TASK-S01-005
 
 stop_state:
@@ -66,4 +64,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Prepare and independently review task execution prompt for TASK-S01-003 (Candidate Email OTP identity verification and provisioning command)"
+next_action: "Prepare and independently review task execution prompt for TASK-S01-004 (Auth callback route handlers, server session validation, and client auth state hooks)"

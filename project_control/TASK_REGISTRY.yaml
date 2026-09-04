@@ -218,11 +218,11 @@ tasks:
   TASK-S01-003:
     title: "Candidate Email OTP identity verification and provisioning command"
     slice: SLICE-01
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S01-001]
     prompt: "project_control/prompts/SLICE-01_TASK-003_v1.md"
     prompt_sha256: "9d9db3c3a68045dec8e2e61e48c5b4ed851022179afa25f5bbd55005f42464fa"
-    review_status: "PENDING_INDEPENDENT_REVIEW"
+    review_status: "PASS (TaskS01003ImplReviewer)"
     evidence:
       - "EVIDENCE_INDEX: CAND-PROVISION-001"
       - "NPM_TYPECHECK: PASS"
