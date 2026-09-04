@@ -181,10 +181,20 @@ Release-only skills                      2
 GitNexus on-demand skills                8
 EIU native review skill                  1
 Global-reuse skills                      3
-Total active/on-demand/native skills    27
 
 Deliberately excluded skills             5
 ```
+
+These are separate provider/topology categories.
+
+Do not combine them into a single total because:
+
+- release-only skills are not active implementation specialists;
+- GitNexus skills are on-demand;
+- global-reuse skills come from the effective global provider;
+- eiu-code-review is an EIU-native review contract.
+
+`SKILLS_LOCK.yaml` is the effective availability/provider truth.
 
 ---
 
@@ -465,8 +475,11 @@ Pre-merge
   -> verification-before-completion
 
 Major UI / pre-release
-  -> canonical Design System v1.8 + accessibility
+  -> canonical Design System v1.8
+  -> applicable Design Review Checklist
+  -> accessibility
   -> browser-qa
+  -> React Doctor when applicable
 Vercel deployment
   -> deploy-to-vercel
 

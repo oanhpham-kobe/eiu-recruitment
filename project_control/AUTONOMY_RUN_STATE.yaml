@@ -10,8 +10,8 @@ canonical_baseline:
 
 integration:
   branch: autonomy/continuous-integration-20260905-01
-  head: "58a53f296ff9bc7006cea7bcddbd3e01804fefae"
-
+  head_resolution: DIRECT_GIT_RUNTIME
+  last_verified_checkpoint: "b7456bde5dfeb915bc746eaf738d7718f3069abe"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
