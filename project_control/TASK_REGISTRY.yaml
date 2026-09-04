@@ -312,10 +312,11 @@ tasks:
   TASK-S02-002:
     title: "Form Session lifecycle and Privacy Notice pinning commands"
     slice: SLICE-02
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S02-001]
     prompt: "project_control/prompts/SLICE-02_TASK-002_v1.md"
     prompt_sha256: "5db2c4a1c0492835f83e522122de12e83826d95e9b29887f8767268e18342ba3"
+    review_status: "PASS (TaskS02002ImplReviewer)"
     evidence:
       - "EVIDENCE_INDEX: FORM-SESSION-001"
       - "NPM_TYPECHECK: PASS"

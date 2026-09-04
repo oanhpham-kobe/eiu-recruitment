@@ -34,30 +34,31 @@ active_task:
   reviewer_status: null
 
 last_accepted_task:
-  id: TASK-S02-001
-  commit: "83f8da575e1812b60a3e57f2bba6862a07b92174"
+  id: TASK-S02-002
+  commit: "c7b40af818d051bae580d40f45f18e29b89da5bf"
   evidence:
-    - "FORM-SCHEMA-001: VERIFIED"
+    - "FORM-SESSION-001: VERIFIED"
     - "prompt_reviewed: PASS"
-    - "prompt_sha256: 23302d0a01ebc8144a4e78123431dbbb14acb81fd724d9b0e5fdfae175a5c557"
-    - "executor_commit: 83f8da575e1812b60a3e57f2bba6862a07b92174"
+    - "prompt_sha256: 5db2c4a1c0492835f83e522122de12e83826d95e9b29887f8767268e18342ba3"
+    - "executor_commit: c7b40af818d051bae580d40f45f18e29b89da5bf"
     - "implementation_reviewed: PASS"
-    - "assertion_1_structure_and_constraints: PASS"
-    - "assertion_2_one_current_privacy_notice_and_immutability: PASS"
-    - "assertion_3_candidate_form_target_and_owner_guard: PASS"
-    - "assertion_4_upload_reservation_parent: PASS"
-    - "assertion_5_touch_version_triggers: PASS"
-    - "assertion_6_rls_denial_and_isolation: PASS"
-    - "tests: PASS (87/87)"
+    - "assertion_1_unauthenticated_call: PASS"
+    - "assertion_2_inactive_candidate: PASS"
+    - "assertion_3_missing_privacy_notice: PASS"
+    - "assertion_4_new_submission_session: PASS"
+    - "assertion_5_edit_foreign_or_missing: PASS"
+    - "assertion_6_edit_non_new_submission: PASS"
+    - "assertion_7_expired_session: PASS"
+    - "assertion_8_cancellation_and_terminal_guard: PASS"
+    - "tests: PASS (109/109)"
     - "local_clean_migration_replay: PASS"
 
 blocked_tasks: []
 
 safe_frontier:
   eligible_tasks:
-    - TASK-S02-002
-  skipped_due_to_dependency:
     - TASK-S02-003
+  skipped_due_to_dependency:
     - TASK-S02-004
     - TASK-S02-005
 
@@ -66,4 +67,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Prepare and independently review task execution prompt for TASK-S02-002 (Form Session lifecycle and Privacy Notice pinning commands)"
+next_action: "Prepare and independently review task execution prompt for TASK-S02-003 (Private Storage reservation and upload signing protocol)"
