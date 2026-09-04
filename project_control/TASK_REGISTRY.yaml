@@ -6,7 +6,7 @@ tasks:
   TASK-S00-001:
     title: Finalize canonical pre-implementation repository baseline, verify source parity, materialize persistent project-control state, and establish the first Git baseline
     slice: SLICE-00
-    status: READY
+    status: DONE
     active_prompt: project_control/prompts/SLICE-00_TASK-001_v3.md
     depends_on: []
     acceptance:
@@ -23,7 +23,18 @@ tasks:
       - GitNexus refreshed after real HEAD
       - exactly one NEXT_ACTION
     evidence:
-      - "EVIDENCE_INDEX: SOURCE-PARITY-001"
+      - "baseline commit: cdd1ea3e94dbedb6a1b880efd366759bcac1024d"
+      - "SOURCE_PARITY_GATE: PASS"
+      - "CRG baseline refresh: PASS"
+      - "GitNexus baseline refresh: PASS"
+      - "source validators: PASS"- "EVIDENCE_INDEX: SOURCE-PARITY-001"
+      - "CURRENT_STATE: current repository observation"
+      - "staged secret scan evidence"
+      - "Full Handover v1.17 validators"
+      - "BASELINE_COMMIT: cdd1ea3e94dbedb6a1b880efd366759bcac1024d"
+      - "COMMIT_MESSAGE: 'chore: establish EIU Recruitment baseline'"
+      - "CRG_CURRENT_FOR_HEAD: PASS (cdd1ea3)"
+      - "GITNEXUS_CURRENT_FOR_HEAD: PASS (cdd1ea3)"- "EVIDENCE_INDEX: SOURCE-PARITY-001"
       - "CURRENT_STATE: current repository observation"
       - "staged secret scan evidence"
       - "Full Handover v1.17 validators"

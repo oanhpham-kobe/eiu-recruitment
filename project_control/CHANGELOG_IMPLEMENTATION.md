@@ -12,3 +12,21 @@
 - Preserved legacy v1.8 files in external backup `recruitment-source-pre-v1.17-sync-20260904-004739`.
 - Source Parity Gate evaluated: 87/87 current-required paths PASS (0 missing, 0 mismatches, 0 unknown extras).
 - Closed gap SOURCE-PARITY-001.
+
+## 2026-09-04 — TASK-S00-001 First Baseline Commit Created
+- Created first canonical Git baseline commit on `main`: `cdd1ea3` (`cdd1ea3e94dbedb6a1b880efd366759bcac1024d`).
+- Commit message: "chore: establish EIU Recruitment baseline" (531 files, 78,277 insertions).
+- Verified real HEAD: `cdd1ea3e94dbedb6a1b880efd366759bcac1024d`.
+- Refreshed Code Review Graph 2.3.8 against real HEAD (`CRG_CURRENT_FOR_HEAD = PASS`).
+- Refreshed GitNexus 1.6.10 against real HEAD (`GITNEXUS_CURRENT_FOR_HEAD = PASS`).
+- Set TASK-S00-001 status to `IMPLEMENTATION_COMPLETE_PENDING_STATE_CLOSURE_REVIEW`.
+- NEXT_ACTION: obtain Task001 post-commit state-closure review.
+
+## 2026-09-04 — TASK-S00-001 State Closure
+- TASK-S00-001 baseline established.
+- Baseline SHA `cdd1ea3e94dbedb6a1b880efd366759bcac1024d` independently reviewed and accepted.
+- Source parity closed (87/87 current-required paths 100% hash verified).
+- CRG refreshed against baseline commit (`CRG: CURRENT_FOR_BASELINE_HEAD`).
+- GitNexus refreshed against baseline commit (`GitNexus: CURRENT_FOR_BASELINE_HEAD`).
+- Task001 state closure completed (status: `DONE`).
+- Next action: Obtain explicit authorization to create the private GitHub repository, configure origin, and push main.

@@ -22,3 +22,22 @@ implementation_evidence:
     payload_version: "Full Handover v1.17"
     payload_sha256: "0b39c3615dd5b34e998527a1d273e0b846458c7bd4170be46c9bb670bfcb3498"
     legacy_backup: "C:/Users/Admin/.omp/backups/recruitment-source-pre-v1.17-sync-20260904-004739"
+
+BASELINE-COMMIT-001:
+    task: TASK-S00-001
+    status: COMMITTED
+    commit_sha: "cdd1ea3e94dbedb6a1b880efd366759bcac1024d"
+    commit_message: "chore: establish EIU Recruitment baseline"
+    branch: main
+    remote: NONE
+    source_parity: PASS
+    current_required_source: "87 / 87"
+    full_handover: "511 / 511 PASS"
+    design: "73 / 73 PASS"
+    responsive: "108 / 108 PASS"
+    manifest: "557 checks / 0 failures"
+    trusted_commands: 59
+    traceability: "59 / 59"
+    source_registry: "86 / 86"
+    crg_status: CURRENT_FOR_BASELINE_HEAD
+    gitnexus_status: CURRENT_FOR_BASELINE_HEAD
