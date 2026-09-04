@@ -241,8 +241,27 @@ tasks:
   TASK-S01-004:
     title: "Auth callback route handlers, server session validation, and client auth state hooks"
     slice: SLICE-01
-    status: PLANNED
+    status: REVIEW
     depends_on: [TASK-S01-002, TASK-S01-003]
+    prompt: "project_control/prompts/SLICE-01_TASK-004_v1.md"
+    prompt_sha256: "ca59a7851ac9929df19d8c77323c9646998e1d6e77e34f16d2b6029a89f6de7f"
+    review_status: "PENDING_INDEPENDENT_REVIEW"
+    evidence:
+      - "EVIDENCE_INDEX: AUTH-ROUTES-001"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_LINT: PASS (46 files, 0 fixes)"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (70/70)"
+      - "ASSERTION_1_OPEN_REDIRECT_DEFENSE: PASS"
+      - "ASSERTION_2_MISSING_CODE_CALLBACK: PASS"
+      - "ASSERTION_3_CANDIDATE_OTP_CSRF_ORIGIN: PASS"
+      - "ASSERTION_4_CANDIDATE_OTP_VERIFICATION: PASS"
+      - "ASSERTION_5_SIGNOUT_FLOW: PASS"
+      - "ASSERTION_6_SERVER_SESSION_INTERNAL: PASS"
+      - "ASSERTION_7_SERVER_SESSION_CANDIDATE: PASS"
+      - "REACT_DOCTOR: PASS (87/100 Great)"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
   TASK-S01-005:
     title: "Login UI shell & authentication feedback for Candidate OTP and Internal Google login"
     slice: SLICE-01
