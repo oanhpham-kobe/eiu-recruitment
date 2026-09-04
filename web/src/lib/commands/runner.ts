@@ -75,11 +75,44 @@ export function createCommandRunner(deps: {
         };
       }
 
+      const executionResult = await command.execute(actor, validation.data);
+
+      if (
+        executionResult !== null &&
+        typeof executionResult === "object" &&
+        "success" in executionResult &&
+        typeof executionResult.success === "boolean"
+      ) {
+        return executionResult as CommandResult<TOutput>;
+      }
+
       return {
         success: true,
-        data: await command.execute(actor, validation.data),
+        data: executionResult as TOutput,
       };
     } catch (error) {
+      if (
+        error !== null &&
+        typeof error === "object" &&
+        "code" in error &&
+        typeof error.code === "string" &&
+        error.code in CommandErrorCode
+      ) {
+        const message =
+          "message" in error && typeof error.message === "string"
+            ? error.message
+            : "Command execution failed";
+        const details = "details" in error ? error.details : undefined;
+        return {
+          success: false,
+          error: {
+            code: error.code as CommandErrorCode,
+            message,
+            details,
+          },
+        };
+      }
+
       logError(error);
 
       return {

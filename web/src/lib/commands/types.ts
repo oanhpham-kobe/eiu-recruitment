@@ -31,6 +31,18 @@ export type CommandError = {
   details?: unknown;
 };
 
+export class CommandExecutionError extends Error {
+  public readonly code: CommandErrorCode;
+  public readonly details?: unknown;
+
+  constructor(code: CommandErrorCode, message: string, details?: unknown) {
+    super(message);
+    this.name = "CommandExecutionError";
+    this.code = code;
+    this.details = details;
+  }
+}
+
 export type CommandResult<T> =
   | { success: true; data: T }
   | { success: false; error: CommandError };
@@ -64,5 +76,11 @@ export type TrustedCommandDefinition<
   ) =>
     | { success: true; data: TValidatedInput }
     | { success: false; error: string; details?: unknown };
-  execute: (actor: VerifiedActor, input: TValidatedInput) => Promise<TOutput>;
+  execute: (
+    actor: VerifiedActor,
+    input: TValidatedInput,
+  ) =>
+    | Promise<TOutput | CommandResult<TOutput>>
+    | TOutput
+    | CommandResult<TOutput>;
 };
