@@ -85,15 +85,17 @@
   - Region: `ap-southeast-1` (Singapore, nearest supported Southeast Asia region for Vietnam)
   - Engine: PostgreSQL 17.6.1.166
   - Status: `ACTIVE_HEALTHY`
-- Linked repository worktree to Supabase DEV via `supabase link`.
-- Stored non-production DEV credentials safely in untracked, gitignored `web/.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PROJECT_REF`, database password). Zero credentials committed.
+- Linked repository worktree to Supabase DEV via `supabase link --project-ref yrjclhdvjlekwvfeczcj` (explicitly distinguished from local config `project_id = "eiu-recruitment-dev"` in `supabase/config.toml`). Verified link read-only with `supabase projects list` (`linked: true`).
+- Audited ephemeral worktree-local secret and link files: `web/.env.local`, `.vercel/`, `web/.vercel/`, `supabase/.temp/` are 100% gitignored and uncommitted. Zero credentials committed.
+- Verified billing/plan status: `NOT_OBSERVABLE` via read-only management endpoints; zero paid upgrade performed (`paid_upgrade_performed: false`).
 - Established migration foundation:
   - Created `supabase/migrations/20260904164112_initial_foundation.sql`.
   - Enabled extensions `pgcrypto`, `citext`, `pg_trgm`, `unaccent` under `extensions` schema.
   - Created `private` schema with strict access revokes from `public`, `anon`, and `authenticated`.
   - Implemented `private.touch_version()` trigger function with `SECURITY DEFINER` and empty `search_path`.
 - Applied migrations to Supabase DEV via `supabase db push --linked`.
-- Verified clean migration replay and idempotency (`supabase db push --linked` reports remote database is up to date).
+- Tested local clean migration replay via `supabase start` and `supabase db reset`: verified as `BLOCKED` because Docker daemon is unavailable on host (`LegacyDockerLifecycleInspectError` at `//./pipe/dockerDesktopLinuxEngine`).
+- Verified remote migration convergence and idempotency (`supabase db push --linked` reports remote database is up to date; all migrations applied in timestamp order).
 - Verified database schema contracts and trigger behavior via direct SQL assertions against linked DEV database.
 - Authenticated and inspected Vercel CLI environment: account `oanhpham-kobe` (`kobe17`).
 - Created and configured Vercel project:

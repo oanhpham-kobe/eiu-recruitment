@@ -37,7 +37,7 @@ Affected: web/ application tooling.
 ## IMP-DEC-006 — Supabase DEV infrastructure and region selection
 Date: 2026-09-04
 Context: TASK-S00-003 requires dedicated DEV-only Supabase infrastructure under explicit owner authorization.
-Decision: Provisioned dedicated Supabase DEV project `eiu-recruitment-dev` (ref: `yrjclhdvjlekwvfeczcj`) under organization `EIU Recruitment` (`clfvovtyobekjaevdewe`) in region `ap-southeast-1` (Singapore, the nearest officially supported Southeast Asia region for Vietnam). Pinned PostgreSQL 17 engine. Linked repository worktree via `supabase link`. Stored all non-production database credentials in gitignored `web/.env.local` and `.env.local`. Zero secrets committed.
+Decision: Provisioned dedicated Supabase DEV project `eiu-recruitment-dev` (remote ref: `yrjclhdvjlekwvfeczcj`) under organization `EIU Recruitment` (`clfvovtyobekjaevdewe`) in region `ap-southeast-1` (Singapore, the nearest officially supported Southeast Asia region for Vietnam). Pinned PostgreSQL 17 engine. Linked repository worktree via `supabase link --project-ref yrjclhdvjlekwvfeczcj`, maintaining explicit distinction between local configuration `project_id = "eiu-recruitment-dev"` (`supabase/config.toml`) and remote project reference `yrjclhdvjlekwvfeczcj`. Verified plan status as `NOT_OBSERVABLE` (default non-production tier; zero paid upgrade performed). Stored all non-production database credentials in gitignored `web/.env.local` and `.env.local`. Zero secrets committed.
 Why source behavior is preserved: Satisfies non-production DEV provisioning requirements without modifying production or introducing unapproved paid tiers.
 Affected: Database development, migrations, and local verification.
 
