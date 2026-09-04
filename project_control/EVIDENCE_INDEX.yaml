@@ -73,7 +73,7 @@ implementation_evidence:
     npm_ci: PASS
     npm_audit: "found 0 vulnerabilities"
     npm_lint: "PASS (biome check 6 files, 0 fixes)"
-    npm_typecheck: "PASS (tsc --noEmit exit 0)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; clean checkout without .next PASS)"
     npm_build: "PASS (Next.js 16.3.4 Turbopack static prerender)"
     dev_smoke: "PASS (HTTP/1.1 200 OK on port 3001)"
     prod_smoke: "PASS (HTTP/1.1 200 OK on port 3002)"

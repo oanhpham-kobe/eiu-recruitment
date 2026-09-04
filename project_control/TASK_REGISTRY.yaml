@@ -56,7 +56,7 @@ tasks:
       - S00-002-AC-07 Next App Router TS scaffold under web/
       - S00-002-AC-08 npm ci clean install succeeds
       - S00-002-AC-09 production build succeeds
-      - S00-002-AC-10 explicit typecheck succeeds (tsc --noEmit)
+      - S00-002-AC-10 explicit typecheck succeeds (next typegen && tsc --noEmit)
       - S00-002-AC-11 lint succeeds (biome check)
       - S00-002-AC-12 local dev startup responds (HTTP 200)
       - S00-002-AC-13 secret scan/direct review finds no credentials
@@ -81,7 +81,8 @@ tasks:
       - "LOCKFILE_SHA256: 2408b7b3b2ac53707719d8121fb6fd4fa57d25f6b5ce638f502984879584eb60"
       - "NPM_CI: PASS"
       - "NPM_LINT: PASS"
-      - "NPM_TYPECHECK: PASS"
+      - "NPM_TYPECHECK: PASS (next typegen && tsc --noEmit)"
+      - "CLEAN_TYPECHECK_FROM_NO_NEXT_ARTIFACTS: PASS"
       - "NPM_BUILD: PASS"
       - "DEV_SMOKE: PASS (HTTP 200)"
       - "SECRET_SCAN: PASS"
