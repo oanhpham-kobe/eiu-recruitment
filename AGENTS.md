@@ -212,12 +212,11 @@ Load only skills relevant to the task.
 
 For a well-defined implementation task:
 
-1. `implement`
-2. task-specific specialist skills
+1. task Executor
+2. task specialist skills
 3. focused verification
-4. `code-review`
+4. independent implementation Reviewer (`eiu-code-review` where applicable)
 5. `verification-before-completion`
-
 ## 6.2 React / TypeScript UI
 
 For material `.ts` / `.tsx`, React components, hooks, forms, client state, or interactive UI:
