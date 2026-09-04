@@ -41,3 +41,16 @@ BASELINE-COMMIT-001:
     source_registry: "86 / 86"
     crg_status: CURRENT_FOR_BASELINE_HEAD
     gitnexus_status: CURRENT_FOR_BASELINE_HEAD
+
+  GITHUB-PUBLICATION-001:
+    task: TASK-S00-001
+    operation: REPOSITORY_PUBLICATION
+    status: PUBLISHED
+    repository: "oanhpham-kobe/eiu-recruitment"
+    visibility: "PRIVATE"
+    origin_url: "https://github.com/oanhpham-kobe/eiu-recruitment.git"
+    pushed_branch: "main"
+    remote_head: "d5d5640fdc59aeb224f08c20d38e0450fef5dfd5"
+    commit_equality: "d5d5640fdc59aeb224f08c20d38e0450fef5dfd5"
+    commit_count: 2
+    default_branch: "main"

@@ -30,3 +30,11 @@
 - GitNexus refreshed against baseline commit (`GitNexus: CURRENT_FOR_BASELINE_HEAD`).
 - Task001 state closure completed (status: `DONE`).
 - Next action: Obtain explicit authorization to create the private GitHub repository, configure origin, and push main.
+
+## 2026-09-04 — Repository Publication Gate (oanhpham-kobe/eiu-recruitment)
+- Created private GitHub repository `oanhpham-kobe/eiu-recruitment`.
+- Verified repository visibility: `PRIVATE`.
+- Configured local origin to `https://github.com/oanhpham-kobe/eiu-recruitment.git`.
+- Pushed canonical branch `main` (`d5d5640fdc59aeb224f08c20d38e0450fef5dfd5`).
+- Verified remote HEAD equality: `local HEAD == origin/main == refs/heads/main == d5d5640fdc59aeb224f08c20d38e0450fef5dfd5`.
+- Next action: Hand control to Planner to prepare and review TASK-S00-002.
