@@ -1,7 +1,7 @@
 version: 1
 current_slice: SLICE-00
-current_task: TASK-S00-003
-allowed_statuses: [PLANNED, READY, IN_PROGRESS, BLOCKED, DONE, SUPERSEDED, CANCELLED]
+current_task: TASK-S00-005
+allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
     title: Finalize canonical pre-implementation repository baseline, verify source parity, materialize persistent project-control state, and establish the first Git baseline
@@ -158,5 +158,19 @@ tasks:
   TASK-S00-005:
     title: Design v1.8 foundation shell + accessibility/test harness
     slice: SLICE-00
-    status: PLANNED
+    status: REVIEW
     depends_on: [TASK-S00-004]
+    prompt: "project_control/prompts/SLICE-00_TASK-005_v1.md"
+    prompt_sha256: "6cfb4781cf7a5f7a6eeabd3e86c59abe2f243b60b2fc6c6efc664ba49072d0c1"
+    review_status: "PENDING_INDEPENDENT_REVIEW"
+    evidence:
+      - "EVIDENCE_INDEX: SHELL-001"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_LINT: PASS (36 files, 0 fixes)"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (29/29)"
+      - "SHELL_SMOKE: PASS (port 3003, HTTP 200, 0 CSP violations)"
+      - "TOKENS_VERIFIED: PASS (v1.8 brand, sidebar, semantic, typography, spacing)"
+      - "A11Y_LANDMARKS: PASS (aside, nav, header, main#main-content, skip-link)"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
