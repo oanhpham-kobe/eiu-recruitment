@@ -312,8 +312,27 @@ tasks:
   TASK-S02-002:
     title: "Form Session lifecycle and Privacy Notice pinning commands"
     slice: SLICE-02
-    status: PLANNED
+    status: REVIEW
     depends_on: [TASK-S02-001]
+    prompt: "project_control/prompts/SLICE-02_TASK-002_v1.md"
+    prompt_sha256: "5db2c4a1c0492835f83e522122de12e83826d95e9b29887f8767268e18342ba3"
+    evidence:
+      - "EVIDENCE_INDEX: FORM-SESSION-001"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_LINT: PASS (52 files, 0 fixes)"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (109/109)"
+      - "ASSERTION_1_UNAUTHENTICATED_CALL: PASS"
+      - "ASSERTION_2_INACTIVE_CANDIDATE: PASS"
+      - "ASSERTION_3_MISSING_PRIVACY_NOTICE: PASS"
+      - "ASSERTION_4_NEW_SUBMISSION_SESSION: PASS"
+      - "ASSERTION_5_EDIT_FOREIGN_OR_MISSING: PASS"
+      - "ASSERTION_6_EDIT_NON_NEW_SUBMISSION: PASS"
+      - "ASSERTION_7_EXPIRED_SESSION: PASS"
+      - "ASSERTION_8_CANCELLATION_AND_TERMINAL_GUARD: PASS"
+      - "LOCAL_CLEAN_MIGRATION_REPLAY: PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
   TASK-S02-003:
     title: "Private Storage reservation and upload signing protocol"
     slice: SLICE-02

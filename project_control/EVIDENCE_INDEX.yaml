@@ -332,3 +332,31 @@ implementation_evidence:
     local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
     source_integrity: "PASS (recruitment_webapp git diff is empty)"
     secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
+  FORM-SESSION-001:
+    task: TASK-S02-002
+    operation: FORM_SESSION_LIFECYCLE_AND_PRIVACY_NOTICE_PINNING_COMMANDS
+    status: REVIEW
+    prompt: "project_control/prompts/SLICE-02_TASK-002_v1.md"
+    prompt_sha256: "5db2c4a1c0492835f83e522122de12e83826d95e9b29887f8767268e18342ba3"
+    migration: "supabase/migrations/20260905070000_form_session_commands.sql"
+    functions_created:
+      - "private.validate_candidate_form_session_transition()"
+      - "public.start_candidate_form_session(text, uuid)"
+      - "public.cancel_candidate_form_session(uuid)"
+    command_interface: "web/src/lib/commands/form-session.ts"
+    test_suite: "web/src/__tests__/form-session.test.ts"
+    assertion_1_unauthenticated_call: "PASS (start and cancel form session reject unauthenticated caller with UNAUTHENTICATED)"
+    assertion_2_inactive_candidate: "PASS (start and cancel form session reject inactive candidate account with USER_INACTIVE)"
+    assertion_3_missing_privacy_notice: "PASS (start form session fails closed with PRIVACY_NOTICE_UNAVAILABLE when no active notice exists)"
+    assertion_4_new_submission_session: "PASS (NEW_SUBMISSION creates OPEN session with server-pinned privacy notice and 4-hour expiry)"
+    assertion_5_edit_foreign_or_missing: "PASS (EDIT_SUBMISSION on foreign or nonexistent submission fails closed with NOT_FOUND)"
+    assertion_6_edit_non_new_submission: "PASS (EDIT_SUBMISSION on non-NEW submission returns INVALID_STATE; valid NEW submission succeeds)"
+    assertion_7_expired_session: "PASS (cancel on wall-clock expired session fails closed with FORM_SESSION_EXPIRED and updates status to EXPIRED)"
+    assertion_8_cancellation_and_terminal_guard: "PASS (cancellation moves OPEN -> CANCELLED, enqueues storage cleanup queue record, and rejects re-cancelling terminal session with INVALID_STATE)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_lint: "PASS (biome check; 52 files, 0 fixes)"
+    npm_build: "PASS (Next.js production build succeeded)"
+    npm_test: "PASS (109/109 tests pass, 0 fail; 22/22 form session tests pass)"
+    local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers, all 8 SQL boundary test cases passed)"
+    source_integrity: "PASS (recruitment_webapp git diff is empty)"
+    secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
