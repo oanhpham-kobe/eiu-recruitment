@@ -158,11 +158,11 @@ tasks:
   TASK-S00-005:
     title: Design v1.8 foundation shell + accessibility/test harness
     slice: SLICE-00
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S00-004]
     prompt: "project_control/prompts/SLICE-00_TASK-005_v1.md"
     prompt_sha256: "6cfb4781cf7a5f7a6eeabd3e86c59abe2f243b60b2fc6c6efc664ba49072d0c1"
-    review_status: "PENDING_INDEPENDENT_REVIEW"
+    review_status: "PASS (ImplementationReviewer)"
     evidence:
       - "EVIDENCE_INDEX: SHELL-001"
       - "NPM_TYPECHECK: PASS"

@@ -1,11 +1,11 @@
 version: 1
-current_slice: SLICE-00
+current_slice: SLICE-01
 slices:
   SLICE-00:
     name: Foundation / Production Skeleton
-    status: IN_PROGRESS
-    current_task: TASK-S00-003
-  SLICE-01: {name: Identity / Auth / User Provisioning, status: NOT_STARTED}
+    status: DONE
+    current_task: TASK-S00-005
+  SLICE-01: {name: Identity / Auth / User Provisioning, status: IN_PROGRESS}
   SLICE-02: {name: Candidate Form / Submission / Privacy / Documents, status: NOT_STARTED}
   SLICE-03: {name: HR Application Inbox / Application, status: NOT_STARTED}
   SLICE-04: {name: Interview Scheduling / Participants / Copy / Reactivate, status: NOT_STARTED}
