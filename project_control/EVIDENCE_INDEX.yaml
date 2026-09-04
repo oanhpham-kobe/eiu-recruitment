@@ -101,7 +101,7 @@ implementation_evidence:
     migration_extensions: "pgcrypto (1.3), citext (1.6), pg_trgm (1.6), unaccent (1.1) in extensions schema"
     migration_private_schema: "PASS (private schema created; revoked from public, anon, authenticated)"
     migration_helpers: "PASS (private.touch_version() SECURITY DEFINER trigger tested and asserted)"
-    local_clean_migration_replay: "BLOCKED (Docker daemon unavailable at //./pipe/dockerDesktopLinuxEngine; LegacyDockerLifecycleInspectError)"
+    local_clean_migration_replay: "PASS (verified via unlinked disposable local Supabase clean reset on Docker Desktop Linux engine; extensions pgcrypto, citext, pg_trgm, unaccent confirmed in extensions schema; zero PUBLIC grants via aclexplode grantee=0; anon/authenticated usage and execute denied; postgres/service_role usage and execute granted; private.touch_version() trigger execution verified across top-level updates replacing sentinel timestamp and incrementing version_no 0->1->2; local and remote migrations converge at 20260904164112)"
     remote_migration_convergence: "PASS (supabase db push --linked is idempotent; all migrations applied)"
     database_verification: "PASS (trigger assertions passed, permissions verified)"
     billing_plan_verification: "NOT_OBSERVABLE (default non-production tier; paid_upgrade_performed: false)"

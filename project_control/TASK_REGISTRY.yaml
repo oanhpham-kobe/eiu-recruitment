@@ -93,6 +93,9 @@ tasks:
     title: "DEV infrastructure: Supabase DEV provisioning/link + migration clean-install/CI foundation + Vercel project link when framework root exists"
     slice: SLICE-00
     status: DONE
+    active_prompt: project_control/prompts/SLICE-00_TASK-003_repair_v2.md
+    prompt_sha256: "a04a5f4aa70f9f45a7c322c5f34b20878b545ed7fe4800dab86374e34ecf809c"
+    prompt_review_status: "PASS (PromptReviewer003_v2)"
     depends_on: [TASK-S00-002]
     acceptance:
       - S00-003-AC-01 verified canonical baseline start eb64e38
@@ -106,7 +109,7 @@ tasks:
       - S00-003-AC-09 foundational extensions enabled (pgcrypto, citext, pg_trgm, unaccent) in extensions schema
       - S00-003-AC-10 private internal schema created with strict public/anon/authenticated revokes
       - S00-003-AC-11 private.touch_version() trigger helper installed and tested
-      - S00-003-AC-12 local clean migration replay verified as BLOCKED (Docker daemon unavailable); remote migration convergence verified
+      - S00-003-AC-12 PASS (unlinked disposable clean replay verified); remote migration convergence verified
       - S00-003-AC-13 Vercel CLI authenticated (account oanhpham-kobe / kobe17)
       - S00-003-AC-14 Vercel project created/configured (eiu-recruitment, root web, framework nextjs)
       - S00-003-AC-15 Vercel project linked to repository and web/ without deployment
@@ -126,7 +129,7 @@ tasks:
       - "REMOTE_LINK_VERIFICATION: PASS (linked: true)"
       - "SUPABASE_REGION: ap-southeast-1"
       - "MIGRATION_FOUNDATION: PASS (20260904164112_initial_foundation.sql)"
-      - "LOCAL_CLEAN_MIGRATION_REPLAY: BLOCKED (Docker daemon unavailable at //./pipe/dockerDesktopLinuxEngine)"
+      - "LOCAL_CLEAN_MIGRATION_REPLAY: PASS (verified via unlinked disposable local Supabase clean reset on Docker Desktop Linux engine; extensions pgcrypto, citext, pg_trgm, unaccent confirmed in extensions schema; zero PUBLIC grants via aclexplode grantee=0; anon/authenticated usage and execute denied; postgres/service_role usage and execute granted; private.touch_version() trigger execution verified across top-level updates replacing sentinel timestamp and incrementing version_no 0->1->2; local and remote migrations converge at 20260904164112)"
       - "REMOTE_MIGRATION_CONVERGENCE: PASS (supabase db push --linked is idempotent; all migrations applied)"
       - "DATABASE_VERIFICATION: PASS (extensions + private schema + touch_version trigger)"
       - "BILLING_PLAN_VERIFICATION: NOT_OBSERVABLE (default non-production tier; zero paid upgrade performed)"

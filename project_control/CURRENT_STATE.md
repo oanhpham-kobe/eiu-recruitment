@@ -23,7 +23,7 @@ Authority Path Resolution: All Full Handover paths resolve relative to `SOURCE_R
 Current Slice: `SLICE-00 Foundation / Production Skeleton`
 Current Task: `TASK-S00-003 DEV infrastructure: Supabase DEV provisioning/link + migration clean-install/CI foundation + Vercel project link when framework root exists`
 Task Status: `DONE`
-Active Prompt: `Autonomous DEV Infra Authorization + TASK-S00-003 Execution Directive`
+Active Prompt: `project_control/prompts/SLICE-00_TASK-003_repair_v2.md`
 
 Workflow Release Scope: `TASK-S00-003`
 Workflow Release Status: `AUTHORIZED_BY_OWNER` / `APPROVED_FOR_EXECUTOR`
@@ -36,7 +36,7 @@ Identities & Tools:
   - Remote Region: `ap-southeast-1` (Singapore)
   - Remote Link Mechanism: `supabase link --project-ref yrjclhdvjlekwvfeczcj`
   - Remote Link Status: `linked: true` (verified via `supabase projects list`, `supabase migration list --linked`)
-  - Local Clean Migration Replay: `BLOCKED` (Docker daemon unavailable on host pipe `//./pipe/dockerDesktopLinuxEngine`; remote migration convergence verified)
+  - Local Clean Migration Replay: `PASS` (verified via unlinked disposable local Supabase clean reset on Docker Desktop Linux engine; extensions pgcrypto, citext, pg_trgm, unaccent confirmed in extensions schema; zero PUBLIC grants via aclexplode grantee=0; anon/authenticated usage and execute denied; postgres/service_role usage and execute granted; private.touch_version() trigger execution verified across top-level updates replacing sentinel timestamp and incrementing version_no `0->1->2`; local and remote migrations converge at `20260904164112`)
   - Billing/Plan Status: `NOT_OBSERVABLE` (default non-production tier; zero paid upgrade performed)
   - Ephemeral Secret/Link Files: `web/.env.local`, `.vercel/`, `web/.vercel/`, `supabase/.temp/` (100% gitignored, uncommitted)
 - Vercel: `oanhpham-kobe` (project `eiu-recruitment`, id `prj_9t5t1RBtgZp4hOLuSgEYgv5nt8qY`, root `web`, framework `nextjs`, linked, deployment NOT_PERFORMED)
@@ -48,4 +48,4 @@ NEXT_ACTION: Return Task003 evidence and repository state to Planner for TASK-S0
 
 Current Task Status: TASK-S00-001 is DONE. TASK-S00-002 is DONE. TASK-S00-003 is DONE. Next Task TASK-S00-004 is PLANNED.
 Do Not Start Yet: `TASK-S00-004` through `TASK-S00-005`; `SLICE-01` through `SLICE-08`.
-Last Updated: `2026-09-04` (TASK-S00-003 Complete)
+Last Updated: `2026-09-05` (TASK-S00-003 local clean migration replay verified)
