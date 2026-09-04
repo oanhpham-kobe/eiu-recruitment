@@ -82,14 +82,12 @@ Do not install multiple active copies of the same `name:`.
 | `accessibility` | ★★★★★ | WCAG 2.2 AA |
 | `react-testing` | ★★★★★ | React/component/form testing |
 | `browser-qa` | ★★★★★ | Preview/staging UI journeys |
-| `context-budget` | ★★★★☆ | Skill/context/token audit |
 | `architecture-decision-records` | ★★★★☆ | Durable technical decisions |
 | `click-path-audit` | ★★★★☆ | Sequential UI state/side-effect analysis |
 
 ### Removed from previous list
-
-`postgres-patterns` is **not installed**.
-
+`postgres-patterns` is **not installed** (Supabase Postgres skill used instead).
+`context-budget` is **not installed** (superseded by Token Efficiency Policy).
 It is replaced by Supabase's official `supabase-postgres-best-practices` to avoid duplicate PostgreSQL/RLS/concurrency guidance.
 
 ---
@@ -109,11 +107,12 @@ These are maintained by Supabase and are the primary Supabase/Postgres specialis
 
 | Skill | Priority | Use |
 |---|---:|---|
-| `implement` | ★★★★★ | Execute a defined implementation task |
 | `tdd` | ★★★★★ | Risk-based TDD for critical behavior |
-| `code-review` | ★★★★★ | Source/spec + standards review |
 | `diagnosing-bugs` | ★★★★★ | Root-cause debugging |
 
+`implement` and `code-review` are **deliberately not installed**:
+- implementation is performed by OMP task Executor + applicable specialist skills;
+- review is performed by independent implementation Reviewer (`eiu-code-review` where applicable).
 Do not install discovery/domain-modeling/spec-reopening workflows by default.
 
 ---
@@ -147,22 +146,12 @@ Do not install discovery/domain-modeling/spec-reopening workflows by default.
 
 ## `thedaviddias/Front-End-Checklist` — selective
 
-| Skill | Priority | Use |
-|---|---:|---|
-| `frontend-checklist-global` | ★★★★★ | Major frontend/pre-release audit |
-
-Do not copy hundreds of rule-specific skills.
-
+`frontend-checklist-global` is **deliberately not installed** (superseded by `web-design-guidelines` and Design Review Checklist).
 ---
 
 ## `multica-ai/andrej-karpathy-skills`
 
-| Skill | Priority | Use |
-|---|---:|---|
-| `karpathy-guidelines` | ★★★★★ | Global heuristic overlay |
-
-The repository can be cloned as a whole because it is small, but only install/activate the skill directory.
-
+`karpathy-guidelines` is **deliberately not installed** (heuristic overlay preserved in core engineering principles without external skill dependency).
 Do not copy its root `CLAUDE.md` into this project.
 
 ---
@@ -456,16 +445,15 @@ Shared/high-impact symbol
   -> OMP LSP/search
 
 Pre-merge
-  -> code-review
-  -> OMP /review for high-risk
+  -> independent implementation Reviewer (`eiu-code-review` where applicable)
+  -> OMP independent /review for high-risk
   -> ponytail-review if complexity grew
   -> React Doctor for meaningful React diff
   -> verification-before-completion
 
 Major UI / pre-release
-  -> frontend-checklist-global
+  -> web-design-guidelines
   -> browser-qa
-
 Vercel deployment
   -> deploy-to-vercel
 
