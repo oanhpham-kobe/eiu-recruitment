@@ -10,7 +10,7 @@ canonical_baseline:
 
 integration:
   branch: autonomy/continuous-integration-20260905-01
-  head: "d6e88b21ccc7cc8229fc2126e455e508e352e825"
+  head: "0089123df4dfcfcffe033ee5dae3b3b5f0e35d5b"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -54,12 +54,17 @@ last_accepted_task:
 blocked_tasks: []
 
 safe_frontier:
-  eligible_tasks: []
-  skipped_due_to_dependency: []
+  eligible_tasks:
+    - TASK-S02-001
+  skipped_due_to_dependency:
+    - TASK-S02-002
+    - TASK-S02-003
+    - TASK-S02-004
+    - TASK-S02-005
 
 stop_state:
   stop_gate: null
   reason: null
   observed_evidence: []
 
-next_action: "Materialize SLICE-02 (Candidate Form / Submission / Privacy / Documents) tasks from canonical source into TASK_REGISTRY.yaml"
+next_action: "Prepare and independently review task execution prompt for TASK-S02-001 (Candidate Form Session, Privacy Notice & Upload Reservation schema migration)"

@@ -286,3 +286,28 @@ tasks:
       - "REACT_DOCTOR: PASS (87/100 Great)"
       - "SECRET_SCAN: PASS"
       - "SOURCE_INTEGRITY: PASS"
+  TASK-S02-001:
+    title: "Candidate Form Session, Privacy Notice & Upload Reservation schema migration"
+    slice: SLICE-02
+    status: PLANNED
+    depends_on: [TASK-S01-005]
+  TASK-S02-002:
+    title: "Form Session lifecycle and Privacy Notice pinning commands"
+    slice: SLICE-02
+    status: PLANNED
+    depends_on: [TASK-S02-001]
+  TASK-S02-003:
+    title: "Private Storage reservation and upload signing protocol"
+    slice: SLICE-02
+    status: PLANNED
+    depends_on: [TASK-S02-002]
+  TASK-S02-004:
+    title: "Candidate Submission transactional commands (submit and update)"
+    slice: SLICE-02
+    status: PLANNED
+    depends_on: [TASK-S02-003]
+  TASK-S02-005:
+    title: "Candidate Portal application form UI shell, autosave, and document uploader"
+    slice: SLICE-02
+    status: PLANNED
+    depends_on: [TASK-S02-004]
