@@ -6,10 +6,11 @@
       "url": "https://mcp.context7.com/mcp/oauth"
     },
     "supabase-dev": {
+      "enabled": false,
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=${SUPABASE_PROJECT_REF}&read_only=true&features=docs,database,debugging,development"
     },
-    "gitnexus": {
+    "gitnexus-recruitment": {
       "enabled": true,
       "type": "stdio",
       "command": "npx",

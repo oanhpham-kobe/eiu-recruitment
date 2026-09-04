@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-00
-current_task: TASK-S00-001
+current_task: TASK-S00-002
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -27,21 +27,24 @@ tasks:
       - "SOURCE_PARITY_GATE: PASS"
       - "CRG baseline refresh: PASS"
       - "GitNexus baseline refresh: PASS"
-      - "source validators: PASS"- "EVIDENCE_INDEX: SOURCE-PARITY-001"
+      - "source validators: PASS"
+      - "EVIDENCE_INDEX: SOURCE-PARITY-001"
       - "CURRENT_STATE: current repository observation"
       - "staged secret scan evidence"
       - "Full Handover v1.17 validators"
       - "BASELINE_COMMIT: cdd1ea3e94dbedb6a1b880efd366759bcac1024d"
       - "COMMIT_MESSAGE: 'chore: establish EIU Recruitment baseline'"
       - "CRG_CURRENT_FOR_HEAD: PASS (cdd1ea3)"
-      - "GITNEXUS_CURRENT_FOR_HEAD: PASS (cdd1ea3)"- "EVIDENCE_INDEX: SOURCE-PARITY-001"
+      - "GITNEXUS_CURRENT_FOR_HEAD: PASS (cdd1ea3)"
+      - "EVIDENCE_INDEX: SOURCE-PARITY-001"
       - "CURRENT_STATE: current repository observation"
       - "staged secret scan evidence"
       - "Full Handover v1.17 validators"
   TASK-S00-002:
     title: Dependency selection/pinning + Next.js App Router scaffold
     slice: SLICE-00
-    status: PLANNED
+    status: IN_PROGRESS
+    active_prompt: project_control/prompts/SLICE-00_TASK-002_v1.md
     depends_on: [TASK-S00-001]
   TASK-S00-003:
     title: "DEV infrastructure: Supabase DEV provisioning/link + migration clean-install/CI foundation + Vercel project link when framework root exists"

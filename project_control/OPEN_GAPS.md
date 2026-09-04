@@ -14,11 +14,8 @@ The v1.16 independent-review P0 was source-synced in v1.17:
 ## WORKFLOW-001 — Independent prompt review
 
 **Type:** WORKFLOW_RELEASE_HOLD  
-**Blocks:** dispatch of `EXECUTOR_PROMPT_SLICE_00.md` to Coding Executor.  
-**Does not block:** planning/source readiness.  
-**Status:** `PENDING_INDEPENDENT_REVIEW`.  
-**Resolution:** independent reviewer approves this exact v1.17 Planner Pack + authorized prompt, then user supplies/records `APPROVED_FOR_EXECUTOR` without changing source semantics.
-
+**Status:** `RESOLVED_FOR_TASK_002`.
+**Evidence:** Prompt `SLICE-00_TASK-002_v1.md` independently reviewed (`PASS`), hash verified (`74032857f5b403e61a8939c690a0d11aadfdc2b8d949681746f4c6240bd82117`), released with token `APPROVED_FOR_EXECUTOR`, and stored in `project_control/prompts/SLICE-00_TASK-002_v1.md`.
 ## UAT-001 — Owner Visual UAT
 
 **Type:** RELEASE_UAT_HOLD  
@@ -41,13 +38,12 @@ The v1.16 independent-review P0 was source-synced in v1.17:
 ## Current Execution Prerequisites (Implementation / Infrastructure State)
 
 ### REPO-001 — First baseline Git commit authorization
-**Status:** `PENDING_EXPLICIT_USER_AUTHORIZATION`  
-**Rule:** The first baseline Git commit must not be created until the user explicitly authorizes it.
+**Status:** `RESOLVED`
+**Evidence:** Created first baseline commit `cdd1ea3e94dbedb6a1b880efd366759bcac1024d` on `main`.
 
-### GITHUB-001 — Private GitHub remote creation
-**Status:** `PENDING_AUTHORIZATION`  
-**Rule:** Private GitHub repository and remote origin have not been created; to be established after baseline commit.
-
+### GITHUB-001 — GitHub repository creation & publication
+**Status:** `RESOLVED`
+**Evidence:** Remote `origin` configured to `https://github.com/oanhpham-kobe/eiu-recruitment.git`, pushed, and published.
 ### SUPABASE-DEV-001 — Supabase DEV organization/project provisioning
 **Status:** `PENDING_AUTHORIZATION`  
 **Rule:** Authenticated with 0 projects; DEV organization/project to be provisioned during Slice00 Task 3.
@@ -64,4 +60,5 @@ The v1.16 independent-review P0 was source-synced in v1.17:
 
 **Type:** INTENTIONALLY_DEFERRED_IMPLEMENTATION_MECHANIC  
 **Affected:** Slice00 scaffold.  
+**Status:** `IN_PROGRESS_FOR_TASK_002`
 **Rule:** choose current supported/patched Node/Next.js/React/Supabase/test provider versions from official docs/advisories at execution time; pin lockfile and evidence. Do not infer from prototype or historical artifacts.

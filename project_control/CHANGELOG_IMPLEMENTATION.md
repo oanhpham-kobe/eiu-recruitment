@@ -38,3 +38,12 @@
 - Pushed canonical branch `main` (`d5d5640fdc59aeb224f08c20d38e0450fef5dfd5`).
 - Verified remote HEAD equality: `local HEAD == origin/main == refs/heads/main == d5d5640fdc59aeb224f08c20d38e0450fef5dfd5`.
 - Next action: Hand control to Planner to prepare and review TASK-S00-002.
+
+## 2026-09-04 — TASK-S00-002 Started (Dependency Baseline + Next.js App Router Scaffold)
+- Verified independent review PASS on `SLICE-00_TASK-002_v1.md` with release token `APPROVED_FOR_EXECUTOR`.
+- Preserved released prompt copy at `project_control/prompts/SLICE-00_TASK-002_v1.md` (hash verified: `74032857f5b403e61a8939c690a0d11aadfdc2b8d949681746f4c6240bd82117`).
+- Executed mandatory YAML machine-parse preflight with PyYAML on `TASK_REGISTRY.yaml`, `EVIDENCE_INDEX.yaml`, and `SLICE_REGISTRY.yaml`. Repaired syntax anomalies (`PROJECT_CONTROL_YAML_PARSE = PASS`).
+- Verified initial task state: `TASK-S00-001 = DONE`, `TASK-S00-002 = PLANNED`, `TASK-S00-003 = PLANNED`.
+- Normalized `.omp/mcp.json`: renamed project server `gitnexus` -> `gitnexus-recruitment`, set `supabase-dev.enabled = false`.
+- Established isolated official Node.js 24.20.0 LTS and npm 11.19.0 acceptance runtime (SHA-256: `6cac9ffbca8f6a47091e4b5c772e0606049c3871cb67d900c0cedde630e545ba`).
+- Promoted TASK-S00-002 to `IN_PROGRESS`.

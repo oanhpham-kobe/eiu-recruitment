@@ -23,7 +23,7 @@ implementation_evidence:
     payload_sha256: "0b39c3615dd5b34e998527a1d273e0b846458c7bd4170be46c9bb670bfcb3498"
     legacy_backup: "C:/Users/Admin/.omp/backups/recruitment-source-pre-v1.17-sync-20260904-004739"
 
-BASELINE-COMMIT-001:
+  BASELINE-COMMIT-001:
     task: TASK-S00-001
     status: COMMITTED
     commit_sha: "cdd1ea3e94dbedb6a1b880efd366759bcac1024d"
