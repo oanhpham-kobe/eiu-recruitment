@@ -8,7 +8,7 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '557 checks / 0 failures'}
 implementation_evidence:
-  status: NOT_STARTED
+  status: IN_PROGRESS
   note: Pre-code validator evidence is not implementation/migration proof.
 
   SOURCE-PARITY-001:
@@ -54,3 +54,31 @@ implementation_evidence:
     commit_equality: "d5d5640fdc59aeb224f08c20d38e0450fef5dfd5"
     commit_count: 2
     default_branch: "main"
+
+  SCAFFOLD-APP-001:
+    task: TASK-S00-002
+    operation: APP_ROUTER_SCAFFOLD
+    status: VERIFIED
+    application_root: web
+    node_acceptance_runtime: "24.20.0"
+    npm_acceptance_runtime: "11.19.0"
+    runtime_provenance: "official nodejs.org portable win-x64 zip (SHA-256: 6cac9ffbca8f6a47091e4b5c772e0606049c3871cb67d900c0cedde630e545ba)"
+    framework: "next@16.3.4"
+    react: "react@19.2.8 / react-dom@19.2.8"
+    typescript: "typescript@6.0.3"
+    types: "@types/react@19.2.18, @types/react-dom@19.2.7, @types/node@24.13.3"
+    linter: "@biomejs/biome@2.5.12"
+    lockfile_path: "web/package-lock.json"
+    lockfile_sha256: "2408b7b3b2ac53707719d8121fb6fd4fa57d25f6b5ce638f502984879584eb60"
+    npm_ci: PASS
+    npm_audit: "found 0 vulnerabilities"
+    npm_lint: "PASS (biome check 6 files, 0 fixes)"
+    npm_typecheck: "PASS (tsc --noEmit exit 0)"
+    npm_build: "PASS (Next.js 16.3.4 Turbopack static prerender)"
+    dev_smoke: "PASS (HTTP/1.1 200 OK on port 3001)"
+    prod_smoke: "PASS (HTTP/1.1 200 OK on port 3002)"
+    secret_scan: PASS
+    react_doctor: "PASS (Score: 100/100, 0 issues)"
+    source_authority_diff: NONE
+    root_controls_diff: NONE
+    mcp_config_normalization: "PASS (gitnexus-recruitment + supabase-dev.enabled=false)"

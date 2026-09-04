@@ -43,9 +43,51 @@ tasks:
   TASK-S00-002:
     title: Dependency selection/pinning + Next.js App Router scaffold
     slice: SLICE-00
-    status: IN_PROGRESS
+    status: DONE
     active_prompt: project_control/prompts/SLICE-00_TASK-002_v1.md
     depends_on: [TASK-S00-001]
+    acceptance:
+      - S00-002-AC-01 verified canonical origin/main start
+      - S00-002-AC-02 runtime metadata reconciled without reopening Task001
+      - S00-002-AC-03 app root decision recorded (web/)
+      - S00-002-AC-04 dependency support/advisory evidence recorded
+      - S00-002-AC-05 exact acceptance runtime/framework/package-manager baseline pinned (Node 24.20.0, npm 11.19.0)
+      - S00-002-AC-06 exactly one canonical app lockfile (web/package-lock.json)
+      - S00-002-AC-07 Next App Router TS scaffold under web/
+      - S00-002-AC-08 npm ci clean install succeeds
+      - S00-002-AC-09 production build succeeds
+      - S00-002-AC-10 explicit typecheck succeeds (tsc --noEmit)
+      - S00-002-AC-11 lint succeeds (biome check)
+      - S00-002-AC-12 local dev startup responds (HTTP 200)
+      - S00-002-AC-13 secret scan/direct review finds no credentials
+      - S00-002-AC-14 recruitment_webapp remains unchanged/hash-safe
+      - S00-002-AC-15 project/root controls remain intact; .omp/ diff limited to authorized .omp/mcp.json normalization
+      - S00-002-AC-16 no Supabase resource/link/migration mutation
+      - S00-002-AC-17 no Vercel project/link/deployment mutation
+      - S00-002-AC-18 no recruitment business feature/trusted command implementation
+      - S00-002-AC-19 TASK-S00-003 remains NOT_STARTED/PLANNED
+      - S00-002-AC-20 project_control/evidence updated + exactly one NEXT_ACTION
+      - S00-002-AC-21 direct diff + REVIEW.md + eiu-code-review + verification-before-completion pass
+      - S00-002-AC-22 project .omp/mcp.json normalized persistently (gitnexus-recruitment + supabase-dev.enabled=false)
+      - S00-002-AC-23 CRG package-pin evidence records code-review-graph 2.3.8
+      - S00-002-AC-24 Supabase DEV remains INACTIVE / UNLINKED throughout Task002
+      - S00-002-AC-25 PROJECT_CONTROL_YAML_PARSE = PASS before Task002 in progress
+      - S00-002-AC-26 maintained linter support gate passes (Biome 2.5.12 clean peer graph)
+      - S00-002-AC-27 Windows PowerShell uses .cmd npm/npx launchers with no ExecutionPolicy change
+    evidence:
+      - "APPLICATION_ROOT: web"
+      - "NODE_ACCEPTANCE_RUNTIME: 24.20.0"
+      - "NPM_ACCEPTANCE_RUNTIME: 11.19.0"
+      - "LOCKFILE_SHA256: 2408b7b3b2ac53707719d8121fb6fd4fa57d25f6b5ce638f502984879584eb60"
+      - "NPM_CI: PASS"
+      - "NPM_LINT: PASS"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_BUILD: PASS"
+      - "DEV_SMOKE: PASS (HTTP 200)"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
+      - "REACT_DOCTOR: PASS (100/100)"
+      - "EVIDENCE_INDEX: SCAFFOLD-APP-001"
   TASK-S00-003:
     title: "DEV infrastructure: Supabase DEV provisioning/link + migration clean-install/CI foundation + Vercel project link when framework root exists"
     slice: SLICE-00

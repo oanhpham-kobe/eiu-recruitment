@@ -47,3 +47,29 @@
 - Normalized `.omp/mcp.json`: renamed project server `gitnexus` -> `gitnexus-recruitment`, set `supabase-dev.enabled = false`.
 - Established isolated official Node.js 24.20.0 LTS and npm 11.19.0 acceptance runtime (SHA-256: `6cac9ffbca8f6a47091e4b5c772e0606049c3871cb67d900c0cedde630e545ba`).
 - Promoted TASK-S00-002 to `IN_PROGRESS`.
+
+## 2026-09-04 — TASK-S00-002 Completed (Next.js App Router Scaffold + Pinned Dependencies)
+- Scaffolded minimal Next.js App Router TypeScript application under `web/` using `create-next-app@16.3.4` with `--ts`, `--biome`, `--app`, `--src-dir`, `--no-tailwind`, `--no-react-compiler`, `--import-alias "@/*"`, `--empty`, `--use-npm`, `--agents-md`, `--disable-git`, `--skip-install`.
+- Pinned exact dependencies in `web/package.json`:
+  - `next`: `16.3.4`
+  - `react`: `19.2.8`
+  - `react-dom`: `19.2.8`
+  - `@biomejs/biome`: `2.5.12`
+  - `typescript`: `6.0.3`
+  - `@types/react`: `19.2.18`
+  - `@types/react-dom`: `19.2.7`
+  - `@types/node`: `24.13.3`
+- Established `packageManager = npm@11.19.0`, `engines.node = 24.x`, and `web/.nvmrc = 24.20.0`.
+- Generated canonical `web/package-lock.json` via clean peer resolution (`SHA-256: 2408b7b3b2ac53707719d8121fb6fd4fa57d25f6b5ce638f502984879584eb60`).
+- Verified `npm ci` clean install (29 packages added cleanly).
+- Verified `npm run lint` (`biome check` 6 files, 0 fixes, clean pass).
+- Verified `npm run typecheck` (`tsc --noEmit` exit 0).
+- Verified `npm run build` (`next build` compiled and prerendered static routes).
+- Verified local dev startup smoke (port 3001, HTTP/1.1 200 OK).
+- Verified production startup smoke (`next start`, port 3002, HTTP/1.1 200 OK).
+- Verified secret scan: 0 credentials or secrets found.
+- Verified source authority integrity: `recruitment_webapp/` completely untouched (0 diff).
+- Verified root governance integrity: `.agents/`, `AGENTS.md`, `REVIEW.md`, `SKILLS.md`, `SKILLS_LOCK.yaml` untouched (0 diff).
+- Verified React Doctor scan: Score 100/100, 0 issues.
+- Updated project control: `TASK-S00-002 = DONE`, `TASK-S00-003 = PLANNED`.
+- Next action: Return Task002 evidence/repository state to Planner for rehydration and TASK-S00-003 planning.
