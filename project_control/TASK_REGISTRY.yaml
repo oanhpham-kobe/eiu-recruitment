@@ -194,11 +194,11 @@ tasks:
   TASK-S01-002:
     title: "Internal Google Workspace OAuth first-login provisioning command"
     slice: SLICE-01
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S01-001]
     prompt: "project_control/prompts/SLICE-01_TASK-002_v1.md"
     prompt_sha256: "093ba61f21a9da10c84e26a320829756d6ca94ede754d34c200e7fd2cfaeabf4"
-    review_status: "PENDING (Independent Implementation Review)"
+    review_status: "PASS (TaskS01002ImplReviewer)"
     evidence:
       - "EVIDENCE_INDEX: PROVISION-001"
       - "NPM_TYPECHECK: PASS"
