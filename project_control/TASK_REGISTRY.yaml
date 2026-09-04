@@ -289,10 +289,11 @@ tasks:
   TASK-S02-001:
     title: "Candidate Form Session, Privacy Notice & Upload Reservation schema migration"
     slice: SLICE-02
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S01-005]
     prompt: "project_control/prompts/SLICE-02_TASK-001_v1.md"
     prompt_sha256: "23302d0a01ebc8144a4e78123431dbbb14acb81fd724d9b0e5fdfae175a5c557"
+    review_status: "PASS (TaskS02001ImplReviewer)"
     evidence:
       - "EVIDENCE_INDEX: FORM-SCHEMA-001"
       - "NPM_TYPECHECK: PASS"

@@ -10,7 +10,7 @@ canonical_baseline:
 
 integration:
   branch: autonomy/continuous-integration-20260905-01
-  head: "9c129e67c2e9b1340b00e62df0aa9870e67112c1"
+  head: "58a53f296ff9bc7006cea7bcddbd3e01804fefae"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -34,30 +34,29 @@ active_task:
   reviewer_status: null
 
 last_accepted_task:
-  id: TASK-S01-005
-  commit: "b494ded489b38bafb53f682d5577a4d9ac362a32"
+  id: TASK-S02-001
+  commit: "83f8da575e1812b60a3e57f2bba6862a07b92174"
   evidence:
-    - "LOGIN-UI-001: VERIFIED"
+    - "FORM-SCHEMA-001: VERIFIED"
     - "prompt_reviewed: PASS"
-    - "prompt_sha256: e0799fc83d36bd4677e979f4dfec8c0f3676f519b976d5b3c297a2b1c6ef1982"
-    - "executor_commit: b494ded489b38bafb53f682d5577a4d9ac362a32"
+    - "prompt_sha256: 23302d0a01ebc8144a4e78123431dbbb14acb81fd724d9b0e5fdfae175a5c557"
+    - "executor_commit: 83f8da575e1812b60a3e57f2bba6862a07b92174"
     - "implementation_reviewed: PASS"
-    - "assertion_1_dual_persona_interface: PASS"
-    - "assertion_2_candidate_otp_flow: PASS"
-    - "assertion_3_internal_google_oauth: PASS"
-    - "assertion_4_canonical_error_feedback: PASS"
-    - "assertion_5_language_toggle: PASS"
-    - "assertion_6_design_tokens_and_responsive: PASS"
-    - "assertion_7_production_smoke_and_csp: PASS (HTTP 200 on port 3003, 0 CSP violations)"
+    - "assertion_1_structure_and_constraints: PASS"
+    - "assertion_2_one_current_privacy_notice_and_immutability: PASS"
+    - "assertion_3_candidate_form_target_and_owner_guard: PASS"
+    - "assertion_4_upload_reservation_parent: PASS"
+    - "assertion_5_touch_version_triggers: PASS"
+    - "assertion_6_rls_denial_and_isolation: PASS"
     - "tests: PASS (87/87)"
+    - "local_clean_migration_replay: PASS"
 
 blocked_tasks: []
 
 safe_frontier:
   eligible_tasks:
-    - TASK-S02-001
-  skipped_due_to_dependency:
     - TASK-S02-002
+  skipped_due_to_dependency:
     - TASK-S02-003
     - TASK-S02-004
     - TASK-S02-005
@@ -67,4 +66,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Prepare and independently review task execution prompt for TASK-S02-001 (Candidate Form Session, Privacy Notice & Upload Reservation schema migration)"
+next_action: "Prepare and independently review task execution prompt for TASK-S02-002 (Form Session lifecycle and Privacy Notice pinning commands)"

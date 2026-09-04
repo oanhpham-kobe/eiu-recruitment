@@ -206,6 +206,32 @@ Only add them if their specific feature and prerequisites are actually used by t
 
 Load only skills relevant to the task.
 
+## Centralized Governance / Delta-Only Task Contracts
+
+Governance is centralized; tasks carry only routing decisions and evidence
+deltas.
+
+Reusable governance is defined centrally in:
+- `AGENTS.md`
+- `SKILLS.md`
+- `SKILLS_LOCK.yaml`
+- `REVIEW.md`
+- the autonomous governance pack
+- canonical project sources
+
+Task prompts must not duplicate these full contracts.
+
+A task prompt should contain only:
+- task-specific canonical references;
+- applicable governance/profile decisions;
+- required specialist skills;
+- graph route;
+- task-specific acceptance criteria;
+- deviations/exceptions, if any;
+- evidence delta required for that task.
+
+Executor and Reviewer records should likewise store only the evidence delta
+needed to prove compliance.
 ## 6.1 General implementation
 
 For a well-defined implementation task:
@@ -680,7 +706,10 @@ Preserve at minimum:
 - responsive behavior required by the project;
 - readable/reflowable business text;
 - reduced-motion handling where motion exists.
-Use `web-design-guidelines` and the Design Review Checklist for major UI/pre-release audit, not as permission to redesign the product.
+For major UI/pre-release audit, use the canonical Design System v1.8,
+the applicable Design Review Checklist, `accessibility`, `browser-qa`,
+and React Doctor when applicable. These checks do not authorize redesign
+outside the canonical design source.
 Use `browser-qa` against preview/staging for required user journeys.
 
 ---

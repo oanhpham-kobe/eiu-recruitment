@@ -70,7 +70,7 @@ Do not install multiple active copies of the same `name:`.
 
 ---
 
-# 2. Project Skills — 23 Selected
+# 2. Active Project Specialists — 13
 
 ## `affaan-m/ECC` — selective
 
@@ -86,10 +86,13 @@ Do not install multiple active copies of the same `name:`.
 | `click-path-audit` | ★★★★☆ | Sequential UI state/side-effect analysis |
 
 ### Removed from previous list
-`postgres-patterns` is **not installed** (Supabase Postgres skill used instead).
-`context-budget` is **not installed** (superseded by Token Efficiency Policy).
-It is replaced by Supabase's official `supabase-postgres-best-practices` to avoid duplicate PostgreSQL/RLS/concurrency guidance.
 
+`postgres-patterns` is **not installed**.
+It is replaced by the official `supabase-postgres-best-practices` skill for
+PostgreSQL, schema, RLS, locking, concurrency, and performance guidance.
+
+`context-budget` is **not installed**.
+Its purpose is superseded by the centralized Token Efficiency Policy.
 ---
 
 ## `supabase/agent-skills` — install both official skills
@@ -105,15 +108,15 @@ These are maintained by Supabase and are the primary Supabase/Postgres specialis
 
 ## `mattpocock/skills` — selective
 
-| Skill | Priority | Use |
+|Skill|Priority|Use|
 |---|---:|---|
-| `tdd` | ★★★★★ | Risk-based TDD for critical behavior |
-| `diagnosing-bugs` | ★★★★★ | Root-cause debugging |
+|`tdd`|★★★★★|Risk-based TDD for critical behavior|
+|`diagnosing-bugs`|★★★★★|Root-cause debugging|
 
 `implement` and `code-review` are **deliberately not installed**:
 - implementation is performed by OMP task Executor + applicable specialist skills;
-- review is performed by independent implementation Reviewer (`eiu-code-review` where applicable).
-Do not install discovery/domain-modeling/spec-reopening workflows by default.
+- review is performed by independent implementation Reviewer
+  (`eiu-code-review` where applicable).
 
 ---
 
@@ -146,32 +149,42 @@ Do not install discovery/domain-modeling/spec-reopening workflows by default.
 
 ## `thedaviddias/Front-End-Checklist` — selective
 
-`frontend-checklist-global` is **deliberately not installed** (superseded by `web-design-guidelines` and Design Review Checklist).
+`frontend-checklist-global` is **deliberately not installed**.
+
+Major UI/pre-release verification is covered by:
+- canonical Design System v1.8;
+- the applicable Design Review Checklist;
+- `accessibility`;
+- `browser-qa`;
+- React Doctor when applicable.
+
+Do NOT add or reference `web-design-guidelines` unless it is later explicitly
+approved and added to SKILLS_LOCK.yaml.
+
 ---
 
 ## `multica-ai/andrej-karpathy-skills`
 
-`karpathy-guidelines` is **deliberately not installed** (heuristic overlay preserved in core engineering principles without external skill dependency).
-Do not copy its root `CLAUDE.md` into this project.
+`karpathy-guidelines` is **deliberately not installed**.
 
+Its useful simplicity heuristics are represented by the project's core
+engineering principles without an external skill dependency.
+
+Do not copy its root `CLAUDE.md` into this project.
 ---
 
-# 3. Skill Count
+# 3. Effective Skill Topology Count
 
 ```text
-ECC                                  9
-Supabase official                    2
-Matt Pocock                          4
-Vercel Labs                          4
-Ponytail                             1
-Superpowers                          1
-Front-End Checklist                  1
-Karpathy                             1
---------------------------------------
-TOTAL PROJECT SKILLS                23
-```
+Active project specialists              13
+Release-only skills                      2
+GitNexus on-demand skills                8
+EIU native review skill                  1
+Global-reuse skills                      3
+Total active/on-demand/native skills    27
 
-GitNexus skills and Orca runtime skills are managed separately and are not included in the 23.
+Deliberately excluded skills             5
+```
 
 ---
 
@@ -452,7 +465,7 @@ Pre-merge
   -> verification-before-completion
 
 Major UI / pre-release
-  -> web-design-guidelines
+  -> canonical Design System v1.8 + accessibility
   -> browser-qa
 Vercel deployment
   -> deploy-to-vercel
