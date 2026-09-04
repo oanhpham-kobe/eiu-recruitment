@@ -265,11 +265,11 @@ tasks:
   TASK-S01-005:
     title: "Login UI shell & authentication feedback for Candidate OTP and Internal Google login"
     slice: SLICE-01
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S01-004]
     prompt: "project_control/prompts/SLICE-01_TASK-005_v1.md"
     prompt_sha256: "e0799fc83d36bd4677e979f4dfec8c0f3676f519b976d5b3c297a2b1c6ef1982"
-    review_status: "PENDING_INDEPENDENT_REVIEW"
+    review_status: "PASS (TaskS01005ImplReviewer)"
     evidence:
       - "EVIDENCE_INDEX: LOGIN-UI-001"
       - "NPM_TYPECHECK: PASS"

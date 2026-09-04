@@ -10,7 +10,7 @@ canonical_baseline:
 
 integration:
   branch: autonomy/continuous-integration-20260905-01
-  head: "8aff91e58ad830f9b646d88225fca426ab4dae8a"
+  head: "d6e88b21ccc7cc8229fc2126e455e508e352e825"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -34,25 +34,27 @@ active_task:
   reviewer_status: null
 
 last_accepted_task:
-  id: TASK-S01-004
-  commit: "22c3de585db9ecd886a3629632955fe1cdaa624b"
+  id: TASK-S01-005
+  commit: "b494ded489b38bafb53f682d5577a4d9ac362a32"
   evidence:
-    - "AUTH-ROUTES-001: VERIFIED"
+    - "LOGIN-UI-001: VERIFIED"
     - "prompt_reviewed: PASS"
-    - "prompt_sha256: ca59a7851ac9929df19d8c77323c9646998e1d6e77e34f16d2b6029a89f6de7f"
-    - "executor_commit: 22c3de585db9ecd886a3629632955fe1cdaa624b"
+    - "prompt_sha256: e0799fc83d36bd4677e979f4dfec8c0f3676f519b976d5b3c297a2b1c6ef1982"
+    - "executor_commit: b494ded489b38bafb53f682d5577a4d9ac362a32"
     - "implementation_reviewed: PASS"
-    - "open_redirect_defense: PASS"
-    - "candidate_otp_csrf_origin: PASS"
-    - "server_session_internal: PASS"
-    - "server_session_candidate: PASS"
-    - "tests: PASS (70/70)"
+    - "assertion_1_dual_persona_interface: PASS"
+    - "assertion_2_candidate_otp_flow: PASS"
+    - "assertion_3_internal_google_oauth: PASS"
+    - "assertion_4_canonical_error_feedback: PASS"
+    - "assertion_5_language_toggle: PASS"
+    - "assertion_6_design_tokens_and_responsive: PASS"
+    - "assertion_7_production_smoke_and_csp: PASS (HTTP 200 on port 3003, 0 CSP violations)"
+    - "tests: PASS (87/87)"
 
 blocked_tasks: []
 
 safe_frontier:
-  eligible_tasks:
-    - TASK-S01-005
+  eligible_tasks: []
   skipped_due_to_dependency: []
 
 stop_state:
@@ -60,4 +62,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Prepare and independently review task execution prompt for TASK-S01-005 (Login UI shell & authentication feedback for Candidate OTP and Internal Google login)"
+next_action: "Materialize SLICE-02 (Candidate Form / Submission / Privacy / Documents) tasks from canonical source into TASK_REGISTRY.yaml"

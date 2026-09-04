@@ -12,21 +12,21 @@ Worktree: `D:/orca/recruitment/TASK-S01-005-login-ui`
 Git: `INITIALIZED`
 Branch: `oanhpham-kobe/TASK-S01-005-login-ui`
 Local Starting HEAD: `0bacba06984cf2caced490a3621f939a38bba54e`
-Last Completed Task: `TASK-S01-004`
+Last Completed Task: `TASK-S01-005`
 Remote: `https://github.com/oanhpham-kobe/eiu-recruitment.git`
 
 SOURCE_ROOT: `recruitment_webapp`
 SOURCE_PARITY_GATE: `PASS` (87/87 current-required paths verified byte-identical; 0 missing, 0 mismatches, 0 unknown extras)
 Authority Path Resolution: All Full Handover paths resolve relative to `SOURCE_ROOT = recruitment_webapp`.
 
-Current Slice: `SLICE-01 Identity / Auth / User Provisioning` (IN_PROGRESS)
+Current Slice: `SLICE-01 Identity / Auth / User Provisioning` (COMPLETE)
 Current Task: `TASK-S01-005 Login UI shell & authentication feedback for Candidate OTP and Internal Google login`
-Task Status: `REVIEW`
+Task Status: `DONE`
 Active Prompt: `project_control/prompts/SLICE-01_TASK-005_v1.md`
 Prompt SHA256: `e0799fc83d36bd4677e979f4dfec8c0f3676f519b976d5b3c297a2b1c6ef1982`
 
 Workflow Release Scope: `TASK-S01-005`
-Workflow Release Status: `PENDING_INDEPENDENT_REVIEW`
+Workflow Release Status: `ACCEPTED_BY_INDEPENDENT_REVIEW`
 Identities & Tools:
 - GitHub: `oanhpham-kobe/eiu-recruitment` (PUBLIC; origin configured; branch `main` pushed; observed remote HEAD `7c7c2b378c24e64d95a4b25c1c709b2ee6b38756`)
 - Supabase: `authenticated` (account: `oanhpham-kobe` / `oanh.pham@eiu.edu.vn`)
@@ -43,7 +43,7 @@ Identities & Tools:
 - GitNexus: `1.6.10` (NOT_NEEDED for localized schema migration; MCP server normalized to `gitnexus-recruitment`)
 - Graphify: `0.9.47` (DORMANT; future optional discovery tool)
 
-NEXT_ACTION: Independent review execution of REVIEWER_CONTRACT.md for TASK-S01-005 (Login UI shell & authentication feedback for Candidate OTP and Internal Google login).
+NEXT_ACTION: Materialize SLICE-02 (Candidate Form / Submission / Privacy / Documents) tasks from canonical source and compute safe dependency frontier.
 
-Current Task Status: TASK-S00-001 through TASK-S00-005 are DONE (SLICE-00 COMPLETE). TASK-S01-001 through TASK-S01-004 are DONE. TASK-S01-005 is in `REVIEW` (pending independent review).
-Last Updated: `2026-09-05` (TASK-S01-005 implemented and ready for independent review)
+Current Task Status: TASK-S00-001 through TASK-S00-005 are DONE (SLICE-00 COMPLETE). TASK-S01-001 through TASK-S01-005 are DONE (SLICE-01 COMPLETE). Next Slice: `SLICE-02 Candidate Form / Submission / Privacy / Documents`.
+Last Updated: `2026-09-05` (SLICE-01 complete and independently accepted)
