@@ -8,8 +8,8 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '557 checks / 0 failures'}
 implementation_evidence:
-  status: IN_PROGRESS
-  note: Pre-code validator evidence is not implementation/migration proof.
+  status: REVIEW
+  note: Boundary implementation evidence is pending independent implementation review.
 
   SOURCE-PARITY-001:
     gate: SOURCE_PARITY_GATE
@@ -116,3 +116,25 @@ implementation_evidence:
     secret_scan: "PASS (no credentials, passwords, or tokens committed; web/.env.local and .vercel gitignored)"
     mcp_config_update: "PASS (.omp/mcp.json supabase-dev enabled=true, read_only=true, ref=yrjclhdvjlekwvfeczcj)"
     source_integrity: "PASS (recruitment_webapp 100% byte-identical to baseline)"
+
+  BOUNDARY-001:
+    task: TASK-S00-004
+    operation: BROWSER_SERVER_CREDENTIAL_BOUNDARY_AND_TRUSTED_COMMAND_INTERFACE
+    status: REVIEW
+    prompt: "project_control/prompts/SLICE-00_TASK-004_v8.md"
+    prompt_sha256: "16939131e33db2f17b1f0b1a0b3e903aeacfcf8dfd1b3762ffcd26f6a6dad31b"
+    dependencies: "@supabase/ssr@0.12.6, @supabase/supabase-js@2.115.0, server-only@0.0.1"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit)"
+    npm_lint: "PASS (biome check; 23 files, 0 fixes)"
+    npm_build: "PASS (Next.js 16.3.4 production build; dynamic route and Middleware proxy)"
+    npm_test: "PASS (17 tests, 17 pass, 0 fail, 0 skipped)"
+    client_bundle_scan: "PASS (zero SUPABASE_SERVICE_ROLE_KEY, SUPABASE_SECRET_KEY, or SERVICE_ROLE_KEY identifiers in .next/static)"
+    security_headers: "PASS (distinct cryptographic nonces; nonce-matched CSP; Supabase connect origin and baseline headers)"
+    csp_browser_smoke: "PASS (HTTP 200; dynamic nonce CSP; zero securitypolicyviolation events)"
+    origin_csrf: "PASS (matching Origin/Referer accepted; missing, mismatched, and spoofed origins rejected)"
+    sensitive_cache: "PASS (Cache-Control: private, no-store)"
+    logging_redaction: "PASS (cycle-safe, type-agnostic key, Bearer/JWT/signed-URL/OTP, and Error stack suppression)"
+    command_sequence: "PASS (authenticate -> authorize -> validate -> execute; unauthorized invalid input returns FORBIDDEN before validation)"
+    prompt_hash_verification: "PASS (SHA-256 matches approved prompt binding)"
+    source_integrity: "PASS (recruitment_webapp git diff is empty)"
+    secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
