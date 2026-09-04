@@ -73,3 +73,39 @@
 - Verified React Doctor scan: Score 100/100, 0 issues.
 - Updated project control: `TASK-S00-002 = DONE`, `TASK-S00-003 = PLANNED`.
 - Next action: Return Task002 evidence/repository state to Planner for rehydration and TASK-S00-003 planning.
+
+## 2026-09-04 — TASK-S00-003 Completed (DEV Infrastructure: Supabase DEV + Migration Foundation + Vercel Linking)
+- Verified owner authorization for autonomous DEV-only infrastructure execution.
+- Created Orca task worktree at `D:/orca/recruitment/TASK-S00-003-dev-infra` on branch `oanhpham-kobe/TASK-S00-003-dev-infra` from canonical baseline HEAD `eb64e381d9d86825b194df525ceed8e4930f30c2`.
+- Authenticated and inspected Supabase CLI environment: account `oanhpham-kobe` (`oanh.pham@eiu.edu.vn`).
+- Inspected organizations; created organization `EIU Recruitment` (`clfvovtyobekjaevdewe`).
+- Provisioned dedicated Supabase DEV project:
+  - Project name: `eiu-recruitment-dev`
+  - Project ref: `yrjclhdvjlekwvfeczcj`
+  - Region: `ap-southeast-1` (Singapore, nearest supported Southeast Asia region for Vietnam)
+  - Engine: PostgreSQL 17.6.1.166
+  - Status: `ACTIVE_HEALTHY`
+- Linked repository worktree to Supabase DEV via `supabase link --project-ref yrjclhdvjlekwvfeczcj` (explicitly distinguished from local config `project_id = "eiu-recruitment-dev"` in `supabase/config.toml`). Verified link read-only with `supabase projects list` (`linked: true`).
+- Audited ephemeral worktree-local secret and link files: `web/.env.local`, `.vercel/`, `web/.vercel/`, `supabase/.temp/` are 100% gitignored and uncommitted. Zero credentials committed.
+- Verified billing/plan status: `NOT_OBSERVABLE` via read-only management endpoints; zero paid upgrade performed (`paid_upgrade_performed: false`).
+- Established migration foundation:
+  - Created `supabase/migrations/20260904164112_initial_foundation.sql`.
+  - Enabled extensions `pgcrypto`, `citext`, `pg_trgm`, `unaccent` under `extensions` schema.
+  - Created `private` schema with strict access revokes from `public`, `anon`, and `authenticated`.
+  - Implemented `private.touch_version()` trigger function with `SECURITY DEFINER` and empty `search_path`.
+- Applied migrations to Supabase DEV via `supabase db push --linked`.
+- Tested local clean migration replay via `supabase start` and `supabase db reset`: verified as `BLOCKED` because Docker daemon is unavailable on host (`LegacyDockerLifecycleInspectError` at `//./pipe/dockerDesktopLinuxEngine`).
+- Verified remote migration convergence and idempotency (`supabase db push --linked` reports remote database is up to date; all migrations applied in timestamp order).
+- Verified database schema contracts and trigger behavior via direct SQL assertions against linked DEV database.
+- Authenticated and inspected Vercel CLI environment: account `oanhpham-kobe` (`kobe17`).
+- Created and configured Vercel project:
+  - Project name: `eiu-recruitment` (ID: `prj_9t5t1RBtgZp4hOLuSgEYgv5nt8qY`)
+  - Root directory: `web`
+  - Framework preset: `nextjs`
+  - Node version: `24.x`
+- Linked repository worktree and `web/` to Vercel project via `vercel link --yes --project eiu-recruitment`.
+- Preserved explicit non-deployment boundary: Vercel deployment was `NOT_PERFORMED`.
+- Updated `.omp/mcp.json` to enable `supabase-dev` with `read_only=true` scoped to project `yrjclhdvjlekwvfeczcj`.
+- Verified source authority integrity: `recruitment_webapp/` remains 100% byte-identical to baseline.
+- Updated project control: `TASK-S00-003 = DONE`, `TASK-S00-004 = PLANNED`.
+- Next action: Return Task003 evidence and repository state to Planner for TASK-S00-004 planning.

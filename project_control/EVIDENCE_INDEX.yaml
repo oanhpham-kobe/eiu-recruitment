@@ -82,3 +82,37 @@ implementation_evidence:
     source_authority_diff: NONE
     root_controls_diff: NONE
     mcp_config_normalization: "PASS (gitnexus-recruitment + supabase-dev.enabled=false)"
+
+  DEV-INFRA-001:
+    task: TASK-S00-003
+    operation: DEV_INFRASTRUCTURE_PROVISIONING_AND_LINK
+    status: VERIFIED
+    supabase_auth: "PASS (authenticated user: oanhpham-kobe / oanh.pham@eiu.edu.vn)"
+    supabase_org: "clfvovtyobekjaevdewe (EIU Recruitment)"
+    supabase_project: "eiu-recruitment-dev"
+    local_config_project_id: "eiu-recruitment-dev (supabase/config.toml)"
+    remote_supabase_project_ref: "yrjclhdvjlekwvfeczcj"
+    remote_project_ref_distinction: "supabase/config.toml project_id='eiu-recruitment-dev' is local CLI identifier; remote project ref is yrjclhdvjlekwvfeczcj"
+    remote_link_mechanism: "supabase link --project-ref yrjclhdvjlekwvfeczcj"
+    remote_link_verification: "PASS (linked: true via supabase projects list, supabase migration list --linked)"
+    supabase_region: "ap-southeast-1 (Singapore)"
+    supabase_postgres_engine: "PostgreSQL 17.6.1.166"
+    migration_foundation: "PASS (supabase/migrations/20260904164112_initial_foundation.sql)"
+    migration_extensions: "pgcrypto (1.3), citext (1.6), pg_trgm (1.6), unaccent (1.1) in extensions schema"
+    migration_private_schema: "PASS (private schema created; revoked from public, anon, authenticated)"
+    migration_helpers: "PASS (private.touch_version() SECURITY DEFINER trigger tested and asserted)"
+    local_clean_migration_replay: "PASS (verified via unlinked disposable local Supabase clean reset on Docker Desktop Linux engine; extensions pgcrypto, citext, pg_trgm, unaccent confirmed in extensions schema; zero PUBLIC grants via aclexplode grantee=0; anon/authenticated usage and execute denied; postgres/service_role usage and execute granted; private.touch_version() trigger execution verified across top-level updates replacing sentinel timestamp and incrementing version_no 0->1->2; local and remote migrations converge at 20260904164112)"
+    remote_migration_convergence: "PASS (supabase db push --linked is idempotent; all migrations applied)"
+    database_verification: "PASS (trigger assertions passed, permissions verified)"
+    billing_plan_verification: "NOT_OBSERVABLE (default non-production tier; paid_upgrade_performed: false)"
+    ephemeral_state_audit: "PASS (web/.env.local, .vercel/, web/.vercel/, supabase/.temp/ are 100% gitignored and uncommitted)"
+    vercel_auth: "PASS (authenticated user: oanhpham-kobe / kobe17)"
+    vercel_project: "eiu-recruitment (ID: prj_9t5t1RBtgZp4hOLuSgEYgv5nt8qY)"
+    vercel_root_directory: "web"
+    vercel_framework_preset: "nextjs"
+    vercel_node_version: "24.x"
+    vercel_project_link: "PASS (linked via vercel link --yes --project eiu-recruitment)"
+    vercel_deployment: "NOT_PERFORMED (explicitly held per owner authorization)"
+    secret_scan: "PASS (no credentials, passwords, or tokens committed; web/.env.local and .vercel gitignored)"
+    mcp_config_update: "PASS (.omp/mcp.json supabase-dev enabled=true, read_only=true, ref=yrjclhdvjlekwvfeczcj)"
+    source_integrity: "PASS (recruitment_webapp 100% byte-identical to baseline)"
