@@ -289,8 +289,25 @@ tasks:
   TASK-S02-001:
     title: "Candidate Form Session, Privacy Notice & Upload Reservation schema migration"
     slice: SLICE-02
-    status: PLANNED
+    status: REVIEW
     depends_on: [TASK-S01-005]
+    prompt: "project_control/prompts/SLICE-02_TASK-001_v1.md"
+    prompt_sha256: "23302d0a01ebc8144a4e78123431dbbb14acb81fd724d9b0e5fdfae175a5c557"
+    evidence:
+      - "EVIDENCE_INDEX: FORM-SCHEMA-001"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_LINT: PASS (50 files, 0 fixes)"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (87/87)"
+      - "ASSERTION_1_STRUCTURE_AND_CONSTRAINTS: PASS"
+      - "ASSERTION_2_ONE_CURRENT_PRIVACY_NOTICE_AND_IMMUTABILITY: PASS"
+      - "ASSERTION_3_CANDIDATE_FORM_TARGET_AND_OWNER_GUARD: PASS"
+      - "ASSERTION_4_UPLOAD_RESERVATION_PARENT: PASS"
+      - "ASSERTION_5_TOUCH_VERSION_TRIGGERS: PASS"
+      - "ASSERTION_6_RLS_DENIAL_AND_ISOLATION: PASS"
+      - "LOCAL_CLEAN_MIGRATION_REPLAY: PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
   TASK-S02-002:
     title: "Form Session lifecycle and Privacy Notice pinning commands"
     slice: SLICE-02
