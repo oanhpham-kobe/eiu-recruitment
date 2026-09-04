@@ -12,12 +12,15 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const reqHeaders = await headers();
+  const nonce = reqHeaders.get("x-nonce") ?? undefined;
+  const pathname = reqHeaders.get("x-pathname") ?? "";
+  const isAuthRoute = pathname === "/login" || pathname.startsWith("/login");
 
   return (
     <html lang="vi">
       <body nonce={nonce}>
-        <AppShell>{children}</AppShell>
+        {isAuthRoute ? children : <AppShell>{children}</AppShell>}
       </body>
     </html>
   );

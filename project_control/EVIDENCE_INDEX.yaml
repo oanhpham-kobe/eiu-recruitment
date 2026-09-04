@@ -270,3 +270,28 @@ implementation_evidence:
     react_doctor: "PASS (87/100 Great; 0 errors in new auth files)"
     source_integrity: "PASS (recruitment_webapp git diff is empty)"
     secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
+  LOGIN-UI-001:
+    task: TASK-S01-005
+    operation: LOGIN_UI_AND_AUTHENTICATION_FEEDBACK
+    status: REVIEW
+    prompt: "project_control/prompts/SLICE-01_TASK-005_v1.md"
+    prompt_sha256: "e0799fc83d36bd4677e979f4dfec8c0f3676f519b976d5b3c297a2b1c6ef1982"
+    component: "web/src/app/login/page.tsx"
+    styles: "web/src/styles/login.css"
+    test_suites:
+      - "web/src/__tests__/login-ui.test.ts"
+      - "web/src/__tests__/login-smoke.test.ts"
+    assertion_1_dual_persona_interface: "PASS (rendered WAI-ARIA tablist with Candidate Email OTP and Internal Google OAuth tabs, active states, and panel association)"
+    assertion_2_candidate_otp_flow: "PASS (rendered accessible email input and send OTP button for step 1; 6-digit numeric input, verify button, and resend/change email for step 2)"
+    assertion_3_internal_google_oauth: "PASS (rendered institutional @eiu.edu.vn instruction box and Google Workspace OAuth button with SVG icon)"
+    assertion_4_canonical_error_feedback: "PASS (rendered WAI-ARIA role='alert' and aria-live='assertive' banners with bilingual text for USER_INACTIVE, FORBIDDEN, NOT_FOUND, IDENTITY_REBIND_FORBIDDEN, INVALID_OTP, UNAUTHENTICATED, MISSING_CODE, AUTH_EXCHANGE_FAILED)"
+    assertion_5_language_toggle: "PASS (rendered top-right VI | EN language toggle utility placeholder with WAI-ARIA group and aria-pressed attributes)"
+    assertion_6_design_tokens_and_responsive: "PASS (verified typography >= 16px rule, 820px responsive split-to-stacked breakpoint, focus rings, brand colors --eiu-blue, --eiu-gold, and WCAG AA contrast in login.css)"
+    assertion_7_production_smoke_and_csp: "PASS (live smoke check on port 3003 confirmed HTTP 200 on /login, dynamic nonce CSP header, zero CSP violations, and semantic landmarks in rendered DOM)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_lint: "PASS (biome check; 50 files, 0 fixes)"
+    npm_build: "PASS (Next.js production build succeeded; /login dynamic route compiled)"
+    npm_test: "PASS (87/87 tests pass, 0 fail; 16/16 login-ui tests pass, 1/1 login-smoke test passes)"
+    react_doctor: "PASS (87/100 Great; 0 errors in login files)"
+    source_integrity: "PASS (recruitment_webapp git diff is empty)"
+    secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
