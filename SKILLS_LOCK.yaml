@@ -1,0 +1,220 @@
+# EIU Recruitment — Skills & Tools Lockfile
+lock_version: "2.4"
+generated_at: "2026-09-03"
+
+tool_dependencies:
+  - name: code-review-graph
+    role: BROAD_DISCOVERY_AND_REVIEW_GRAPH
+    repository: https://github.com/tirth8205/code-review-graph
+    version: "2.3.8"
+    tag: "v2.3.8"
+    tag_object: "751a20a9ba9ec80223916120110211d69327d2b7"
+    commit: "2c6dae32643572ee528eb9b77dbcc17f58f3a8c9"
+    package: "code-review-graph==2.3.8"
+    execution: "uvx/uv-tool"
+    load_policy: "ON_DEMAND"
+    mcp_enabled: true
+    mcp_tool_surface: "RESTRICTED"
+    hooks_enabled: false
+    watch_enabled: false
+    daemon_enabled: false
+    freshness_policy: "EXPLICIT_BEFORE_USE"
+
+  - name: gitnexus
+    role: PRECISE_CODE_RELATIONSHIP_GRAPH
+    repository: https://github.com/abhigyanpatwari/GitNexus
+    version: "1.6.10"
+    package: "gitnexus@1.6.10"
+    install_scope: "project-mcp"
+    load_policy: "ALWAYS_AVAILABLE"
+    index_only: true
+    mcp_enabled: true
+    freshness_policy: "EXPLICIT_BEFORE_USE"
+
+dormant_optional_tools:
+  - name: graphify
+    role: FUTURE_OPTIONAL_DISCOVERY_TOOL
+    version: "0.9.47"
+    package: "graphifyy[sql]"
+    commit: "b14b52e94ec3d9840413d81777f4c134eac0a40d"
+    status: "DORMANT"
+    baseline_active: false
+    graph_built: false
+    mcp_enabled: false
+    hooks_enabled: false
+    live_postgres: false
+
+eiu_native:
+  - name: eiu-code-review
+    path: .omp/skills/eiu-code-review/SKILL.md
+    sha256: "5f53df54df51cedb3aae8eeb5472c78fbb5499152f39c95976d54832849569d1"
+    role: "AUTHORITATIVE_REVIEW_CONTRACT"
+
+active_project_skills:
+  - name: documentation-lookup
+    source: https://github.com/affaan-m/ECC
+    path: skills/documentation-lookup
+    sha256: "81ad2b5b4acbe02259f4b6cbfd9111d81d5cfe51025051b6048959c45f6516c1"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: react-patterns
+    source: https://github.com/affaan-m/ECC
+    path: skills/react-patterns
+    sha256: "f3208d44a5d553038c42e046cec4dc16e4a3d90a9dbf931f883a2e21919a64a9"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: security-review
+    source: https://github.com/affaan-m/ECC
+    path: skills/security-review
+    sha256: "fe6f9151fb15c1dffd47a55080c3ad147af7c95dd0ad3714735dec6824b060b7"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: accessibility
+    source: https://github.com/affaan-m/ECC
+    path: skills/accessibility
+    sha256: "d8578fe750e7321658450386e2112a46ea1aedca0235fbf97f3db2457e599b3a"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: react-testing
+    source: https://github.com/affaan-m/ECC
+    path: skills/react-testing
+    sha256: "51c18b4e28285bb876ef469e47c6f53108b5a9f900950a60e897c3c24826a65e"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: browser-qa
+    source: https://github.com/affaan-m/ECC
+    path: skills/browser-qa
+    sha256: "c501257d2c9ca711342b56d7adfb04897f17c6946dc6cdb88a5c75c87e4aa951"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: architecture-decision-records
+    source: https://github.com/affaan-m/ECC
+    path: skills/architecture-decision-records
+    sha256: "525e51b4ed98222cd49ea7d2e42b51a010ecab391b25022a86164258c14b8bb0"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: click-path-audit
+    source: https://github.com/affaan-m/ECC
+    path: skills/click-path-audit
+    sha256: "662fc5d02483bcd8ff799d6d3109a38da673182341cfc14445e9076fcd920162"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: supabase
+    source: https://github.com/supabase/agent-skills
+    path: skills/supabase
+    sha256: "df6748d6360a2cfda72d2d607a6f2d2fde730a03247eafb457421089b93e2d78"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: supabase-postgres-best-practices
+    source: https://github.com/supabase/agent-skills
+    path: skills/supabase-postgres-best-practices
+    sha256: "4d7d1bd60f2ad7fd0d510269279519059dcc630d832f4c241d90735244c70525"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: tdd
+    source: https://github.com/mattpocock/skills
+    path: skills/engineering/tdd
+    sha256: "193b791c489d1640ccfb58d7cbd60fc9e059ef44632b3c92f208784cfe45ab78"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: diagnosing-bugs
+    source: https://github.com/mattpocock/skills
+    path: skills/engineering/diagnosing-bugs
+    sha256: "bca66b7141da7d225b7dfd1abf6f2bee657b8044d3897604055e760749c71724"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+  - name: ponytail-review
+    source: https://github.com/DietrichGebert/ponytail
+    path: skills/ponytail-review
+    sha256: "6c8b7e5c897a406b66da6aabda7fa6509e8d1d447e73e602265d7986497445d1"
+    classification: "ACTIVE_PROJECT_SPECIALIST"
+
+release_only:
+  - name: deploy-to-vercel
+    source: https://github.com/vercel-labs/agent-skills
+    path: skills/deploy-to-vercel
+    sha256: "0df550ec39472fa202d752754fddf797b5b7a605cf63aaad06462aea577aa6a7"
+    classification: "RELEASE_ONLY"
+  - name: vercel-optimize
+    source: https://github.com/vercel-labs/agent-skills
+    path: skills/vercel-optimize
+    sha256: "3675219c3b9622513696dd359ff70a8fa38c0b3c3b554b237e10f2b4807fcfb3"
+    classification: "RELEASE_ONLY"
+
+gitnexus_on_demand:
+  - name: gitnexus-exploring
+    source: npm:gitnexus
+    sha256: "21b18eee1f679efff654bf45f9dc32a495c81c014d210ac7e778c58a2a204dbd"
+    classification: "ON_DEMAND"
+  - name: gitnexus-impact-analysis
+    source: npm:gitnexus
+    sha256: "09e529505da155532059a3656557811f99bafff0f05c8f9e6e47bb96edc340d3"
+    classification: "ON_DEMAND"
+  - name: gitnexus-debugging
+    source: npm:gitnexus
+    sha256: "d8090c85e2c8faffd4767fc2dcc52aeb3f3dab3dc7218bc96b29dacf53635d64"
+    classification: "ON_DEMAND"
+  - name: gitnexus-refactoring
+    source: npm:gitnexus
+    sha256: "544841cf90c9ebe92a2f3018b034593c2bfd8617f968412d3599a22725e3c73e"
+    classification: "ON_DEMAND"
+  - name: gitnexus-guide
+    source: npm:gitnexus
+    sha256: "746d057790de5b034d19d603dfa77eb9b596407918025481b4b29214efee2581"
+    classification: "ON_DEMAND"
+  - name: gitnexus-cli
+    source: npm:gitnexus
+    sha256: "58f9f765306b285c661b86777e2097b3efb43dabe9e19d42f795e88faf9081a2"
+    classification: "ON_DEMAND"
+  - name: gitnexus-pdg-query
+    source: npm:gitnexus
+    sha256: "3e908d7e495347f8cc316566534751fecdde347f1e3402d81d170b37d3e71067"
+    classification: "ON_DEMAND"
+  - name: gitnexus-taint-analysis
+    source: npm:gitnexus
+    sha256: "c09df4ca0ca0a14bfce654124bd47a71bb9377089558f76199af80baeffbee7a"
+    classification: "ON_DEMAND"
+
+global_reuse:
+  - name: vercel-react-best-practices
+    effective_path: C:\Users\Admin/.omp/agent/skills\vercel-react-best-practices\SKILL.md
+    effective_provider: "native-user (p100)"
+    sha256: "3286ace648b4d740317b9c1cb7fbd38600eaacc62a8b57ea5e06fd2992b5582e"
+  - name: vercel-composition-patterns
+    effective_path: C:\Users\Admin/.omp/agent/skills\composition-patterns\SKILL.md
+    effective_provider: "native-user (p100)"
+    sha256: "fb8f849b4d46c0c4d364ae6fb398a5cb693b54f9a4c31765a1ec0689c7cb93d5"
+  - name: verification-before-completion
+    effective_path: C:\Users\Admin/.omp/agent/skills\verification-before-completion\SKILL.md
+    effective_provider: "native-user (p100)"
+    sha256: "2befe7fc55bcadaa3d97dd9e8efeb633d2561c0ebe74c5a8b17c4d9e7e4520b3"
+
+excluded_project_skills:
+  - name: implement
+    previous_path: ".agents/skills/implement"
+    previous_sha256: "30cd7bc1ebfb3891e85a1eed3b3b81aea0fa4ad4553a784de7f8e421b2d223e0"
+    reason: "DELIBERATELY_NOT_INSTALLED_FOR_RECRUITMENT"
+    removed_from_provider: true
+  - name: code-review
+    previous_path: ".agents/skills/code-review"
+    previous_sha256: "3abbdfe52540f9242e16589fae2cc423b3d98994c37683944462b29bab89495c"
+    reason: "DELIBERATELY_NOT_INSTALLED_FOR_RECRUITMENT"
+    removed_from_provider: true
+  - name: context-budget
+    previous_path: ".agents/skills/context-budget"
+    previous_sha256: "920c5edde48e495b267fb0d42d8411c8b75ce1d8ab76e793b2eb6d23da01b0f1"
+    reason: "DELIBERATELY_NOT_INSTALLED_FOR_RECRUITMENT"
+    removed_from_provider: true
+  - name: frontend-checklist-global
+    previous_path: ".agents/skills/frontend-checklist-global"
+    previous_sha256: "81171784dcd548faf538834228eeb57b8d0fa36296d3c99229c09160b817e715"
+    reason: "DELIBERATELY_NOT_INSTALLED_FOR_RECRUITMENT"
+    removed_from_provider: true
+  - name: karpathy-guidelines
+    previous_path: ".agents/skills/karpathy-guidelines"
+    previous_sha256: "e2553e9b66299fbca399804d6c44dfa44b2384b979ca5bf8b933b4916bb3141b"
+    reason: "DELIBERATELY_NOT_INSTALLED_FOR_RECRUITMENT"
+    removed_from_provider: true
+  - name: vercel-react-best-practices
+    previous_path: ".agents/skills/vercel-react-best-practices"
+    previous_sha256: "3286ace648b4d740317b9c1cb7fbd38600eaacc62a8b57ea5e06fd2992b5582e"
+    reason: "REDUNDANT_PROJECT_COPY_GLOBAL_REUSE"
+    removed_from_provider: true
+  - name: vercel-composition-patterns
+    previous_path: ".agents/skills/vercel-composition-patterns"
+    previous_sha256: "fb8f849b4d46c0c4d364ae6fb398a5cb693b54f9a4c31765a1ec0689c7cb93d5"
+    reason: "REDUNDANT_PROJECT_COPY_GLOBAL_REUSE"
+    removed_from_provider: true
+  - name: verification-before-completion
+    previous_path: ".agents/skills/verification-before-completion"
+    previous_sha256: "2befe7fc55bcadaa3d97dd9e8efeb633d2561c0ebe74c5a8b17c4d9e7e4520b3"
+    reason: "REDUNDANT_PROJECT_COPY_GLOBAL_REUSE"
+    removed_from_provider: true

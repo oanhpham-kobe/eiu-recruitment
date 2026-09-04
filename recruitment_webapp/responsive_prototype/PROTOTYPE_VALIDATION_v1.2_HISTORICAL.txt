@@ -1,0 +1,27 @@
+PROTOTYPE VALIDATION — Responsive v1.2
+
+PASS | File exists: index.html
+PASS | File exists: app.js
+PASS | File exists: v11-overrides.js
+PASS | File exists: responsive-v12.js
+PASS | File exists: styles.css
+PASS | File exists: responsive-v12.css
+PASS | File exists: README.md
+PASS | File exists: RESPONSIVE_BROWSER_QA_v1.2.md
+PASS | File exists: RESPONSIVE_UX_UAT_CHECKLIST_v1.2.md
+PASS | File exists: RESPONSIVE_QA_RESULTS.json
+PASS | File exists: VERSION.md
+PASS | Index loads responsive CSS
+PASS | Index loads responsive JS
+PASS | Mobile 640 breakpoint
+PASS | Tablet 899 breakpoint
+PASS | Off-canvas nav
+PASS | Candidate mobile cards
+PASS | Candidate privacy
+PASS | Mobile full-screen drawer
+PASS | Tablet table preserved
+PASS | Current desktop widths
+PASS | Browser QA all pass
+PASS | Responsive JS syntax
+
+TOTAL=23 PASS=23 FAIL=0

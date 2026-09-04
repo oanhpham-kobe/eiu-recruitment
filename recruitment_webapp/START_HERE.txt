@@ -1,0 +1,13 @@
+EIU Recruitment Full Handover v1.17
+
+Current authority:
+- Business Logic Core v1.2 — FROZEN
+- Technical Architecture v1.17 — TECHNICAL SPECIFICATION FROZEN
+- Design System v1.8 — CURRENT / REVIEWED
+- Responsive Prototype v1.10 — READY FOR OWNER VISUAL UAT / NOT FROZEN
+- Implementation Gate — READY TO IMPLEMENT
+- Implementation Validation / Migration Freeze — PENDING ACTUAL CODE EVIDENCE
+- Current review alignment: review_pack/97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
+- Current pre-code/implementation gate: review_pack/98_TECHNICAL_PRECODE_GATE_V1_17.md
+
+Start with review_pack/00_README.md and review_pack/FINAL_REVIEW_GUIDE.md. Production Ready = NO.

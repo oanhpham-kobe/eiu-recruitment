@@ -1,0 +1,36 @@
+FAIL | index version v1.3
+PASS | index loads responsive-v13.css
+PASS | index loads responsive-v13.js
+FAIL | README authority Handover v1.8
+FAIL | README authority Design v1.7
+PASS | Discovery exists
+PASS | Audit matrix exists
+PASS | Responsive contract exists
+PASS | Final report exists
+PASS | Current QA exists
+PASS | Current UX UAT exists
+PASS | Reduced motion
+PASS | Visible focus
+PASS | Very narrow 360 contract
+PASS | Large mobile 430 contract
+PASS | Nav inert support
+PASS | Nav aria-hidden support
+PASS | Overlay aria-modal
+PASS | Overlay focus trap
+PASS | Escape behavior
+PASS | Focus restoration
+PASS | Toast live region
+PASS | Form labels normalized
+PASS | Privacy error/focus
+PASS | Scrollable table keyboard
+PASS | Mobile signout available
+PASS | No innerWidth responsive branching
+PASS | Browser QA results exist
+PASS | Browser QA all pass
+PASS | QA covers 360/390/430/768/1024/1280
+PASS | QA constrained height
+PASS | Preview screenshots exist
+PASS | Old QA marked historical
+FAIL | Version file v1.3
+
+TOTAL=34 PASS=30 FAIL=4

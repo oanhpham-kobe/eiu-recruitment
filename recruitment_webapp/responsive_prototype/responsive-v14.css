@@ -1,0 +1,59 @@
+/* Responsive UX-UAT v1.4 — user visual corrections + button-flow verification. */
+
+/* Interview + Report status badges use “Đã gửi báo cáo” as the visual width benchmark.
+   English labels may wrap inside the same compact width. */
+.status-interview,.status-report{
+  box-sizing:border-box;
+  inline-size:144px;
+  min-inline-size:144px;
+  max-inline-size:144px;
+  min-height:34px;
+  padding:5px 10px;
+  white-space:normal;
+  overflow-wrap:normal;
+  word-break:normal;
+  text-wrap:balance;
+}
+.status-cell .status{vertical-align:middle}
+
+/* Time-first, date-second. Each token stays intact and the pair wraps only when the cell truly becomes too narrow. */
+.interview-time-v14{
+  display:inline-flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  column-gap:8px;
+  row-gap:2px;
+  max-width:100%;
+  line-height:1.45;
+}
+.time-range-v14,.date-v14{white-space:nowrap}
+.date-v14::before{content:'·';margin-right:8px;color:var(--muted)}
+
+@media(max-width:640px){
+  /* Grid items stretch by default; status badges must remain compact. */
+  .main .responsive-table-shell>.data-table .status-cell .status{
+    justify-self:start;
+    inline-size:144px;
+    min-inline-size:144px;
+    max-inline-size:144px;
+  }
+  /* HR Report: keep “Thời gian phỏng vấn / Interview time” label on one line. */
+  .main .responsive-table-shell>.report-table td{
+    grid-template-columns:150px minmax(0,1fr);
+  }
+  .main .responsive-table-shell>.report-table td::before{white-space:nowrap}
+  .main .responsive-table-shell>.interviewer-table td{
+    grid-template-columns:140px minmax(0,1fr);
+  }
+  .interview-time-v14{display:flex;width:100%}
+}
+
+@media(max-width:370px){
+  /* Even on 360px QA width keep the Report label intact; value may wrap naturally. */
+  .main .responsive-table-shell>.report-table td{grid-template-columns:150px minmax(0,1fr)}
+  .main .responsive-table-shell>.interviewer-table td{grid-template-columns:136px minmax(0,1fr)}
+  .status-interview,.status-report,
+  .main .responsive-table-shell>.data-table .status-cell .status{
+    inline-size:140px;min-inline-size:140px;max-inline-size:140px;
+  }
+}

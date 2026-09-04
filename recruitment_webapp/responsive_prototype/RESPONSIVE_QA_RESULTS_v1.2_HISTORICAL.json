@@ -1,0 +1,238 @@
+[
+  {
+    "case": "login_mobile",
+    "viewport": "375x812",
+    "ok": true,
+    "errors": [],
+    "checks": [
+      [
+        "no_page_horizontal_overflow",
+        true
+      ],
+      [
+        "no_js_errors",
+        true
+      ]
+    ]
+  },
+  {
+    "case": "candidate_form_mobile",
+    "viewport": "375x812",
+    "ok": true,
+    "errors": [],
+    "checks": [
+      [
+        "no_page_horizontal_overflow",
+        true
+      ],
+      [
+        "no_js_errors",
+        true
+      ],
+      [
+        "candidate_form_one_column",
+        true
+      ],
+      [
+        "privacy_present",
+        true
+      ],
+      [
+        "sticky_actions_present",
+        true
+      ],
+      [
+        "core_touch_height_44",
+        true
+      ]
+    ]
+  },
+  {
+    "case": "candidate_apps_mobile",
+    "viewport": "390x844",
+    "ok": true,
+    "errors": [],
+    "checks": [
+      [
+        "no_page_horizontal_overflow",
+        true
+      ],
+      [
+        "no_js_errors",
+        true
+      ],
+      [
+        "candidate_mobile_cards_visible",
+        true
+      ],
+      [
+        "candidate_desktop_table_hidden",
+        true
+      ],
+      [
+        "core_touch_height_44",
+        true
+      ]
+    ]
+  },
+  {
+    "case": "hr_inbox_mobile",
+    "viewport": "390x844",
+    "ok": true,
+    "errors": [],
+    "checks": [
+      [
+        "no_page_horizontal_overflow",
+        true
+      ],
+      [
+        "no_js_errors",
+        true
+      ],
+      [
+        "structured_rows_mobile",
+        true
+      ],
+      [
+        "mobile_nav_opens",
+        true
+      ],
+      [
+        "filter_sheet_opens",
+        true
+      ],
+      [
+        "drawer_full_screen_mobile",
+        true
+      ],
+      [
+        "core_touch_height_44",
+        true
+      ]
+    ]
+  },
+  {
+    "case": "permissions_mobile",
+    "viewport": "390x844",
+    "ok": true,
+    "errors": [],
+    "checks": [
+      [
+        "no_page_horizontal_overflow",
+        true
+      ],
+      [
+        "no_js_errors",
+        true
+      ],
+      [
+        "structured_rows_mobile",
+        true
+      ],
+      [
+        "mobile_nav_opens",
+        true
+      ],
+      [
+        "core_touch_height_44",
+        true
+      ]
+    ]
+  },
+  {
+    "case": "interview_tablet_portrait",
+    "viewport": "768x1024",
+    "ok": true,
+    "errors": [],
+    "checks": [
+      [
+        "no_page_horizontal_overflow",
+        true
+      ],
+      [
+        "no_js_errors",
+        true
+      ],
+      [
+        "table_header_visible_tablet",
+        true
+      ],
+      [
+        "table_scroll_container",
+        true
+      ]
+    ]
+  },
+  {
+    "case": "hr_report_tablet_portrait",
+    "viewport": "768x1024",
+    "ok": true,
+    "errors": [],
+    "checks": [
+      [
+        "no_page_horizontal_overflow",
+        true
+      ],
+      [
+        "no_js_errors",
+        true
+      ],
+      [
+        "table_header_visible_tablet",
+        true
+      ],
+      [
+        "table_scroll_container",
+        true
+      ]
+    ]
+  },
+  {
+    "case": "hr_inbox_tablet_landscape",
+    "viewport": "1024x768",
+    "ok": true,
+    "errors": [],
+    "checks": [
+      [
+        "no_page_horizontal_overflow",
+        true
+      ],
+      [
+        "no_js_errors",
+        true
+      ],
+      [
+        "table_header_visible_tablet",
+        true
+      ],
+      [
+        "table_scroll_container",
+        true
+      ]
+    ]
+  },
+  {
+    "case": "hr_inbox_desktop",
+    "viewport": "1280x800",
+    "ok": true,
+    "errors": [],
+    "checks": [
+      [
+        "no_page_horizontal_overflow",
+        true
+      ],
+      [
+        "no_js_errors",
+        true
+      ],
+      [
+        "sidebar_visible_desktop",
+        true
+      ],
+      [
+        "hamb_hidden_desktop",
+        true
+      ]
+    ]
+  }
+]

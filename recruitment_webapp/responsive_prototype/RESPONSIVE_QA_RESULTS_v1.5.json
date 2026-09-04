@@ -1,0 +1,287 @@
+[
+  {
+    "name": "no page overflow interview 360x800",
+    "pass": true,
+    "detail": "360/360"
+  },
+  {
+    "name": "no page overflow hr-report 360x800",
+    "pass": true,
+    "detail": "360/360"
+  },
+  {
+    "name": "no page overflow interview 390x844",
+    "pass": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "no page overflow hr-report 390x844",
+    "pass": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "no page overflow interview 430x844",
+    "pass": true,
+    "detail": "430/430"
+  },
+  {
+    "name": "no page overflow hr-report 430x844",
+    "pass": true,
+    "detail": "430/430"
+  },
+  {
+    "name": "no page overflow interview 768x1024",
+    "pass": true,
+    "detail": "768/768"
+  },
+  {
+    "name": "no page overflow hr-report 768x1024",
+    "pass": true,
+    "detail": "768/768"
+  },
+  {
+    "name": "no page overflow interview 1024x768",
+    "pass": true,
+    "detail": "1024/1024"
+  },
+  {
+    "name": "no page overflow hr-report 1024x768",
+    "pass": true,
+    "detail": "1024/1024"
+  },
+  {
+    "name": "no page overflow interview 1280x800",
+    "pass": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "no page overflow hr-report 1280x800",
+    "pass": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "Interview badge width benchmark",
+    "pass": true,
+    "detail": "144px"
+  },
+  {
+    "name": "Interview time first then date",
+    "pass": true,
+    "detail": "14:00 – 15:30 20/05/2025"
+  },
+  {
+    "name": "Interview time stays one visual line at 430",
+    "pass": true,
+    "detail": "{'x': 145, 'y': 339.625, 'width': 262, 'height': 20.296875}"
+  },
+  {
+    "name": "Report mobile time header no-wrap",
+    "pass": true,
+    "detail": "Thời gian phỏng vấn"
+  },
+  {
+    "name": "Report badge benchmark width",
+    "pass": true,
+    "detail": "144px Đã gửi báo cáo"
+  },
+  {
+    "name": "Report benchmark wording",
+    "pass": true,
+    "detail": "Đã gửi báo cáo"
+  },
+  {
+    "name": "English long status same compact width",
+    "pass": true,
+    "detail": "{'x': 145, 'y': 449.21875, 'width': 144, 'height': 45.59375}"
+  },
+  {
+    "name": "English long status wraps",
+    "pass": true,
+    "detail": "45.59375px"
+  },
+  {
+    "name": "Applications bulk checkbox toggles",
+    "pass": true,
+    "detail": "1"
+  },
+  {
+    "name": "Applications delete enables after select",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Applications email opens preview",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Applications bulk status updates selected candidate",
+    "pass": true,
+    "detail": "PROCESSED"
+  },
+  {
+    "name": "Interview bulk checkbox toggles",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Interview bulk status updates selected round",
+    "pass": true,
+    "detail": "CONFIRMED"
+  },
+  {
+    "name": "Copy interview opens copy modal",
+    "pass": true,
+    "detail": "copyRound"
+  },
+  {
+    "name": "Interview participant email opens preview",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Interview delete opens confirmation",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Report bulk checkbox toggles",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Report bulk status updates selected application",
+    "pass": true,
+    "detail": "HIRED"
+  },
+  {
+    "name": "Candidate education Add works",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Candidate education Remove works",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Candidate privacy validation keeps form open",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Candidate privacy error announced",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Add user button opens responsive modal",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Assign HR permissions button opens responsive modal",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "No dead buttons overlay/candidate",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons overlay/round",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons overlay/hrReport",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons overlay/candidateOwn",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons admin/applications",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons admin/interview",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons admin/hr-report",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons admin/permissions",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons candidate/candidate-applications",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons candidate/candidate-form",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "No dead buttons interviewer/interviewer-report",
+    "pass": true,
+    "detail": "[]"
+  },
+  {
+    "name": "Status menu anchored to badge, not pointer X",
+    "pass": true,
+    "detail": "badge={'x': 145, 'y': 449.21875, 'width': 144, 'height': 32} menu={'x': 138, 'y': 489, 'width': 280, 'height': 269}"
+  },
+  {
+    "name": "Status trigger exposes expanded state",
+    "pass": true,
+    "detail": "true"
+  },
+  {
+    "name": "Escape closes status menu",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Escape restores focus to badge",
+    "pass": true,
+    "detail": "status status-interview s-confirmed status-clickable"
+  },
+  {
+    "name": "Different click position keeps same anchored menu X",
+    "pass": true,
+    "detail": "first=138 second=138"
+  },
+  {
+    "name": "Outside click dismisses without selection",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Same badge toggles dropdown closed",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "Dismiss/toggle does not change status",
+    "pass": true,
+    "detail": "CONFIRMED"
+  },
+  {
+    "name": "No JS/console errors",
+    "pass": true,
+    "detail": "[]"
+  }
+]

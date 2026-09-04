@@ -1,0 +1,1070 @@
+Tôi đã rà toàn bộ cấu trúc trong recruitment_webapp.zip: bộ Business Logic v1.2, toàn bộ logic_validation, database_schema.sql, app_spec.yaml, permission/status matrix, acceptance tests và Design System v1.1.
+
+Kết luận tổng thể
+
+Bộ tài liệu này rất tốt ở tầng nghiệp vụ và đã vượt xa mức “ý tưởng để bắt đầu làm web”. Tôi đánh giá khoảng:
+
+Hạng mục	Mức hoàn thiện
+Phạm vi nghiệp vụ tuyển dụng Phase 1	90–95%
+Entity / ownership / workflow	90%
+Role & permission business model	90%
+Interview nhiều vòng	90–95%
+UI/UX desktop	85–90%
+Edge cases nghiệp vụ	85–90%
+Data model conceptual	80–85%
+Database production-ready	60–65%
+Security production-ready	55–60%
+API/backend contract	35–40%
+Privacy/compliance	30–40%
+Deployment/monitoring/backup	25–35%
+Mobile/tablet hoàn chỉnh	40–50%
+
+Vì vậy, tôi đồng ý với việc freeze phần business logic tương đối, nhưng chưa đồng ý coi bộ tài liệu hiện tại là đủ để giao thẳng cho AI/developer code production.
+
+Tôi đề nghị thêm một gate:
+
+Technical Architecture Freeze / Production Readiness Gate
+
+trước khi code chính thức.
+
+Dưới đây là những điểm quan trọng nhất.
+
+A. Có 6 vấn đề tôi xem là P0/P1 – nên xử lý trước khi code
+1. Final Decision Source hiện có một lỗi logic khá nguy hiểm
+
+Spec đang quy định:
+
+Report có updated_at mới nhất và có ít nhất một decision field → trở thành Final Decision Source.
+
+Các field quyết định là:
+
+Conclusion
+Expected Specific Job
+Expected Recruitment Time
+
+Nhưng updated_at lại là timestamp của toàn bộ report.
+
+Ví dụ:
+
+A viết Conclusion = “Tuyển”, lúc 09:00.
+B viết Conclusion = “Không tuyển”, lúc 08:00.
+Sau đó 10:00 B chỉ sửa trường Professional Knowledge, không đụng Conclusion.
+
+updated_at của B trở thành 10:00.
+
+=> B đột nhiên trở thành Final Decision Source, mặc dù decision block của B không thay đổi.
+
+Đây là bug về semantics, không phải chỉ technical implementation.
+
+Tôi khuyến nghị
+
+Thêm:
+
+decision_updated_at
+decision_updated_by
+
+Chỉ update timestamp này khi một trong ba decision fields thay đổi.
+
+Final source:
+
+ORDER BY decision_updated_at DESC
+
+Nếu không muốn thêm column, phải có audit event riêng cho decision block. Nhưng dùng report.updated_at chung là không an toàn.
+
+Mức ưu tiên: P0.
+
+2. Conflict lịch thiếu chính Candidate
+
+Hiện spec chặn overlap theo:
+
+Interviewer
+Room
+
+Nhưng chưa thấy rule chặn:
+
+Candidate có hai lịch phỏng vấn cùng giờ.
+
+Điều này hoàn toàn có thể xảy ra vì:
+
+Candidate
+ └ Submission
+      ├ Application A
+      └ Application B
+
+hoặc nhiều Submission/Application.
+
+Ví dụ candidate được Khoa A xếp:
+
+08:00–09:00
+
+và Khoa B xếp:
+
+08:30–09:30
+
+Room và Interviewer khác nhau nên validation hiện tại vẫn PASS.
+
+Nên thành
+
+Server transaction kiểm tra conflict theo:
+
+Candidate
+Interviewer
+Room
+
+và có thể thêm configurable warning đối với:
+
+HR owner nếu cần.
+
+Candidate conflict nên là blocking, không phải warning.
+
+P0/P1.
+
+3. Ba database view hiện tại có nguy cơ bypass RLS
+
+Schema tạo:
+
+application_current_interview
+application_effective_outcome
+interview_final_decision_source
+
+nhưng chưa thấy security handling tương ứng.
+
+Đây đặc biệt quan trọng với Supabase: tài liệu Supabase hiện tại cảnh báo rằng view có thể bypass RLS mặc định tùy cách tạo/owner, nên view expose qua Data API phải được thiết kế an toàn chứ không thể mặc định rằng RLS của table bên dưới sẽ tự bảo vệ.
+
+Nếu một trong các view trên bị expose sai, Candidate hoặc Interviewer có thể đọc dữ liệu mà table policy vốn không cho phép.
+
+Technical spec phải khóa rõ
+
+Ví dụ một trong các phương án:
+
+security-invoker view phù hợp;
+không expose view trực tiếp;
+RPC bảo mật;
+schema private;
+explicit grants/revokes;
+RLS/filter ở layer thích hợp.
+
+Ngoài RLS, cần kiểm soát GRANT. Supabase cũng nhấn mạnh RLS và database grants là hai lớp riêng biệt.
+
+P0 security.
+
+4. applications có thể chứa Candidate A nhưng Submission của Candidate B
+
+Schema hiện nay có:
+
+applications.candidate_id
+applications.submission_id
+
+nhưng không có constraint bảo đảm:
+
+applications.candidate_id
+=
+submissions.candidate_id
+
+Do đó DB hoàn toàn chấp nhận:
+
+Application
+candidate_id = Candidate A
+
+submission_id = Submission của Candidate B
+
+Backend đúng thì có thể không xảy ra, nhưng database integrity không nên phụ thuộc hoàn toàn vào frontend/backend.
+
+Tôi khuyến nghị
+
+Thực ra candidate_id trong Application đang là dữ liệu suy ra từ Submission.
+
+Có hai hướng:
+
+Hướng sạch nhất:
+
+Application -> Submission -> Candidate
+
+bỏ candidate_id khỏi Application.
+
+Hoặc nếu giữ để tối ưu query thì phải có composite FK/trigger invariant.
+
+P1.
+
+5. Khoa/Phòng – Ngành/Tổ – Vị trí hiện chưa được DB bảo đảm consistency
+
+Bạn có:
+
+department_teams.unit_id
+positions.unit_id
+positions.department_team_id
+applications.unit_id
+applications.department_team_id
+applications.position_id
+
+Nhưng schema chưa enforce:
+
+Application.unit
+      =
+Position.unit
+
+và:
+
+Application.department_team
+      =
+Position.department_team
+
+Do đó có thể tạo record kiểu:
+
+Khoa: Điều dưỡng
+Ngành/Tổ: Điều dưỡng cơ bản
+Vị trí: Chuyên viên CNTT của phòng IT
+
+SQL vẫn hợp lệ vì cả ba UUID đều tồn tại.
+
+Cần quyết định
+
+Nếu Position đã xác định Unit/Department thì Application chỉ cần:
+
+position_id
+
+và derive Unit/Team.
+
+Nếu muốn Application snapshot cả ba để bảo toàn lịch sử thì phải có business constraint tại RPC/server transaction.
+
+Đây là integrity invariant quan trọng.
+
+P1.
+
+6. Interview Report không được DB ràng buộc với Participant
+
+Hiện:
+
+interview_reports.interview_id
+interviewer_user_id
+
+nhưng DB không yêu cầu interviewer đó tồn tại trong:
+
+interview_participants
+
+Nghĩa là về mặt database có thể có:
+
+Interview X
+Report của User Y
+
+trong khi Y chưa bao giờ là participant của Interview X.
+
+RLS có thể ngăn user tự tạo, nhưng privileged backend/service-role vẫn có thể vô tình ghi record sai.
+
+Nên có invariant
+
+Report hiện hành phải gắn với một:
+
+interview_participant_id
+
+thay vì chỉ:
+
+interviewer_user_id
+
+Tôi thực ra khuyến nghị schema:
+
+interview_reports
+    participant_id FK
+
+Điều này còn giải quyết sạch hơn flow:
+
+Remove → Re-add → Restore old / Create new.
+
+P1.
+
+B. Concurrency rule “Interviewer wins” cần thiết kế lại
+
+Spec hiện ghi:
+
+HR sửa report → Interviewer đang giữ version cũ vẫn được phép save và Interviewer wins.
+
+Đây là một chính sách nghiệp vụ có thể hiểu được, nhưng nếu implementation đơn giản bằng whole-row update thì sẽ gây lost update.
+
+Ví dụ:
+
+HR sửa:
+
+Strengths = ABC
+
+Trong lúc Interviewer đang mở bản cũ.
+
+Interviewer chỉ sửa:
+
+Professional knowledge = XYZ
+
+Nếu Interviewer wins bằng cách ghi toàn bộ form cũ:
+
+Strengths = ABC của HR biến mất.
+
+Activity Log chỉ ghi nhận mất dữ liệu chứ không cứu dữ liệu.
+
+Nên đổi thành field-aware concurrency
+
+Một trong hai:
+
+Option 1 — Patch update
+
+Client chỉ gửi các field thực sự thay đổi.
+
+Option 2 — Three-way merge
+
+base version
+server current
+client changes
+
+Nếu hai bên sửa khác field → merge.
+
+Nếu sửa cùng field → áp rule Interviewer wins.
+
+Đây mới thực sự thể hiện đúng business decision “Interviewer wins”.
+
+C. Một thiếu sót lớn khác: chưa có API/RPC contract
+
+Tài liệu mô tả rất kỹ web phải làm gì, nhưng chưa đủ rõ backend sẽ thực hiện bằng transaction nào.
+
+Ví dụ action:
+
+Create Application
+
+thực tế phải atomic:
+
+validate permission
+→ validate submission/candidate
+→ unique Application
+→ create Application
+→ create Interview Round 1
+→ update/recalculate Submission
+→ activity log
+
+Nếu bước 3 thành công nhưng bước 4 lỗi thì sao?
+
+Không được để frontend gọi 4–5 lệnh SQL riêng.
+
+Tôi đề nghị thêm tài liệu
+
+37_BACKEND_COMMAND_CONTRACTS.md
+
+với các command:
+
+create_application()
+create_next_interview_round()
+save_interview_schedule()
+delete_or_inactivate_application()
+delete_or_inactivate_interview()
+add_interview_participant()
+remove_interview_participant()
+readd_interview_participant()
+change_interview_status()
+change_report_status()
+save_interviewer_report()
+update_submission()
+mark_submission_new()
+set_candidate_active()
+grant_hr_permission()
+
+Mỗi command phải ghi:
+
+Input
+Permission
+Preconditions
+Transaction boundary
+DB locks
+Validation
+Side effects
+Audit
+Output
+Error codes
+Idempotency
+
+Đây là phần thiếu lớn nhất giữa spec và code production.
+
+D. Chưa có idempotency strategy
+
+Đặc biệt quan trọng với:
+
+Candidate Submit
+Create Application
+Create Round
+Send Email
+Upload document
+Generate PDF
+
+Double click hoặc retry do network có thể gây duplicate.
+
+Design System có nói chặn double submit ở UI, nhưng UI không đủ.
+
+Nên có
+idempotency_key
+
+cho các mutation quan trọng.
+
+Ví dụ Candidate Submit:
+
+candidate_id
+client_request_id UUID
+
+unique ở DB.
+
+E. Schema thiếu khá nhiều database constraints quan trọng
+
+Tôi sẽ bổ sung ít nhất các constraint sau.
+
+Interview
+round_no > 0
+start_at < end_at
+
+Nếu status/schedule cần thời gian thì enforce ở command.
+
+Participant
+
+Hiện chưa có:
+
+unique(interview_id, participant_order)
+participant_order > 0
+
+Nếu reorder concurrent thì có thể trùng thứ tự.
+
+Documents
+
+submission_documents chưa có constraint kiểu:
+
+unique current document/version
+version > 0
+
+và thiếu:
+
+mime_type
+file_size
+checksum
+uploaded_by
+storage_bucket
+Applications
+
+hr_owner_id chưa enforce owner:
+
+Active
++ role HR
+app_users
+
+Spec yêu cầu:
+
+@email @eiu.edu.vn
+
+nhưng DB không có domain validation.
+
+Timestamps/versioning
+
+Các table có:
+
+updated_at
+version_no
+
+nhưng schema chưa có trigger/function đảm bảo tự increment.
+
+Developer quên increment một nơi là optimistic locking hỏng.
+
+F. Root Admin hiện chỉ enforce “tối đa 1”, chưa enforce “luôn có 1”
+
+Index:
+
+where is_root_admin = true
+
+chỉ đảm bảo:
+
+không có hai Root Admin.
+
+Nó không đảm bảo:
+
+hệ thống luôn có một Root Admin.
+
+Spec nói Root không được inactive/delete, nhưng database hiện mới comment:
+
+-- enforce via privileged DB function/trigger
+
+chứ chưa implement.
+
+Cần thêm bootstrap strategy
+
+Ví dụ:
+
+initial deployment
+→ seed root admin email
+→ auth mapping
+→ bootstrap RPC
+→ permanently protected
+
+và recovery procedure nếu Auth account bị khóa/mất.
+
+G. Authentication vẫn chưa khóa hoàn toàn
+
+Tôi thấy một inconsistency:
+
+Business implementation:
+
+Internal User “có thể dùng Google OAuth/OTP”.
+
+Design System:
+
+Internal User = Google OAuth.
+
+Candidate:
+
+OTP/Magic Link.
+
+Trước khi coding nên khóa chính xác:
+
+Candidate: Email OTP hay Magic Link?
+Internal: Google Workspace OAuth only?
+
+Đặc biệt với internal user @eiu.edu.vn, tôi chọn:
+
+Google OAuth / Google Workspace account only
+
+và allowlist trong app_users.
+
+Không nên vừa OAuth vừa OTP nếu không có use case thật.
+
+H. Internal User đổi email là một flow phức tạp hơn tài liệu hiện tại mô tả
+
+Spec nói HR có thể sửa:
+
+app_users.email
+
+và phải sync Supabase Auth.
+
+Nhưng với Google OAuth, identity thực tế đến từ Google Workspace.
+
+Không nên coi việc đổi email như sửa một text field.
+
+Cần có riêng:
+
+Change Internal User Identity
+
+với:
+
+verify email mới thuộc EIU;
+verify Auth identity;
+tránh duplicate;
+update User Directory;
+giữ snapshot lịch sử;
+invalidate session cũ nếu cần;
+audit.
+I. File upload security hiện còn thiếu khá nhiều
+
+App tuyển dụng nhận:
+
+CV
+bằng cấp
+bảng điểm
+chứng chỉ
+slide/demo material
+
+Đây là dữ liệu không thể coi upload như file thông thường.
+
+Cần khóa:
+
+allowed MIME types
+allowed extensions
+max file size
+max files
+max total storage/submission
+filename normalization
+malware scanning policy
+content-disposition
+preview policy
+
+Không cho upload rồi browser render tùy tiện HTML/SVG.
+
+Signed URL
+
+Ý tưởng signed URL là đúng. Nhưng cần TTL ngắn vì Supabase hiện ghi rõ signed URL tồn tại đến thời điểm expiry; thay đổi Auth key không tự revoke URL đã phát hành.
+
+Cho HR/Interviewer tôi sẽ dùng:
+
+1–5 phút
+
+thay vì URL dài nhiều giờ.
+
+J. Service-role/secret key cần được đưa thành “hard security rule”
+
+Tài liệu hiện nói RLS nhiều, rất tốt.
+
+Nhưng nên bổ sung hẳn:
+
+Không bao giờ dùng Supabase secret/service-role key trong browser.
+
+Supabase hiện xác nhận secret key chạy dưới service_role, bypass RLS hoàn toàn.
+
+Mọi server action dùng secret key phải tự authorization trước khi query.
+
+Đặc biệt:
+
+Root Admin
+HR permission
+Candidate ownership
+Interviewer contextual permission
+
+không được bỏ qua chỉ vì chạy server-side.
+
+K. Privacy/compliance hiện là khoảng trống lớn
+
+Đây là web tuyển dụng nên dữ liệu chứa:
+
+họ tên;
+ngày sinh;
+giới tính;
+địa chỉ;
+email;
+SĐT;
+quá trình học;
+kinh nghiệm;
+CV;
+bằng cấp;
+đánh giá tuyển dụng;
+lịch sử tuyển dụng.
+
+Trong khi từ 01/01/2026, Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15 đã có hiệu lực.
+
+Do đó phần:
+
+“Đồng ý sử dụng thông tin cho mục đích tuyển dụng”
+
+là chưa đủ để trở thành privacy specification.
+
+Tôi đề nghị một workstream pháp lý/compliance riêng, ít nhất xác định với bộ phận pháp chế/DPO phù hợp:
+
+mục đích xử lý;
+thông báo quyền riêng tư;
+căn cứ xử lý/consent khi áp dụng;
+retention period ứng viên không được tuyển;
+retention ứng viên được tuyển;
+quyền truy cập/chỉnh sửa/xóa theo quy định;
+withdrawal/objection flow nếu áp dụng;
+export dữ liệu;
+xóa/anonymize;
+data breach procedure;
+processor/subprocessor;
+cross-border data handling nếu Supabase/Vercel lưu ngoài Việt Nam;
+audit việc HR xem/download hồ sơ.
+
+Tôi không khuyến nghị code production trước khi phần này được owner chịu trách nhiệm xác nhận.
+
+L. Chưa có Data Retention Policy
+
+Đây là một trong những thiếu sót lớn nhất.
+
+Hiện rule thiên về:
+
+“Có lịch sử → inactive → giữ.”
+
+Nếu áp dụng vô thời hạn thì database sẽ chứa CV/bằng cấp/hồ sơ ứng viên vĩnh viễn.
+
+Inactive khác hoàn toàn với:
+
+retain
+archive
+anonymize
+purge
+
+Nên xác định riêng:
+
+Candidate account retention
+Submission retention
+Attachment retention
+Interview report retention
+Email history retention
+Activity log retention
+Generated PDF retention
+M. Activity Log nên chuyển từ “nên log” sang “bắt buộc”
+
+Tôi khuyến nghị audit log ít nhất cho:
+
+login/auth failure
+candidate data read
+candidate file download
+candidate update
+HR update
+status change
+permission grant/revoke
+report edit
+report conflict override
+participant add/remove
+candidate active/inactive
+PDF generation/download
+email send
+delete/inactive
+root-admin actions
+
+Đặc biệt permission và personal-data access.
+
+Ngoài ra Activity Log hiện chỉ có:
+
+entity_type
+entity_id
+actor
+old_values
+new_values
+
+nên thêm:
+
+request_id
+correlation_id
+ip/hash nếu chính sách cho phép
+user_agent nếu cần
+reason
+source
+
+Không lưu secret/token.
+
+N. Email History đang bị gọi là history nhưng lại cho hard delete
+
+Điều này hơi mâu thuẫn về audit semantics.
+
+Spec cho:
+
+Xóa email history test/gửi lỗi.
+
+Tôi sẽ không hard delete một email đã thực sự gửi.
+
+Nên phân biệt:
+
+DRAFT
+QUEUED
+FAILED
+SENT
+BOUNCED
+Draft/test chưa gửi: có thể delete.
+Failed: có thể archive.
+Sent: immutable audit record.
+
+Ngoài ra cần lưu:
+
+provider_message_id
+delivery status
+error
+attempt_no
+
+Nếu không, sent_at chỉ chứng minh app đã gọi send, không chứng minh mail được gửi thành công.
+
+O. Email sending cần Outbox/Queue semantics
+
+Hiện:
+
+Save → Send Email
+
+chưa rõ transaction.
+
+Không nên:
+
+DB transaction mở
+→ gọi email provider
+→ chờ
+
+Nên:
+
+business transaction
+→ create email_outbox
+→ commit
+→ worker/server sends
+→ update SENT/FAILED
+
+Có retry + idempotency.
+
+P. Candidate Form có một UX rule nên xem lại
+
+Hiện:
+
+Candidate NEW → được edit
+HR mở → READ
+Candidate không edit nữa
+
+Nghĩa là Candidate có thể đang chỉnh hồ sơ, HR chỉ cần click xem một lần là candidate mất quyền chỉnh.
+
+Không phải bug vì spec chủ động thiết kế như vậy, nhưng tôi đề nghị owner xác nhận rõ đây thực sự là ý muốn.
+
+Một mô hình ít gây bất ngờ hơn:
+
+NEW
+UNDER_REVIEW
+LOCKED
+
+hoặc HR phải thực hiện explicit action Start processing để khóa hồ sơ, thay vì “view = lock”.
+
+Nếu giữ logic hiện tại thì ít nhất UI Candidate cần thông báo rõ.
+
+Q. Gender đang hard-code chỉ MALE/FEMALE
+
+Schema:
+
+check (gender_code in ('MALE','FEMALE'))
+
+Nếu đây đúng theo biểu mẫu HR chính thức của EIU thì giữ.
+
+Nếu chưa có quyết định nghiệp vụ chính thức thì không nên biến thành DB constraint trước khi form được owner xác nhận.
+
+R. Design System và Business Logic docs hiện không đồng bộ trạng thái
+
+Đây là inconsistency tài liệu khá rõ.
+
+Trong Business Logic README:
+
+Visual Design System chưa freeze; chờ repo.
+
+Trong khi ZIP đã có:
+
+design_system/
+EIU Recruitment Design System v1.1
+Desktop Design System current
+
+Tức là Business Logic docs đang tham chiếu trạng thái cũ.
+
+Nên sửa
+
+Trong:
+
+00_README.md
+14_SCOPE_AND_OPEN_ITEMS.md
+31_FINAL_PRECODE_GATE_RESULTS.md
+32_BUSINESS_LOGIC_FREEZE.md
+app_spec.yaml
+15_ALL_IN_ONE_SPEC.md
+
+thành trạng thái hiện tại:
+
+Desktop Design System: v1.1 CURRENT
+Desktop Prototype: REVISION REQUIRED
+Responsive Detailed Design: NOT FROZEN
+
+Nếu không, developer/AI đọc file khác nhau sẽ nhận hai “source of truth” khác nhau.
+
+S. Mobile/tablet chưa đủ để gọi toàn bộ web app là “UI fully specified”
+
+Design System nói rõ:
+
+iPad/Mobile detailed design chưa freeze.
+
+Điều này hoàn toàn hợp lý nếu Phase 1 là desktop-first.
+
+Nhưng phải ghi vào acceptance criteria:
+
+Supported production viewport Phase 1
+
+Ví dụ:
+
+Desktop ≥1280: fully supported.
+1024–1279: usable.
+Tablet/mobile: chưa production target.
+
+Hoặc nếu Candidate sẽ nộp hồ sơ từ điện thoại — khả năng rất cao — thì Candidate Portal mobile không nên để phase sau.
+
+Tôi đặc biệt khuyến nghị:
+
+Candidate Form + Phiếu của tôi phải mobile-ready trước go-live.
+
+Internal HR app có thể desktop-first.
+
+T. Chưa có Non-functional Requirements
+
+Nên bổ sung một file riêng:
+
+38_NON_FUNCTIONAL_REQUIREMENTS.md
+
+Ít nhất chốt:
+
+Performance
+page initial load
+search latency
+table pagination
+PDF generation time
+upload limit
+Capacity
+candidate count/year
+submissions/year
+concurrent HR
+documents/year
+storage forecast
+Reliability
+availability target
+retry
+transaction
+idempotency
+Backup
+DB backup
+Storage backup
+restore test
+RPO
+RTO
+Observability
+application errors
+DB errors
+email failures
+auth failures
+slow queries
+storage failures
+Security
+session lifetime
+rate limits
+brute-force protection
+headers/CSP
+dependency scanning
+secret management
+U. Rate limiting / abuse prevention chưa có
+
+Candidate portal là external-facing.
+
+Cần ít nhất:
+
+OTP request rate limit
+login attempt protection
+submission creation limit
+file upload limit
+email notification limit
+PDF generation limit
+
+Đặc biệt tránh người dùng tạo hàng trăm Submission và HR notification email.
+
+V. Search/pagination strategy chưa khóa
+
+Application Inbox có thể ban đầu vài trăm hồ sơ, rồi vài nghìn.
+
+Không nên thiết kế autocomplete theo:
+
+“mỗi ký tự query toàn DB”
+
+mà không có:
+
+debounce
+minimum characters
+server pagination
+indexes
+normalization
+
+Nên search normalized:
+
+full_name
+email
+phone
+
+và có pagination/cursor.
+
+W. Timezone cần được ghi rõ
+
+DB dùng timestamptz là đúng.
+
+Nhưng spec chưa nói rõ presentation timezone.
+
+Tôi khuyến nghị:
+
+DB: UTC/timestamptz
+Business display timezone: Asia/Ho_Chi_Minh
+Date-only: date, không convert timezone
+
+Không để mỗi frontend tự suy diễn.
+
+X. Có một số phần “không blocker” nhưng thực tế là blocker cho go-live
+
+Hiện tài liệu liệt kê:
+
+Email templates, attachment rules, PDF template… không block core logic.
+
+Đúng với business logic freeze.
+
+Nhưng không đúng với production go-live.
+
+Tôi sẽ phân thành:
+
+Không block coding foundation
+PDF pixel-perfect.
+Dashboard.
+KPI.
+Recruitment Needs.
+Offer.
+Nhưng block UAT/go-live
+email templates;
+attachment requirements;
+max upload/file policy;
+privacy notice;
+retention;
+production auth;
+RLS;
+backup;
+mobile Candidate Portal;
+PDF official layout nếu PDF dùng nghiệp vụ thật.
+Y. Những điểm tôi đánh giá rất tốt và nên giữ
+
+Có khá nhiều thiết kế tôi đánh giá đúng hướng.
+
+Đặc biệt:
+
+Candidate → Submission → Application → Interview Session → Report là decomposition tốt.
+Application identity tách khỏi Interview Round là đúng.
+Hỗ trợ N rounds ngay Phase 1 là quyết định tốt.
+Demo Topic thuộc Interview Session là đúng ownership.
+Snapshot participant name/job title/email là rất hợp lý.
+Không rewrite Application identity khi đã có history là tốt.
+Current Round dùng chung là đúng nguyên tắc.
+RLS được xác định là bắt buộc thay vì chỉ ẩn UI.
+Granular HR permissions tốt hơn role-based all-or-nothing.
+Interviewer contextual authorization là thiết kế tốt.
+Root Admin implicit permission nhưng vẫn chịu business safety rules là đúng.
+Optimistic concurrency đã được nghĩ từ trước.
+DB unique guard cho duplicate Application là đúng.
+Transaction lock round allocation là đúng.
+Server-side schedule conflict là đúng.
+Delete vs Inactive matrix được mô tả khá chặt.
+Activity Log được đưa vào ngay từ đầu là đúng.
+Business Logic và Design System đã tách riêng source-of-truth tương đối tốt.
+Không đưa Dashboard/KPI vào làm trung tâm app là một quyết định đúng với workflow HR.
+Z. Tôi đề nghị cấu trúc tài liệu cuối cùng trước coding
+
+Không cần viết lại toàn bộ những gì bạn đã làm. Chỉ cần bổ sung một Technical Closure Pack khoảng 7–9 tài liệu.
+
+File cần bổ sung	Nội dung
+37_BACKEND_COMMAND_CONTRACTS.md	Transaction/RPC/actions
+38_NON_FUNCTIONAL_REQUIREMENTS.md	Performance, capacity, SLA
+39_SECURITY_RLS_MATRIX.md	SELECT/INSERT/UPDATE/DELETE cho từng table/view/storage
+40_DATABASE_INVARIANTS.md	FK, unique, checks, triggers
+41_STORAGE_AND_UPLOAD_SECURITY.md	file/MIME/size/signed URL
+42_PRIVACY_RETENTION_COMPLIANCE.md	privacy, retention, deletion
+43_EMAIL_DELIVERY_SPEC.md	outbox, retry, delivery status
+44_DEPLOYMENT_OPERATIONS.md	dev/staging/prod, backup, monitoring
+45_PRODUCTION_UAT_GATE.md	checklist cuối trước go-live
+
+Sau đó update:
+
+app_spec.yaml
+database_schema.sql
+15_ALL_IN_ONE_SPEC.md
+Thứ tự tôi khuyên bạn xử lý
+
+Nếu bắt đầu chỉnh ngay, tôi sẽ đi đúng thứ tự này:
+
+Sửa Final Decision Source.
+Bổ sung Candidate schedule conflict.
+Khóa database invariants Application/Submission/Participant/Report.
+Thiết kế toàn bộ RLS + GRANT + view security.
+Định nghĩa Backend Commands/RPC + transaction boundaries.
+Chốt authentication.
+Chốt upload/storage security.
+Chốt privacy + retention.
+Chốt email outbox/delivery.
+Chốt mobile Candidate Portal.
+Non-functional + deployment/backup/monitoring.
+Sau đó mới tuyên bố Technical Architecture FROZEN và bắt đầu production coding.
+Đánh giá cuối cùng
+
+Nếu câu hỏi là:
+
+“Tài liệu đã mô tả đủ rõ nghiệp vụ để một kiến trúc sư hiểu app phải hoạt động thế nào chưa?”
+
+Có. Khoảng 90%+.
+
+Nếu câu hỏi là:
+
+“Có thể đưa ZIP này cho một AI coding agent và nói build production app chính xác theo tài liệu không?”
+
+Tôi chưa khuyến nghị.
+
+Khoảng cách còn lại không nằm nhiều ở UI hay workflow HR nữa, mà chủ yếu nằm ở technical contract, database invariants, RLS/security, concurrency semantics, privacy, file security và production operations. Đây chính là những phần thường chỉ lộ lỗi sau khi code đã lớn, nên xử lý trước sẽ tiết kiệm rất nhiều việc sửa kiến trúc về sau.
+
+Đặc biệt, tôi sẽ không giữ nguyên trạng thái “Final Pre-code Gate: PASS/FROZEN” mà không thêm một “Technical Pre-code Gate” mới, vì chính app_spec.yaml và database_schema.sql cũng thừa nhận production schema vẫn TECH_REVIEW_REQUIRED.

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+  "mcpServers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp/oauth"
+    },
+    "supabase-dev": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=${SUPABASE_PROJECT_REF}&read_only=true&features=docs,database,debugging,development"
+    },
+    "gitnexus": {
+      "enabled": true,
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "gitnexus@1.6.10",
+        "mcp"
+      ]
+    },
+    "code-review-graph": {
+      "enabled": true,
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "code-review-graph==2.3.8",
+        "code-review-graph",
+        "serve",
+        "--tools",
+        "get_minimal_context_tool,query_graph_tool,detect_changes_tool,get_review_context_tool,get_architecture_overview_tool,list_graph_stats_tool"
+      ]
+    }
+  }
+}

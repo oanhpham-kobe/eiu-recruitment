@@ -1,0 +1,6 @@
+EIU Recruitment Responsive Prototype v1.4
+Fresh Chromium/Playwright QA
+TOTAL=49
+PASS=49
+FAIL=0
+Key checks: compact Interview/Report badges, English wrap, time-first/date-second layout, mobile Report label nowrap, bulk selection/status flows, core button wiring, representative drawer button wiring, zero JS/console errors.

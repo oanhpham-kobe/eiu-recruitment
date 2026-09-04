@@ -1,0 +1,304 @@
+version: '1.17'
+technical_architecture: '1.17'
+design_system: '1.8'
+current_review_resolution: 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
+current_precode_gate: 98_TECHNICAL_PRECODE_GATE_V1_17.md
+documents:
+- file: 00_README.md
+  status: CURRENT
+  normative: true
+- file: 01_PRODUCT_SCOPE_AND_ARCHITECTURE.md
+  status: CURRENT
+  normative: true
+- file: 02_ROLES_PERMISSIONS_AND_NAVIGATION.md
+  status: CURRENT
+  normative: true
+- file: 03_CANDIDATE_FORM_AND_PORTAL.md
+  status: CURRENT
+  normative: true
+- file: 04_HR_APPLICATION_INBOX.md
+  status: CURRENT
+  normative: true
+- file: 05_HR_INTERVIEW_PAGE.md
+  status: CURRENT
+  normative: true
+- file: 06_INTERVIEW_REPORT_HR_AND_INTERVIEWER.md
+  status: CURRENT
+  normative: true
+- file: 07_STATUS_AND_BUSINESS_RULES.md
+  status: CURRENT
+  normative: true
+- file: 08_DATA_MODEL_AND_FIELD_DICTIONARY.md
+  status: CURRENT
+  normative: true
+- file: 09_MASTER_DATA_CATALOG.md
+  status: CURRENT
+  normative: true
+- file: 10_UI_UX_SPEC.md
+  status: CURRENT
+  normative: true
+- file: 11_EMAIL_DOCUMENTS_AND_ACTIVITY_LOG.md
+  status: CURRENT
+  normative: true
+- file: 12_IMPLEMENTATION_NOTES_VERCEL_SUPABASE.md
+  status: CURRENT
+  normative: true
+- file: 13_ACCEPTANCE_CRITERIA_AND_TEST_CASES.md
+  status: CURRENT
+  normative: true
+- file: 14_SCOPE_AND_OPEN_ITEMS.md
+  status: CURRENT
+  normative: true
+- file: 15_ALL_IN_ONE_SPEC.md
+  status: CURRENT
+  normative: false
+- file: 16_AI_REVIEW_AND_BUILD_PROMPT.md
+  status: CURRENT
+  normative: true
+- file: 37_BACKEND_COMMAND_CONTRACTS.md
+  status: CURRENT
+  normative: true
+- file: 38_NON_FUNCTIONAL_REQUIREMENTS.md
+  status: CURRENT
+  normative: true
+- file: 39_SECURITY_RLS_MATRIX.md
+  status: CURRENT
+  normative: true
+- file: 40_DATABASE_INVARIANTS.md
+  status: CURRENT
+  normative: true
+- file: 41_STORAGE_AND_UPLOAD_SECURITY.md
+  status: CURRENT
+  normative: true
+- file: 42_PRIVACY_RETENTION_COMPLIANCE.md
+  status: CURRENT
+  normative: true
+- file: 43_EMAIL_DELIVERY_SPEC.md
+  status: CURRENT
+  normative: true
+- file: 44_DEPLOYMENT_OPERATIONS.md
+  status: CURRENT
+  normative: true
+- file: 45_PRODUCTION_UAT_GATE.md
+  status: CURRENT
+  normative: true
+- file: 46_AUTH_IDENTITY_MODEL.md
+  status: CURRENT
+  normative: true
+- file: 47_AUDIT_LOGGING_SPEC.md
+  status: CURRENT
+  normative: true
+- file: 48_IDEMPOTENCY_CONCURRENCY_SPEC.md
+  status: CURRENT
+  normative: true
+- file: 49_TECHNICAL_REVIEW_VERCEL_SUPABASE.md
+  status: HISTORICAL
+  normative: false
+- file: 50_OWNER_DECISIONS_PENDING.md
+  status: CURRENT
+  normative: true
+- file: 51_SOURCE_REFERENCES.md
+  status: CURRENT
+  normative: true
+- file: 52_TECHNICAL_GATE_STATUS.md
+  status: CURRENT
+  normative: true
+- file: 53_FINAL_CONSISTENCY_VALIDATION.md
+  status: CURRENT
+  normative: true
+- file: 54_SCHEMA_CONFORMANCE_MATRIX.md
+  status: CURRENT
+  normative: true
+- file: 55_COMMAND_COVERAGE_MATRIX.md
+  status: CURRENT
+  normative: true
+- file: 56_EXTERNAL_REVIEW_V2_RESOLUTION.md
+  status: HISTORICAL
+  normative: false
+- file: 57_TECHNICAL_PRECODE_GATE_V1_4.md
+  status: HISTORICAL
+  normative: false
+- file: 58_SEARCH_AND_INDEXING_STRATEGY.md
+  status: CURRENT
+  normative: true
+- file: 59_RLS_POLICY_BLUEPRINT.md
+  status: CURRENT
+  normative: true
+- file: 60_EXTERNAL_REVIEW_V3_RESOLUTION.md
+  status: HISTORICAL
+  normative: false
+- file: 61_ROOT_ADMIN_BREAK_GLASS_RECOVERY.md
+  status: CURRENT
+  normative: true
+- file: 62_VALIDATION_CONTRACT.md
+  status: CURRENT
+  normative: true
+- file: 63_BATCH_OPERATION_SEMANTICS.md
+  status: CURRENT
+  normative: true
+- file: 64_MASTER_DATA_HISTORY_POLICY.md
+  status: CURRENT
+  normative: true
+- file: 65_TECHNICAL_PRECODE_GATE_V1_5.md
+  status: HISTORICAL
+  normative: false
+- file: 66_DATA_EXPORT_ARCHIVE_PURGE_RUNBOOK.md
+  status: CURRENT
+  normative: true
+- file: 67_WEB_SECURITY_BASELINE.md
+  status: CURRENT
+  normative: true
+- file: 68_RATE_LIMIT_POLICY.md
+  status: CURRENT
+  normative: true
+- file: 69_EXTERNAL_REVIEW_V4_RESOLUTION.md
+  status: HISTORICAL
+  normative: false
+- file: 70_SEMANTIC_VALIDATION_GATE.md
+  status: CURRENT
+  normative: true
+- file: 71_TECHNICAL_PRECODE_GATE_V1_6.md
+  status: HISTORICAL
+  normative: false
+- file: 72_EXTERNAL_REVIEW_V5_RESOLUTION.md
+  status: HISTORICAL
+  normative: false
+- file: 73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md
+  status: CURRENT
+  normative: true
+- file: 74_TECHNICAL_PRECODE_GATE_V1_7.md
+  status: HISTORICAL
+  normative: false
+- file: 75_RELEASE_EVIDENCE_MATRIX.md
+  status: CURRENT
+  normative: true
+- file: 76_DEPENDENCY_BASELINE_POLICY.md
+  status: CURRENT
+  normative: true
+- file: 77_EXTERNAL_REVIEW_V6_RESOLUTION.md
+  status: HISTORICAL
+  normative: false
+- file: 78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md
+  status: CURRENT
+  normative: true
+- file: 79_TECHNICAL_PRECODE_GATE_V1_8.md
+  status: HISTORICAL
+  normative: false
+- file: 80_EXTERNAL_REVIEW_V7_RESOLUTION.md
+  status: HISTORICAL
+  normative: false
+- file: 81_RESPONSIVE_PROTOTYPE_INTEGRATION.md
+  status: CURRENT
+  normative: true
+- file: 82_TECHNICAL_PRECODE_GATE_V1_9.md
+  status: HISTORICAL
+  normative: false
+- file: 83_EXTERNAL_REVIEW_V7_IMPLEMENTATION_ALIGNMENT_V1_10.md
+  status: HISTORICAL
+  normative: false
+- file: 84_TECHNICAL_PRECODE_GATE_V1_10.md
+  status: HISTORICAL
+  normative: false
+- file: 85_EXTERNAL_REVIEW_V8_IMPLEMENTATION_ALIGNMENT_V1_11.md
+  status: HISTORICAL
+  normative: false
+- file: 86_TECHNICAL_PRECODE_GATE_V1_11.md
+  status: HISTORICAL
+  normative: false
+- file: 87_EXTERNAL_REVIEW_V9_IMPLEMENTATION_ALIGNMENT_V1_12.md
+  status: HISTORICAL
+  normative: false
+- file: 88_TECHNICAL_PRECODE_GATE_V1_12.md
+  status: HISTORICAL
+  normative: false
+- file: CHANGELOG_V1_12.md
+  status: HISTORICAL
+  normative: false
+- file: FINAL_REVIEW_GUIDE.md
+  status: CURRENT
+  normative: false
+  kind: ENTRYPOINT_GUIDE
+- file: 89_EXTERNAL_REVIEW_V10_IMPLEMENTATION_ALIGNMENT_V1_13.md
+  status: HISTORICAL
+  normative: false
+- file: 90_TECHNICAL_PRECODE_GATE_V1_13.md
+  status: HISTORICAL
+  normative: false
+- file: CHANGELOG_V1_13.md
+  status: HISTORICAL
+  normative: false
+- file: 91_EXTERNAL_REVIEW_V11_IMPLEMENTATION_ALIGNMENT_V1_14.md
+  status: HISTORICAL
+  normative: false
+- file: 92_TECHNICAL_PRECODE_GATE_V1_14.md
+  status: HISTORICAL
+  normative: false
+- file: CHANGELOG_V1_14.md
+  status: HISTORICAL
+  normative: false
+- file: 93_EXTERNAL_REVIEW_V12_IMPLEMENTATION_ALIGNMENT_V1_15.md
+  status: HISTORICAL
+  normative: false
+- file: 94_TECHNICAL_PRECODE_GATE_V1_15.md
+  status: HISTORICAL
+  normative: false
+- file: CHANGELOG_V1_15.md
+  status: HISTORICAL
+  normative: false
+- file: 95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md
+  status: HISTORICAL
+  normative: false
+- file: 96_TECHNICAL_PRECODE_GATE_V1_16.md
+  status: HISTORICAL
+  normative: false
+- file: CHANGELOG_V1_16.md
+  status: HISTORICAL
+  normative: false
+- file: 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
+  status: CURRENT
+  normative: true
+- file: 98_TECHNICAL_PRECODE_GATE_V1_17.md
+  status: CURRENT
+  normative: true
+- file: CHANGELOG_V1_17.md
+  status: CURRENT
+  normative: false
+current_entrypoints:
+- 00_README.md
+- FINAL_REVIEW_GUIDE.md
+- 16_AI_REVIEW_AND_BUILD_PROMPT.md
+- 52_TECHNICAL_GATE_STATUS.md
+- 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
+- 73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md
+- 78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md
+- 81_RESPONSIVE_PROTOTYPE_INTEGRATION.md
+- 98_TECHNICAL_PRECODE_GATE_V1_17.md
+historical_numbered_files:
+- 49_TECHNICAL_REVIEW_VERCEL_SUPABASE.md
+- 56_EXTERNAL_REVIEW_V2_RESOLUTION.md
+- 57_TECHNICAL_PRECODE_GATE_V1_4.md
+- 60_EXTERNAL_REVIEW_V3_RESOLUTION.md
+- 65_TECHNICAL_PRECODE_GATE_V1_5.md
+- 69_EXTERNAL_REVIEW_V4_RESOLUTION.md
+- 71_TECHNICAL_PRECODE_GATE_V1_6.md
+- 72_EXTERNAL_REVIEW_V5_RESOLUTION.md
+- 74_TECHNICAL_PRECODE_GATE_V1_7.md
+- 77_EXTERNAL_REVIEW_V6_RESOLUTION.md
+- 79_TECHNICAL_PRECODE_GATE_V1_8.md
+- 80_EXTERNAL_REVIEW_V7_RESOLUTION.md
+- 82_TECHNICAL_PRECODE_GATE_V1_9.md
+- 83_EXTERNAL_REVIEW_V7_IMPLEMENTATION_ALIGNMENT_V1_10.md
+- 84_TECHNICAL_PRECODE_GATE_V1_10.md
+- 85_EXTERNAL_REVIEW_V8_IMPLEMENTATION_ALIGNMENT_V1_11.md
+- 86_TECHNICAL_PRECODE_GATE_V1_11.md
+- 87_EXTERNAL_REVIEW_V9_IMPLEMENTATION_ALIGNMENT_V1_12.md
+- 88_TECHNICAL_PRECODE_GATE_V1_12.md
+- 89_EXTERNAL_REVIEW_V10_IMPLEMENTATION_ALIGNMENT_V1_13.md
+- 90_TECHNICAL_PRECODE_GATE_V1_13.md
+- 91_EXTERNAL_REVIEW_V11_IMPLEMENTATION_ALIGNMENT_V1_14.md
+- 92_TECHNICAL_PRECODE_GATE_V1_14.md
+- 93_EXTERNAL_REVIEW_V12_IMPLEMENTATION_ALIGNMENT_V1_15.md
+- 94_TECHNICAL_PRECODE_GATE_V1_15.md
+- 95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md
+- 96_TECHNICAL_PRECODE_GATE_V1_16.md
+all_in_one_policy: CURRENT_NORMATIVE_NUMBERED_ONLY; historical/superseded excluded

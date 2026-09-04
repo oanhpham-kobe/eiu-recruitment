@@ -1,0 +1,182 @@
+ID,Finding,Status,Resolution,Reference
+TR-01,Final Decision generic updated_at can change source after qualitative edit,ACCEPTED_CHANGE,Implemented decision_updated_at/by; only 3 final fields move source,"06,08,13,40,48,database_schema.sql"
+TR-02,Candidate schedule conflict missing,RESOLVED,Candidate overlap BLOCK; shared conflict engine + mandatory locks,"05,37,48,50"
+TR-03,Derived views may bypass RLS,ACCEPTED_TECH,Move implementation views to private schema; security_invoker if exposed; explicit grants,"39,40,49,database_schema.sql"
+TR-04,Application candidate_id can disagree with Submission candidate,ACCEPTED_TECH,Remove duplicate candidate_id from Application; derive via Submission,"08,40,database_schema.sql"
+TR-05,Unit/Team/Position hierarchy can be inconsistent,ACCEPTED_TECH,DB trigger + command invariant; Position is hierarchy source at assignment time,"08,40,database_schema.sql"
+TR-06,Report not constrained to Participant,ACCEPTED_TECH,Report FK to interview_participant_id,"08,40,database_schema.sql"
+TR-07,Interviewer-wins could cause whole-row lost update,ACCEPTED_TECH,Field-aware patch/merge; same field Interviewer wins; stale HR reload,"37,48,logic_validation/36"
+TR-08,Backend transaction/API/RPC contract missing,ACCEPTED_TECH,Added command contract document,37
+TR-09,Idempotency strategy missing,ACCEPTED_TECH,Added idempotency table/contract for retriable mutations,"37,48,database_schema.sql"
+TR-10,DB checks/version triggers incomplete,ACCEPTED_TECH,Added round/time/order/version/document metadata starter invariants,"40,database_schema.sql"
+TR-11,Root Admin max-one does not guarantee non-zero,ACCEPTED_TECH,Bootstrap runbook + root protection trigger after bootstrap,"40,44,46,database_schema.sql"
+TR-12,Auth methods not fully locked,RESOLVED,Internal Google OAuth; Candidate Email OTP,"46,50"
+TR-13,Internal email change is identity workflow,ACCEPTED_TECH,Dedicated Change Internal User Identity command; not plain text edit,"37,46"
+TR-14,Upload/file security incomplete,RESOLVED_POLICY,"PDF/Word/PPT/PNG/JPEG; max 5 files, 5MB/file; private two-phase upload","41,50"
+TR-15,Service-role/secret hard rule missing,ACCEPTED_TECH,Server-only; never browser; privileged server still reauthorizes,"39,44"
+TR-16,Privacy/compliance incomplete,CAPABILITY_SPECIFIED_GO_LIVE_LEGAL_REVIEW,Privacy capability + acknowledgement; legal wording remains go-live responsibility,"42,45,50"
+TR-17,Data retention policy missing,RESOLVED_BUSINESS_POLICY,No automatic purge; capacity warning/export/archive/explicit purge,"42,50"
+TR-18,Activity log should be mandatory,ACCEPTED_TECH,Sensitive event audit mandatory and append-only,"11,47,database_schema.sql"
+TR-19,Email History hard delete conflicts with audit,BUSINESS_RULE_RETAINED,Keep user-facing History deletable; immutable audit separately records send/delete,"11,43,47"
+TR-20,Email sending needs outbox/retry,ACCEPTED_TECH,Transactional outbox after commit with retry/idempotency/provider status,"11,43,database_schema.sql"
+TR-21,Candidate NEW->READ on HR open locks edit,ALREADY_FROZEN,Retain owner-approved workflow; improve Candidate explanatory UX only,"03,04,07"
+TR-22,Gender MALE/FEMALE hard coded,ALREADY_FROZEN,Retain Phase-1 Nam/Nữ owner decision,"03,database_schema.sql"
+TR-23,Business/Design document status inconsistent,ACCEPTED_DOC_FIX,"Current status synchronized: BL frozen, DS current, technical not frozen","00,14,app_spec.yaml"
+TR-24,Candidate mobile not production specified,ACCEPTED_UI_GATE,Candidate Login/Form/My Applications mobile required before go-live,"45,Design System v1.4 RESPONSIVE"
+TR-25,Non-functional requirements missing,ACCEPTED_TECH,Added NFR document,38
+TR-26,Rate limiting/abuse prevention missing,PARTIALLY_RESOLVED,Rate-limit strategy/defaults now specified in doc 68; implementation/load/security evidence remains go-live gate,"38,44,45,68"
+TR-27,Search/pagination not locked,ACCEPTED_TECH_UI,"Server-side pagination/search, debounce/indexes, URL state guidance","38,Design System v1.4"
+TR-28,Timezone unspecified,ACCEPTED_TECH,timestamptz; display Asia/Ho_Chi_Minh; date-only remains date,"38,app_spec.yaml"
+TR-29,Some non-blockers are actually go-live blockers,ACCEPTED_CLASSIFICATION,Separated coding-foundation vs production-UAT/go-live gates,"14,45,50"
+TR-30,PDF administrative elements assumed by reviewer,NOT_ADOPTED,Official EIU template required; do not invent Quốc hiệu/Tiêu ngữ/Hội đồng,"06,45,50"
+TR-31,Vercel React/Next performance/accessibility best practices,ACCEPTED_TECH_UI,"Server-first, authorize actions, parallel independent reads, URL state, semantic/accessibility rules","49,Design System v1.4"
+TR-32,Supabase preview branches can diverge in grants/auth triggers,RISK_GUARD,Run branch security smoke tests; persistent isolated staging for final UAT,"44,49"
+RV2-01,submissions.view has write side-effect,RESOLVED,NEW→READ requires submissions.status; default HR full,"02,04,37"
+RV2-02,Bound identity rebinding privilege takeover,RESOLVED,Directory only unbound email typo; bound identity Root-only,"02,37,46"
+RV2-03,Interview note vs HR report note conflated,RESOLVED,Separate interview_note/hr_report_note + RLS,"08,39,database_schema.sql"
+RV2-04,Schedule transaction race,RESOLVED_SPEC,Mandatory advisory resource locks + recheck,"37,48"
+RV2-05,Conflict engine missing on participant/reactivate/status,RESOLVED,Shared engine all activation mutations,"37,48"
+RV2-06,reactivate_interview missing,RESOLVED,Explicit command added,"37,55"
+RV2-07,First login Candidate provisioning ambiguous,RESOLVED,Atomic provision/find/safe rebind,"37,46"
+RV2-08,Application selector ambiguous across N submissions,RESOLVED,Selector resolves specific Submission; CLOSED business rule retained,"05,37"
+RV2-09,Data Dictionary/SQL mismatch,RESOLVED_SPEC,Schema conformance matrix + physical columns,"08,54,database_schema.sql"
+RV2-10,NULL team hierarchy bug,FIXED,Null-safe IS DISTINCT FROM,"40,database_schema.sql"
+RV2-11,Master data not physical,RESOLVED_SPEC,Phase1 master tables/FKs added,"09,database_schema.sql"
+RV2-12,Application inactive child semantics,RESOLVED,effective_interview_active definition,"08,39"
+RV2-13,Unused Application impossible to hard delete,RESOLVED,Empty auto Round1 is owned default child,"37,40"
+RV2-14,Backend mutation coverage incomplete,RESOLVED_SPEC,Command coverage matrix added,"37,55"
+RV2-15,Candidate writable allowlist,RESOLVED,Separate Candidate/HR DTOs,37
+RV2-16,Document versioning incomplete,RESOLVED_SPEC,logical id/version/current/storage unique,"08,41,database_schema.sql"
+RV2-17,Upload two-phase protocol missing,RESOLVED_SPEC,reserve/finalize/orphan cleanup,"37,41"
+RV2-18,Email exactly-once wording unsafe,RESOLVED,at-least-once + best-effort dedup + lease,43
+RV2-19,Email recipient/attachment leakage guard,RESOLVED_SPEC,allowlist by email_type,"37,43"
+RV2-20,Participant lifecycle details,RESOLVED_SPEC,lock/readd/order/snapshot rules,"37,48"
+RV2-21,Privacy acknowledgement missing,RESOLVED_SPEC,privacy_acknowledgements capability,"42,database_schema.sql"
+RV2-22,Status contrast fails AA,RESOLVED_DS,Accessible Success/Warning tokens,Design System v1.4 TOKENS
+RV2-23,Generic wrap-anywhere,ALREADY_CORRECT_HARDENED,Explicit utility-only rule,Design System v1.4 TABLE_LAYOUT
+RV2-24,Column spec not deterministic,RESOLVED_DS,Explicit desktop widths/min-widths,Design System v1.4 TABLE_LAYOUT
+RV2-25,Future nav modules ambiguous,RESOLVED_DS,FUTURE_HIDDEN states,"14,Design System v1.4 SIDEBAR"
+RV2-26,Validator false-positive,FIXED,Fail-closed parser checks + expanded gate,"53,PACKAGE_VALIDATION.txt"
+RV2-27,Decision revision sequence hardening,DEFERRED_P2,Timestamp + UUID tie-break sufficient Phase1,48
+RV2-28,NFR lacks numbers,RESOLVED_BASELINE,Added measurable Phase1 targets,38
+RV2-29,Search normalization/indexing not technical,RESOLVED_BASELINE,Server search + trigram/email/phone indexes,"38,40,database_schema.sql"
+RV2-30,Pin Supabase/Next dependencies,RESOLVED_SPEC,Pinned versions/lockfile + auth regression CI,"12,44,46"
+RV3-01,Pre-submit upload parent missing,RESOLVED_V1_5,Candidate Form Session + staged upload,37;41;database_schema.sql
+RV3-02,Save Cancel file atomicity,RESOLVED_V1_5,Staged document changes committed only on Save/Submit,37;41;database_schema.sql
+RV3-03,Submission recalc scattered,RESOLVED_V1_5,Single authoritative recalculation helper,37;40;database_schema.sql
+RV3-04,Submission recalc race,RESOLVED_V1_5,Submission FOR UPDATE before outcome recalc,37;48;database_schema.sql
+RV3-05,Participant reschedule race,RESOLVED_V1_5,Interview row first then deterministic resource locks,37;48
+RV3-06,Internal first Google bind missing,RESOLVED_V1_5,Dedicated provisioning command,37;46
+RV3-07,Root recovery runbook missing,RESOLVED_V1_5,Break-glass runbook,61
+RV3-08,Permission dependencies,RESOLVED_V1_5,Dependency table + command prerequisites,database_schema.sql;02;37
+RV3-09,Master historical semantics,RESOLVED_V1_5,Referenced structural fields immutable,40;64;database_schema.sql
+RV3-10,Application Reactivate,OWNER_RESOLVED,Supported Phase 1,05;37
+RV3-11,Candidate Inbox parent summary,OWNER_RESOLVED,Latest Submission summary,04;Design System v1.4
+RV3-12,Email attachments,OWNER_RESOLVED,Deferred beyond Phase 1,43;Design System v1.4
+RV3-13,Design cross-layer findings,RESOLVED_DS_V1_4,1610 width/privacy/submission selector/bound identity/catalog lifecycle,Design System v1.4
+RV3-14,Validation contract missing,RESOLVED_V1_5,Central validation_contract.yaml,62;validation_contract.yaml
+RV3-15,PII search URL,RESOLVED_V1_5,PII search not serialized into URL,58;Design System v1.4
+RV4-P0-01,Candidate Reactivation vs recalculation contradiction,RESOLVED,Reactivation no active Application => READ lifecycle exception,"03,37,69,app_spec.yaml"
+RV4-P0-02,UI mutations missing trusted command coverage,RESOLVED,Explicit commands + command_registry.yaml + semantic coverage validation,"37,55,69,command_registry.yaml"
+RV4-P0-03,Email retry semantics contradiction,RESOLVED,Logical enqueue idempotent; provider delivery at-least-once,"13,43,69"
+RV4-P0-04,Internal user lifecycle target governance,RESOLVED,Directory manager non-HR/non-Root only; HR target Root-only,"02,37,39,69"
+RV4-P1-03,Privacy notice version client authority,RESOLVED,Server-published version pinned to Form Session,"42,database_schema.sql,app_spec.yaml"
+RV4-P1-08,Archive/purge runbook missing,RESOLVED_SPEC,Added doc 66; rehearsal remains go-live gate,66
+RV4-P1-09,Web security baseline too general,RESOLVED_SPEC,Added doc 67; evidence remains go-live gate,67
+RV5-P0-01,Current source/gate navigation version drift,RESOLVED_V1_7,source_registry current/historical; current pointers 72/73/74; All-in-One excludes historical,00;16;52;72;73;74;source_registry.yaml
+RV5-P0-02,Submission no-active-Application contradiction,RESOLVED_V1_7,generic recalc preserves manual NEW/READ; derived->READ; Candidate Reactivate no-app->READ exception,07;13;37;app_spec.yaml
+RV5-P0-03,access_active/current_round/resource_blocking contradiction,RESOLVED_V1_7,three canonical predicates; parent Application required for access; every scheduled access-active non-CANCELLED round blocks resources,02;37;39;48;59;73;database_schema.sql
+RV5-P0-04,Candidate EDIT Privacy acknowledgement missing,RESOLVED_V1_7,EDIT pins authoritative notice and persists idempotent acknowledgement,03;13;37;42;app_spec.yaml;command_registry.yaml
+RV5-P1-01,Candidate Update HR notification drift,RESOLVED_V1_7,exact-submission Outbox inside same transaction; downstream email throttling cannot roll back valid Save,11;37;43;68;command_registry.yaml
+RV5-P1-02,Published Privacy Notice mutable,RESOLVED_V1_7,published notice semantic content immutable; new wording creates new notice version,40;42;database_schema.sql
+RV5-P1-03,Candidate Form Session privacy/base-version constraints,RESOLVED_V1_7,pinned notice NOT NULL; EDIT base version NOT NULL; NEW base version NULL; fail closed if notice unavailable,37;40;database_schema.sql
+RV5-P1-04,Candidate current profile cache lifecycle,RESOLVED_V1_7,authoritative refresh helper latest surviving Submission after latest edit/delete,03;37;40;database_schema.sql
+RV5-P1-05,RESTORE_OLD_REPORT transitions ambiguous,RESOLVED_V1_7,participant restore + report unarchive + preserved decision metadata + audit explicitly frozen,37;13;command_registry.yaml
+RV5-P1-06,Application identity ambiguity active-only vs global,RESOLVED_V1_7,durable global identity chosen; global unique + immutable assignment; inactive exact row reactivated,01;05;07;08;13;37;40;database_schema.sql;app_spec.yaml
+RV5-P1-07,Internal User hard-delete command gap,RESOLVED_V1_7,Root maintenance-only unbound/non-HR/non-Root/unreferenced; no HR UI command,35;37;50;Design PAGE_OVERRIDES_V1_6
+RV5-P1-08,Application hard-delete matrix misses empty Round1,RESOLVED_V1_7,structurally empty auto Round1 is deletable atomically with unused Application,35;37;40
+RV5-P1-09,Malware UAT optional wording,RESOLVED_V1_7,scanner mandatory and fail-closed production UAT,41;45
+RV5-P1-10,Email duplicate/transaction wording stale,RESOLVED_V1_7,logical enqueue idempotent; provider at-least-once; Outbox enqueue before commit,11;13;43
+RV5-P1-11,AC-54 upload policy looked unapproved,RESOLVED_V1_7,acceptance now executable frozen whitelist/size/count/CLEAN rule,13;41;50
+RV5-P1-12,Historical file 49 read as current,RESOLVED_V1_7,historical banner + registry + AI prompt historical-only rule,16;49;source_registry.yaml
+RV6-P0-01,Duplicate Report Status mutation commands,RESOLVED_V1_8,Single status writer change_report_status; update_hr_report_note note-only; AC/registry updated,
+RV6-P0-02,Historical logical REPLACE/DELETE target bypass,RESOLVED_V1_8,Stage/save current-target guard + locks + HR invariant,
+RV6-P0-03,CURRENT source legacy contradictory blocks,RESOLVED_V1_8,Consolidated docs 02/08/10 in place; semantic validator legacy scan,
+RV6-P1-01,Registry outcome side effects incomplete,RESOLVED_V1_8,Outcome-changing commands enumerate recalc effects,
+RV6-P1-02,Email History context/eligibility,RESOLVED_V1_8,emails.history_view + parent context + TEST/WRONG cleanup rules,
+RV6-P1-03,Active Application owner lifecycle,RESOLVED_V1_8,Active owner invariant + deactivation/role removal guard,
+RV6-P1-04,Past-vs-past Reactivate conflict,RESOLVED_V1_8,Fully elapsed intervals excluded from reactivation conflict relevance,
+RV6-P1-05,Permission detail visibility,RESOLVED_V1_8,Root all; non-root others hidden; self-only effective permissions,
+RV6-P1-06,Privacy publication lifecycle,RESOLVED_V1_8,Runbook 78 maintenance/deployment-only gapless current switch,
+RV6-P1-07,Candidate inactive metadata,RESOLVED_V1_8,Set/clear semantics + DB state check,
+RV6-P1-08,Version metadata drift,RESOLVED_V1_8,Schema/Design/current entrypoints advanced,
+RV6-P1-09,Report lifecycle DB CHECK,RESOLVED_V1_8,Only active-current or historical-archived states,
+RV6-P1-10,Acceptance relevance,RESOLVED_V1_8,Behavior-specific AC IDs and guarantee tags,
+RV6-P2-01,Application nullable-Team zero UUID sentinel collision risk,RESOLVED_V1_8,Reserved zero UUID via department_team DB CHECK and documented invariant,40;database_schema.sql;70
+RV6-P2-02,Final Decision exact timestamp tie could use monotonic revision,ACCEPTED_NO_CHANGE_PHASE1,Optional hardening only; decision_updated_at plus stable tie-break retained,06;40;48
+RV6-P2-03,Audit rows lack at-most-one-human-actor DB check,RESOLVED_V1_8,Added actor cardinality CHECKs to business and security audit tables,database_schema.sql;47
+RV6-P2-04,SHA-256/checksum field format not physically constrained,RESOLVED_V1_8,Added 64-hex CHECKs to privacy/document/upload checksum fields,database_schema.sql;40;41
+RV6-P2-05,CURRENT docs accumulate versioned clarification appendices,RESOLVED_V1_8,Consolidated CURRENT normative headings/content in place; history remains in changelog/review files,source_registry.yaml;70
+RV6-P2-06,Browser QA/click-path evidence unavailable pre-code,IMPLEMENTATION_GATE,Required evidence matrix retained as explicit staging/release gate without false PASS,75;45;79
+RV7-P0-01,Conflict predicate ambiguity,RESOLVED_V1_9,Normal operations use resource_blocking; Application Reactivate-only uses reactivation_conflict_relevant,05;13;37;48;55;59;73;app_spec.yaml
+RV7-P0-02,Manual READ with active Application,RESOLVED_V1_9,Manual NEW and READ both blocked while any active Application exists,07;13;37;database_schema.sql
+RV7-P0-03,Visible bulk actions lack named batch commands,RESOLVED_V1_9,Five named ALL_OR_NOTHING batch commands added; browser loops forbidden,37;55;63;command_registry.yaml
+RV7-P1-01,Inactive master new-reference guard incomplete,RESOLVED_V1_9,DB/trusted guards require active on new/changed references while historical unchanged inactive refs remain valid,40;64;database_schema.sql
+RV7-P1-02,Participant re-add/user lifecycle,RESOLVED_V1_9,Re-add requires active user; deactivation blocked for current non-elapsed resource-blocking participation,37;database_schema.sql
+RV7-P1-03,Form Session candidate/Submission ownership,RESOLVED_V1_9,EDIT target must belong to same Candidate,37;40;database_schema.sql
+RV7-P1-04,Privacy Notice DELETE gap,RESOLVED_V1_9,Published notice normal DELETE forbidden,42;78;database_schema.sql
+RV7-P1-05,Structurally-empty Round1 ambiguous,RESOLVED_V1_9,Single private.is_structurally_empty_default_round predicate shared by Copy/delete,37;40;database_schema.sql
+RV7-P1-06,Participant lifecycle DB CHECK,RESOLVED_V1_9,Current implies removed_at NULL; removed historical implies non-NULL,40;database_schema.sql
+RV7-P1-07,Candidate verified email immutability,RESOLVED_V1_9,Normal DB/business mutation cannot change verified Candidate email,46;database_schema.sql
+RV7-P1-08,Implementation Notes stale source range,RESOLVED_V1_9,source_registry.yaml is authoritative current technical source index,12;source_registry.yaml
+RV7-P1-09,Email Outbox actor consistency,RESOLVED_V1_9,At most one initiating human actor enforced,43;47;database_schema.sql
+RV7-P1-10,Submission delete email trace policy,RESOLVED_V1_9,Retained PRODUCTION email usage is downstream history and blocks unused Submission hard-delete,37;43;database_schema.sql
+RV8-P0-01,Bulk Interview Schedule Status permission alternate path,RESOLVED_V1_11,Single and bulk both require interviews.status + view,"37,55,command_registry.yaml,permissions_matrix.csv,13"
+RV8-P0-02,app_spec stale version and legacy Mark New key,RESOLVED_V1_11,Version coherence v1.11 and legacy key removed,"app_spec.yaml,tools/validate_package.py"
+RV8-P1-01,Form Session and reservation expiry not synchronous,RESOLVED_V1_11,Stage Save Submit Finalize fail closed on transaction-time expiry,"37,40,41,database_schema.sql,validation_contract.yaml,13"
+RV8-P1-02,open_submission registry missing conditional mutation,RESOLVED_V1_11,Machine-readable conditional NEW to READ requiring submissions.status,"command_registry.yaml,37,55"
+RV8-P1-03,Inactive Candidate single bulk manual status mismatch,RESOLVED_V1_11,Inactive portal lifecycle does not block internal manual NEW READ; active Application still blocks,"37,63,responsive-v17.js,13"
+RV8-P1-04,Prototype invented Education requiredness,RESOLVED_V1_11,Education min 0 and no required fields in current contract/prototype,"03,validation_contract.yaml,responsive-v17.js"
+RV8-P1-05,NEW Privacy acknowledgement prechecked,RESOLVED_V1_11,NEW defaults unchecked and survives rerender only after explicit user action,"03,responsive-v17.js,13"
+RV8-P1-06,Accuracy confirmation not modeled separately,RESOLVED_V1_11,Phase 1 has one Privacy acknowledgement only,"03,responsive-v17.js"
+RV8-P1-07,Current source pointers drift,RESOLVED_V1_11,Current authority updated to Full v1.11 Responsive v1.7 Gate 86,"source_registry.yaml,START_HERE.txt,01,database_schema.sql"
+RV8-P1-08,save_interviewer_report pseudo permission,RESOLVED_V1_11,Registry now encodes interviewer-context OR HR reports.view + reports.edit_interviewer,"command_registry.yaml,37"
+RV8-P1-09,Form Session transitions not deterministic,RESOLVED_V1_11,Canonical OPEN terminal transition table and DB guard added,"37,40,database_schema.sql,validation_contract.yaml"
+RV9-P0-01,Inactive current Participant can operationalize Interview,RESOLVED_V1_12,Trusted operationalization paths require every current Participant to map to an active Internal User before conflict evaluation,"37,40,database_schema.sql,command_registry.yaml,13,88"
+RV9-P0-02,Unused Submission delete unreachable under mandatory production email trace,RESOLVED_V1_12,Normal production hard-delete capability removed; delete_unused_submission classified MAINTENANCE_ONLY and submitted rows are retention-managed,"37,43,55,command_registry.yaml,permissions_matrix.csv,app_spec.yaml,13,88"
+RV9-P0-03,Schedule conflicts inconsistent across current source and prototype,RESOLVED_V1_12,Candidate Room Interviewer use one blocking [start,end) model with CANCELLED/inactive exclusions in source prototype and QA,"05,37,13,responsive-v18.js,validate_responsive_v18.py,88"
+RV9-P1-01,Copy prototype ignores structurally empty default Round1,RESOLVED_V1_12,Cross-Application Copy fills eligible empty Round1 otherwise creates next legal round; source logistics prefill and Demo Topic remains blank,"05,37,responsive-v18.js,validate_responsive_v18.py,13"
+RV9-P1-02,Structurally empty Round predicate omits copy provenance,RESOLVED_V1_12,Copy provenance and incoming copied-from references count as usage in canonical predicate,"40,database_schema.sql,13"
+RV9-P1-03,Single manual Submission status can mutate historical child,RESOLVED_V1_12,Single writer re-resolves deterministic latest Submission with expected id/version; historical child is system-wide read-only for this workflow,"37,command_registry.yaml,app_spec.yaml,13"
+RV9-P1-04,Critical-control authorization token drift,RESOLVED_V1_12,Candidate critical controls use canonical candidate_self authorization vocabulary,"critical_control_registry.yaml,command_registry.yaml"
+RV9-P1-05,Responsive overflow evidence misses core routes,RESOLVED_V1_12,Responsive v1.8 smoke/overflow matrix covers all frozen core persona routes at representative breakpoints,"validate_responsive_v18.py,RESPONSIVE_BROWSER_QA_v1.8.md"
+RV9-P1-06,Copy and scheduling lack current behavioral QA,RESOLVED_V1_12,Responsive v1.8 executable QA covers copy semantics and Candidate Room Interviewer conflict behavior,"validate_responsive_v18.py,RESPONSIVE_BROWSER_QA_v1.8.md"
+RV9-P1-07,Acceptance lacks participant eligibility on operationalize,RESOLVED_V1_12,Added AC-PART-OPER-01 through 04 plus normal conflict-engine continuation,"13,37,88"
+RV10-P0-01,Education optional contract conflicts with SQL NOT NULL,RESOLVED_V1_13,Education business columns nullable to match required_fields empty,"03,validation_contract.yaml,database_schema.sql,13,90"
+RV10-P0-02,Prototype Application assignment uses Candidate-only selector,RESOLVED_V1_13,Exact SubmissionSelector returns submission_id and distinguishes same-Candidate submissions,"10,app_spec.yaml,responsive-v19.js,validate_responsive_v19.py,13,90"
+RV10-P0-03,Create Copy prototype can operationalize inactive Participant,RESOLVED_V1_13,All schedule save paths block inactive selected/prefilled current Participant,"05,37,responsive-v19.js,validate_responsive_v19.py,13,90"
+RV10-P1-01,SQL manual status helper not latest-safe,RESOLVED_V1_13,Replaced raw submission-id helper with Candidate-level latest resolver plus expected id/version checks,"database_schema.sql,37,13"
+RV10-P1-02,Internal User registry omits future participant deactivation guard,RESOLVED_V1_13,Machine side effects and guarantee declare current-participant reassignment guard,"command_registry.yaml,55,13"
+RV10-P1-03,Design README responsive status stale,RESOLVED_V1_13,Design current source points to Responsive v1.9 / Full v1.13,"design_system/00_README.md,design_system/RESPONSIVE.md"
+RV10-P1-04,Validator and manifest labels stale,RESOLVED_V1_13,Generated evidence labels derive/current-match v1.13 v1.9,"tools/validate_package.py,tools/verify_manifests.py,design_system/tools/validate_design.py"
+RV10-P1-05,Responsive QA misses exact selector and inactive Create Copy,RESOLVED_V1_13,Responsive v1.9 browser QA adds both adversarial paths,"validate_responsive_v19.py,RESPONSIVE_BROWSER_QA_v1.9.md"
+RV11-P0-01,Nullable Education qualification rejected by active-master trigger,RESOLVED_V1_14,NULL qualification skips master validation; changed non-null inactive qualification rejects,"database_schema.sql,validation_contract.yaml,13,92"
+RV11-P0-02,Bulk Interview schedule status missing Active Participant guard,RESOLVED_V1_14,Bulk status has participant eligibility + Candidate/Room/Interviewer recheck + ALL_OR_NOTHING rollback,"37,55,command_registry.yaml,critical_control_registry.yaml,13,92"
+RV11-P0-03,Application Reactivate has conflicting every-child vs non-elapsed rules,RESOLVED_V1_14,Removed legacy every-resource-blocking-child wording; canonical predicate is reactivation_conflict_relevant non-elapsed only,"05,48,73,13,92"
+RV11-P1-01,Current machine/source baseline declarations stale,RESOLVED_V1_14,Current baseline pointers aligned to Full/Technical v1.14 Design v1.8 Responsive v1.9,"validation_contract.yaml,critical_control_registry.yaml,00,53,70,responsive_prototype/README.md,source_registry.yaml"
+RV11-P1-02,set_internal_user_active command section omits participant guard,RESOLVED_V1_14,Dedicated command preconditions now include owner and participant stranding guards,"37,command_registry.yaml,55"
+RV11-P1-03,Bulk status acceptance mapping too generic,RESOLVED_V1_14,Added participant/candidate/room/interviewer/rollback acceptance IDs and registry mapping,"13,command_registry.yaml"
+RV11-P1-04,Semantic validator presence-only misses contradictory legacy sentence,RESOLVED_V1_14,Validator now requires canonical Reactivate wording and forbids legacy every-child pattern,"70,tools/validate_package.py"
+RV11-P1-05,Responsive README authority stale,RESOLVED_V1_14,README and VERSION both state Responsive v1.9 against Full v1.14 + Design v1.8,"responsive_prototype/README.md,responsive_prototype/VERSION.md"
+RV12-P0-01,Responsive single/bulk Interview Schedule Status operational parity,CLOSED,v1.15 shared status transition validator + RQA
+RV12-P0-02,Interview upload reservation parent/delete storage integrity,CLOSED,FK RESTRICT + durable storage_cleanup_queue
+RV12-P1-02,Bulk Candidate lifecycle machine parity,CLOSED,metadata/recalc/audit side effects + acceptance
+RV12-P1-03,Critical schedule-status controls browser evidence,CLOSED,single+bulk control IDs mapped to RQA
+IPR-P0-01,Freeze / Implementation Gate circular sequencing,RESOLVED_V1_16,Four-gate model: Technical Specification Freeze → Approved for Implementation → Implementation Validation/Migration Freeze → Production UAT/Ready,"01,14,39,52,95,96"
+IPR-P0-02,Copy Interview trusted-command mapping ambiguity,RESOLVED_V1_16,Dedicated copy_interview_schedule added; client draft is non-mutating; Save Copy owns atomic target-round/provenance/conflict/idempotency/audit semantics,"37,55,command_registry.yaml,13"
+IPR-P1-02,Scope stale Responsive Prototype v1.9 pointer,RESOLVED_V1_16,14_SCOPE now references Responsive Prototype v1.10,14
+IPR-P1-03,Design START_HERE stale Full/Responsive authority,RESOLVED_V1_16,Design START_HERE now references Full v1.16 / Design v1.8 / Responsive v1.10,design_system/START_HERE.txt
+
+IR16-P0-01,Copy command missing from canonical schedule-engine declarations,RESOLVED_V1_17,copy_interview_schedule added to app_spec engine_used_by and Concurrency shared-engine declaration,"app_spec.yaml,48,37,command_registry.yaml,97,98"
+IR16-P1-01,Critical Copy browser-QA IDs unresolved / used-target branch missing,RESOLVED_V1_17,RP-COPY-01..04 are stable current QA IDs including used target Round1 creates next legal round,"critical_control_registry.yaml,responsive_prototype/tools/validate_responsive_v110.py,97"
+IR16-P1-02,All-in-One generator labels stale v1.15,RESOLVED_V1_17,Generator validator and generated header now v1.17,"tools/generate_all_in_one.py,tools/validate_package.py,15_ALL_IN_ONE_SPEC.md"

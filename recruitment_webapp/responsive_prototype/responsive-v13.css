@@ -1,0 +1,110 @@
+/* Responsive rebuild v1.3 — disciplined audit/contract layer.
+   Authority: Full Handover v1.8 + Design System v1.7.
+   This file intentionally layers on v1.2 and changes only responsive/a11y presentation behavior. */
+:root{
+  --responsive-header-h:76px;
+  --responsive-safe-bottom:max(12px, env(safe-area-inset-bottom));
+  --responsive-focus:0 0 0 3px rgba(20,64,105,.24);
+}
+
+/* Visible focus is a hard responsive/accessibility contract. */
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{
+  outline:3px solid #144069;
+  outline-offset:2px;
+}
+:where(.btn,.row-btn,.hamb,.mobile-nav-close,.lang-btn,.circle-btn,.pagebtn,.nav-item,.text-link):focus-visible{
+  box-shadow:var(--responsive-focus);
+}
+
+/* Overlay background state is controlled by JS; content stays scrollable inside the overlay. */
+body.overlay-is-open{overflow:hidden}
+#app[aria-hidden="true"]{pointer-events:none}
+.modal,.drawer{overscroll-behavior:contain}
+.drawer-body,.modal-body{scrollbar-gutter:stable}
+
+/* Form/error normalization. */
+.field-error{margin-top:8px;color:#9d321b;font-size:14px;line-height:1.45;font-weight:600}
+[aria-invalid="true"]{border-color:#b44425!important;box-shadow:0 0 0 3px rgba(180,68,37,.13)!important}
+.candidate-form{scroll-padding-bottom:108px}
+.candidate-form :is(input,select,textarea,button){scroll-margin-block:94px}
+
+/* Sidebar footer sign-out is visible only when topbar sign-out is intentionally compacted/hidden. */
+.mobile-sidebar-signout{display:none;margin-left:auto;min-width:44px;min-height:44px;border:1px solid rgba(255,255,255,.22);border-radius:9px;background:transparent;color:#fff;place-items:center}
+.mobile-sidebar-signout:hover{background:rgba(255,255,255,.08)}
+
+/* Consistent responsive header height token rather than page-specific duplicated top offsets. */
+.topbar{min-height:var(--responsive-header-h);height:auto}
+.toolbar{top:var(--responsive-header-h)}
+
+/* Table scroll regions are themselves keyboard reachable without adding page-level overflow. */
+.desktop-table-scroll[tabindex="0"]:focus-visible{outline:3px solid #144069;outline-offset:2px}
+
+/* Long action groups should scroll/wrap, never force the entire viewport wider. */
+.toolbar-left,.toolbar-right,.candidate-head-main,.candidate-head-actions{min-width:0}
+.toolbar-left{overscroll-behavior-inline:contain}
+
+@media(max-width:1279px){
+  :root{--responsive-header-h:78px}
+  .mobile-sidebar-signout{display:grid}
+  .responsive-sidebar[aria-hidden="true"]{visibility:hidden}
+  .responsive-sidebar[aria-hidden="false"]{visibility:visible}
+  .drawer,.drawer.narrow{width:min(820px,calc(100vw - 32px))}
+}
+
+@media(max-width:899px){
+  :root{--responsive-header-h:72px}
+  .drawer,.drawer.narrow{width:min(88vw,820px)}
+  .modal{max-height:min(92dvh,calc(100dvh - max(8px,env(safe-area-inset-top))))}
+}
+
+@media(max-width:640px){
+  :root{--responsive-header-h:74px}
+  .login-page,.login-card{min-height:100svh;min-height:100dvh}
+  .responsive-candidate-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+  .candidate-head-main{align-items:flex-start}
+  .candidate-head-actions{align-items:center}
+  .candidate-head-actions .btn{min-width:44px;min-height:44px}
+  .drawer,.drawer.narrow{width:100vw;min-height:100svh;height:100dvh}
+  .drawer-head,.modal-head{padding-top:max(14px,env(safe-area-inset-top))}
+  .drawer-body{padding-bottom:calc(84px + var(--responsive-safe-bottom))}
+  .modal-footer{padding-bottom:var(--responsive-safe-bottom)}
+  .candidate-form-actions{padding-bottom:var(--responsive-safe-bottom)}
+  .main .responsive-table-shell>.data-table td{overflow-wrap:break-word;word-break:normal}
+  .main .responsive-table-shell>.data-table td.wrap-anywhere{overflow-wrap:anywhere}
+}
+
+/* Very narrow mobile is a first-class review width; preserve language and actions by stacking instead of hiding. */
+@media(max-width:430px){
+  :root{--responsive-gutter:10px}
+  .responsive-candidate-head{grid-template-columns:1fr}
+  .candidate-head-actions{width:100%;justify-content:space-between;border-top:1px solid var(--line);padding-top:8px}
+  .candidate-head-actions .language-switcher{display:flex!important}
+  .candidate-head-actions .btn span{display:inline}
+  .candidate-head-actions .btn{font-size:14px;padding-inline:10px}
+  .candidate-actions{grid-template-columns:1fr}
+  .submission-card-actions{display:grid;grid-template-columns:1fr 1fr}
+  .toolbar-right{grid-template-columns:minmax(0,1fr) 44px}
+}
+
+@media(max-width:370px){
+  :root{--responsive-gutter:8px}
+  .topbar{padding-inline:8px}
+  .content,.candidate-content{padding-inline:8px}
+  .title-wrap h1{max-width:185px;font-size:17px}
+  .candidate-head h1{font-size:20px}
+  .candidate-form .form-section{padding:13px}
+  .main .responsive-table-shell>.data-table td{grid-template-columns:92px minmax(0,1fr);padding-inline:10px}
+  .submission-card-actions{grid-template-columns:1fr}
+}
+
+/* Respect user motion preference; responsive state changes remain understandable without animation. */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+@media(max-width:430px){
+  .toolbar-right .btn{width:44px;min-width:44px;min-height:44px}
+}
+@media(max-width:430px){
+  .responsive-candidate-head:not(:has(.candidate-head-actions .btn)){grid-template-columns:minmax(0,1fr) auto}
+  .responsive-candidate-head:not(:has(.candidate-head-actions .btn)) .candidate-head-actions{width:auto;border-top:0;padding-top:0;justify-content:flex-end}
+}

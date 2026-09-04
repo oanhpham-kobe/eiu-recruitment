@@ -1,0 +1,15 @@
+version: 1
+current_slice: SLICE-00
+slices:
+  SLICE-00:
+    name: Foundation / Production Skeleton
+    status: READY
+    current_task: TASK-S00-001
+  SLICE-01: {name: Identity / Auth / User Provisioning, status: NOT_STARTED}
+  SLICE-02: {name: Candidate Form / Submission / Privacy / Documents, status: NOT_STARTED}
+  SLICE-03: {name: HR Application Inbox / Application, status: NOT_STARTED}
+  SLICE-04: {name: Interview Scheduling / Participants / Copy / Reactivate, status: NOT_STARTED}
+  SLICE-05: {name: Interviewer Reports / HR Report / Final Decision, status: NOT_STARTED}
+  SLICE-06: {name: Master Data / Users & Permissions, status: NOT_STARTED}
+  SLICE-07: {name: Email / Documents / Activity / Workers, status: NOT_STARTED}
+  SLICE-08: {name: Search / Performance / Ops / Release Hardening, status: NOT_STARTED}

@@ -1,0 +1,11 @@
+Package: App Tuyển Dụng EIU Full Handover v1.17 — Combined Review Bundle
+Review-pack manifest entries: 133
+Design manifest entries: 29
+Responsive prototype manifest entries: 112
+Total manifest entries: 274
+Full Handover validation target: 511/511 PASS, 0 FAIL
+Design validation target: 73/73 PASS, 0 FAIL
+Responsive prototype browser QA target: 108/108 PASS, 0 FAIL
+Manifest entry verification target: 274 entries / 557 checks, 0 failures
+Verification order: verify manifests → run validators with --no-write → verify manifests again
+Final ZIP checksum is supplied separately in App_Tuyen_Dung_EIU_Full_Handover_v1.17.zip.sha256.

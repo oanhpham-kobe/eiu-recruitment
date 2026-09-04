@@ -1,0 +1,49 @@
+version: 1
+current_slice: SLICE-00
+current_task: TASK-S00-001
+allowed_statuses: [PLANNED, READY, IN_PROGRESS, BLOCKED, DONE, SUPERSEDED, CANCELLED]
+tasks:
+  TASK-S00-001:
+    title: Finalize canonical pre-implementation repository baseline, verify source parity, materialize persistent project-control state, and establish the first Git baseline
+    slice: SLICE-00
+    status: READY
+    active_prompt: project_control/prompts/SLICE-00_TASK-001_v3.md
+    depends_on: []
+    acceptance:
+      - canonical root verified
+      - main verified
+      - SOURCE_ROOT verified
+      - SOURCE_PARITY_GATE PASS
+      - project_control consistent with repo
+      - current staged baseline verified
+      - secret scan PASS
+      - first commit authorization explicitly present before commit
+      - first commit SHA recorded after execution
+      - CRG refreshed after real HEAD
+      - GitNexus refreshed after real HEAD
+      - exactly one NEXT_ACTION
+    evidence:
+      - "EVIDENCE_INDEX: SOURCE-PARITY-001"
+      - "CURRENT_STATE: current repository observation"
+      - "staged secret scan evidence"
+      - "Full Handover v1.17 validators"
+  TASK-S00-002:
+    title: Dependency selection/pinning + Next.js App Router scaffold
+    slice: SLICE-00
+    status: PLANNED
+    depends_on: [TASK-S00-001]
+  TASK-S00-003:
+    title: "DEV infrastructure: Supabase DEV provisioning/link + migration clean-install/CI foundation + Vercel project link when framework root exists"
+    slice: SLICE-00
+    status: PLANNED
+    depends_on: [TASK-S00-002]
+  TASK-S00-004:
+    title: Browser/server credential boundary + trusted-command interface + security/logging boundaries
+    slice: SLICE-00
+    status: PLANNED
+    depends_on: [TASK-S00-003]
+  TASK-S00-005:
+    title: Design v1.8 foundation shell + accessibility/test harness
+    slice: SLICE-00
+    status: PLANNED
+    depends_on: [TASK-S00-004]

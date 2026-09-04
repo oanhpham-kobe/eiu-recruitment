@@ -1,0 +1,1022 @@
+1. P0 — submissions.view hiện vô tình trở thành quyền ghi
+
+Đây là điểm tôi xem là quan trọng nhất về permission semantics.
+
+Trong permission catalog:
+
+submissions.view
+
+có nghĩa là xem hồ sơ.
+
+Trong khi backend contract open_submission lại cho actor chỉ cần submissions.view, nhưng việc mở hồ sơ:
+
+NEW → READ
+
+Business rule lại quy định khi Submission không còn NEW thì Candidate không được chỉnh sửa nữa.
+
+Như vậy một HR chỉ có quyền đọc có thể:
+
+mở hồ sơ
+→ đổi trạng thái
+→ khóa quyền chỉnh sửa của Candidate
+
+Đây không còn là read permission.
+
+Tôi đề nghị sửa
+
+Có hai phương án, nhưng tôi chọn phương án B:
+
+Phương án	Hành vi
+A	Ai có submissions.view mở hồ sơ cũng được NEW→READ
+B – khuyến nghị	submissions.view chỉ đọc; NEW→READ chỉ xảy ra nếu actor có submissions.status
+
+Nếu HR chỉ có View:
+
+GET/open
+→ không mutation
+
+Nếu HR có Status:
+
+open
+→ có thể atomic NEW → READ
+
+Hoặc tốt hơn nữa, dùng explicit action:
+
+Bắt đầu xử lý hồ sơ
+
+thay vì “xem = khóa Candidate”.
+
+P0 vì hiện permission model và business side-effect mâu thuẫn trực tiếp.
+
+2. P0 — Thay đổi identity/email Internal User có thể trở thành đường chiếm quyền
+
+v1.3 đã bổ sung flow đổi identity, nhưng hiện còn một rủi ro security.
+
+users.directory_manage cho phép HR quản lý Internal User và contract có:
+
+change_internal_user_identity
+
+Trong khi Root Admin protection hiện tập trung vào:
+
+không delete Root;
+không inactive Root;
+không demote Root.
+
+Nhưng nếu một Directory Admin có thể đổi:
+
+Root Admin.email
+Root Admin.auth_user_id
+
+thì về bản chất họ có thể rebind tài khoản đặc quyền sang một Auth identity khác mà không cần demote Root.
+
+Tương tự với một HR đang có các permission nhạy cảm.
+
+Nên khóa như sau
+
+users.directory_manage chỉ được phép quản lý:
+
+tên;
+chức danh;
+profile business;
+trạng thái của user thường;
+các thuộc tính không liên quan security identity.
+
+Còn:
+
+email
+auth_user_id
+identity provider binding
+
+nên là một action đặc quyền riêng.
+
+Tôi khuyến nghị:
+
+Root Admin identity change
+→ ROOT ONLY / recovery procedure riêng
+
+Privileged HR identity change
+→ ROOT ONLY
+
+Normal Internal User identity change
+→ ROOT hoặc permission đặc biệt riêng
+
+Không nên để directory_manage đồng nghĩa với Auth identity rebinding.
+
+P0 security.
+
+3. P0 — Data Dictionary có Interview Note và HR Report Note, nhưng SQL hiện chỉ có một note
+
+Đây là một mismatch nguy hiểm giữa business model và database starter.
+
+Business docs tách:
+
+Interview Note
+HR Report Note
+
+Hai field có mục đích và visibility khác nhau.
+
+Nhưng database_schema.sql hiện chỉ có một trường tương ứng dạng:
+
+note
+
+Nếu implementation dùng một column cho cả hai thì có hai rủi ro:
+
+Rủi ro 1 — overwrite
+
+HR sửa Report Note có thể ghi đè Interview Note.
+
+Rủi ro 2 — confidentiality
+
+Interviewer được đọc Interview Note nhưng vô tình nhận luôn HR-only Report Note.
+
+Nên tách ngay ở schema
+
+Ví dụ:
+
+interview_note text,
+hr_report_note text
+
+và xác định riêng:
+
+interview_note:
+  HR write
+  Interviewer contextual read nếu nghiệp vụ cho phép
+
+hr_report_note:
+  HR-only
+
+Không nên đợi đến RLS implementation mới xử lý.
+
+P0 vì có khả năng lộ thông tin HR nội bộ.
+
+4. P0/P1 — “Re-check conflict trong transaction” vẫn chưa chống được race condition
+
+Đây là một lỗi concurrency tinh vi.
+
+Tài liệu hiện nói đại ý:
+
+BEGIN
+→ re-check Candidate / Room / Interviewer overlap
+→ update schedule
+→ COMMIT
+
+Nhưng PostgreSQL mặc định dùng Read Committed. Hai transaction đồng thời có thể cùng kiểm tra và cùng thấy:
+
+không có conflict
+
+sau đó ghi vào hai row khác nhau, và cả hai vẫn commit.
+
+PostgreSQL xác nhận Read Committed có thể xảy ra serialization anomaly; chỉ việc đặt các câu lệnh trong transaction không tự động loại trừ trường hợp này. Serializable hoặc locking strategy phù hợp mới cung cấp bảo đảm mạnh hơn.
+
+Ví dụ
+
+HR A:
+
+Candidate X
+08:00–09:00
+
+HR B đồng thời:
+
+Candidate X
+08:30–09:30
+
+Cả hai transaction đều query trước khi transaction kia commit.
+
+Kết quả:
+
+A: PASS
+B: PASS
+A: COMMIT
+B: COMMIT
+
+=> AC SCH-08 bị vi phạm.
+
+Cần chọn một strategy bắt buộc
+
+Tôi ưu tiên transaction-level advisory lock theo resources:
+
+candidate_id
+room_id
+interviewer_user_ids
+
+Acquire lock theo thứ tự deterministic để giảm deadlock, sau đó mới re-check overlap và save. PostgreSQL có transaction-level advisory locking phù hợp cho kiểu business resource locking này.
+
+Hoặc dùng:
+
+SERIALIZABLE
++ retry SQLSTATE 40001
+
+Quan trọng là trong 48_CONCURRENCY..., advisory lock hiện không nên ghi:
+
+“nếu cần khi load cao”
+
+Mà phải là:
+
+mandatory consistency mechanism cho schedule mutation
+
+Ngoài ra nên freeze interval semantic:
+
+[start_at, end_at)
+
+để:
+
+08:00–09:00
+09:00–10:00
+
+không bị tính là overlap.
+
+5. Conflict validation hiện phải chạy ở nhiều command hơn save_interview_schedule
+
+Đây là hệ quả của vấn đề trên.
+
+Giả sử Interview A đã có lịch:
+
+08:00–09:00
+
+Sau đó HR thực hiện:
+
+add_interview_participant(User X)
+
+trong khi User X đã có Interview B 08:30–09:30.
+
+Nếu add_participant không chạy conflict validation thì vẫn tạo được conflict dù save_schedule hoàn toàn đúng.
+
+Tương tự:
+
+readd participant
+CANCELLED → SCHEDULED
+CANCELLED → CONFIRMED
+Reactivate Interview
+
+đều có thể đưa một resource trở lại trạng thái blocking.
+
+Rule nên là
+
+Mọi mutation có khả năng làm một interval trở thành operationally active đều phải dùng cùng một conflict engine:
+
+Mutation	Candidate	Room	Interviewer
+Save/reschedule	✓	✓	✓
+Add participant	—	—	✓
+Re-add participant	—	—	✓
+Reactivate interview	✓	✓	✓
+CANCELLED → active status	✓	✓	✓
+6. Thiếu reactivate_interview() dù business rule đã yêu cầu Reactivate
+
+Business docs đã mô tả:
+
+Nếu latest round bị Inactive thì phải Reactivate hoặc xử lý nó trước khi tạo round tiếp.
+
+Nhưng Backend Command Contracts hiện có delete/inactivate mà chưa có contract tương xứng cho:
+
+reactivate_interview()
+
+Command này cần:
+
+latest-round guard
+optimistic version check
+application active check
+conflict re-validation
+participant access recalculation
+audit
+
+Nếu không bổ sung, developer sẽ phải tự suy diễn cách Reactivate.
+
+7. First-login Candidate provisioning chưa khớp với Submit command
+
+Ở business flow:
+
+Auth Candidate
+→ tìm Candidate
+→ không có thì create Candidate
+
+Regression test cũng ngụ ý first login phải map/create Candidate.
+
+Nhưng submit_candidate_submission lại bắt đầu với precondition gần như:
+
+Candidate exists + Active
+
+Không có command rõ ràng chịu trách nhiệm tạo Candidate lần đầu.
+
+Nên xác định atomic flow
+verified Auth identity
+→ normalize verified email
+→ find by auth_user_id
+→ fallback find by verified email
+→ nếu không có: create Candidate ACTIVE
+→ nếu có nhưng inactive: block
+→ bind Auth identity nếu hợp lệ
+→ create/update Submission
+
+Và cần định nghĩa cả trường hợp:
+
+Candidate xóa/recreate Auth account nhưng dùng lại email verified cũ.
+
+Nếu không, rất dễ sinh Candidate duplicate.
+
+8. Selector “Candidate” khi tạo Application chưa đủ vì Candidate có N Submission
+
+Application identity hiện đúng:
+
+Application
+→ Submission
+→ Candidate
+
+Nhưng UI tạo Application lại cho HR search/select Candidate chủ yếu theo:
+
+Tên
+Email
+Phone
+
+Một Candidate có thể có:
+
+Submission 2025
+Submission 2026
+Submission 2027
+
+Câu hỏi là Application mới dùng Submission nào?
+
+Nếu hệ thống tự chọn latest mà không có rule thì nguy cơ gắn nhầm historical snapshot khá cao.
+
+Tôi đề nghị UI thực chất select Submission
+
+Hiển thị:
+
+Nguyễn Văn A
+abc@...
+Ứng tuyển ngày 01/09/2026
+Trạng thái: READ
+
+Khi mở từ Submission drawer:
+
+submission_id
+
+phải được preselect và lock.
+
+Đồng thời freeze eligibility:
+
+Submission status	Có thể tạo Application?
+NEW	Owner quyết định
+READ	Có
+PROCESSED	Có thêm Application khác không? cần rule
+DONE	Thường không
+CLOSED	Không
+
+Điểm này hiện chưa đủ deterministic để coding agent tự xử lý.
+
+9. Data Dictionary và database_schema.sql vẫn còn lệch khá nhiều
+
+Đây là vấn đề lớn nhất ở tầng technical consistency.
+
+Một số ví dụ tôi đối chiếu được:
+
+Entity	Field trong docs nhưng SQL starter còn thiếu/khác
+Candidate	current_full_name, current_phone, last_submission_at, inactive metadata
+Submission	updated_by_internal_user_id
+Submission Document	logical_document_id, document_type_id
+Application	updated_by
+Interview	interview_note, report_note, copied_from_interview_id, updated_by
+Participant	updated_at, version_no
+Report	is_archived, created_by, updated_by
+
+Một số trường có thể chủ ý derive thay vì persist, nhưng hiện tài liệu chưa phân biệt rõ:
+
+REQUIRED DB COLUMN
+DERIVED
+OPTIONAL CACHE
+FUTURE
+Tôi khuyến nghị
+
+Trước Technical Freeze phải có schema conformance gate:
+
+Data Dictionary field
+→ physical DB field / derived expression
+→ source
+→ nullable
+→ writable by
+
+Sau đó database_schema.sql mới thật sự trở thành implementation starter đáng tin cậy.
+
+10. Có một bug cụ thể trong validate_position_hierarchy()
+
+Docs yêu cầu:
+
+Application.department_team_id
+=
+Position.department_team_id
+
+Nhưng SQL trigger hiện chỉ reject team mismatch khi Position.department_team_id IS NOT NULL.
+
+Điều đó có nghĩa nếu Position là cấp Unit:
+
+Position.department_team_id = NULL
+
+Application vẫn có thể gửi:
+
+department_team_id = bất kỳ team nào trong Unit
+
+mà vượt validation.
+
+Nên dùng null-safe equality
+
+Logic tương đương:
+
+IF p_team IS DISTINCT FROM NEW.department_team_id THEN
+   RAISE EXCEPTION ...;
+END IF;
+
+Sau đó mới kiểm tra Team thuộc đúng Unit.
+
+Đây là bug SQL cụ thể, không phải chỉ thiếu spec.
+
+11. Master Data đã được mô tả nhiều hơn những gì schema đang triển khai
+
+09_MASTER_DATA_CATALOG/seed có các catalogue như:
+
+Qualification/Học vấn.
+Position Group.
+Recruitment Source.
+Document Type.
+Cancellation Reason.
+Rejection Reason.
+Roles.
+Interview Format metadata.
+
+Nhưng SQL starter hiện vẫn để nhiều field dạng free text/check enum hoặc chưa có bảng tương ứng.
+
+Ví dụ đáng chú ý:
+
+interview_format
+
+trong seed có:
+
+requires_room
+requires_meeting_link
+
+nhưng SQL table chưa thể hiện đầy đủ metadata đó, trong khi scheduling logic cần dựa vào chúng.
+
+Cần chọn rõ
+
+Hoặc:
+
+các master này là Phase 1 → tạo table + FK thực sự.
+
+Hoặc:
+
+chưa phải Phase 1 → bỏ khỏi seed/menu/current source-of-truth.
+
+Không nên để một catalogue xuất hiện trong Design/Seed nhưng backend không thể thực thi semantics của nó.
+
+12. Application Inactive hiện chưa định nghĩa rõ hiệu ứng với Interview con
+
+Giả sử:
+
+Application = inactive
+Interview Round 2 = active
+
+Một số current-view/RLS/conflict logic đang chủ yếu kiểm tra:
+
+Interview.is_active
+
+mà không nhất thiết kiểm tra parent Application.
+
+Điều này có thể khiến:
+
+Interviewer vẫn truy cập session;
+lịch vẫn block room;
+lịch vẫn block interviewer;
+current-round view vẫn coi session là operational.
+Nên có khái niệm thống nhất
+effective_interview_active =
+application.is_active
+AND interview.is_active
+
+Các chỗ sau đều dùng cùng một định nghĩa:
+
+current interview
+RLS interviewer
+schedule conflict
+participant contextual access
+report accessibility
+email participant actions
+
+Candidate inactive thì khác: như spec hiện tại, internal recruitment process vẫn có thể tiếp tục. Tôi đồng ý giữ distinction này.
+
+13. “Hard delete Application chưa dùng” hiện gần như không thể xảy ra
+
+Business rule:
+
+Application unused → có thể hard delete.
+
+Nhưng:
+
+Create Application → tự động create Round 1.
+
+Vậy Application mới tạo đã luôn có Interview child.
+
+Nếu rule “có Interview = đã dùng” thì ngay sau khi create, Application không bao giờ đủ điều kiện hard delete.
+
+Nên định nghĩa
+
+Auto-created Round 1 trống có thể được xem là:
+
+owned empty default child
+
+và delete_unused_application() được phép atomic:
+
+verify Round1 completely unused
+→ delete empty Round1
+→ delete Application
+
+Còn nếu Round1 đã có:
+
+schedule
+participant
+document
+report
+status history
+
+thì Application chỉ Inactive.
+
+14. Backend Command Contracts vẫn chưa bao phủ hết các mutation mà UI/permission đã cho phép
+
+37_BACKEND_COMMAND_CONTRACTS.md đã tốt hơn nhiều, nhưng chưa đạt nguyên tắc:
+
+1 UI mutation = 1 explicit backend command
+
+Tôi thấy còn thiếu hoặc chưa rõ contract cho các nhóm như:
+
+Chức năng hiện có trong spec/UI	Contract cần rõ hơn
+HR sửa Submission	update_submission_by_hr()
+HR replace/delete hồ sơ Candidate	document mutation commands
+Interview document	upload/finalize/delete
+reports.delete	delete/inactivate report
+Manual send email	send_email()
+Upload finalization	upload_finalize()
+Master Data CRUD	create/update/delete-or-inactivate
+Internal User create/inactive/delete	lifecycle commands
+Report owner / HR Report Note	explicit command
+Reactivate Interview	reactivate_interview()
+
+Tôi rất khuyến nghị tạo một Command Coverage Matrix:
+
+UI Action
+→ Permission
+→ Backend Command
+→ Transaction
+→ Audit Event
+→ Acceptance Test
+
+Nếu một dòng không map được đủ 5 cột thì chưa Technical Freeze.
+
+15. Candidate writable-field allowlist phải được viết rõ ở backend
+
+Candidate Form có một số thông tin HR-only.
+
+Nhưng update_candidate_submission hiện mô tả tương đối rộng là update snapshot fields ngoại trừ email.
+
+Frontend ẩn field không phải authorization.
+
+Một crafted request không được phép thay đổi:
+
+hr_note
+status
+HR-only information
+internal assessment
+ownership
+system timestamps
+other internal child records
+Nên có schema input riêng
+
+Ví dụ:
+
+CandidateSubmissionPatch
+HRSubmissionPatch
+
+Không dùng chung DTO rồi bỏ qua field ở frontend.
+
+16. Document versioning vẫn chưa đủ rõ cho hồ sơ nhiều file
+
+Docs đã có ý tưởng:
+
+logical_document_id
+version
+current
+
+rất đúng.
+
+Nhưng SQL starter hiện thiên về:
+
+submission_id + document_type
+
+và một current document/type.
+
+Điều này không đủ nếu Candidate có:
+
+2 bằng cấp
+3 chứng chỉ
+nhiều tài liệu khác
+Model nên gần như
+logical_document_id
+document_type_id
+version_no
+is_current
+storage_bucket
+storage_path
+mime_type
+file_size
+checksum
+
+Constraints:
+
+UNIQUE(logical_document_id, version_no)
+UNIQUE(logical_document_id) WHERE is_current
+UNIQUE(storage_bucket, storage_path)
+
+Ngoài ra hai package đang còn một điểm không nhất quán:
+
+Business form có chỗ mô tả khá rộng rằng các field hiển thị baseline là required, trong khi Design Candidate Form v1.2 mô tả gần hơn với:
+
+CV required
+Degree / Transcript / Certificate / Other optional
+
+Điểm này phải freeze thành một rule duy nhất trước UAT.
+
+17. Upload → Storage → DB cần một protocol 2-phase rõ ràng
+
+DB transaction không thể rollback file đã upload lên object storage như rollback SQL row.
+
+Vì vậy sequence:
+
+upload
+→ insert metadata
+
+có thể để lại orphan file nếu DB fail.
+
+Ngược lại:
+
+replace DB metadata
+→ storage upload fail
+
+có thể làm mất current document.
+
+Nên formalize
+Reserve upload
+→ temp/quarantine object
+→ verify extension/MIME/magic bytes/size
+→ malware policy
+→ finalize metadata atomically
+→ mark current
+→ retire previous version
+→ cleanup orphan job
+
+upload_finalize đã được nhắc tới trong spec/idempotency nhưng cần backend contract thật.
+
+Supabase private buckets và signed URL là hướng phù hợp. Tuy nhiên signed URL đã phát hành vẫn hợp lệ cho đến khi hết hạn; cache lifetime cũng cần được xem xét riêng với URL/token lifetime. Vì đây là hồ sơ nhân sự nhạy cảm, nên TTL ngắn và cache policy bảo thủ là hợp lý.
+
+18. Email outbox tốt hơn bản trước, nhưng chưa nên gọi semantics là “exactly once”
+
+Outbox + idempotency key đảm bảo tốt việc không enqueue cùng logical message nhiều lần.
+
+Nhưng có tình huống:
+
+worker → provider accepts email
+worker crashes
+DB chưa mark SENT
+worker retries
+
+=> Candidate có thể nhận hai email nếu provider không hỗ trợ idempotency.
+
+Nên bổ sung
+
+Outbox row có:
+
+locked_at
+locked_until
+worker_id
+attempt_no
+last_error
+provider_message_id
+
+Worker claim:
+
+FOR UPDATE SKIP LOCKED
+
+và có stale SENDING recovery.
+
+Semantics nên mô tả chính xác hơn:
+
+at-least-once delivery with idempotency/best-effort deduplication
+
+trừ khi email provider được chọn hỗ trợ idempotency mạnh.
+
+Ngoài ra Candidate Submit/Update nên enqueue email trong cùng business transaction tạo/update Submission, không để frontend gọi send lần hai.
+
+19. Email attachment/recipient policy cần khóa vì đây là dữ liệu tuyển dụng
+
+Email Preview đã có:
+
+To
+CC
+Subject
+Body
+Attachments
+
+nhưng cần backend guard, không chỉ UI.
+
+Ví dụ email gửi Candidate không được vô tình attach:
+
+Interview Report
+HR Report Note
+Internal Assessment
+Internal Interview Document
+
+Nên có allowlist theo email_type.
+
+Recipient cũng nên derive từ entity thay vì cho arbitrary addresses ở các flow hệ thống quan trọng.
+
+20. Participant lifecycle còn vài edge case chưa freeze
+
+Một số điểm:
+
+Remove participant
+→ business docs nói reorder lại
+
+Backend contract
+→ chưa xác định rõ reorder transaction
+
+Với Re-add:
+
+restore participant cũ hay tạo mới?
+nếu position cũ đã bị người khác chiếm thì participant_order nào?
+snapshot Name/Email/Title dùng snapshot cũ hay refresh Directory?
+re-add phải conflict check lịch.
+add/remove/reorder concurrent phải lock cùng Interview.
+
+Không lớn bằng các P0 nhưng nên khóa để tránh behavior khác nhau giữa implementation và acceptance tests.
+
+21. Privacy capability được mô tả nhưng schema chưa đủ để chứng minh Candidate đã nhận đúng notice
+
+42_PRIVACY_RETENTION_COMPLIANCE.md đã tiến bộ rõ rệt.
+
+Nhưng nếu hệ thống cần record việc Candidate đã đọc/acknowledge Privacy Notice version nào, schema hiện chưa thấy capability tương xứng.
+
+Có thể dùng:
+
+privacy_acknowledgements
+candidate_id
+submission_id
+notice_version
+acknowledged_at
+source
+
+hoặc snapshot trực tiếp trên Submission.
+
+Nội dung notice/retention period vẫn để Legal/Owner quyết định là đúng; nhưng technical capability nên tồn tại trước production.
+
+22. Design System v1.2 còn một accessibility issue cụ thể
+
+Tôi kiểm tra contrast của semantic status tokens.
+
+Hai cặp đáng chú ý:
+
+Token	Contrast xấp xỉ
+Warning foreground #D88327 / soft #FFF0DE	2.61:1
+Success foreground #52813B / soft #EAF3E6	4.05:1
+
+Đối với normal-sized text, WCAG AA yêu cầu tối thiểu 4.5:1.
+
+Vì vậy nếu những màu này được dùng cho status text 14–16px, nên darken foreground.
+
+Ví dụ có thể kiểm tra các màu gần:
+
+Warning: #8A4F00
+Success: #3B6A2A
+
+Không nhất thiết phải dùng chính xác hai màu này, nhưng Design System nên có contrast test và declare target:
+
+WCAG 2.2 AA
+23. CSS table đang trái với chính TABLE_LAYOUT guideline
+
+Guideline nói chỉ dùng:
+
+overflow-wrap: anywhere;
+
+cho chuỗi thực sự khó wrap như URL/email/file identifier.
+
+Nhưng CSS hiện áp dụng gần như toàn bộ:
+
+.data-table td {
+  overflow-wrap: anywhere;
+}
+
+Điều này có thể bẻ từ tiếng Việt/English ở vị trí rất xấu.
+
+Nên bỏ khỏi generic td và tạo utility riêng:
+
+.wrap-anywhere
+
+chỉ dùng cho:
+
+email dài;
+filename;
+URL;
+ID/token-like text.
+24. Column specification chưa đủ deterministic
+
+Design System nói đúng rằng mỗi page phải own table column spec.
+
+Nhưng page override hiện chủ yếu xác định:
+
+column names/order
+
+chưa freeze đầy đủ:
+
+width
+min-width
+priority
+wrap/no-wrap
+sticky
+action width
+expanded child behavior
+
+Nếu giao cho hai developer khác nhau, hai table vẫn có thể ra layout khác nhau dù cùng dùng Design System.
+
+Trước UI Freeze, nên chốt ở ít nhất:
+
+1280
+1440
+
+và Candidate Mobile riêng.
+
+25. Navigation vẫn có module ngoài Phase 1 nhưng chưa được đánh dấu đủ rõ
+
+Tôi thấy các navigation/reference tới:
+
+Dashboard
+Nhu cầu tuyển dụng
+Candidate Database
+KPI & Reports
+
+trong khi scope document xác định một số module là Future.
+
+Đặc biệt Candidate Database chưa được định nghĩa đầy đủ thành một module business.
+
+Coding agent có thể hiểu:
+
+sidebar có menu → phải build.
+
+Nên thêm trạng thái cho từng menu
+PHASE1_IMPLEMENTED
+FUTURE_HIDDEN
+PLACEHOLDER_NOT_RENDERED
+
+Không nên render menu disabled/empty trừ khi đó là intentional UX.
+
+26. Automated validation hiện có một false-positive đáng sửa
+
+Đây là điểm khá thú vị.
+
+Trong PACKAGE_VALIDATION.txt có dạng:
+
+PASS | Permission SQL/matrix alignment | sql=19 matrix=0
+
+Tôi kiểm tra thực tế permission codes ở SQL/YAML/seed và chúng có vẻ khớp đủ 19 code.
+
+Nhưng vấn đề là validator đã parse được:
+
+matrix = 0
+
+mà vẫn báo:
+
+PASS
+
+Tức test itself có thể tạo false confidence.
+
+Validator nên fail nếu
+count(source A) = 0
+OR count(source B) = 0
+
+trừ khi expected count thật sự là 0.
+
+Tôi đề nghị mở rộng automated consistency gate để kiểm tra cả:
+
+Data Dictionary ↔ SQL columns
+Master Data Seed ↔ tables/FK
+UI Action ↔ Backend Command
+Permission ↔ Command
+Required attachment rules ↔ Candidate Design
+Navigation ↔ Phase scope
+Status codes ↔ SQL CHECK
+
+Package hashes hiện tại thì PASS thực sự.
+
+27. Final Decision đã sửa đúng, nhưng có thể harden thêm thứ tự concurrent
+
+decision_updated_at là sửa đúng vấn đề tôi chỉ ra vòng trước.
+
+Một edge case nhỏ còn lại: nếu nhiều decision được cập nhật rất gần/concurrent, timestamp equality có thể phải fallback UUID/order không phản ánh hoàn toàn ý nghĩa “latest decision”.
+
+Không phải blocker.
+
+Nếu muốn cực kỳ deterministic, có thể dùng:
+
+decision_revision_no BIGINT
+
+tăng theo sequence mỗi lần một decision block thực sự thay đổi.
+
+Tôi xếp P2 hardening, không cần làm nếu complexity không đáng.
+
+28. NFR vẫn cần số cụ thể trước Technical Freeze
+
+38_NON_FUNCTIONAL_REQUIREMENTS.md đã có cấu trúc tốt nhưng nhiều target vẫn chưa đóng.
+
+Technical Freeze nên có ít nhất:
+
+NFR	Cần freeze
+Search/list	p95 latency
+Save mutation	p95 target
+Concurrent Internal Users	target
+Candidate submissions/year	estimate
+Upload	max file / total size
+Backup	RPO / RTO
+Email	retry window / failure handling
+Logs	retention
+Audit	retention/search target
+Production uptime	target nếu EIU cần
+
+Không cần benchmark cực kỳ chính xác từ ngày đầu; cần một target có thể test được.
+
+29. Search normalization đã được mô tả nhưng chưa thành technical implementation
+
+Spec có đúng yêu cầu tìm:
+
+họ tên;
+email;
+phone;
+Vietnamese normalized text.
+
+Nhưng SQL starter chưa khóa cách index.
+
+Trước performance UAT nên chọn một implementation, ví dụ:
+
+normalized searchable columns
+unaccent
+pg_trgm
+GIN/GiST/trigram indexes
+
+Không để frontend dùng:
+
+ILIKE '%keyword%'
+
+trên toàn table khi dữ liệu lớn.
+
+30. Một lưu ý cập nhật về Supabase stack
+
+Phần security key của v1.3 đi đúng hướng: browser dùng public/publishable credential, còn secret chỉ ở trusted server. Supabase hiện cũng phân biệt publishable/secret keys và secret keys có quyền mạnh, không được expose ra client.
+
+Nếu stack chọn Next.js + Supabase SSR, tài liệu Supabase hiện vẫn hướng tới @supabase/ssr để quản lý auth bằng cookie ở SSR. Vì library/toolchain có thể thay đổi, tôi đề nghị pin dependency versions + lockfile, và đưa auth upgrade regression vào CI thay vì để coding agent tự lấy latest package tùy thời điểm.
+
+Tôi đánh giá những thay đổi của v1.3 thế nào?
+
+So với bản bạn gửi trước, đây không phải sửa “trang trí tài liệu”. Kiến trúc đã tiến lên một cấp rõ rệt.
+
+Vấn đề vòng trước	v1.3
+Final Decision dùng report updated_at	Đã sửa đúng
+Application dư candidate_id	Đã sửa
+Report không gắn Participant	Đã sửa
+Whole-row interviewer overwrite	Đã chuyển field-aware
+Candidate conflict bị thiếu	Đã đưa vào quyết định/gate
+RLS/View risk	Đã được specification hóa tốt hơn
+Service role risk	Đã nhận diện
+Idempotency	Đã bổ sung
+Outbox email	Đã bổ sung
+Privacy/Retention	Đã có workstream riêng
+Upload security	Đã tiến bộ nhiều
+NFR	Đã có framework
+Technical Freeze riêng	Đúng hướng
+Mobile Candidate	Được nâng mức ưu tiên
+Design semantics/accessibility	Cải thiện rõ
+
+Nói cách khác, tôi không đề nghị viết lại v1.3. Cấu trúc hiện tại đủ tốt để tiếp tục chỉnh incremental.
+
+Thứ tự tôi khuyên đóng từ đây
+Khóa 4 P0: submissions.view side-effect, privileged identity rebinding, tách Interview Note/HR Report Note, schedule concurrency thật sự.
+Đồng bộ Data Dictionary ↔ SQL starter, bao gồm bug null-team.
+Hoàn thiện command coverage, đặc biệt Reactivate, HR Submission edit, documents, Internal Users, report/delete, email/upload finalize.
+Khóa lifecycle invariants: Application inactive, unused hard-delete, first Candidate provisioning, participant re-add.
+Khóa document/storage model và attachment requiredness.
+Khóa exact RLS predicates, không chỉ “HR: permission”.
+Khóa master-data physical model và historical snapshot policy.
+Bổ sung privacy acknowledgement + email leakage guards.
+Sửa Design System contrast/table wrapping/table widths/nav scope.
+Sửa validator và đóng NFR numbers, sau đó mới chạy Technical Pre-code Gate lần cuối.
+
+Sau các điểm trên, tôi sẽ thoải mái hơn khi chuyển trạng thái thành:
+
+Business Logic        FROZEN
+Design System         FROZEN / UAT APPROVED
+Technical Architecture FROZEN
+Implementation Gate   PASS
+Production Ready      NO — until implementation/security/UAT/deployment gates pass
+
+Điểm quan trọng cuối cùng: “Technical Architecture FROZEN” không nên đồng nghĩa “Production Ready”. Sau coding vẫn nên có các gate riêng cho migration/database tests, RLS adversarial tests, concurrency tests, accessibility, backup/restore, security, UAT và deployment rehearsal. Cách v1.3 đang tách các trạng thái này là đúng; tôi khuyến nghị giữ nguyên nguyên tắc đó.

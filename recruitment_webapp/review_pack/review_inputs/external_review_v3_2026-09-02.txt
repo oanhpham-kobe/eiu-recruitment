@@ -1,0 +1,1194 @@
+I. Các vấn đề P0 tôi khuyến nghị sửa trước Technical Architecture Freeze
+#	Vấn đề	Vì sao quan trọng	Đề nghị
+1	Upload hồ sơ lần đầu chưa có parent Submission	Candidate phải upload CV trước Submit, nhưng document/reservation cần submission_id, trong khi Submission chỉ được tạo khi Submit	Dùng submission_draft_id/form_session_id để giữ upload tạm; khi Submit mới atomic create Submission + bind file
+2	Save/Cancel Candidate Form chưa atomic với file	Candidate có thể thay file rồi Cancel form nhưng file đã persist; hoặc xóa CV bắt buộc rồi bỏ form	Stage document changes trong edit session và finalize cùng Save; enforce current CV invariant
+3	Submission derived status chưa được recalculate ở mọi mutation	Create round/delete/reactivate/report status có thể thay outcome nhưng Submission cache không chắc được cập nhật	Một shared recalculate_submission_status() bắt buộc trong cùng transaction
+4	Recalculate Submission còn race giữa nhiều Applications	Hai Application cùng đổi outcome có thể cùng đọc trạng thái cũ rồi ghi status sai	Mọi outcome-changing transaction phải lock parent Submission trước khi tính lại
+5	Schedule vẫn còn race với Add/Re-add Participant	Reschedule có thể snapshot participant cũ trong lúc transaction khác vừa thêm interviewer mới	Lock Interview row trước, sau đó đọc participant set → lock resources → recheck conflict
+6	Internal User chưa có first-login Google identity binding	app_users.auth_user_id có thể null nhưng không có command tương đương Candidate provisioning	Thêm provision_internal_identity_on_first_google_login() với verified EIU email + atomic bind
+7	Master Data có thể bị sửa làm thay đổi lịch sử	Application giữ FK tới Position/Unit/Team nhưng edit master sau đó có thể thay nghĩa lịch sử	Referential master đã được dùng phải immutable ở semantic fields; sửa lớn = create version/new record + inactive old
+
+Tôi giải thích chi tiết các điểm quan trọng nhất dưới đây.
+
+1. Luồng upload hồ sơ lần đầu hiện chưa khép kín
+
+Đây là lỗi flow rõ nhất còn lại.
+
+Current source truth yêu cầu Candidate Form có attachment trước khi Submit, ví dụ CV bắt buộc. Nhưng data model lại đặt:
+
+submission_documents.submission_id
+
+và upload reservation cũng gắn với parent.
+
+Trong khi:
+
+Candidate chưa có Submission
+        ↓
+điền form + upload CV
+        ↓
+bấm Submit
+        ↓
+mới tạo Submission
+
+Vậy lúc upload CV, submission_id nào được dùng?
+
+submit_candidate_submission() có thể tạo Submission trong transaction, nhưng file đã phải được upload từ trước.
+
+Tôi khuyên dùng
+Candidate opens new form
+        ↓
+create upload_session UUID
+        ↓
+reserve/upload files against upload_session
+        ↓
+Candidate presses Submit
+        ↓
+BEGIN
+  create Submission
+  validate required documents
+  bind finalized upload_session documents → Submission
+  create privacy acknowledgement
+  enqueue notification
+COMMIT
+        ↓
+cleanup abandoned upload sessions asynchronously
+
+Không nên pre-create Submission ngay khi mở form vì business model hiện xem Submission là một snapshot đã nộp, chưa có trạng thái DRAFT.
+
+2. Candidate Form: Save/Cancel và file phải có cùng transaction semantics
+
+Design hiện có:
+
+Edit → Save / Cancel / unsaved changes.
+
+Nhưng nếu thao tác file là immediate mutation thì:
+
+Candidate Edit
+→ xóa CV
+→ đổi thông tin
+→ bấm Cancel
+
+Text được Cancel nhưng CV đã mất.
+
+Hoặc:
+
+replace CV
+→ upload thành công
+→ đóng browser trước Save
+
+Database/document state có thể lệch với form snapshot.
+
+Nên xem file changes là một phần của edit session
+
+Save mới commit:
+
+field patch;
+document replacements;
+deletions;
+new document versions;
+required-document validation;
+updated candidate current cache nếu applicable.
+
+Cancel chỉ cleanup pending reservations.
+
+Ngoài ra Candidate document command phải enforce ở server:
+
+Candidate.is_active = true
+Submission.status = NEW
+Candidate owns Submission
+
+Không chỉ ở lúc mở form.
+
+Khi finalize_upload(), phải re-check một lần nữa vì trong lúc Candidate đang upload, HR có thể đã chuyển NEW → READ.
+
+3. Submission Status hiện cần một “single authoritative recalculation function”
+
+v1.4 đã mô tả status derived tốt hơn, nhưng implementation contract còn phân tán.
+
+Các command có khả năng làm thay đổi effective outcome gồm ít nhất:
+
+create_or_update_application()
+create_next_interview_round()
+delete_or_inactivate_application()
+delete_or_inactivate_interview()
+reactivate_interview()
+change_report_status()
+
+Chúng phải không tự mỗi nơi viết status theo cách riêng.
+
+Tôi khuyến nghị:
+
+private.recalculate_submission_status(submission_id)
+
+và rule:
+
+Bất kỳ command nào làm thay đổi Application/current-round/effective outcome phải gọi function này trước COMMIT.
+
+Quan trọng hơn, transaction phải:
+
+SELECT Submission ... FOR UPDATE
+
+trước khi thay đổi outcome.
+
+Nếu không, hai Application của cùng Submission có thể cùng hoàn tất gần như đồng thời và tạo lost-recalculation.
+
+4. change_submission_status() phải giới hạn manual state
+
+Current business logic cho thấy:
+
+NEW / READ
+
+là trạng thái có yếu tố thao tác HR.
+
+Còn:
+
+PROCESSED
+DONE
+CLOSED
+
+là kết quả tổng hợp từ Applications/Interviews.
+
+Nhưng tên command:
+
+change_submission_status()
+
+vẫn quá generic.
+
+Nên freeze contract thành:
+
+manual allowed:
+NEW
+READ
+
+system-derived only:
+PROCESSED
+DONE
+CLOSED
+
+Nếu không, crafted backend request có thể đặt trực tiếp một Submission sang DONE dù không có Application nào đạt outcome tương ứng.
+
+5. Conflict engine đã tốt hơn, nhưng vẫn còn race Add Participant ↔ Reschedule
+
+v1.4 đã làm đúng ở chỗ dùng mandatory resource lock. Tuy nhiên cần thêm Interview row lock trước khi xác định resource set.
+
+Race ví dụ:
+
+T1: HR A bắt đầu reschedule Interview I
+    đọc participant hiện có = {A,B}
+
+T2: HR B add interviewer X
+    kiểm tra X với lịch cũ → không conflict
+    insert X
+
+T1: lock/check A,B
+    không hề biết X
+    save lịch mới
+
+Lịch mới có thể conflict với lịch khác của X.
+
+Canonical transaction order nên là
+1. Lock target Interview row
+2. Resolve effective parent/application
+3. Snapshot current Candidate + Room + Participants
+4. Acquire advisory locks theo deterministic order
+5. Re-read/re-check conflicts
+6. Apply mutation
+7. Audit
+8. Commit
+
+Các command sau đều nên dùng cùng framework:
+
+reschedule;
+add participant;
+re-add participant;
+reactivate interview;
+CANCELLED → active;
+format/room/time change.
+6. Internal User first-login flow đang thiếu
+
+Candidate đã có identity provisioning tương đối rõ.
+
+Internal User lại dùng Google Workspace account nhưng app_users.auth_user_id có thể null.
+
+Cần trả lời deterministic:
+
+Một HR đã được Root tạo trước bằng abc@eiu.edu.vn, lần đầu đăng nhập Google thì row app_users đó được bind với Auth user thế nào?
+
+Không nên dùng change_internal_user_identity() vì command đó mang semantics đổi identity có rủi ro security cao.
+
+Nên thêm command riêng
+provision_internal_identity_on_first_google_login()
+
+Preconditions:
+
+provider = Google
+email verified
+normalized domain = eiu.edu.vn
+app_user active
+app_user email exact match
+auth_user_id currently null
+no other app_user bound to current auth identity
+
+Sau đó atomic bind + audit.
+
+Nếu row đã bound sang Auth ID khác:
+
+reject
+
+không tự rebind.
+
+7. Root Admin recovery vẫn cần runbook thực tế
+
+v1.4 có nói về protected recovery/bootstrap, nhưng source truth hiện chưa đủ để một operator thực hiện khi gặp sự cố.
+
+Ví dụ:
+
+Google Workspace account của Root bị đổi hoặc Auth identity bị mất.
+
+SQL protection có thể đồng thời chặn chính việc sửa Root.
+
+Cần một file/runbook rõ:
+
+ROOT_ADMIN_BREAK_GLASS_RECOVERY.md
+
+gồm:
+
+điều kiện được dùng;
+ai phê duyệt;
+DB function/migration cụ thể;
+cách xác minh EIU identity mới;
+cách bypass protected trigger có kiểm soát;
+audit;
+rollback;
+secret custody;
+test định kỳ.
+
+Tôi xem đây là P0/P1 tùy môi trường vận hành, nhưng nên đóng trước go-live chắc chắn.
+
+II. Các vấn đề P1 về data integrity và command coverage
+Permission dependencies chưa được mô tả
+
+Granular permission rất tốt, nhưng hiện có thể tạo những combination vô nghĩa như:
+
+interviews.status
+không có interviews.view
+
+hoặc:
+
+reports.edit_interviewer
+không có reports.view
+
+Nên có dependency graph.
+
+Ví dụ:
+
+*.edit     ⇒ *.view
+*.status   ⇒ *.view
+*.delete   ⇒ *.view
+*.email    ⇒ *.view
+
+Hoặc authorization command phải require cả hai.
+
+UI Root cũng nên tự grant prerequisite hoặc cảnh báo.
+
+Một inconsistency cụ thể khác: permission matrix vẫn có dòng Create Submission – HR optional support, trong khi current business source truth cho Candidate tạo Submission và không có HR create-submission command. Nên xóa/No hoặc implement rõ; không để “optional”.
+
+HR role lifecycle thiếu chiều remove/change
+
+Có:
+
+assign_hr_role_with_defaults()
+
+nhưng chưa thấy lifecycle đối xứng đủ rõ cho:
+
+remove_hr_role()
+change_hr_role()
+
+Khi bỏ HR role cần quyết định:
+
+custom permissions còn giữ hay revoke?
+app user vẫn đăng nhập được không?
+existing ownership/history giữ nguyên;
+session hiện tại có revoke/invalidate không?
+
+Nên explicit contract.
+
+Document logical identity chưa được DB khóa chặt
+
+Hiện uniqueness theo:
+
+(logical_document_id, version_no)
+
+chưa đủ.
+
+Về lý thuyết có thể có:
+
+Logical ID X
+v1 → Submission A / CV
+v2 → Submission B / Degree
+
+SQL vẫn có thể coi là hợp lệ nếu không có invariant riêng.
+
+Tôi khuyên một trong hai thiết kế:
+
+document_logicals
+  id
+  parent_type
+  parent_id
+  document_type_id
+
+rồi version table FK tới logical header.
+
+Hoặc trigger kiểm tra mọi version cùng logical ID phải có cùng:
+
+parent
+document_type
+III. Master Data còn một số điểm cần khóa
+
+Đây là nhóm tôi cho rằng đáng chú ý hơn tưởng tượng vì có thể làm lịch sử tuyển dụng thay đổi sau này.
+
+1. Historical FK không phải historical snapshot thực sự
+
+Application tham chiếu:
+
+Position
+Unit
+Department Team
+
+Nếu sau này HR sửa Position:
+
+“Giảng viên Điều dưỡng”
+Unit A
+
+thành:
+
+Unit B
+
+thì Application cũ cũng sẽ hiển thị theo Unit B nếu đọc join trực tiếp.
+
+Vậy từ “snapshot” trong tài liệu chưa hoàn toàn chính xác nếu chỉ lưu FK.
+
+Nên áp dụng rule
+
+Các field semantic của master đã được reference:
+
+không được mutate cấu trúc.
+
+Muốn thay:
+
+create new master row
+inactivate old row
+
+Có thể cho sửa typo/display name nếu đó là policy có chủ ý.
+
+2. Master CRUD nói có versioning nhưng schema chưa đồng đều
+
+Một số master có:
+
+updated_at
+
+một số không.
+
+Nhiều master chưa có:
+
+version_no
+
+trong khi command contract nói master CRUD dùng versioning.
+
+Cần hoặc:
+
+thêm optimistic versioning đồng đều;
+
+hoặc:
+
+sửa contract, đừng tuyên bố versioning nếu physical schema không có.
+
+3. document_types.scope_code seed hiện chưa đủ explicit
+
+Schema có scope:
+
+SUBMISSION
+INTERVIEW
+BOTH
+
+nhưng seed hiện để nhiều record default về BOTH.
+
+Điều này có thể khiến:
+
+CV
+Degree
+Transcript
+
+xuất hiện ở Interview documents,
+
+và:
+
+Demo Slide
+Publication
+Portfolio
+
+có thể xuất hiện không đúng chỗ trong Candidate form.
+
+Nên seed explicit từng type và validator phải kiểm tra.
+
+4. Một số master field có schema nhưng chưa có business effect
+
+Tôi thấy các ví dụ:
+
+position_groups.requires_demo_topic
+cancellation_reason_id
+rejection_reason_id
+recruitment_source_id
+
+nhưng end-to-end behavior chưa khép kín.
+
+Ví dụ requires_demo_topic=true:
+
+Demo topic phải có trước lúc nào?
+
+trước Schedule?
+trước CONFIRMED?
+trước AWAITING?
+chỉ warning?
+
+Cancellation/rejection reason:
+
+required khi CANCELLED/REJECTED hay optional?
+
+Khi status đổi lại thì clear hay giữ history?
+
+recruitment_source_id hiện được lưu ở đâu trên UI Candidate/HR?
+
+Cần hoặc wire thành Phase 1 hoàn chỉnh, hoặc mark Future/remove khỏi current implementation truth.
+
+IV. Một lỗi SQL/business rule đáng sửa: inactive Interview Format
+
+Interview format được validate khi schedule/status thay đổi.
+
+Nếu một format đã từng được dùng sau đó Master Admin set:
+
+is_active = false
+
+một Interview lịch sử dùng format đó có thể gặp lỗi khi chuyển sang trạng thái như CANCELLED vì validator chỉ chấp nhận active format.
+
+Historical reference phải tiếp tục operable.
+
+Rule nên là
+Creating/changing to a new format: format phải Active.
+Existing historical format: vẫn được đọc và thực hiện lifecycle hợp lệ.
+is_active=false chỉ ngăn chọn mới, không invalid hóa record quá khứ.
+
+Nguyên tắc này cũng nên áp dụng cho các master khác.
+
+V. Format switch cần normalize Room/Meeting Link
+
+Ví dụ:
+
+IN_PERSON
+room_id = B3.301
+meeting_link = null
+
+Sau đó HR đổi sang:
+
+ONLINE
+
+Nếu không clear room_id, engine conflict có thể vẫn giữ phòng B3.301 dù cuộc phỏng vấn đã online.
+
+Ngược lại, switch Online → In-person có thể giữ stale meeting link.
+
+Command nên normalize theo metadata:
+
+requires_room = false
+→ room_id = null
+
+requires_meeting_link = false
+→ meeting_link = null
+
+Trừ khi có loại HYBRID cho phép cả hai.
+
+VI. Application inactive semantics cần hoàn thiện ở UX
+
+v1.4 đã xác định rất đúng:
+
+effective_interview_active =
+application.is_active
+AND interview.is_active
+
+Nhưng design chưa làm rõ hoàn toàn cách người dùng tìm lại và Reactivate inactive history.
+
+Tình huống:
+
+Round 3 = inactive
+
+và business rule:
+
+chưa được tạo Round 4 cho tới khi xử lý Round 3.
+
+Nếu default view chỉ hiển thị active/current round, HR có thể bị kẹt mà không thấy Round 3 ở đâu.
+
+Nên có rõ:
+
+Active | Inactive | All
+
+và label:
+
+Vòng 3 — Không hoạt động
+
+cùng action Reactivate khi được phép.
+
+Tương tự Application đã inactive: hiện chưa thật rõ có:
+
+reactivate_application()
+
+hay inactive Application là irreversible Phase 1.
+
+Phải chọn một trong hai.
+
+VII. Copy Interview Schedule sang Application khác còn một ambiguity
+
+Spec cho copy:
+
+cùng Application → vòng tiếp;
+sang Application khác.
+
+Nhưng mỗi Application mới đã auto-create Round 1.
+
+Nếu target Application B hiện có:
+
+Round 1 = completely empty
+
+copy từ Application A sang B sẽ:
+
+điền vào Round 1?
+hay create Round 2 và bỏ Round 1 rỗng?
+
+Current wording chưa deterministic.
+
+Tôi khuyên:
+
+Same Application:
+→ create/fill next round
+
+Other Application:
+→ if current default round is structurally empty, fill it
+→ otherwise create next round according to normal next-round rule
+
+UI Copy chỉ nên tạo client draft/prefill; database mutation xảy ra khi Save cuối cùng.
+
+VIII. Grouped tables cần định nghĩa pagination entity
+
+Đây là vấn đề technical/UX dễ xuất hiện khi data lớn.
+
+Application Inbox
+
+UI group theo Candidate.
+
+Nếu backend paginate theo Submission thì:
+
+Candidate A — Submission 1
+
+có thể ở page 1,
+
+Candidate A — Submission 2
+
+ở page 2.
+
+=> parent group bị lặp, count sai, expand không đủ.
+
+Nên paginate theo:
+
+Candidate group
+
+children tải kèm hoặc lazy fetch.
+
+Interview / HR Report
+
+Group theo Application.
+
+Nên paginate theo:
+
+Application
+
+không paginate raw Interview rows.
+
+Cần stable sort:
+
+sort_field + id tie-breaker
+IX. Parent row của Candidate Inbox chưa rõ lấy Submission nào
+
+Parent Candidate row hiện hiển thị các field như:
+
+DOB;
+gender;
+phone;
+status;
+HR note.
+
+Candidate lại có thể có nhiều Submission.
+
+Vậy với 3 hồ sơ:
+
+2024
+2025
+2026
+
+parent row lấy status/DOB/HR note nào?
+
+Nên freeze rõ:
+
+Parent summary = latest Submission theo submitted_at DESC, id DESC.
+
+Hoặc parent chỉ hiển thị Candidate-level fields, còn mọi Submission-specific field chỉ nằm trong child row.
+
+Tôi nghiêng về phương án thứ hai vì clean semantics hơn.
+
+X. Candidate current profile cache cũng cần rule rõ
+
+Candidate có:
+
+current_full_name
+current_phone
+
+Nếu Candidate chỉnh một Submission cũ vẫn còn NEW, cache có được overwrite theo hồ sơ cũ không?
+
+Nên:
+
+current profile chỉ phản ánh latest submitted snapshot.
+
+Update một older Submission không làm thay đổi current cache.
+
+Hoặc tốt hơn nếu query cost không đáng kể thì derive thay vì cache.
+
+XI. Bulk UI và backend commands hiện chưa hoàn toàn tương ứng
+
+Design/Handover có nhiều thao tác:
+
+multi-select Application;
+bulk assignment;
+bulk status;
+bulk email/delete ở một số table.
+
+Nhưng Backend Commands phần lớn vẫn singular.
+
+Đây không phải vấn đề nếu UI gọi command N lần, nhưng phải freeze semantics:
+
+Nếu 10 item, item thứ 6 fail thì 1–5 giữ hay rollback tất cả?
+
+Tôi khuyên explicit batch endpoint cho operation thực sự bulk:
+
+bulk_create_applications()
+bulk_assign_interviewers()
+bulk_change_status()
+
+Response:
+
+success[]
+failed[{id,error_code}]
+
+hoặc toàn bộ atomic — nhưng phải chọn.
+
+Không để coding agent tự quyết.
+
+XII. Email semantics còn hai điểm chưa khớp hoàn toàn
+Retry wording
+
+Email spec hiện đúng hơn khi gọi:
+
+at-least-once + best-effort deduplication.
+
+Nhưng acceptance/design vẫn có câu gần như:
+
+retry không tạo duplicate email.
+
+Điều đó mạnh hơn mức outbox thực tế đảm bảo.
+
+Crash scenario:
+
+provider accepted
+↓
+worker chết trước khi mark SENT
+↓
+retry
+↓
+provider nhận lần nữa
+
+Có thể duplicate.
+
+Nên sửa acceptance wording cho đồng nhất.
+
+Attachment trong Email Preview chưa có immutable model tương ứng
+
+Design Preview có:
+
+Attachments
+
+Nhưng nếu email thật có attachment thì outbox phải lưu chính xác document version ID đã preview, không phải:
+
+logical_document_id → current
+
+vì trước lúc worker gửi, Candidate có thể replace file.
+
+Nếu Phase 1 chưa thật sự cần attachment email, tôi khuyến nghị:
+
+No email attachments in Phase 1.
+
+Đơn giản và an toàn hơn.
+
+Nếu cần, thêm immutable attachment references vào outbox.
+
+XIII. Privacy acknowledgement còn redundancy
+
+Table có:
+
+candidate_id
+submission_id
+
+trong khi Submission đã xác định Candidate.
+
+Có khả năng theoretically:
+
+Candidate A
+Submission của Candidate B
+
+trong cùng acknowledgement.
+
+Nên:
+
+bỏ candidate_id và derive từ Submission;
+
+hoặc:
+
+enforce consistency trigger/FK invariant.
+
+Ngoài ra kiểm tra delete semantics: nếu một unused Submission được phép hard-delete nhưng acknowledgement ON DELETE RESTRICT, hai policy đang xung đột.
+
+XIV. Hard-delete matrix có capability nhưng command/UI chưa đủ
+
+Business matrix vẫn nói:
+
+Candidate chưa có Submission → hard delete có thể;
+Submission chưa có Application → hard delete có thể.
+
+Nhưng current commands/UI chủ yếu là Active/Inactive.
+
+Bạn nên chọn:
+
+A. Phase 1 thực sự hỗ trợ hard delete
+
+→ thêm command, authorization, document cleanup, privacy-ack cleanup, audit.
+
+B. Không cho HR hard delete Candidate/Submission trong Phase 1
+
+→ xóa capability khỏi matrix để source truth không mô tả một hành động không thể thực hiện.
+
+Tôi nghiêng về B cho hồ sơ tuyển dụng, trừ khi Legal/Operations thật sự cần chức năng delete.
+
+XV. HR Report “Xóa” đang chưa rõ đối tượng
+
+Đây là mismatch giữa UI và entity model.
+
+Trang Báo cáo HR ở cấp parent là:
+
+Application + Current Interview aggregate
+
+nhưng actual Interview Report là:
+
+one Participant → one Report
+
+Nếu drawer cấp aggregate có nút:
+
+Xóa
+
+thì đang xóa:
+
+một Participant Report?
+toàn bộ reports của vòng?
+current Interview?
+chỉ HR note?
+
+Không nên có một action ambiguous như vậy.
+
+Tôi đề nghị
+
+Top-level drawer:
+
+Edit HR note
+Change Report Status
+Send email
+
+Còn Delete/Inactive report nằm cạnh từng Interviewer Report cụ thể, với report ID rõ.
+
+Nếu muốn xóa cả Interview Session, thao tác đó thuộc module Interview.
+
+XVI. Design System v1.3 — có một lỗi số học cụ thể
+
+Trong TABLE_LAYOUT.md, bảng Báo cáo phỏng vấn HR ghi:
+
+min-width: 1460px
+
+nhưng tổng column widths thực tế là:
+
+48
++ 240
++ 300
++ 240
++ 200
++ 190
++ 300
++ 92
+= 1610px
+
+Do đó phải:
+
+min-width: 1610px
+
+hoặc giảm width column có chủ đích.
+
+Hai bảng khác tôi kiểm tra:
+
+Application Inbox: tổng khớp khoảng 1560px.
+Interview: tổng khớp khoảng 1480px.
+
+Nên nâng validator để tự sum column specs và so với min-width.
+
+XVII. Table columns giữa Handover và Design chưa thống nhất hoàn toàn
+
+Các page core trong Handover không phải chỗ nào cũng liệt kê cột:
+
+Action
+
+trong khi TABLE_LAYOUT/colgroup bên Design lại có.
+
+Riêng HR Report page override cũng chưa đồng nhất với Table Layout.
+
+Cần một source duy nhất:
+
+Page table specification
+→ exact columns
+→ exact order
+→ width
+→ min-width
+→ wrap
+→ sticky
+→ visibility
+→ mobile behavior
+
+Design/component phải derive từ đó.
+
+Tôi thực ra khuyến nghị giữ Action/View control vì nó giúp keyboard accessibility hơn việc chỉ dựa vào row click.
+
+XVIII. Candidate selector component chưa đủ cho multi-Submission model
+
+Generic Combobox option trong Design chủ yếu mô tả:
+
+Name
+Email
+
+Nhưng khi tạo Application, nghiệp vụ cần chọn một Submission cụ thể, không chỉ Candidate.
+
+Nên có dedicated:
+
+SubmissionSelectorOption
+
+ví dụ:
+
+Nguyễn Văn A
+nguyenvana@email.com
+Hồ sơ: 01/09/2026 · READ
+
+Nếu cùng Candidate có nhiều Submission, user không được chọn chỉ theo tên/email.
+
+XIX. Candidate Form Design thiếu Privacy/Confirmation section
+
+Business source truth yêu cầu Candidate xác nhận privacy/usage purpose và backend có privacy_acknowledgement.
+
+Nhưng Design Candidate Form v1.3 tôi thấy tập trung vào:
+
+General information;
+education/experience;
+attachments;
+
+mà chưa mô tả đầy đủ section xác nhận cuối.
+
+Nên thêm:
+
+Privacy Notice
+Notice version
+Link/View details
+Required acknowledgement
+Validation error
+Submit disabled rule
+Vietnamese/English content
+
+Đây là P1 design, không chỉ cosmetic.
+
+XX. HR Report thiếu TableScrollContainer trong component matrix
+
+Trang Report có table rộng ~1610px, nhưng page component matrix chưa thể hiện TableScrollContainer tương ứng như các wide tables khác.
+
+Nên bổ sung để implementation không render table bị crop/overflow page.
+
+XXI. User & Permissions Design vẫn còn quá generic so với security model
+
+Đây là một page nhạy cảm nhưng design chưa cụ thể bằng logic backend.
+
+Tôi khuyên freeze exact columns:
+
+Cột	Gợi ý
+Họ tên	✓
+Email EIU	✓
+Auth binding	Bound / Unbound
+Active	✓
+HR role	✓
+Effective permissions	summary
+Last updated	optional
+Action	rõ Root-only
+
+Đồng thời cần distinguish:
+
+Unbound user → Root/Manager có thể sửa typo email
+
+Bound user → email/auth identity change = privileged security action
+
+Không dùng chung một Edit form.
+
+XXII. Catalog/Master Data pages cần thiết kế lifecycle rõ hơn
+
+Page nên thể hiện:
+
+Active
+Inactive
+All
+
+và khi record đã được tham chiếu:
+
+không Delete / không đổi structural semantics.
+
+UI cần nói rõ:
+
+Đang được sử dụng bởi 126 hồ sơ
+Không thể thay đổi đơn vị của vị trí này.
+Hãy tạo vị trí mới và ngưng sử dụng vị trí hiện tại.
+
+Nếu chỉ có generic CRUD modal, user rất dễ vô tình làm thay đổi historical semantics.
+
+XXIII. Reference image trong v1.4 đang không còn khớp field definitions
+
+File reference Interview Report hiện hiển thị các field kiểu:
+
+Professional Knowledge
+Teaching ability
+Research potential
+Limitation
+Other
+
+trong khi current frozen report model là nhóm field khác, gồm ví dụ:
+
+Professional Knowledge
+Necessary Skills
+Qualities and Personality
+Strengths and Limitations
+Other
+
+Nếu ảnh chỉ dùng làm layout inspiration, phải rename/annotate rõ:
+
+LEGACY_LAYOUT_REFERENCE_ONLY — field labels are not source of truth
+
+Nếu không cần nữa thì bỏ khỏi implementation package.
+
+Một coding agent nhìn ảnh có thể hiểu sai nó là current functional spec.
+
+XXIV. Wide table UX: nên dùng sticky context columns
+
+Với:
+
+Sidebar ≈ 244px
+Viewport 1280–1440px
+Table width 1480–1610px
+
+horizontal scrolling là chắc chắn.
+
+Tôi đề nghị sticky:
+
+Checkbox
+Candidate/Application name
+
+ở các bảng operational chính.
+
+Không cần sticky quá nhiều column vì dễ tạo z-index/accessibility issue.
+
+Thêm overflow shadow/indicator ở mép phải cũng giúp user nhận biết còn nội dung.
+
+XXV. Drawer width có một inconsistency nhỏ
+
+Design nói Drawer thường:
+
+760–860px
+
+nhưng đồng thời:
+
+max-width: 55vw
+
+Ở viewport 1280px:
+
+55vw = 704px
+
+tức nhỏ hơn chính minimum 760px.
+
+Nên dùng rule responsive rõ hơn, ví dụ conceptually:
+
+width = min(820px, available viewport width)
+
+và candidate/mobile dùng full-width sheet riêng.
+
+XXVI. Gold color cần restriction về accessibility
+
+Token gold hiện khoảng:
+
+#A78656
+
+trên white/canvas không đủ tương phản cho normal body text theo chuẩn thông dụng.
+
+Không nhất thiết đổi brand color; chỉ cần quy định:
+
+--eiu-gold là accent/decorative/large-text color, không dùng làm 14–16px body text trên nền sáng.
+
+Sidebar gold sáng trên blue tối thì ổn hơn.
+
+XXVII. Office-file security nên mạnh hơn
+
+Current allowed documents có legacy Office formats như .doc/.ppt.
+
+Với hệ thống tuyển dụng, đây là file đến từ người ngoài và HR sẽ tải/open trên máy.
+
+Nếu giữ các format này, tôi khuyến nghị malware scanning mandatory trước go-live, không nên để chỉ optional.
+
+Nếu chưa có scanner:
+
+Phase 1 có thể hạn chế PDF + modern formats an toàn hơn.
+
+Cũng nên quyết định xử lý EXIF/geolocation metadata trong ảnh upload từ điện thoại nếu Candidate có upload image.
+
+XXVIII. Validation Contract vẫn nên bổ sung
+
+Tôi chưa thấy một contract tập trung đủ chi tiết cho:
+
+max name length
+phone format/normalization
+address length
+note/report length
+meeting URL
+max education rows
+max work-history rows
+DOB sanity
+start/end-date sanity
+filename length
+plain text vs HTML
+
+Không nên để frontend và backend tự chọn limit khác nhau.
+
+Tôi khuyên thêm:
+
+VALIDATION_CONTRACT.yaml
+
+để dùng chung cho:
+
+frontend schema;
+API DTO;
+DB checks khi phù hợp;
+automated acceptance tests.
+
+Đặc biệt HR Note / Interview Note / Report field nên mặc định plain-text hoặc sanitized controlled rich text, không render raw HTML từ input.
+
+XXIX. PII search không nên đặt trong URL
+
+Design/search strategy cho phép filter/sort/page ở URL là hợp lý.
+
+Nhưng search:
+
+Tên
+Email
+SĐT
+
+không nên thành:
+
+?search=nguyenvana@email.com
+
+vì có thể xuất hiện trong:
+
+browser history;
+web server logs;
+analytics;
+referrer.
+
+Nên:
+
+URL:
+page, sort, non-sensitive filter
+
+request state/body:
+PII search value
+XXX. Có vài điểm validator nên bổ sung
+
+Current package validation tốt hơn, nhưng chưa bắt được nhiều lỗi cross-layer tôi vừa nêu.
+
+Tôi khuyên thêm automated checks cho các cặp sau:
+
+Check	Điều kiện FAIL
+Data Dictionary ↔ SQL	field REQUIRED không có physical/derived mapping
+UI mutation ↔ command	UI action không map backend command
+Bulk action ↔ batch semantics	bulk UI không có strategy
+Master seed ↔ scope	Document Type dùng default BOTH ngoài chủ ý
+Table columns ↔ layout	khác order/count
+Table widths	sum widths ≠ declared min-width
+Candidate Form ↔ privacy	thiếu acknowledgement component
+Derived status	outcome-changing command không gọi recalc
+Document logical versions	parent/type có thể thay qua versions
+Internal OAuth	Active unbound user nhưng không có provisioning path
+Permission dependency	action permission không có effective read access
+Master history safety	structural fields có thể mutate trên referenced row
+
+Các validator kiểu này giá trị hơn việc chỉ kiểm tra file existence/hash.
+
+Những phần tôi đánh giá hiện đã đủ tốt
+
+Không nên vì danh sách trên mà hiểu rằng v1.4 còn “rất thiếu”. Ngược lại, những phần nền tảng hiện đã khá chắc:
+
+entity hierarchy hợp lý;
+Application không duplicate Candidate identity;
+report/participant ownership sạch;
+final decision semantics rõ;
+HR note đã được phân tách;
+effective active semantics đã được nghĩ tới;
+conflict Candidate/Room/Interviewer đã đầy đủ về business scope;
+resource locking đã trở thành mandatory concept;
+Candidate identity provisioning tốt;
+specific Submission selection đã được nhận diện;
+document versioning/two-phase upload hướng đi đúng;
+outbox semantics được mô tả trung thực hơn;
+privacy/retention đã trở thành first-class concern;
+service credentials/RLS được xử lý đúng hướng;
+Technical Freeze được tách khỏi Business Freeze;
+Design v1.3 có responsive/accessibility/table specification tốt hơn một design guide thông thường.
+
+Vì vậy tôi không đề nghị mở lại Business Logic Core toàn bộ.
+
+Trạng thái tôi khuyến nghị sau vòng rà soát này
+Gate	Tôi đánh giá
+Business Logic Core	FROZEN — giữ được
+Data Model Concept	Gần FROZEN
+Backend Command Contract	REVIEW REQUIRED
+Database Physical Schema	REVIEW REQUIRED
+Concurrency	REVIEW REQUIRED ở 2 race còn lại
+Security/RLS Architecture	Gần FROZEN, implementation chưa
+Storage/Documents	REVIEW REQUIRED về first-submit/edit-session
+Email	Gần FROZEN
+Privacy	Gần FROZEN, capability/runbook còn thiếu
+Desktop Design System	CURRENT, chưa nên FINAL FREEZE
+Candidate Mobile	Vẫn là go-live gate
+Technical Architecture	NOT YET FROZEN
+Production Ready	NO
+
+Nếu ưu tiên để đóng nhanh, tôi sẽ sửa trước upload/edit-session → Submission recalc/locking → Interview participant race → internal Google provisioning/root recovery → master-data immutability → document logical identity/scopes, rồi mới đồng bộ các phần UI/Design còn lệch.
+
+Một lưu ý về phần design: hai ZIP hiện cho tôi kiểm tra rất kỹ design specification, token, component, layout, responsive rules và consistency, nhưng package Design System không chứa một prototype render/clickable hoàn chỉnh để tôi pixel-review từng màn hình thực tế. Vì vậy kết luận về visual implementation cuối cùng vẫn cần UAT trên bản prototype/render sau khi nó được đồng bộ với v1.3.

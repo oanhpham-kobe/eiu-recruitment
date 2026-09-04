@@ -1,0 +1,15 @@
+/* Responsive UX-UAT v1.5 — anchored status dropdown interaction */
+.status-popover{
+  width:min(280px,calc(100vw - 24px));
+  max-height:min(420px,calc(100dvh - 24px));
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.status-popover[data-placement="top"]{transform-origin:bottom left}
+.status-popover[data-placement="bottom"]{transform-origin:top left}
+.status-clickable[aria-expanded="true"]{
+  box-shadow:0 0 0 2px rgba(20,64,105,.18);
+}
+@media (max-width:430px){
+  .status-popover{width:min(280px,calc(100vw - 20px));}
+}

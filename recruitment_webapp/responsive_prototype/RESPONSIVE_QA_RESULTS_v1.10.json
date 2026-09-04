@@ -1,0 +1,548 @@
+{
+  "version": "1.10",
+  "total": 108,
+  "pass": 108,
+  "fail": 0,
+  "results": [
+    {
+      "name": "Responsive README/VERSION authority v1.10 + Full v1.17",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "no page overflow admin/applications 360x800",
+      "pass": true,
+      "detail": "360/360"
+    },
+    {
+      "name": "no page overflow admin/hr-report 360x800",
+      "pass": true,
+      "detail": "360/360"
+    },
+    {
+      "name": "no page overflow candidate/candidate-form 360x800",
+      "pass": true,
+      "detail": "360/360"
+    },
+    {
+      "name": "no page overflow admin/applications 390x844",
+      "pass": true,
+      "detail": "390/390"
+    },
+    {
+      "name": "no page overflow admin/hr-report 390x844",
+      "pass": true,
+      "detail": "390/390"
+    },
+    {
+      "name": "no page overflow candidate/candidate-form 390x844",
+      "pass": true,
+      "detail": "390/390"
+    },
+    {
+      "name": "no page overflow admin/applications 430x844",
+      "pass": true,
+      "detail": "430/430"
+    },
+    {
+      "name": "no page overflow admin/hr-report 430x844",
+      "pass": true,
+      "detail": "430/430"
+    },
+    {
+      "name": "no page overflow candidate/candidate-form 430x844",
+      "pass": true,
+      "detail": "430/430"
+    },
+    {
+      "name": "no page overflow admin/applications 768x1024",
+      "pass": true,
+      "detail": "768/768"
+    },
+    {
+      "name": "no page overflow admin/hr-report 768x1024",
+      "pass": true,
+      "detail": "768/768"
+    },
+    {
+      "name": "no page overflow candidate/candidate-form 768x1024",
+      "pass": true,
+      "detail": "768/768"
+    },
+    {
+      "name": "no page overflow admin/applications 1024x768",
+      "pass": true,
+      "detail": "1024/1024"
+    },
+    {
+      "name": "no page overflow admin/hr-report 1024x768",
+      "pass": true,
+      "detail": "1024/1024"
+    },
+    {
+      "name": "no page overflow candidate/candidate-form 1024x768",
+      "pass": true,
+      "detail": "1024/1024"
+    },
+    {
+      "name": "no page overflow admin/applications 1280x800",
+      "pass": true,
+      "detail": "1280/1280"
+    },
+    {
+      "name": "no page overflow admin/hr-report 1280x800",
+      "pass": true,
+      "detail": "1280/1280"
+    },
+    {
+      "name": "no page overflow candidate/candidate-form 1280x800",
+      "pass": true,
+      "detail": "1280/1280"
+    },
+    {
+      "name": "Phase1 admin nav hides FUTURE_HIDDEN",
+      "pass": true,
+      "detail": "EIU | EIU Recruitment System | QUẢN LÝ TUYỂN DỤNG | Phiếu ứng tuyển | QUẢN LÝ QUY TRÌNH | Interview | Báo cáo phỏng vấn | QUẢN TRỊ HỆ THỐNG | Danh mục | Người dùng & Phân quyền | AD | Root Admin | Administrator"
+    },
+    {
+      "name": "Interviewer nav hides Home/Documents/Settings",
+      "pass": true,
+      "detail": "EIU | EIU Recruitment System | PHỎNG VẤN CỦA TÔI | Báo cáo phỏng vấn | NT | Nguyễn Thị An | Interviewer"
+    },
+    {
+      "name": "Candidate nav only applications",
+      "pass": true,
+      "detail": "EIU | EIU Recruitment System | ỨNG VIÊN | Phiếu ứng tuyển | NT | Nguyễn Thị An | Ứng viên"
+    },
+    {
+      "name": "Application Inbox bulk Delete removed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Application Inbox bulk candidate email removed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Inactive Candidate lifecycle shown separately",
+      "pass": true,
+      "detail": "\t | Nguyễn Thị H | 1 phiếu | Candidate Inactive | \tnguyenthih@gmail.com\t22/12/1996\tNữ\t0908 901 234\tĐã đọc\tKhông phản hồi\t"
+    },
+    {
+      "name": "Inactive Candidate preserves Submission workflow",
+      "pass": true,
+      "detail": "Đã đọc"
+    },
+    {
+      "name": "Demo Submission has no INACTIVE",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Historical Submission statuses are read-only",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Latest Submission menu only NEW READ",
+      "pass": true,
+      "detail": "['Mới', 'Đã đọc']"
+    },
+    {
+      "name": "Escape closes latest Submission menu",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Escape restores focus",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Inactive Candidate latest status remains clickable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Single manual status allowed for inactive Candidate",
+      "pass": true,
+      "detail": "READ->NEW"
+    },
+    {
+      "name": "Bulk inactive Candidate parity succeeds",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Bulk active-Application member rolls back whole batch",
+      "pass": true,
+      "detail": "READ->READ"
+    },
+    {
+      "name": "Candidate has no duplicated workflow status property",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Inactivation changes Candidate lifecycle",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Inactivation preserves Submission status",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Aggregate report drawer has no generic Delete",
+      "pass": true,
+      "detail": "Báo cáo phỏng vấn\nCurrent Interview: Vòng 2\nEdit HR Note\nĐổi Report Status\nẨn khỏi Interviewer\nXem PDF\nTải PDF\nReport Status\nTheo dõi thêm\nApplication outcome (derived)\nIN_PROGRESS\nHR\nNguyễn Thị An\nHR Note\n–\nHiển thị với Interviewer\nCó\nNguồn kết luận hiện hành\nChưa có\ndecisionUpdatedAt\n–\nBÁO CÁO CỦA"
+    },
+    {
+      "name": "Aggregate drawer exposes required controls",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Report Status writes Current Interview",
+      "pass": true,
+      "detail": "FOLLOW_UP->REPORT_SUBMITTED"
+    },
+    {
+      "name": "Report Status does not directly mutate Application status",
+      "pass": true,
+      "detail": "FOLLOW_UP->FOLLOW_UP"
+    },
+    {
+      "name": "Qualitative-only edit keeps Final Decision Source",
+      "pass": true,
+      "detail": "['u1', '24/05/2025 14:20']->['u1', '24/05/2025 14:20']"
+    },
+    {
+      "name": "NEW Privacy starts unchecked",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Education fields are not invented as required",
+      "pass": true,
+      "detail": "0"
+    },
+    {
+      "name": "Education permits zero rows",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Education add remains repeatable",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "New Candidate form blocks submit without CV",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Privacy explicit choice survives staged-file rerender",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "New Candidate form accepts staged CV ADD",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "EDIT staged DELETE cannot violate CV required",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "EDIT stages REPLACE",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Cancel discards staged replacement",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Cancel clears staged state",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Schedule blocks same-Candidate overlap",
+      "pass": true,
+      "detail": "['Candidate']"
+    },
+    {
+      "name": "Schedule blocks Room overlap",
+      "pass": true,
+      "detail": "['Room']"
+    },
+    {
+      "name": "Schedule blocks Interviewer overlap",
+      "pass": true,
+      "detail": "['Interviewer']"
+    },
+    {
+      "name": "Adjacent end-start interval allowed",
+      "pass": true,
+      "detail": "[]"
+    },
+    {
+      "name": "CANCELLED round ignored by conflict engine",
+      "pass": true,
+      "detail": "[]"
+    },
+    {
+      "name": "Copy modal prefills source date",
+      "pass": true,
+      "detail": "2025-05-15"
+    },
+    {
+      "name": "RP-COPY-01 Copy fills empty target Round1",
+      "pass": true,
+      "detail": "{'count': 1, 'no': 1, 'topic': '', 'date': '15/05/2025', 'start': '09:00', 'end': '10:00', 'location': 'Phòng Kỹ thuật 201 – EIU', 'prov': 'r11'}"
+    },
+    {
+      "name": "RP-COPY-03 Copy keeps Demo Topic blank",
+      "pass": true,
+      "detail": "{'count': 1, 'no': 1, 'topic': '', 'date': '15/05/2025', 'start': '09:00', 'end': '10:00', 'location': 'Phòng Kỹ thuật 201 – EIU', 'prov': 'r11'}"
+    },
+    {
+      "name": "RP-COPY-04 Copy preserves source schedule logistics",
+      "pass": true,
+      "detail": "{'count': 1, 'no': 1, 'topic': '', 'date': '15/05/2025', 'start': '09:00', 'end': '10:00', 'location': 'Phòng Kỹ thuật 201 – EIU', 'prov': 'r11'}"
+    },
+    {
+      "name": "Copy records provenance",
+      "pass": true,
+      "detail": "{'count': 1, 'no': 1, 'topic': '', 'date': '15/05/2025', 'start': '09:00', 'end': '10:00', 'location': 'Phòng Kỹ thuật 201 – EIU', 'prov': 'r11'}"
+    },
+    {
+      "name": "Copied Round no longer structurally empty",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "RP-COPY-02 Copy used target Round1 creates next legal round",
+      "pass": true,
+      "detail": "{'count': 2, 'r1Topic': 'Already used', 'r2No': 2, 'r2Topic': '', 'date': '15/05/2025', 'start': '09:00', 'end': '10:00', 'location': 'Phòng Kỹ thuật 201 – EIU', 'prov': 'r11'}"
+    },
+    {
+      "name": "Application modal uses exact SubmissionSelector",
+      "pass": true,
+      "detail": "[{'value': 's1', 'text': 'Nguyễn Văn A — nguyenvana@gmail.com — Submitted: 20/05/2025 10:30 — Status: Đang xử lý'}, {'value': 's2', 'text': 'Nguyễn Văn A — nguyenvana@gmail.com — Submitted: 19/05/2025 14:22 — Status: Đã đọc'}, {'value': 's3', 'text': 'Nguyễn Văn A — nguyenvana@gmail.com — Submitted: 18/05/2025 09:15 — Status: Đang xử lý'}, {'value': 's4', 'text': 'Trần Thị B — tranthib@gmail.com — Submitted: 30/08/2025 11:15 — Status: Đang xử lý'}]"
+    },
+    {
+      "name": "Same Candidate Submissions remain distinct",
+      "pass": true,
+      "detail": "[{'value': 's1', 'text': 'Nguyễn Văn A — nguyenvana@gmail.com — Submitted: 20/05/2025 10:30 — Status: Đang xử lý'}, {'value': 's2', 'text': 'Nguyễn Văn A — nguyenvana@gmail.com — Submitted: 19/05/2025 14:22 — Status: Đã đọc'}, {'value': 's3', 'text': 'Nguyễn Văn A — nguyenvana@gmail.com — Submitted: 18/05/2025 09:15 — Status: Đang xử lý'}]"
+    },
+    {
+      "name": "SubmissionSelector displays date and status",
+      "pass": true,
+      "detail": "[{'value': 's1', 'text': 'Nguyễn Văn A — nguyenvana@gmail.com — Submitted: 20/05/2025 10:30 — Status: Đang xử lý'}, {'value': 's2', 'text': 'Nguyễn Văn A — nguyenvana@gmail.com — Submitted: 19/05/2025 14:22 — Status: Đã đọc'}, {'value': 's3', 'text': 'Nguyễn Văn A — nguyenvana@gmail.com — Submitted: 18/05/2025 09:15 — Status: Đang xử lý'}]"
+    },
+    {
+      "name": "Application Save returns exact submission_id",
+      "pass": true,
+      "detail": "['s2', 'c1']"
+    },
+    {
+      "name": "Create blocks inactive selected Participant",
+      "pass": true,
+      "detail": "10->10 CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED: TS. Trần Minh Khoa"
+    },
+    {
+      "name": "Copy blocks inactive prefilled Participant",
+      "pass": true,
+      "detail": "1->1 parts=u1,u2,u3 u1=False err=CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED: TS. Trần Minh Khoa"
+    },
+    {
+      "name": "RQA-SCH-STATUS-01 single inactive Participant blocks",
+      "pass": true,
+      "detail": "{'status': 'CANCELLED', 'last': {'roundIds': ['r41'], 'targetStatus': 'SCHEDULED', 'ok': False, 'failures': [{'roundId': 'r41', 'code': 'CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED', 'participants': ['u1'], 'conflicts': None}]}}"
+    },
+    {
+      "name": "RQA-SCH-STATUS-02 bulk inactive Participant rolls back all",
+      "pass": true,
+      "detail": "{'r41': 'CANCELLED', 'r31': 'CANCELLED', 'last': {'roundIds': ['r41', 'r31'], 'targetStatus': 'SCHEDULED', 'ok': False, 'failures': [{'roundId': 'r41', 'code': 'CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED', 'participants': ['u1'], 'conflicts': None}]}}"
+    },
+    {
+      "name": "RQA-SCH-STATUS-03 single Candidate conflict blocks",
+      "pass": true,
+      "detail": "{'status': 'CANCELLED', 'last': {'roundIds': ['r12'], 'targetStatus': 'SCHEDULED', 'ok': False, 'failures': [{'roundId': 'r12', 'code': 'SCHEDULE_CONFLICT', 'conflicts': ['Candidate'], 'participants': None}]}}"
+    },
+    {
+      "name": "RQA-SCH-STATUS-04 single Room conflict blocks",
+      "pass": true,
+      "detail": "{'status': 'CANCELLED', 'last': {'roundIds': ['r41'], 'targetStatus': 'SCHEDULED', 'ok': False, 'failures': [{'roundId': 'r41', 'code': 'SCHEDULE_CONFLICT', 'conflicts': ['Room'], 'participants': None}]}}"
+    },
+    {
+      "name": "RQA-SCH-STATUS-05 single Interviewer conflict blocks",
+      "pass": true,
+      "detail": "{'status': 'CANCELLED', 'last': {'roundIds': ['r41'], 'targetStatus': 'SCHEDULED', 'ok': False, 'failures': [{'roundId': 'r41', 'code': 'SCHEDULE_CONFLICT', 'conflicts': ['Interviewer'], 'participants': None}]}}"
+    },
+    {
+      "name": "RQA-SCH-STATUS-06 bulk conflict rolls back every selected Interview",
+      "pass": true,
+      "detail": "{'r41': 'CANCELLED', 'r31': 'CANCELLED', 'last': {'roundIds': ['r41', 'r31'], 'targetStatus': 'SCHEDULED', 'ok': False, 'failures': [{'roundId': 'r41', 'code': 'SCHEDULE_CONFLICT', 'conflicts': ['Room'], 'participants': None}]}}"
+    },
+    {
+      "name": "RQA-SCH-STATUS-07 adjacent activation allowed",
+      "pass": true,
+      "detail": "{'status': 'SCHEDULED', 'last': {'roundIds': ['r41'], 'targetStatus': 'SCHEDULED', 'ok': True, 'failures': []}}"
+    },
+    {
+      "name": "No page overflow admin/applications 375",
+      "pass": true,
+      "detail": "scroll=375 inner=375"
+    },
+    {
+      "name": "No page overflow admin/applications 430",
+      "pass": true,
+      "detail": "scroll=430 inner=430"
+    },
+    {
+      "name": "No page overflow admin/applications 768",
+      "pass": true,
+      "detail": "scroll=768 inner=768"
+    },
+    {
+      "name": "No page overflow admin/applications 1280",
+      "pass": true,
+      "detail": "scroll=1280 inner=1280"
+    },
+    {
+      "name": "No page overflow admin/interview 375",
+      "pass": true,
+      "detail": "scroll=375 inner=375"
+    },
+    {
+      "name": "No page overflow admin/interview 430",
+      "pass": true,
+      "detail": "scroll=430 inner=430"
+    },
+    {
+      "name": "No page overflow admin/interview 768",
+      "pass": true,
+      "detail": "scroll=768 inner=768"
+    },
+    {
+      "name": "No page overflow admin/interview 1280",
+      "pass": true,
+      "detail": "scroll=1280 inner=1280"
+    },
+    {
+      "name": "No page overflow admin/hr-report 375",
+      "pass": true,
+      "detail": "scroll=375 inner=375"
+    },
+    {
+      "name": "No page overflow admin/hr-report 430",
+      "pass": true,
+      "detail": "scroll=430 inner=430"
+    },
+    {
+      "name": "No page overflow admin/hr-report 768",
+      "pass": true,
+      "detail": "scroll=768 inner=768"
+    },
+    {
+      "name": "No page overflow admin/hr-report 1280",
+      "pass": true,
+      "detail": "scroll=1280 inner=1280"
+    },
+    {
+      "name": "No page overflow admin/permissions 375",
+      "pass": true,
+      "detail": "scroll=375 inner=375"
+    },
+    {
+      "name": "No page overflow admin/permissions 430",
+      "pass": true,
+      "detail": "scroll=430 inner=430"
+    },
+    {
+      "name": "No page overflow admin/permissions 768",
+      "pass": true,
+      "detail": "scroll=768 inner=768"
+    },
+    {
+      "name": "No page overflow admin/permissions 1280",
+      "pass": true,
+      "detail": "scroll=1280 inner=1280"
+    },
+    {
+      "name": "No page overflow candidate/candidate-form 375",
+      "pass": true,
+      "detail": "scroll=375 inner=375"
+    },
+    {
+      "name": "No page overflow candidate/candidate-form 430",
+      "pass": true,
+      "detail": "scroll=430 inner=430"
+    },
+    {
+      "name": "No page overflow candidate/candidate-form 768",
+      "pass": true,
+      "detail": "scroll=768 inner=768"
+    },
+    {
+      "name": "No page overflow candidate/candidate-form 1280",
+      "pass": true,
+      "detail": "scroll=1280 inner=1280"
+    },
+    {
+      "name": "No page overflow candidate/candidate-applications 375",
+      "pass": true,
+      "detail": "scroll=375 inner=375"
+    },
+    {
+      "name": "No page overflow candidate/candidate-applications 430",
+      "pass": true,
+      "detail": "scroll=430 inner=430"
+    },
+    {
+      "name": "No page overflow candidate/candidate-applications 768",
+      "pass": true,
+      "detail": "scroll=768 inner=768"
+    },
+    {
+      "name": "No page overflow candidate/candidate-applications 1280",
+      "pass": true,
+      "detail": "scroll=1280 inner=1280"
+    },
+    {
+      "name": "No page overflow interviewer/interviewer-report 375",
+      "pass": true,
+      "detail": "scroll=375 inner=375"
+    },
+    {
+      "name": "No page overflow interviewer/interviewer-report 430",
+      "pass": true,
+      "detail": "scroll=430 inner=430"
+    },
+    {
+      "name": "No page overflow interviewer/interviewer-report 768",
+      "pass": true,
+      "detail": "scroll=768 inner=768"
+    },
+    {
+      "name": "No page overflow interviewer/interviewer-report 1280",
+      "pass": true,
+      "detail": "scroll=1280 inner=1280"
+    },
+    {
+      "name": "No JS/console errors",
+      "pass": true,
+      "detail": "[]"
+    }
+  ]
+}

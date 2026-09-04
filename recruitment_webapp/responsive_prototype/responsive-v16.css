@@ -1,0 +1,14 @@
+/* Responsive UX-UAT v1.6 alignment layer */
+.candidate-lifecycle{display:inline-flex;align-items:center;min-height:24px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;margin-left:6px;vertical-align:middle}
+.candidate-lifecycle.inactive{background:#f2f4f7;color:#475467;border:1px solid #d0d5dd}
+.candidate-inactive-row{background:#fafafa}
+.candidate-inactive-row .name-cell strong{color:#667085}
+.candidate-error-summary{margin:0 0 16px;padding:12px 14px;border:1px solid #f04438;border-radius:8px;background:#fff5f4;color:#b42318;font-weight:600}
+.current-doc-box{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:12px 0;background:#fff}
+.staged-doc-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;min-width:0}
+.staged-doc-row span{overflow-wrap:anywhere}
+.status-popover{width:max-content;min-width:180px;max-width:min(320px,calc(100vw - 24px))}
+@media (max-width:600px){
+  .staged-doc-row{align-items:flex-start;flex-direction:column}
+  .candidate-lifecycle{margin-left:0;margin-top:4px}
+}

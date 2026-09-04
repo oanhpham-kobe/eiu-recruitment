@@ -1,0 +1,40 @@
+# Environment / credentials
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel/
+
+# Node / Next
+node_modules/
+.next/
+dist/
+build/
+coverage/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Code Review Graph runtime
+.code-review-graph/
+
+# GitNexus generated index
+.gitnexus/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# Historical setup/archive inputs
+Skills set/
+Skills set.zip
+App_Tuyen_Dung_EIU_Full_Handover_v1.8.zip
+EIU_Recruitment_Design_System_v1.7.zip
+EIU_Recruitment_Implementation_Planner_Pack_*.zip
