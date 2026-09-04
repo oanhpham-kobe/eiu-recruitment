@@ -10,7 +10,7 @@ canonical_baseline:
 
 integration:
   branch: autonomy/continuous-integration-20260905-01
-  head: "29a3f4e0b50221da7ca72480b9d0683c7f118243"
+  head: "b8ad00145f444a204a7f282dd052fb6a53d72ea7"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -34,30 +34,27 @@ active_task:
   reviewer_status: null
 
 last_accepted_task:
-  id: TASK-S00-005
-  commit: "5c942470d91948a1dd16a68726601e06537783da"
+  id: TASK-S01-001
+  commit: "a93e287e0c4a25435e48c7875d955e2d90f55d75"
   evidence:
-    - "SHELL-001: VERIFIED"
+    - "IDENTITY-001: VERIFIED"
     - "prompt_reviewed: PASS"
-    - "prompt_sha256: 6cfb4781cf7a5f7a6eeabd3e86c59abe2f243b60b2fc6c6efc664ba49072d0c1"
-    - "executor_commit: 5c942470d91948a1dd16a68726601e06537783da"
+    - "prompt_sha256: bff3c1f9ff8afd114de49e24936f4e1812263fed957cb7637e560d73ce379223"
+    - "executor_commit: a93e287e0c4a25435e48c7875d955e2d90f55d75"
     - "implementation_reviewed: PASS"
-    - "typecheck: PASS"
-    - "lint: PASS (36 files, 0 fixes)"
-    - "build: PASS (Next.js dynamic server-rendered)"
-    - "tests: PASS (29/29)"
-    - "tokens: PASS (v1.8 brand, sidebar, semantic >=4.5:1 contrast, typography >=16px, spacing)"
-    - "a11y_landmarks: PASS (aside, nav, header, main#main-content, skip-link)"
-    - "shell_smoke: PASS (port 3003, HTTP 200, 0 CSP violations)"
+    - "assertion_a_structure_constraints: PASS (7 tables, check constraints internal_email_domain_ck, one_root_admin_uq, candidate_inactive_metadata_ck)"
+    - "assertion_b_helpers: PASS (4 private helpers with prosecdef=true and search_path='')"
+    - "assertion_c_triggers: PASS (touch_version incremented version_no on update)"
+    - "assertion_d_rls_denial_isolation: PASS (anon denied 0 rows, candidate isolated, staff isolated, HR permission verified)"
+    - "local_clean_migration_replay: PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
 
 blocked_tasks: []
 
 safe_frontier:
   eligible_tasks:
-    - TASK-S01-001
-  skipped_due_to_dependency:
     - TASK-S01-002
     - TASK-S01-003
+  skipped_due_to_dependency:
     - TASK-S01-004
     - TASK-S01-005
 
@@ -66,4 +63,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Prepare and independently review task execution prompt for TASK-S01-001 (Identity/Auth schema migration)"
+next_action: "Prepare and independently review task execution prompt for TASK-S01-002 (Internal Google Workspace OAuth first-login provisioning command)"
