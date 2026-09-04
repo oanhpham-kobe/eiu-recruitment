@@ -123,6 +123,18 @@ file_size_limit = "50MiB"
 # allowed_mime_types = ["image/png", "image/jpeg"]
 # objects_path = "./images"
 
+[storage.buckets.candidate-quarantine]
+public = false
+file_size_limit = "5MiB"
+allowed_mime_types = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "image/png",
+  "image/jpeg"
+]
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
 enabled = true
