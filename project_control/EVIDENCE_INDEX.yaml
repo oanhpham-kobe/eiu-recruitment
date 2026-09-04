@@ -191,3 +191,29 @@ implementation_evidence:
     local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
     source_integrity: "PASS (recruitment_webapp git diff is empty)"
     secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
+
+  PROVISION-001:
+    task: TASK-S01-002
+    operation: INTERNAL_USER_PROVISIONING_COMMAND
+    status: REVIEW
+    prompt: "project_control/prompts/SLICE-01_TASK-002_v1.md"
+    prompt_sha256: "093ba61f21a9da10c84e26a320829756d6ca94ede754d34c200e7fd2cfaeabf4"
+    migration: "supabase/migrations/20260905040000_internal_user_provisioning.sql"
+    command_wrapper: "web/src/lib/auth/internal.ts"
+    test_suite: "web/src/__tests__/internal-provisioning.test.ts"
+    functions_created:
+      - "public.provision_internal_user_identity() (SECURITY DEFINER, empty search_path, jsonb payload)"
+    assertion_1_unauthenticated: "PASS (rejected unauthenticated caller with UNAUTHENTICATED)"
+    assertion_2_forbidden_domain: "PASS (rejected non-@eiu.edu.vn email domain with FORBIDDEN)"
+    assertion_3_not_found_user: "PASS (rejected unlisted email with NOT_FOUND)"
+    assertion_4_inactive_user: "PASS (rejected inactive user with USER_INACTIVE)"
+    assertion_5_rebind_defense: "PASS (rejected identity rebind attempt with IDENTITY_REBIND_FORBIDDEN)"
+    assertion_6_first_time_bind: "PASS (bound auth_user_id, incremented version_no to 2, returned roles and permissions)"
+    assertion_7_subsequent_login: "PASS (idempotent login returned profile and permissions without touching version_no)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_lint: "PASS (biome check; 38 files, 0 fixes)"
+    npm_build: "PASS (Next.js production build succeeded)"
+    npm_test: "PASS (38/38 tests pass, 0 fail; 9/9 internal provisioning tests pass)"
+    local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
+    source_integrity: "PASS (recruitment_webapp git diff is empty)"
+    secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"

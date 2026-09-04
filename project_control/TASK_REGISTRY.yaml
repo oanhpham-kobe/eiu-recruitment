@@ -1,6 +1,6 @@
 version: 1
-current_slice: SLICE-00
-current_task: TASK-S00-005
+current_slice: SLICE-01
+current_task: TASK-S01-002
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -194,8 +194,27 @@ tasks:
   TASK-S01-002:
     title: "Internal Google Workspace OAuth first-login provisioning command"
     slice: SLICE-01
-    status: PLANNED
+    status: REVIEW
     depends_on: [TASK-S01-001]
+    prompt: "project_control/prompts/SLICE-01_TASK-002_v1.md"
+    prompt_sha256: "093ba61f21a9da10c84e26a320829756d6ca94ede754d34c200e7fd2cfaeabf4"
+    review_status: "PENDING (Independent Implementation Review)"
+    evidence:
+      - "EVIDENCE_INDEX: PROVISION-001"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_LINT: PASS (38 files, 0 fixes)"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (38/38)"
+      - "ASSERTION_1_UNAUTHENTICATED: PASS"
+      - "ASSERTION_2_FORBIDDEN_DOMAIN: PASS"
+      - "ASSERTION_3_NOT_FOUND_USER: PASS"
+      - "ASSERTION_4_INACTIVE_USER: PASS"
+      - "ASSERTION_5_REBIND_DEFENSE: PASS"
+      - "ASSERTION_6_FIRST_TIME_BIND: PASS"
+      - "ASSERTION_7_SUBSEQUENT_LOGIN: PASS"
+      - "LOCAL_CLEAN_MIGRATION_REPLAY: PASS (unlinked disposable runtime on port 5642x, 0 residual containers)"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
   TASK-S01-003:
     title: "Candidate Email OTP identity verification and provisioning command"
     slice: SLICE-01
