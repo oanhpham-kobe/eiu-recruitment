@@ -1,6 +1,6 @@
 version: 1
-current_slice: SLICE-01
-current_task: TASK-S01-003
+current_slice: SLICE-02
+current_task: TASK-S02-001
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
