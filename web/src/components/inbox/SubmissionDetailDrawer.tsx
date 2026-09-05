@@ -15,6 +15,7 @@ import {
   getSubmissionDetailAction,
   updateSubmissionHrNoteAction,
 } from "@/app/application-inbox-actions";
+import type { SubmissionStatus } from "@/lib/application-inbox/model";
 import type {
   AssignmentOptions,
   SubmissionDetail,
@@ -33,7 +34,9 @@ export interface SubmissionDetailDrawerProps {
     submissionId: string;
     hrNote: string | null;
     versionNo: number;
+    status?: SubmissionStatus;
     hasApplication: boolean;
+    hasActiveApplication?: boolean;
   }) => void;
   actions?: {
     getSubmissionDetail?: typeof getSubmissionDetailAction;
@@ -199,6 +202,16 @@ export function SubmissionDetailDrawer({
         if (res.success) {
           setDetail(res.data);
           setEditedHrNote(res.data.hr_note ?? "");
+          onSubmissionUpdated?.({
+            submissionId: res.data.submission_id,
+            hrNote: res.data.hr_note ?? null,
+            versionNo: res.data.version_no,
+            status: res.data.status_code,
+            hasApplication: res.data.applications.length > 0,
+            hasActiveApplication: res.data.applications.some(
+              (app) => app.is_active,
+            ),
+          });
         } else {
           setErrorMessage(res.error);
         }
@@ -218,7 +231,7 @@ export function SubmissionDetailDrawer({
     return () => {
       active = false;
     };
-  }, [isOpen, submissionId, actions?.getSubmissionDetail]);
+  }, [isOpen, submissionId, actions?.getSubmissionDetail, onSubmissionUpdated]);
 
   const isDirty = isEditMode && (detail?.hr_note ?? "") !== editedHrNote;
 
@@ -419,7 +432,9 @@ export function SubmissionDetailDrawer({
           submissionId: detail.submission_id,
           hrNote: res.data.hr_note ?? null,
           versionNo: res.data.version_no,
-          hasApplication: detail.applications.length > 0,
+          status: detail.status_code,
+          hasApplication: detail.applications.some((a) => a.is_active),
+          hasActiveApplication: detail.applications.some((a) => a.is_active),
         });
       } else {
         if (res.code === "STALE_VERSION") {
@@ -617,7 +632,9 @@ export function SubmissionDetailDrawer({
           submissionId: detail.submission_id,
           hrNote: detail.hr_note,
           versionNo: detail.version_no,
+          status: detail.status_code,
           hasApplication: true,
+          hasActiveApplication: true,
         });
       } else {
         if (res.code === "DUPLICATE_APPLICATION") {

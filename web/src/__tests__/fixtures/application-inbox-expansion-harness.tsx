@@ -13,6 +13,9 @@ const GROUPS: ApplicationInboxGroup[] = [
     candidateId: "candidate-1",
     email: "an@example.com",
     isCandidateActive: true,
+    candidateVersionNo: 1,
+    latestSubmissionId: "submission-2",
+    latestSubmissionVersionNo: 1,
     submissions: [
       {
         submissionId: "submission-2",
@@ -25,6 +28,7 @@ const GROUPS: ApplicationInboxGroup[] = [
         hrNote: "Đã liên hệ",
         submittedAt: "2026-09-02T09:00:00.000Z",
         hasApplication: false,
+        versionNo: 1,
       },
       {
         submissionId: "submission-1",
@@ -37,6 +41,7 @@ const GROUPS: ApplicationInboxGroup[] = [
         hrNote: "Chờ xử lý",
         submittedAt: "2026-08-15T09:00:00.000Z",
         hasApplication: false,
+        versionNo: 1,
       },
     ],
   },
@@ -44,6 +49,9 @@ const GROUPS: ApplicationInboxGroup[] = [
     candidateId: "candidate-2",
     email: "binh@example.com",
     isCandidateActive: true,
+    candidateVersionNo: 1,
+    latestSubmissionId: "submission-4",
+    latestSubmissionVersionNo: 1,
     submissions: [
       {
         submissionId: "submission-4",
@@ -56,6 +64,7 @@ const GROUPS: ApplicationInboxGroup[] = [
         hrNote: "Đang phỏng vấn",
         submittedAt: "2026-09-01T09:00:00.000Z",
         hasApplication: true,
+        versionNo: 1,
       },
       {
         submissionId: "submission-3",
@@ -68,6 +77,7 @@ const GROUPS: ApplicationInboxGroup[] = [
         hrNote: "Lần trước",
         submittedAt: "2026-08-01T09:00:00.000Z",
         hasApplication: false,
+        versionNo: 1,
       },
     ],
   },

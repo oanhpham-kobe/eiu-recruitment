@@ -438,9 +438,136 @@ textarea {
   flex: 1 1 320px;
 }
 
-.application-inbox__selection {
-  margin: 0;
-  color: var(--ink-600);
+.application-inbox__bulk-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: var(--radius-card, 8px);
+}
+
+.application-inbox__selection-count {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-800, #1e293b);
+  border-radius: var(--radius-control, 4px);
+}
+
+.application-inbox__selection-count:focus:not(:focus-visible),
+.application-inbox:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.application-inbox__selection-count:focus-visible,
+.application-inbox:focus-visible {
+  outline: 2px solid var(--accent, #0284c7);
+  outline-offset: 2px;
+}
+
+.application-inbox__bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.application-inbox__bulk-btn {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 16px;
+  padding: 8px 16px;
+}
+
+.application-inbox__feedback-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-radius: var(--radius-control, 6px);
+  font-size: 16px;
+}
+
+.application-inbox__feedback-banner--success {
+  background: var(--status-success-bg, #ecfdf5);
+  color: var(--status-success-text, #065f46);
+  border: 1px solid #a7f3d0;
+}
+
+.application-inbox__feedback-banner--error {
+  background: var(--status-danger-bg, #fef2f2);
+  color: var(--status-danger-text, #991b1b);
+  border: 1px solid #fecaca;
+}
+
+.application-inbox__feedback-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  padding: 0;
+}
+
+.bulk-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4, 16px);
+}
+
+.bulk-confirm-dialog {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface, #ffffff);
+  border-radius: var(--radius-card, 10px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  padding: var(--space-6, 24px);
+  outline: none;
+}
+
+.bulk-confirm-dialog h3 {
+  margin: 0 0 var(--space-2, 8px) 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-900, #0f172a);
+}
+
+.bulk-confirm-dialog p {
+  margin: 0 0 var(--space-5, 20px) 0;
+  font-size: 16px;
+  color: var(--ink-600, #475569);
+  line-height: 1.5;
+}
+
+.bulk-confirm-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3, 12px);
+}
+
+.bulk-confirm-dialog__actions button {
+  min-height: 44px;
+  font-size: 16px;
+  padding: 8px 16px;
 }
 
 .application-inbox__table-scroll {

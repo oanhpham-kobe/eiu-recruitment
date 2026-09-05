@@ -23,12 +23,30 @@ export interface ApplicationInboxSubmission {
   hrNote: string | null;
   submittedAt: string;
   hasApplication: boolean;
+  hasActiveApplication?: boolean;
+  applications?: Array<{
+    applicationId?: string;
+    is_active?: boolean;
+    isActive?: boolean;
+    [key: string]: unknown;
+  }>;
+  versionNo: number;
 }
 
 export interface ApplicationInboxGroup {
   candidateId: string;
   email: string;
   isCandidateActive: boolean;
+  candidateVersionNo: number;
+  latestSubmissionId: string;
+  latestSubmissionVersionNo: number;
+  hasActiveApplication?: boolean;
+  applications?: Array<{
+    applicationId?: string;
+    is_active?: boolean;
+    isActive?: boolean;
+    [key: string]: unknown;
+  }>;
   submissions: ApplicationInboxSubmission[];
 }
 
@@ -80,15 +98,28 @@ export function projectApplicationInboxGroups(
       candidateId: submission.candidateId,
       email: "",
       isCandidateActive: true,
+      candidateVersionNo: 1,
+      latestSubmissionId: submission.submissionId,
+      latestSubmissionVersionNo: submission.versionNo,
       submissions: [submission],
     });
   }
 
   return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      submissions: group.submissions.toSorted(compareLatestSubmission),
-    }))
+    .map((group) => {
+      const sorted = group.submissions.toSorted(compareLatestSubmission);
+      const latest = sorted[0];
+      return {
+        ...group,
+        latestSubmissionId: latest
+          ? latest.submissionId
+          : group.latestSubmissionId,
+        latestSubmissionVersionNo: latest
+          ? latest.versionNo
+          : group.latestSubmissionVersionNo,
+        submissions: sorted,
+      };
+    })
     .toSorted((left, right) => {
       const latestDifference = compareLatestSubmission(
         left.submissions[0],
