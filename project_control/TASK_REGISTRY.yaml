@@ -604,12 +604,12 @@ tasks:
   TASK-S03-003:
     title: "Bulk Submission status and bulk Application assignment transactional commands"
     slice: SLICE-03
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S03-002]
     prompt:
       path: "project_control/prompts/SLICE-03_TASK-003_v1.md"
       sha256: "7a4cde67e161f6c2ed0f4752a21134693830d5a03f986c67677a42c3fd980529"
-      independent_review: "FAIL (blockers received; remediated pending re-review)"
+      independent_review: "PASS (final independent direct-source review; no blockers)"
     skill_usage:
       supabase:
         provider: ".agents/skills/supabase/SKILL.md"
@@ -661,6 +661,7 @@ tasks:
       - "WRAPPER_AUTHORIZATION: PASS (Root Admin bulk-status positive; HR-role-only denied by both wrappers)"
       - "OVERLAP_REPLAY: PASS (opposite-order bulk status, status versus assignment, and same-identity assignment with distinct keys 908/909 completed without deadlock)"
       - "SKILL_LOCK_PROVIDER_HASHES: PASS"
+      - "GITHUB_CI: PASS (Integration CI exact commit dbf474bce94464abe29be242ec3a91cc05687a96; run 33943117083; audit dependencies, lint, typecheck, build, and test passed)"
   TASK-S03-004:
     title: "HR Application Inbox grouped table UI shell, search/filter, and candidate expandable rows"
     slice: SLICE-03

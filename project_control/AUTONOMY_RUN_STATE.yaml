@@ -11,7 +11,7 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_checkpoint: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
+  last_verified_checkpoint: "dbf474bce94464abe29be242ec3a91cc05687a96"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -24,50 +24,28 @@ authorization:
       create_pr: false
       merge_pr: false
 
-active_task:
-  id: TASK-S03-003
-  status: RELEASED
-  task_branch: oanhpham-kobe/TASK-S03-003-bulk-commands
-  task_worktree: "D:/orca/recruitment/TASK-S03-003-bulk-commands"
-  executor_prompt: "project_control/prompts/SLICE-03_TASK-003_v1.md"
-  executor_prompt_sha256: "7a4cde67e161f6c2ed0f4752a21134693830d5a03f986c67677a42c3fd980529"
-  reviewer_status: "PROMPT: PASS; IMPLEMENTATION: PENDING"
-
+active_task: null
 last_accepted_task:
-  id: TASK-S03-002
-  commit: "84ed46f4a34df94f6baa780c1501b17b5c9662b5"
+  id: TASK-S03-003
+  commit: "dbf474bce94464abe29be242ec3a91cc05687a96"
   evidence:
-    - "APP-LIFECYCLE-001: VERIFIED"
+    - "BULK-COMMANDS-001: VERIFIED"
     - "prompt_reviewed: PASS"
-    - "prompt_sha256: b01d2986ca1c9a8a38de2afa603eafb311e309a052f214b0bda58fb5a2c5a286"
-    - "executor_commit: 84ed46f4a34df94f6baa780c1501b17b5c9662b5"
-    - "implementation_reviewed: PASS"
-    - "skill_usage: VERIFIED (supabase, supabase-postgres-best-practices, security-review, tdd loaded & applied)"
-    - "assertion_1_create_default_round1: PASS"
-    - "assertion_2_durable_identity_uniqueness: PASS"
-    - "assertion_3_structurally_empty_hard_delete: PASS"
-    - "assertion_4_used_application_inactivation: PASS"
-    - "assertion_5_status_recalculation_integration: PASS"
-    - "assertion_6_hr_note_update_email_immutable: PASS"
-    - "assertion_7_stale_version_guard: PASS"
-    - "assertion_8_forbidden_actor_guard: PASS"
-    - "assertion_9_hierarchy_validation_guard: PASS"
-    - "assertion_10_structurally_empty_predicate_logic: PASS"
-    - "tests: PASS (197/197)"
-    - "local_clean_migration_replay: PASS (4/4 SQL assertions)"
-    - "github_ci: VERIFIED (integration-ci exact SHA ec739e98dcf8492a920ef89ee9ff8c14b622a32a, run 33935403509, all required checks PASS)"
+    - "implementation_reviewed: PASS (final independent direct-source review)"
+    - "skill_usage: VERIFIED (supabase, supabase-postgres-best-practices, security-review, tdd)"
+    - "local_clean_migration_replay: PASS"
+    - "github_ci: VERIFIED (Integration CI exact SHA dbf474bce94464abe29be242ec3a91cc05687a96; run 33943117083)"
 github_ci:
-  workflow: integration-ci
-  commit_sha: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
-  run_id: "33936480169"
+  workflow: "Integration CI"
+  commit_sha: "dbf474bce94464abe29be242ec3a91cc05687a96"
+  run_id: "33943117083"
   result: PASS
   checks:
-    npm_ci: PASS
-    audit_high: PASS
+    audit_dependencies: PASS
     lint: PASS
     typecheck: PASS
-    test: PASS
     build: PASS
+    test: PASS
 governance_hotfix:
   commit: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
   ci_run_id: "33936480169"
@@ -79,9 +57,8 @@ blocked_tasks: []
 
 safe_frontier:
   eligible_tasks:
-    - TASK-S03-003
-  skipped_due_to_dependency:
     - TASK-S03-004
+  skipped_due_to_dependency:
     - TASK-S03-005
 
 stop_state:
@@ -89,4 +66,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Execute TASK-S03-003 in oanhpham-kobe/TASK-S03-003-bulk-commands from prompt SHA256 7a4cde67e161f6c2ed0f4752a21134693830d5a03f986c67677a42c3fd980529"
+next_action: "Rebase and integrate the prepared MCP runtime governance maintenance onto the verified TASK-S03-003 integration head before releasing TASK-S03-004."

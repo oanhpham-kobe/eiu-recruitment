@@ -627,8 +627,8 @@ implementation_evidence:
   BULK-COMMANDS-001:
     task: TASK-S03-003
     operation: BULK_SUBMISSION_STATUS_AND_APPLICATION_ASSIGNMENT_TRANSACTIONAL_COMMANDS
-    status: REVIEW
-    review_remediation: "PENDING_REVIEW (independent-review blockers repaired; fresh evidence recorded)"
+    status: DONE
+    review_remediation: "PASS (final independent direct-source review; no blockers)"
     migration: "supabase/migrations/20260905120000_bulk_submission_status_and_application_assignment.sql"
     GRAPH_USAGE:
       route: DIRECT_SOURCE_LSP_ONLY
@@ -652,3 +652,14 @@ implementation_evidence:
     disposable_cleanup: "PASS (bulk-commands-replay containers stopped; no residual matching containers)"
     secret_scan: "PASS (direct changed-task credential-assignment scan: no matches)"
     diff_check: "PASS (git diff --check)"
+    github_ci:
+      workflow: "Integration CI"
+      commit_sha: "dbf474bce94464abe29be242ec3a91cc05687a96"
+      run_id: "33943117083"
+      result: PASS
+      checks:
+        audit_dependencies: PASS
+        lint: PASS
+        typecheck: PASS
+        build: PASS
+        test: PASS
