@@ -421,5 +421,86 @@ tasks:
   TASK-S02-005:
     title: "Candidate Portal application form UI shell, autosave, and document uploader"
     slice: SLICE-02
-    status: PLANNED
+    status: DONE
     depends_on: [TASK-S02-004]
+    prompt: "project_control/prompts/SLICE-02_TASK-005_v1.md"
+    prompt_sha256: "49ef3e28474feae5c2b13310028d32941ccbe521711d31984217b3e27954d083"
+    review_status: "PASS (IndependentReviewer)"
+    skill_usage:
+      react-patterns:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Derived state without useEffect anti-patterns in CandidateForm"
+          - "Clean component composition: CandidateForm -> EducationSection, DocumentUploader"
+          - "Top-level hooks discipline and debounced autosave custom hook lifecycle in useAutosave"
+      accessibility:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Semantic HTML landmarks (<main>, <header>, <section>, <form>, <fieldset>, <legend>)"
+          - "WCAG 2.2 AA compliant focus visible outlines and touch targets >= 44x44px"
+          - "Aria attributes: aria-required, aria-invalid, aria-describedby for field errors"
+          - "Aria-live polite status region for autosave announcements"
+      vercel-react-best-practices:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Server/Client component boundaries: minimal client serialization in /candidate route"
+          - "Eliminating waterfalls: independent upload and submission action dispatch"
+          - "Zero unnecessary client bundle dependencies or heavy UI libraries"
+      supabase:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Direct storage upload to private candidate-quarantine bucket with upsert: false"
+          - "Binding verified candidate auth session email without client-side overrides"
+    evidence:
+      - "EVIDENCE_INDEX: PORTAL-FORM-001"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_LINT: PASS (65 files, 0 fixes)"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (171/171)"
+      - "ASSERTION_1_SEMANTIC_SECTIONS: PASS"
+      - "ASSERTION_2_REQUIRED_VALIDATION: PASS"
+      - "ASSERTION_3_IMMUTABLE_EMAIL: PASS"
+      - "ASSERTION_4_DYNAMIC_EDUCATION_ROWS: PASS"
+      - "ASSERTION_5_UPLOADER_VALIDATION: PASS"
+      - "ASSERTION_6_CV_REQUIREMENT_ENFORCED: PASS"
+      - "ASSERTION_7_MAX_FIVE_FILES_LIMIT: PASS"
+      - "ASSERTION_8_AUTOSAVE_PERSISTENCE: PASS"
+      - "ASSERTION_9_AUTOSAVE_STATUS_MESSAGES: PASS"
+      - "ASSERTION_10_SUBMISSIONS_LIST_3_STATUS_MAPPING: PASS"
+      - "ASSERTION_11_EDIT_SUBMISSION_FLOW: PASS"
+      - "ASSERTION_12_ACCESSIBILITY_WCAG_AA: PASS"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
+  TASK-S03-001:
+    title: "Application Inbox status calculation schema and manual status transition commands"
+    slice: SLICE-03
+    status: PLANNED
+    depends_on: [TASK-S02-005]
+  TASK-S03-002:
+    title: "Application creation, assignment, and lifecycle commands"
+    slice: SLICE-03
+    status: PLANNED
+    depends_on: [TASK-S03-001]
+  TASK-S03-003:
+    title: "Bulk Submission status and bulk Application assignment transactional commands"
+    slice: SLICE-03
+    status: PLANNED
+    depends_on: [TASK-S03-002]
+  TASK-S03-004:
+    title: "HR Application Inbox grouped table UI shell, search/filter, and candidate expandable rows"
+    slice: SLICE-03
+    status: PLANNED
+    depends_on: [TASK-S03-003]
+  TASK-S03-005:
+    title: "Submission Detail Drawer, HR Note editor, document preview, and Application creation flow"
+    slice: SLICE-03
+    status: PLANNED
+    depends_on: [TASK-S03-004]

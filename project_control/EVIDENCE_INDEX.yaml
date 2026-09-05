@@ -439,3 +439,60 @@ implementation_evidence:
     local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers, 3/3 SQL integration assertions passed)"
     source_integrity: "PASS (recruitment_webapp git diff is empty)"
     secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
+  PORTAL-FORM-001:
+    task: TASK-S02-005
+    operation: CANDIDATE_PORTAL_APPLICATION_FORM_UI_SHELL_AUTOSAVE_AND_DOCUMENT_UPLOADER
+    status: REVIEW
+    prompt: "project_control/prompts/SLICE-02_TASK-005_v1.md"
+    prompt_sha256: "49ef3e28474feae5c2b13310028d32941ccbe521711d31984217b3e27954d083"
+    skill_usage:
+      react-patterns:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Derived state without useEffect anti-patterns in CandidateForm"
+          - "Clean component composition: CandidateForm -> EducationSection, DocumentUploader"
+          - "Top-level hooks discipline and debounced autosave custom hook lifecycle in useAutosave"
+      accessibility:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Semantic HTML landmarks (<main>, <header>, <section>, <form>, <fieldset>, <legend>)"
+          - "WCAG 2.2 AA compliant focus visible outlines and touch targets >= 44x44px"
+          - "Aria attributes: aria-required, aria-invalid, aria-describedby for field errors"
+          - "Aria-live polite status region for autosave announcements"
+      vercel-react-best-practices:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Server/Client component boundaries: minimal client serialization in /candidate route"
+          - "Eliminating waterfalls: independent upload and submission action dispatch"
+          - "Zero unnecessary client bundle dependencies or heavy UI libraries"
+      supabase:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Direct storage upload to private candidate-quarantine bucket with upsert: false"
+          - "Binding verified candidate auth session email without client-side overrides"
+    assertion_1_semantic_sections: "PASS (renders General Info, Education, Attachments, Privacy fieldsets)"
+    assertion_2_required_validation: "PASS (validates full name, phone, date of birth, address, CV, privacy notice)"
+    assertion_3_immutable_email: "PASS (verified email is readonly and preserved)"
+    assertion_4_dynamic_education_rows: "PASS (adding and removing education rows updates state properly)"
+    assertion_5_uploader_validation: "PASS (rejects unapproved extensions and files > 5MB)"
+    assertion_6_cv_requirement_enforced: "PASS (cannot submit if CV document missing)"
+    assertion_7_max_five_files_limit: "PASS (blocks adding more than 5 documents)"
+    assertion_8_autosave_persistence: "PASS (persists draft to localStorage and restores on mount)"
+    assertion_9_autosave_status_messages: "PASS (displays accessible saving, saved, and restored live status)"
+    assertion_10_submissions_list_3_status_mapping: "PASS (NEW -> Mới, READ/PROCESSED -> Đang xử lý, DONE/CLOSED -> Hoàn thành)"
+    assertion_11_edit_submission_flow: "PASS (NEW submission editable, others read-only)"
+    assertion_12_accessibility_wcag_aa: "PASS (min 44px touch targets, min 16px font, landmarks, ARIA error binding)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_lint: "PASS (biome check; 65 files, 0 fixes)"
+    npm_build: "PASS (Next.js production build succeeded in 5.4s; /candidate route dynamic)"
+    npm_test: "PASS (171/171 tests pass, 0 fail; 12/12 candidate portal tests pass)"
+    source_integrity: "PASS (recruitment_webapp git diff is empty)"
+    secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
