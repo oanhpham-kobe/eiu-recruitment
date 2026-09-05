@@ -38,7 +38,7 @@ Before creating any new control-plane or governance document:
 Until explicit owner authorization activates this policy:
 
 ```yaml
-governance_maintenance:
+governance_consolidation:
   status: READY_FOR_OWNER_REVIEW
 
 autonomy_policy_activation:
@@ -183,6 +183,52 @@ are compatibility or human-summary pointers only.
 They are never concurrency authority.
 
 They must never overwrite, replace, or hide `active_workers`.
+
+### Lane reservation persistence
+
+The Executor entry in `active_workers` also acts as the durable lane-reservation
+record for a started implementation task.
+
+At `TASK_STARTED`, the Coordinator MUST create exactly one Executor entry for
+the task and assigned lane with:
+
+state: STARTING
+
+When the Executor process begins implementation, transition that same entry to:
+
+state: RUNNING
+
+If the Executor process finishes or settles before the task reaches
+`CI_VERIFIED`, DO NOT remove the Executor entry from `active_workers`.
+
+Instead, retain the same task/lane entry and transition it to:
+
+state: SETTLED
+
+The `SETTLED` state means the writing process has stopped, but the task still
+owns the implementation lane.
+
+`worker_settled_history` may record the process-settlement event, but it does
+not replace or release the corresponding lane-reservation entry.
+
+During implementation review, reconciliation, integration, or CI waiting, the
+task's Executor lane-reservation entry remains present in `active_workers`,
+even when no writing Executor process is currently running.
+
+Only after the task reaches:
+
+CI_VERIFIED
+
+may the Coordinator remove that task's Executor lane-reservation entry from
+`active_workers`.
+
+Removal of that entry is the normal successful lane-release event.
+
+Therefore, concurrency capacity MUST be calculated from Executor entries in
+`active_workers`, including entries whose state is `SETTLED`.
+
+This rule intentionally avoids introducing a separate lane registry,
+pending-integration registry, or additional runtime-state authority.
 
 ---
 

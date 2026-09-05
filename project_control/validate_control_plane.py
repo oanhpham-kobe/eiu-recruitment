@@ -526,6 +526,23 @@ def main() -> int:
         and consolidation.get("status")
         == "READY_FOR_OWNER_REVIEW"
     ):
+        if auto_advance != "PENDING_OWNER_REVIEW":
+            errors.append(
+                "READY_FOR_OWNER_REVIEW requires "
+                "auto_advance=PENDING_OWNER_REVIEW"
+            )
+
+        if parallel_scheduler != "PENDING_OWNER_REVIEW":
+            errors.append(
+                "READY_FOR_OWNER_REVIEW requires "
+                "parallel_scheduler=PENDING_OWNER_REVIEW"
+            )
+
+        if max_active != 1:
+            errors.append(
+                "READY_FOR_OWNER_REVIEW requires "
+                "max_active_implementation_tasks=1"
+            )
         slice_04_execution = run_state.get(
             "slice_04_execution",
             {},
