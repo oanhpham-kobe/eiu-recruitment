@@ -26,22 +26,22 @@ authorization:
 
 active_task:
   id: TASK-S03-005
-  status: BLOCKED_BY_REVIEW_CAP
+  status: ACCEPTED_PENDING_EXACT_CI
   task_branch: oanhpham-kobe/TASK-S03-005-inbox-detail
   task_worktree: "D:/orca/recruitment/TASK-S03-005-inbox-detail"
   executor_prompt: "project_control/prompts/SLICE-03_TASK-005_v1.md"
   executor_prompt_sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
-  reviewer_status: "PROMPT: PASS; IMPLEMENTATION REVIEW #5: FAIL (Exception consumed; stopped immediately per owner mandate)"
+  reviewer_status: "PROMPT: PASS; IMPLEMENTATION REVIEW #6: PASS; CONTINUOUS VERIFICATION CLOSURE COMPLETE"
 last_accepted_task:
-  id: TASK-S03-004
-  commit: "8eea72a4b9c34143560ee4687555972b066903cd"
+  id: TASK-S03-005
+  commit: "cc742c9dd5ea4a1bcc97d23985be6e99e4243eba"
   evidence:
-    - "APPLICATION-INBOX-001: VERIFIED"
+    - "APPLICATION-INBOX-DETAIL-001: VERIFIED"
     - "prompt_reviewed: PASS"
     - "executor_pre_review_ui_test_gate: PASS"
-    - "implementation_reviewed: PASS (independent REVIEW #3)"
-    - "skill_usage: VERIFIED (accessibility, react-testing, browser-qa receipts)"
-    - "github_ci: VERIFIED (Integration CI exact SHA bef1a2f5846629d1102071f003455bb783d0f6f0; run 33950464523)"
+    - "ten_point_transition_matrix_gate: PASS"
+    - "implementation_reviewed: PASS (independent REVIEW #6)"
+    - "github_ci: PENDING exact accepted integration checkpoint"
 github_ci:
   workflow: "Integration CI"
   commit_sha: "bef1a2f5846629d1102071f003455bb783d0f6f0"
@@ -53,6 +53,10 @@ github_ci:
     typecheck: PASS
     build: PASS
     test: PASS
+pending_github_ci:
+  required_for_task: TASK-S03-005
+  workflow: "Integration CI"
+  reason: "accepted integration checkpoint must be pushed and matched to its exact SHA"
 governance_hotfix:
   commit: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
   ci_run_id: "33936480169"
@@ -65,20 +69,16 @@ governance_maintenance:
   ci_result: PASS
   mcp_runtime_diagnostic: "CONFIGURED YES; DISCOVERED/CALLABLE/USED NO; supabase-dev startup HTTP 401 (redacted); direct fallback retained"
 
-blocked_tasks:
-  - id: TASK-S03-005
-    reason: "Independent review attempt 3/2 failed; global review cap reached without owner authorization."
+blocked_tasks: []
 
 safe_frontier:
-  eligible_tasks: []
-  skipped_due_to_dependency:
+  eligible_tasks:
     - TASK-S03-006
+  skipped_due_to_dependency: []
 
 stop_state:
-  stop_gate: REVIEW_CAP_EXCEEDED
-  reason: "TASK-S03-005 failed independent implementation review #5 exception. Stopped immediately per owner instruction."
+  stop_gate: null
+  reason: null
   observed_evidence:
-    - "Reviewer FinalIndependentReviewerS03005Round5 returned FAIL on exact task SHA 493046c4b23dbc88e29d3b86829646deb1860618."
-    - "Finding 1: web/src/__tests__/submission-detail.test.ts:1783-1790 substituted source-text checks for required Team invalidation and altered-context confirmation refusal; rendered tests also omitted claimed dirty-discard focus and retry pending state."
-    - "Owner authorized repair exception for TASK-S03-005 is fully consumed."
-next_action: "STOP: TASK-S03-005 review exception is fully consumed. Do not perform another repair or review. Await new explicit owner authorization."
+    - "TASK-S03-005 passed independent implementation review #6 under authorized continuous verification closure."
+next_action: "Push accepted TASK-S03-005 integration checkpoint, verify exact-SHA CI, then proceed autonomously to TASK-S03-006."

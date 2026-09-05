@@ -719,7 +719,7 @@ implementation_evidence:
   APPLICATION-INBOX-DETAIL-001:
     task: TASK-S03-005
     operation: SUBMISSION_DETAIL_DRAWER_EDIT_DOCUMENTS_AND_APPLICATION_FLOW
-    status: REVIEW
+    status: ACCEPTED
     GRAPH_USAGE:
       route: DIRECT_SOURCE_LSP_ONLY
       graph_used: NO
@@ -742,6 +742,7 @@ implementation_evidence:
     npm_build: "PASS (Next.js 16.3.4 production build succeeded)"
     npm_test: "PASS (228/228 passed, 0 failed)"
     react_doctor: "REVIEWED (exit 1; 28 pre-existing/task-scope findings scanned against origin/main; SubmissionDetailDrawer scored clean except complexity/component-size metrics matching S03-004 baseline)"
+    independent_review: "PASS (REVIEW #6 verified all 16 focused tests, 10/10 transition matrix gate, hardened same-origin preview route, authoritative actor resolution, and single task commit; no blockers)"
     executor_pre_review_ui_test_gate: "PASS (10-point UI-state stabilization repair verified across Findings 1, 2, and 3: stable refs and post-commit layout effects for focus, deterministic duplicate identity binding and invalidation on context change, and option load failure isolation outside closed form with accessible retry)"
     browser_qa: "PARTIAL (local dialog semantics, focus trap, and responsive rules verified against Design System v1.8; no live authorized seeded session exists in this isolated environment)"
     secret_scan: "PASS (no credentials, tokens, or service-role keys committed)"
