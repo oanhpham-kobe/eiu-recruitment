@@ -11,7 +11,7 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_checkpoint: "dbf474bce94464abe29be242ec3a91cc05687a96"
+  last_verified_checkpoint: "ffb7038e939599fd5bbbcda1592c25619ca6a624"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -52,6 +52,11 @@ governance_hotfix:
   ci_result: PASS
   skill_execution_receipt_contract: PASS
   graph_usage_receipt_contract: PASS
+governance_maintenance:
+  commit: "ffb7038e939599fd5bbbcda1592c25619ca6a624"
+  ci_run_id: "33943629020"
+  ci_result: PASS
+  mcp_runtime_diagnostic: "CONFIGURED YES; DISCOVERED/CALLABLE/USED NO; supabase-dev startup HTTP 401 (redacted); direct fallback retained"
 
 blocked_tasks: []
 

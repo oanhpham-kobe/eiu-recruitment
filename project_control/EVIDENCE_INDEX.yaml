@@ -676,3 +676,14 @@ implementation_evidence:
     runtime_gap: "supabase-dev MCP startup HTTP 401 Unauthorized (redacted)"
     mcp_usage_receipt: NONE
     fallback: "direct source/migration/test"
+    github_ci:
+      workflow: "Integration CI"
+      commit_sha: "ffb7038e939599fd5bbbcda1592c25619ca6a624"
+      run_id: "33943629020"
+      result: PASS
+      checks:
+        audit_dependencies: PASS
+        lint: PASS
+        typecheck: PASS
+        build: PASS
+        test: PASS

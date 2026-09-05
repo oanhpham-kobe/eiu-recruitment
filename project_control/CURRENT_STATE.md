@@ -11,8 +11,8 @@ Repository Root: `D:/orca/recruitment`
 Worktree: `D:/orca/recruitment/continuous-integration-20260905-01`
 Git: `INITIALIZED`
 Branch: `autonomy/continuous-integration-20260905-01`
-Integration HEAD: `dbf474bce94464abe29be242ec3a91cc05687a96` (exact-SHA Integration CI PASS: run `33943117083`)
-Last Completed Task: `TASK-S03-003`
+Integration HEAD: `ffb7038e939599fd5bbbcda1592c25619ca6a624` (exact-SHA Integration CI PASS: run `33943629020`)
+Last Completed Task: `TASK-S03-003`; MCP runtime governance maintenance `ffb7038e` exact-SHA CI verified
 Remote: `https://github.com/oanhpham-kobe/eiu-recruitment.git`
 
 SOURCE_ROOT: `recruitment_webapp`
@@ -20,10 +20,10 @@ SOURCE_PARITY_GATE: `PASS` (87/87 current-required paths verified byte-identical
 Authority Path Resolution: All Full Handover paths resolve relative to `SOURCE_ROOT = recruitment_webapp`.
 
 Current Slice: `SLICE-03 HR Application Inbox / Application` (IN_PROGRESS)
-Current Task: `MCP runtime governance maintenance`
-Task Status: `PREPARED_REBASE_REQUIRED`
-Workflow Release Scope: `GOV-MCP-runtime-maintenance`
-Workflow Release Status: `TASK-S03-003_EXACT_CI_PASS`
+Current Task: `TASK-S03-004 preparation`
+Task Status: `ELIGIBLE_PROMPT_PREPARATION`
+Workflow Release Scope: `TASK-S03-004`
+Workflow Release Status: `MAINTENANCE_EXACT_CI_PASS`
 Identities & Tools:
 - GitHub: `oanhpham-kobe/eiu-recruitment` (PUBLIC; origin configured; branch `main` pushed; observed remote HEAD `7c7c2b378c24e64d95a4b25c1c709b2ee6b38756`)
 - Supabase: `authenticated` (account: `oanhpham-kobe` / `oanh.pham@eiu.edu.vn`)
@@ -40,7 +40,7 @@ Identities & Tools:
 - GitNexus: `1.6.10` (NOT_NEEDED for localized schema migration; MCP server normalized to `gitnexus-recruitment`)
 - Graphify: `0.9.47` (DORMANT; future optional discovery tool)
 
-NEXT_ACTION: Rebase the prepared MCP runtime governance maintenance onto the verified TASK-S03-003 integration head; do not release TASK-S03-004 before maintenance exact-SHA CI passes.
+NEXT_ACTION: Derive the canonical TASK-S03-004 HR Application Inbox contract and prepare its independently reviewed execution prompt.
 
-Current Task Status: SLICE-00, SLICE-01, SLICE-02 are COMPLETE. TASK-S03-001 through TASK-S03-003 are DONE. TASK-S03-004 remains held for maintenance integration.
-Last Updated: `2026-09-05` (TASK-S03-003 `dbf474b` exact-SHA CI verified)
+Current Task Status: SLICE-00, SLICE-01, SLICE-02 are COMPLETE. TASK-S03-001 through TASK-S03-003 are DONE. TASK-S03-004 is eligible for prompt preparation.
+Last Updated: `2026-09-05` (MCP runtime governance maintenance `ffb7038e` exact-SHA CI verified)
