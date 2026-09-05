@@ -11,7 +11,7 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_checkpoint: "b7456bde5dfeb915bc746eaf738d7718f3069abe"
+  last_verified_checkpoint: "ec739e98dcf8492a920ef89ee9ff8c14b622a32a"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -55,6 +55,19 @@ last_accepted_task:
     - "assertion_10_structurally_empty_predicate_logic: PASS"
     - "tests: PASS (197/197)"
     - "local_clean_migration_replay: PASS (4/4 SQL assertions)"
+    - "github_ci: VERIFIED (integration-ci exact SHA ec739e98dcf8492a920ef89ee9ff8c14b622a32a, run 33935403509, all required checks PASS)"
+github_ci:
+  workflow: integration-ci
+  commit_sha: "ec739e98dcf8492a920ef89ee9ff8c14b622a32a"
+  run_id: "33935403509"
+  result: PASS
+  checks:
+    npm_ci: PASS
+    audit_high: PASS
+    lint: PASS
+    typecheck: PASS
+    test: PASS
+    build: PASS
 
 blocked_tasks: []
 
@@ -70,4 +83,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Configure GitHub Actions CI workflow at this safe checkpoint, then release TASK-S03-003 (Bulk Submission status and bulk Application assignment transactional commands)"
+next_action: "Release TASK-S03-003 (Bulk Submission status and bulk Application assignment transactional commands); exact-SHA GitHub Actions CI is PASS for the integration checkpoint"

@@ -600,6 +600,7 @@ tasks:
       - "LOCAL_CLEAN_MIGRATION_REPLAY: PASS (unlinked disposable runtime on port 5642x, 0 residual containers, 4/4 SQL integration assertions passed)"
       - "SECRET_SCAN: PASS"
       - "SOURCE_INTEGRITY: PASS"
+      - "GITHUB_CI: PASS (workflow integration-ci; exact commit ec739e98dcf8492a920ef89ee9ff8c14b622a32a; run 33935403509; npm_ci, audit_high, lint, typecheck, test, build all PASS)"
   TASK-S03-003:
     title: "Bulk Submission status and bulk Application assignment transactional commands"
     slice: SLICE-03

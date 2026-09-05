@@ -611,3 +611,15 @@ implementation_evidence:
     local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers, 4/4 SQL integration assertions passed)"
     source_integrity: "PASS (recruitment_webapp git diff is empty)"
     secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
+    github_ci:
+      workflow: integration-ci
+      commit_sha: "ec739e98dcf8492a920ef89ee9ff8c14b622a32a"
+      run_id: "33935403509"
+      result: PASS
+      checks:
+        npm_ci: PASS
+        audit_high: PASS
+        lint: PASS
+        typecheck: PASS
+        test: PASS
+        build: PASS
