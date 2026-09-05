@@ -415,7 +415,7 @@ Therefore do not add from the sample repo:
 | `context-engineering` | SKIP | overlaps OMP + `context-budget` |
 | `context-mode` MCP | SKIP | environment-specific; OMP already manages context |
 | AgentMemory | SKIP | OMP has memory capabilities |
-| Code Review Graph | SKIP | not required; OMP LSP/search is first-pass, GitNexus is graph/impact engine |
+| Code Review Graph | STATICALLY CONFIGURED / RUNTIME UNPROVEN | Configuration present in `.omp/mcp.json`; runtime discovery/callability unproven; direct source/LSP stays localized default and GitNexus stays precise graph |
 | WarpGrep | SKIP | OMP search/LSP + GitNexus |
 | Morph edit | SKIP | OMP editing/LSP |
 | OpenSpec | SKIP | would create second spec authority |

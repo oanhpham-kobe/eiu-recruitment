@@ -663,3 +663,16 @@ implementation_evidence:
         typecheck: PASS
         build: PASS
         test: PASS
+  MCP-RUNTIME-001:
+    operation: MCP_RUNTIME_AVAILABILITY_DIAGNOSTIC
+    scope: READ_ONLY
+    configured: YES
+    configured_server: "supabase-dev"
+    project_scoped_static: YES
+    read_only_static: YES
+    discovered: NO
+    callable: NO
+    used: NO
+    runtime_gap: "supabase-dev MCP startup HTTP 401 Unauthorized (redacted)"
+    mcp_usage_receipt: NONE
+    fallback: "direct source/migration/test"
