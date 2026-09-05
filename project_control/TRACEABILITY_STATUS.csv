@@ -1,23 +1,23 @@
-Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,Commit,Notes
-,review_pack/command_registry.yaml,provision_candidate_identity,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,start_candidate_form_session,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,reserve_candidate_form_upload,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,stage_candidate_document_change,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,cancel_candidate_form_session,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,submit_candidate_submission,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,update_candidate_submission,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,open_submission,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,update_submission_by_hr,,,NOT_STARTED,,,Production trusted command; implementation status only.
+Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,Commit,Notes (Reconciled through SLICE-03 / Tasks S00-01 to S03-06)
+,review_pack/command_registry.yaml,provision_candidate_identity,web/src/lib/auth/candidate.ts,CAND-PROVISION-001,IMPLEMENTED,,a8a23f0,TASK-S01-003 candidate provisioning command
+,review_pack/command_registry.yaml,start_candidate_form_session,web/src/lib/commands/form-session.ts,FORM-SESSION-001,IMPLEMENTED,,c7b40af,TASK-S02-002 form session lifecycle
+,review_pack/command_registry.yaml,reserve_candidate_form_upload,supabase/migrations/20260905080000,STORAGE-RESERVATION-001,IMPLEMENTED,,75018b9,TASK-S02-003 private storage reservation
+,review_pack/command_registry.yaml,stage_candidate_document_change,supabase/migrations/20260905080000,STORAGE-RESERVATION-001,IMPLEMENTED,,75018b9,TASK-S02-003 document change staging
+,review_pack/command_registry.yaml,cancel_candidate_form_session,web/src/lib/commands/form-session.ts,FORM-SESSION-001,IMPLEMENTED,,c7b40af,TASK-S02-002 form session cancel
+,review_pack/command_registry.yaml,submit_candidate_submission,web/src/lib/commands/candidate-submission.ts,CANDIDATE-SUBMISSION-001,IMPLEMENTED,,0d86e53,TASK-S02-004 candidate submission
+,review_pack/command_registry.yaml,update_candidate_submission,web/src/lib/commands/candidate-submission.ts,CANDIDATE-SUBMISSION-001,IMPLEMENTED,,0d86e53,TASK-S02-004 candidate update
+,review_pack/command_registry.yaml,open_submission,supabase/migrations/20260905100000,INBOX-STATUS-001,IMPLEMENTED,,1f87028,TASK-S03-001 / S03-005 open submission
+,review_pack/command_registry.yaml,update_submission_by_hr,supabase/migrations/20260905110000,APP-LIFECYCLE-001,IMPLEMENTED,,84ed46f,TASK-S03-002 / S03-005 update HR note
 ,review_pack/command_registry.yaml,mutate_submission_documents_by_hr,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,set_submission_manual_status,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,recalculate_submission_status,,,NOT_STARTED,,,Production trusted command; implementation status only.
+,review_pack/command_registry.yaml,set_submission_manual_status,supabase/migrations/20260905100000,INBOX-STATUS-001,IMPLEMENTED,,1f87028,TASK-S03-001 manual status transition
+,review_pack/command_registry.yaml,recalculate_submission_status,supabase/migrations/20260905100000,INBOX-STATUS-001,IMPLEMENTED,,1f87028,TASK-S03-001 authoritative status recalc
 ,review_pack/command_registry.yaml,delete_unused_submission,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,delete_unused_candidate,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,set_candidate_active,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,create_or_update_application,,,NOT_STARTED,,,Production trusted command; implementation status only.
+,review_pack/command_registry.yaml,set_candidate_active,web/src/lib/commands/candidate-lifecycle.ts,APPLICATION-INBOX-BULK-001,IMPLEMENTED,,fa59ab2,TASK-S03-006 candidate lifecycle
+,review_pack/command_registry.yaml,create_or_update_application,web/src/lib/commands/application-lifecycle.ts,APP-LIFECYCLE-001,IMPLEMENTED,,84ed46f,TASK-S03-002 / S03-005 application create/update
 ,review_pack/command_registry.yaml,update_application_hr_owner,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,reactivate_application,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,delete_or_inactivate_application,,,NOT_STARTED,,,Production trusted command; implementation status only.
+,review_pack/command_registry.yaml,delete_or_inactivate_application,web/src/lib/commands/application-lifecycle.ts,APP-LIFECYCLE-001,IMPLEMENTED,,84ed46f,TASK-S03-002 application delete/inactivate
 ,review_pack/command_registry.yaml,create_next_interview_round,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,copy_interview_schedule,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,save_interview_schedule,,,NOT_STARTED,,,Production trusted command; implementation status only.
@@ -38,13 +38,13 @@ Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,C
 ,review_pack/command_registry.yaml,delete_or_inactivate_report,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,enqueue_email,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,delete_email_history,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,bulk_create_or_update_applications,,,NOT_STARTED,,,Production trusted command; implementation status only.
+,review_pack/command_registry.yaml,bulk_create_or_update_applications,web/src/lib/commands/application-lifecycle.ts,BULK-COMMANDS-001,IMPLEMENTED,,5042b70,TASK-S03-003 bulk application create/update
 ,review_pack/command_registry.yaml,bulk_enqueue_email,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,create_master_item,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,update_master_item,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,delete_or_inactivate_master_item,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,create_internal_user,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,provision_internal_identity_on_first_google_login,,,NOT_STARTED,,,Production trusted command; implementation status only.
+,review_pack/command_registry.yaml,provision_internal_identity_on_first_google_login,web/src/lib/auth/internal.ts,PROVISION-001,IMPLEMENTED,,e00eb20,TASK-S01-002 internal Google provisioning
 ,review_pack/command_registry.yaml,set_internal_user_active,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,assign_hr_role_with_defaults,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,remove_hr_role,,,NOT_STARTED,,,Production trusted command; implementation status only.
@@ -53,8 +53,8 @@ Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,C
 ,review_pack/command_registry.yaml,root_admin_break_glass_recovery,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,grant_hr_permission,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,revoke_hr_permission,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,bulk_set_candidate_active,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,bulk_set_latest_submission_manual_status,,,NOT_STARTED,,,Production trusted command; implementation status only.
+,review_pack/command_registry.yaml,bulk_set_candidate_active,web/src/lib/commands/candidate-lifecycle.ts,APPLICATION-INBOX-BULK-001,IMPLEMENTED,,fa59ab2,TASK-S03-006 bulk candidate lifecycle
+,review_pack/command_registry.yaml,bulk_set_latest_submission_manual_status,web/src/lib/commands/submission-status.ts,BULK-COMMANDS-001,IMPLEMENTED,,5042b70,TASK-S03-003 / S03-006 bulk manual status
 ,review_pack/command_registry.yaml,bulk_delete_or_inactivate_interviews,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,bulk_change_interview_schedule_status,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,bulk_change_report_status,,,NOT_STARTED,,,Production trusted command; implementation status only.

@@ -3,13 +3,13 @@
 ## Recommended Normal State
 
 - **Orca:** Worktrees / handoffs / multi-agent orchestration.
-- **OMP:** Primary coding runtime (PID 2056, OMP 18.1.6).
+- **OMP:** Primary coding runtime (OMP 18.x / process-scoped runtime).
 - **Project Skills:** `.agents/skills/` (13 active specialists + 2 release-only + 8 GitNexus on-demand skills).
 - **Native Review Skill:** `.omp/skills/eiu-code-review/`.
 - **Global Reuse Skills:** `~/.omp/agent/skills/` (verified native p100 copies for vercel-react-best-practices, composition-patterns, verification-before-completion).
 - **Context7 MCP:** Enabled (`https://mcp.context7.com/mcp/oauth`).
-- **Supabase MCP:** Non-production, project-scoped, read-only by default (`SUPABASE_PROJECT_REF`).
-- **Code Review Graph (CRG 2.3.8):** Broad discovery and diff triage graph; manually configured MCP with restricted tool allowlist; hooks, watch, and daemon OFF; explicit freshness gate before task evidence.
+- **Supabase MCP:** Diagnostic non-production read-only MCP server (`eiu-recruitment-dev`, ref `yrjclhdvjlekwvfeczcj`). Runtime status: `CONFIGURED: YES`, `DISCOVERED: YES`, `CALLABLE: NO` (HTTP 401 unauthenticated startup retained; direct repository migrations, schema, and SQL tests remain database authority).
+- **Code Review Graph (CRG 2.3.8):** Broad discovery and diff triage graph; runtime status: `CONFIGURED: YES`, `DISCOVERED: YES`, `CALLABLE: YES` (restricted tool allowlist); hooks, watch, and daemon OFF; explicit freshness gate required before task evidence; direct source remains authority.
 - **GitNexus (1.6.10):** Primary precise code relationship graph (caller/callee, blast radius, symbol tracing); project-pinned; `indexOnly: true`; explicit freshness gate before task evidence.
 - **Graphify (0.9.47):** Retained in isolated virtual environment (`uv tool`) as a future optional tool (`DORMANT`, `NOT_BASELINE_ACTIVE`); no baseline graph built; no MCP; no git hooks; no agent rules; live PostgreSQL introspection disabled. Retained solely to avoid destructive uninstall and for potential future heterogeneous architecture visualization.
 

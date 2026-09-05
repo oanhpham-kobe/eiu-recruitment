@@ -415,7 +415,7 @@ Therefore do not add from the sample repo:
 | `context-engineering` | SKIP | overlaps OMP + `context-budget` |
 | `context-mode` MCP | SKIP | environment-specific; OMP already manages context |
 | AgentMemory | SKIP | OMP has memory capabilities |
-| Code Review Graph | STATICALLY CONFIGURED / RUNTIME UNPROVEN | Configuration present in `.omp/mcp.json`; runtime discovery/callability unproven; direct source/LSP stays localized default and GitNexus stays precise graph |
+| Code Review Graph | CONFIGURED / DISCOVERED / CALLABLE (SELECTIVE) | Configured in `.omp/mcp.json`, discovered by OMP runtime, callable via restricted allowlist tools (`get_minimal_context_tool`, `list_graph_stats_tool`, `detect_changes_tool`, `get_review_context_tool`, `get_architecture_overview_tool`, `query_graph_tool`). Explicit freshness gate required before use; direct source/LSP remains default authority. |
 | WarpGrep | SKIP | OMP search/LSP + GitNexus |
 | Morph edit | SKIP | OMP editing/LSP |
 | OpenSpec | SKIP | would create second spec authority |

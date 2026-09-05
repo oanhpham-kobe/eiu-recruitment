@@ -45,13 +45,12 @@ The v1.16 independent-review P0 was source-synced in v1.17:
 **Status:** `RESOLVED`
 **Evidence:** Remote `origin` configured to `https://github.com/oanhpham-kobe/eiu-recruitment.git`, pushed, and published.
 ### SUPABASE-DEV-001 — Supabase DEV organization/project provisioning
-**Status:** `PENDING_AUTHORIZATION`  
-**Rule:** Authenticated with 0 projects; DEV organization/project to be provisioned during Slice00 Task 3.
+**Status:** `RESOLVED`
+**Evidence:** Dedicated DEV project `eiu-recruitment-dev` provisioned (`yrjclhdvjlekwvfeczcj`, ap-southeast-1) under organization `EIU Recruitment` (`clfvovtyobekjaevdewe`). Linked via `supabase link --project-ref yrjclhdvjlekwvfeczcj`. Local/remote migrations converge through `20260905150000`. Direct SQL/migrations remain database authority; Supabase MCP configured as read-only diagnostic (HTTP 401 unauthenticated startup retained).
 
 ### VERCEL-001 — Vercel project creation & linking
-**Status:** `PENDING_FRAMEWORK_ROOT`  
-**Rule:** Authenticated with 0 projects; Vercel project linking to occur when framework root is established.
-
+**Status:** `RESOLVED`
+**Evidence:** Vercel project `eiu-recruitment` (`prj_9t5t1RBtgZp4hOLuSgEYgv5nt8qY`) created and linked to root directory `web` under account `oanhpham-kobe`. Production deployment held per owner governance.
 ### SOURCE-PARITY-001 — Source Parity Gate Resolution
 **Status:** `RESOLVED`  
 **Evidence:** Reconciled `recruitment_webapp` from authoritative Full Handover v1.17 payload (`App_Tuyen_Dung_EIU_Full_Handover_v1.17.zip`, SHA256: `0b39c3615dd5b34e998527a1d273e0b846458c7bd4170be46c9bb670bfcb3498`). 87 of 87 current-required paths verified present and 100% hash-identical (0 missing, 0 hash mismatches, 0 unknown extras). Legacy v1.8 assets backed up to external snapshot `recruitment-source-pre-v1.17-sync-20260904-004739`.
@@ -60,5 +59,5 @@ The v1.16 independent-review P0 was source-synced in v1.17:
 
 **Type:** INTENTIONALLY_DEFERRED_IMPLEMENTATION_MECHANIC  
 **Affected:** Slice00 scaffold.  
-**Status:** `IN_PROGRESS_FOR_TASK_002`
-**Rule:** choose current supported/patched Node/Next.js/React/Supabase/test provider versions from official docs/advisories at execution time; pin lockfile and evidence. Do not infer from prototype or historical artifacts.
+**Status:** `RESOLVED`
+**Evidence:** Managed dependencies locked in `web/package.json` (`next@16.3.4`, `react@19.2.8`, `react-dom@19.2.8`, `typescript@6.0.3`, `@biomejs/biome@2.5.12`, `@supabase/ssr@^0.12.6`, `@supabase/supabase-js@^2.115.0`) with exact hashes locked in `web/package-lock.json`. Acceptance runtime locked to Node.js 24.20.0 LTS and npm 11.19.0.

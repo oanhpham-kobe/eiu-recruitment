@@ -1,4 +1,4 @@
-# Current Implementation State — SLICE-03 In Progress
+# Current Implementation State — SLICE-03 Complete / SLICE-04 Held for Governance Review
 
 Source Baseline: Full Handover v1.17
 Source SHA256: `0b39c3615dd5b34e998527a1d273e0b846458c7bd4170be46c9bb670bfcb3498`
@@ -11,19 +11,19 @@ Repository Root: `D:/orca/recruitment`
 Worktree: `D:/orca/recruitment/continuous-integration-20260905-01`
 Git: `INITIALIZED`
 Branch: `autonomy/continuous-integration-20260905-01`
-Integration HEAD: `ffb7038e939599fd5bbbcda1592c25619ca6a624` (exact-SHA Integration CI PASS: run `33943629020`)
-Last Completed Task: `TASK-S03-003`; MCP runtime governance maintenance `ffb7038e` exact-SHA CI verified
+Integration HEAD: `2e786e194afefdf5b2b7dc6548c6438c6574f552` (exact-SHA Integration CI PASS: run `33970358657`)
+Last Completed Task: `TASK-S03-006` (Candidate Account Lifecycle & Application Inbox Bulk Actions; SLICE-03 complete)
 Remote: `https://github.com/oanhpham-kobe/eiu-recruitment.git`
 
 SOURCE_ROOT: `recruitment_webapp`
 SOURCE_PARITY_GATE: `PASS` (87/87 current-required paths verified byte-identical; 0 missing, 0 mismatches, 0 unknown extras)
 Authority Path Resolution: All Full Handover paths resolve relative to `SOURCE_ROOT = recruitment_webapp`.
 
-Current Slice: `SLICE-03 HR Application Inbox / Application` (IN_PROGRESS)
-Current Task: `TASK-S03-004 preparation`
-Task Status: `ELIGIBLE_PROMPT_PREPARATION`
-Workflow Release Scope: `TASK-S03-004`
-Workflow Release Status: `MAINTENANCE_EXACT_CI_PASS`
+Current Slice: `SLICE-04 Interview Scheduling / Participants / Copy / Reactivate` (HELD_FOR_GOVERNANCE_REVIEW)
+Current Task: `TASK-S04-001` (HELD_FOR_GOVERNANCE_REVIEW)
+Task Status: `FRONTIER_AVAILABLE_HELD`
+Workflow Release Scope: `GOVERNANCE_MAINTENANCE_ONLY`
+Workflow Release Status: `HELD_FOR_GOVERNANCE_REVIEW`
 Identities & Tools:
 - GitHub: `oanhpham-kobe/eiu-recruitment` (PUBLIC; origin configured; branch `main` pushed; observed remote HEAD `7c7c2b378c24e64d95a4b25c1c709b2ee6b38756`)
 - Supabase: `authenticated` (account: `oanhpham-kobe` / `oanh.pham@eiu.edu.vn`)
@@ -40,7 +40,7 @@ Identities & Tools:
 - GitNexus: `1.6.10` (NOT_NEEDED for localized schema migration; MCP server normalized to `gitnexus-recruitment`)
 - Graphify: `0.9.47` (DORMANT; future optional discovery tool)
 
-NEXT_ACTION: Derive the canonical TASK-S03-004 HR Application Inbox contract and prepare its independently reviewed execution prompt.
+NEXT_ACTION: STOP and return governance maintenance package to owner for external review before starting SLICE-04.
 
-Current Task Status: SLICE-00, SLICE-01, SLICE-02 are COMPLETE. TASK-S03-001 through TASK-S03-003 are DONE. TASK-S03-004 is eligible for prompt preparation.
-Last Updated: `2026-09-05` (MCP runtime governance maintenance `ffb7038e` exact-SHA CI verified)
+Current Task Status: SLICE-00, SLICE-01, SLICE-02, SLICE-03 are COMPLETE. TASK-S04-001 is on the safe frontier but HELD for governance review.
+Last Updated: `2026-09-05` (Governance debt closure & control-plane consistency audit)
