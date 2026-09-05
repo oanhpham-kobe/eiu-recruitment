@@ -35,7 +35,7 @@ active_task:
 
 last_accepted_task:
   id: TASK-S02-005
-  commit: "e2a63af0421d9331f8931720915006e9b2917a51"
+  commit: "8693bc948a3bf6be5c8df59f1479fa6a9d7ebddb"
   evidence:
     - "PORTAL-FORM-001: VERIFIED"
     - "prompt_reviewed: PASS"
@@ -55,7 +55,8 @@ last_accepted_task:
     - "assertion_10_submissions_list_3_status_mapping: PASS"
     - "assertion_11_edit_submission_flow: PASS"
     - "assertion_12_accessibility_wcag_aa: PASS"
-    - "tests: PASS (171/171)"
+    - "assertion_13_excluded_sections_not_rendered: PASS"
+    - "tests: PASS (172/172)"
 
 blocked_tasks: []
 
