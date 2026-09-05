@@ -24,7 +24,16 @@ import {
   createOrUpdateApplication,
   type UpdateSubmissionByHrData,
 } from "@/lib/commands/application-lifecycle";
-
+import {
+  type BulkSetCandidateActiveData,
+  bulkSetCandidateActive,
+  type SetCandidateActiveData,
+  setCandidateActive,
+} from "@/lib/commands/candidate-lifecycle";
+import {
+  type BulkSetLatestSubmissionManualStatusData,
+  bulkSetLatestSubmissionManualStatus,
+} from "@/lib/commands/submission-status";
 export async function queryApplicationInbox(input: {
   filters: ApplicationInboxFilters;
   page: number;
@@ -236,6 +245,165 @@ export async function createApplicationAction(input: {
     return {
       success: false,
       error: "Không thể tạo hoặc cập nhật Application.",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
+export async function bulkSetLatestSubmissionManualStatusAction(input: {
+  items: Array<{
+    candidateId: string;
+    expectedLatestSubmissionId: string;
+    expectedVersion: number;
+  }>;
+  statusCode: "NEW" | "READ";
+}): Promise<
+  | { success: true; data: BulkSetLatestSubmissionManualStatusData }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    const result = await bulkSetLatestSubmissionManualStatus({
+      items: input.items,
+      statusCode: input.statusCode,
+      idempotencyKey: crypto.randomUUID(),
+    });
+
+    if (!result.success) {
+      if (result.error.code === "INTERNAL_ERROR") {
+        console.error(
+          "[application-inbox-actions] bulkSetLatestSubmissionManualStatusAction internal error:",
+          result.error.message,
+        );
+        return {
+          success: false,
+          error: "Không thể cập nhật trạng thái phiếu hàng loạt.",
+          code: "INTERNAL_ERROR",
+        };
+      }
+      return {
+        success: false,
+        error: result.error.message,
+        code: result.error.code,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    console.error(
+      "[application-inbox-actions] bulkSetLatestSubmissionManualStatusAction unexpected error:",
+      error,
+    );
+    return {
+      success: false,
+      error: "Không thể cập nhật trạng thái phiếu hàng loạt.",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
+export async function setCandidateActiveAction(input: {
+  candidateId: string;
+  active: boolean;
+  expectedVersion: number;
+}): Promise<
+  | { success: true; data: SetCandidateActiveData }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    const result = await setCandidateActive({
+      candidateId: input.candidateId,
+      active: input.active,
+      expectedVersion: input.expectedVersion,
+      idempotencyKey: crypto.randomUUID(),
+    });
+
+    if (!result.success) {
+      if (result.error.code === "INTERNAL_ERROR") {
+        console.error(
+          "[application-inbox-actions] setCandidateActiveAction internal error:",
+          result.error.message,
+        );
+        return {
+          success: false,
+          error: "Không thể cập nhật trạng thái tài khoản Candidate.",
+          code: "INTERNAL_ERROR",
+        };
+      }
+      return {
+        success: false,
+        error: result.error.message,
+        code: result.error.code,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    console.error(
+      "[application-inbox-actions] setCandidateActiveAction unexpected error:",
+      error,
+    );
+    return {
+      success: false,
+      error: "Không thể cập nhật trạng thái tài khoản Candidate.",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
+export async function bulkSetCandidateActiveAction(input: {
+  items: Array<{
+    candidateId: string;
+    expectedVersion: number;
+  }>;
+  active: boolean;
+}): Promise<
+  | { success: true; data: BulkSetCandidateActiveData }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    const result = await bulkSetCandidateActive({
+      items: input.items,
+      active: input.active,
+      idempotencyKey: crypto.randomUUID(),
+    });
+
+    if (!result.success) {
+      if (result.error.code === "INTERNAL_ERROR") {
+        console.error(
+          "[application-inbox-actions] bulkSetCandidateActiveAction internal error:",
+          result.error.message,
+        );
+        return {
+          success: false,
+          error: "Không thể cập nhật trạng thái tài khoản hàng loạt.",
+          code: "INTERNAL_ERROR",
+        };
+      }
+      return {
+        success: false,
+        error: result.error.message,
+        code: result.error.code,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    console.error(
+      "[application-inbox-actions] bulkSetCandidateActiveAction unexpected error:",
+      error,
+    );
+    return {
+      success: false,
+      error: "Không thể cập nhật trạng thái tài khoản hàng loạt.",
       code: "INTERNAL_ERROR",
     };
   }

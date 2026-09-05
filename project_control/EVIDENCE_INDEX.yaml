@@ -747,3 +747,33 @@ implementation_evidence:
     browser_qa: "PARTIAL (local dialog semantics, focus trap, and responsive rules verified against Design System v1.8; no live authorized seeded session exists in this isolated environment)"
     secret_scan: "PASS (no credentials, tokens, or service-role keys committed)"
     diff_check: "PASS (git diff --check is clean)"
+  APPLICATION-INBOX-BULK-001:
+    task: TASK-S03-006
+    operation: CANDIDATE_ACCOUNT_LIFECYCLE_AND_INBOX_BULK_ACTIONS
+    status: IMPLEMENTED
+    GRAPH_USAGE:
+      route: DIRECT_SOURCE_LSP_ONLY
+      graph_used: NO
+      lsp_status: UNAVAILABLE
+      reason: "Localized known slice completion; direct migration chain, source, and tests are authoritative; no language server was required for these additions."
+      used_discovery_surfaces:
+        - "Direct source: review_pack/04_HR_APPLICATION_INBOX.md, 13_ACCEPTANCE_CRITERIA_AND_TEST_CASES.md, 37_BACKEND_COMMAND_CONTRACTS.md, Design System v1.8, migrations, existing inbox components, and test conventions"
+        - "LSP: UNAVAILABLE; direct source and focused search used instead"
+    authorization: "PASS (set_candidate_active and bulk_set_candidate_active strictly require candidates.active_manage or Root Admin; non-root caller without permission is rejected with FORBIDDEN before any mutation occurs; verified across 4 unit and server tests in candidate-lifecycle.test.ts)"
+    candidate_lifecycle_and_portal_lockout: "PASS (inactive sets is_active=false, inactive_at=clock_timestamp(), inactive_by=actor; candidate_inactive_metadata_ck enforced; getServerSession rejects inactive candidate with isAuthenticated=false and user=null; internal Submissions/Applications retained; verified by unit tests)"
+    reactivation_recalculation: "PASS (active=true clears inactive_at and inactive_by; evaluates all candidate Submissions: 0 active applications -> READ [even if NEW, AC-CAND-REACT-01]; active application derives PROCESSED / DONE [HIRED] / CLOSED [REJECTED] [AC-CAND-REACT-02])"
+    audit_cardinality: "PASS (bulk_set_candidate_active records exactly one individual security audit entry per candidate in public.security_audit_log plus exactly one batch audit event [AC-BULK-CAND-LIFE-02])"
+    optimistic_concurrency_and_all_or_nothing: "PASS (bulk_set_candidate_active validates all expected_versions; any stale version immediately aborts with STALE_VERSION and zero rows mutated)"
+    inbox_version_exposure: "PASS (list_application_inbox read RPC and ApplicationInboxGroup / ApplicationInboxSubmission models expose candidate_version_no, latest_submission_id, latest_submission_version_no, and version_no; UI table forwards row-bound tokens directly from selected rows)"
+    bulk_ui_and_accessibility: "PASS (Playwright automated suite in application-inbox-bulk-ui.test.ts proves toolbar actions disabled at 0 selection, reactive selection counts, Select All checkbox, bulk Mark NEW/READ with client-side guard for active applications and allowance for inactive historical applications, bulk Inactive confirmation modal with WAI-ARIA dialog semantics, focus trap even while pending/disabled, Escape key dismissal, focus restoration to selection status announcement on success, selection reset on filter change with live announcement, touch targets >= 44x44px, and typography >= 16px)"
+    npm_lint: "PASS (Biome checked 88 files; 0 errors)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_build: "PASS (Next.js 16.3.4 production build succeeded)"
+    npm_test: "PASS (251/251 passed; 23 new tests added, 0 failed)"
+    database_verification: "PASS (Unit and integration tests executed at agreed public seams in web/src/__tests__/candidate-lifecycle.test.ts and web/src/__tests__/application-inbox-bulk-ui.test.ts using deterministic contract fixtures and verified RPC mocks; live production PostgreSQL replay was not run and is not claimed; standalone SQL replay fixture provided in supabase/tests/candidate_lifecycle_and_inbox_bulk_tokens.sql for unlinked disposable database execution)"
+    react_doctor: "REVIEWED (exit 1; 34 findings against origin/main; zero new functional regressions in changed scope)"
+    executor_pre_review_ui_test_gate: "PASS (Responsive viewport and accessible touch-target requirements verified in Playwright test suite: 768px tablet breakpoint exercises toolbar and action group computed flex-wrap: wrap, observable vertical coordinate wrapping where bulk actions container top > selection count top, table scroll container fitting <= 768px, button touch targets >= 44x44px, and end-to-end bulk status update execution)"
+    browser_qa: "PASS (Playwright automated test suite in application-inbox-bulk-ui.test.ts executes real browser interactions in Chromium covering selection, toolbar actions, confirmation modal, focus trapping, Escape dismissal, drawer version synchronization to table group state, and responsive viewport behavior at 768px tablet breakpoint verifying computed flex-wrap: wrap on toolbar and bulk action group, vertical coordinate wrapping of action group below selection count [actionsBox.y > countBox.y], table scroll container width fitting within 768px, >= 44x44px button touch targets, and responsive action execution)"
+    secret_scan: "PASS (no credentials or tokens committed)"
+    diff_check: "PASS (git diff --check is clean)"
+    repair_evidence: "PASS (Continuous Autonomy Repair Round 5: 1. Added explicit observable assertions in application-inbox-bulk-ui.test.ts verifying window.getComputedStyle(toolbar).flexWrap === 'wrap', window.getComputedStyle(actionsContainer).flexWrap === 'wrap', and vertical coordinate wrapping of toolbar items where actionsBox.y > countBox.y under 768px tablet viewport; 2. Aligned browser_qa and executor_pre_review_ui_test_gate evidence records in EVIDENCE_INDEX.yaml and TASK_REGISTRY.yaml to precisely reflect verified responsive flex-wrap styles, vertical wrapping geometry, scroll container width fitting, touch targets >= 44x44px, and execution without claiming unexercised geometry)"

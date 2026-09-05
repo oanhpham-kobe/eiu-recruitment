@@ -28,6 +28,7 @@ const candidateOneLatest: ApplicationInboxSubmission = {
   hrNote: "Đã liên hệ",
   submittedAt: "2026-09-02T09:00:00.000Z",
   hasApplication: false,
+  versionNo: 1,
 };
 
 const candidateOneHistorical: ApplicationInboxSubmission = {
@@ -183,6 +184,9 @@ test("Application Inbox Root Admin bypasses submissions.view and receives only m
       candidateId: "candidate-1",
       email: "an@example.com",
       isCandidateActive: true,
+      candidateVersionNo: 1,
+      latestSubmissionId: "submission-2",
+      latestSubmissionVersionNo: 1,
       submissions: [
         {
           submissionId: "submission-2",
@@ -195,6 +199,7 @@ test("Application Inbox Root Admin bypasses submissions.view and receives only m
           hrNote: null,
           submittedAt: "2026-09-02T09:00:00.000Z",
           hasApplication: false,
+          versionNo: 1,
         },
       ],
     },
@@ -326,6 +331,32 @@ test("Application Inbox clears an initial server error after a successful refetc
     page: 1,
     pageCount: 1,
   });
+});
+test("Application Inbox reducer updates group versions and submission fields on submission_updated", () => {
+  const loadedGroups = projectApplicationInboxGroups([candidateOneHistorical]);
+  assert.equal(loadedGroups[0].latestSubmissionVersionNo, 1);
+  assert.equal(loadedGroups[0].submissions[0].status, "NEW");
+  assert.equal(loadedGroups[0].submissions[0].versionNo, 1);
+
+  const updated = reduceApplicationInboxReadState(
+    { inbox: { groups: loadedGroups, page: 1, pageCount: 1 } },
+    {
+      type: "submission_updated",
+      submissionId: "submission-1",
+      hrNote: "Updated HR Note via drawer",
+      versionNo: 2,
+      status: "READ",
+      hasApplication: false,
+    },
+  );
+
+  assert.equal(updated.inbox.groups[0].latestSubmissionVersionNo, 2);
+  assert.equal(updated.inbox.groups[0].submissions[0].versionNo, 2);
+  assert.equal(updated.inbox.groups[0].submissions[0].status, "READ");
+  assert.equal(
+    updated.inbox.groups[0].submissions[0].hrNote,
+    "Updated HR Note via drawer",
+  );
 });
 
 test("PII filter model supports observable groups and reset restores results", () => {

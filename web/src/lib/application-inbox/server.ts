@@ -28,6 +28,7 @@ export class ApplicationInboxReadError extends Error {
 
 interface InboxRow {
   submission_id: unknown;
+  submission_version_no?: unknown;
   candidate_id: unknown;
   status_code: unknown;
   full_name: unknown;
@@ -38,6 +39,9 @@ interface InboxRow {
   submitted_at: unknown;
   email: unknown;
   is_candidate_active: unknown;
+  candidate_version_no?: unknown;
+  latest_submission_id?: unknown;
+  latest_submission_version_no?: unknown;
   has_application: unknown;
   total_count: unknown;
 }
@@ -125,6 +129,9 @@ function mapInboxRow(row: InboxRow): {
   submission: ApplicationInboxSubmission;
   email: string;
   isActive: boolean;
+  candidateVersionNo: number;
+  latestSubmissionId: string;
+  latestSubmissionVersionNo: number;
 } | null {
   if (
     typeof row.email !== "string" ||
@@ -134,6 +141,22 @@ function mapInboxRow(row: InboxRow): {
     typeof row.submitted_at !== "string"
   )
     return null;
+
+  const versionNo =
+    typeof row.submission_version_no === "number"
+      ? row.submission_version_no
+      : 1;
+  const candidateVersionNo =
+    typeof row.candidate_version_no === "number" ? row.candidate_version_no : 1;
+  const latestSubmissionId =
+    typeof row.latest_submission_id === "string"
+      ? row.latest_submission_id
+      : row.submission_id;
+  const latestSubmissionVersionNo =
+    typeof row.latest_submission_version_no === "number"
+      ? row.latest_submission_version_no
+      : versionNo;
+
   return {
     submission: {
       submissionId: row.submission_id,
@@ -150,9 +173,13 @@ function mapInboxRow(row: InboxRow): {
       hrNote: typeof row.hr_note === "string" ? row.hr_note : null,
       submittedAt: row.submitted_at,
       hasApplication: row.has_application === true,
+      versionNo,
     },
     email: row.email,
     isActive: row.is_candidate_active === true,
+    candidateVersionNo,
+    latestSubmissionId,
+    latestSubmissionVersionNo,
   };
 }
 
@@ -217,7 +244,16 @@ export async function loadApplicationInbox(
   const totalCount =
     typeof rows[0]?.total_count === "number" ? rows[0].total_count : 0;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
-  const details = new Map<string, { email: string; isActive: boolean }>();
+  const details = new Map<
+    string,
+    {
+      email: string;
+      isActive: boolean;
+      candidateVersionNo: number;
+      latestSubmissionId: string;
+      latestSubmissionVersionNo: number;
+    }
+  >();
   const submissions = rows.map(mapInboxRow).filter(
     (
       value,
@@ -225,22 +261,38 @@ export async function loadApplicationInbox(
       submission: ApplicationInboxSubmission;
       email: string;
       isActive: boolean;
+      candidateVersionNo: number;
+      latestSubmissionId: string;
+      latestSubmissionVersionNo: number;
     } => value !== null,
   );
   for (const row of submissions)
     details.set(row.submission.candidateId, {
       email: row.email,
       isActive: row.isActive,
+      candidateVersionNo: row.candidateVersionNo,
+      latestSubmissionId: row.latestSubmissionId,
+      latestSubmissionVersionNo: row.latestSubmissionVersionNo,
     });
 
   return {
     groups: projectApplicationInboxGroups(
       submissions.map((row) => row.submission),
-    ).map((group) => ({
-      ...group,
-      email: details.get(group.candidateId)?.email ?? "",
-      isCandidateActive: details.get(group.candidateId)?.isActive ?? false,
-    })),
+    ).map((group) => {
+      const candidateDetails = details.get(group.candidateId);
+      return {
+        ...group,
+        email: candidateDetails?.email ?? "",
+        isCandidateActive: candidateDetails?.isActive ?? false,
+        candidateVersionNo:
+          candidateDetails?.candidateVersionNo ?? group.candidateVersionNo,
+        latestSubmissionId:
+          candidateDetails?.latestSubmissionId ?? group.latestSubmissionId,
+        latestSubmissionVersionNo:
+          candidateDetails?.latestSubmissionVersionNo ??
+          group.latestSubmissionVersionNo,
+      };
+    }),
     page: Math.min(requestedPage, pageCount),
     pageCount,
   };

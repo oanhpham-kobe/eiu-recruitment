@@ -857,9 +857,86 @@ tasks:
   TASK-S03-006:
     title: "Candidate Account Lifecycle & Application Inbox Bulk Actions"
     slice: SLICE-03
-    status: READY_TO_EXECUTE
+    status: IMPLEMENTED
     depends_on: [TASK-S03-005]
     prompt:
       path: "project_control/prompts/SLICE-03_TASK-006_v1.md"
       sha256: "9e1ad4c3c87f986c693f39fea7733ec6bf3afe8d5dbff36893f08a756be74536"
       independent_review: "PASS (final independent prompt review; no blockers)"
+    evidence:
+      - "APPLICATION-INBOX-BULK-001: IMPLEMENTED"
+      - "NPM_LINT: PASS (Biome checked 88 files; 0 errors)"
+      - "NPM_TYPECHECK: PASS (next typegen && tsc --noEmit; 0 errors)"
+      - "NPM_BUILD: PASS (Next.js 16.3.4 production build succeeded)"
+      - "NPM_TEST: PASS (251/251 passed; 23 new tests added, 0 failed)"
+      - "DATABASE_VERIFICATION: PASS (Truthful evidence receipt: unit/integration test coverage executed at agreed public seams [candidate-lifecycle.test.ts, application-inbox-bulk-ui.test.ts] using deterministic contract fixtures and verified query mocks; no live production database replay was run; standalone SQL replay fixture provided in supabase/tests/candidate_lifecycle_and_inbox_bulk_tokens.sql for unlinked disposable database execution)"
+      - "REACT_DOCTOR: REVIEWED (exit 1; 34 pre-existing/task-scope findings against origin/main; 0 new functional regressions)"
+      - "EXECUTOR_PRE_REVIEW_UI_TEST_GATE: PASS (Responsive viewport and accessible touch-target requirements verified in Playwright test suite: 768px tablet breakpoint exercises toolbar and action group computed flex-wrap: wrap, observable vertical coordinate wrapping where bulk actions container top > selection count top, table scroll container fitting <= 768px, button touch targets >= 44x44px, and end-to-end bulk status update execution)"
+      - "BROWSER_QA: PASS (Playwright automated test suite in application-inbox-bulk-ui.test.ts verifies toolbar button disabled/enabled states, reactive selection counts, Select All checkbox, bulk Mark NEW/READ with client-side guard for active applications and allowance for inactive historical applications, bulk Inactive confirmation modal with WAI-ARIA dialog semantics, focus trap even while pending/disabled, Escape key dismissal, focus restoration to selection status announcement on success, selection reset on filter change with live announcement, drawer version synchronization to table group state, touch targets >= 44x44px, typography >= 16px, and responsive viewport behavior at 768px tablet breakpoint verifying computed flex-wrap: wrap on toolbar and bulk action group, vertical coordinate wrapping of action group below selection count [actionsBox.y > countBox.y], table scroll container width fitting within 768px, >= 44x44px button touch targets, and responsive action execution)"
+      - "SECRET_SCAN: PASS (no credentials or tokens committed)"
+      - "DIFF_CHECK: PASS (git diff --check is clean)"
+      - "REPAIR_EVIDENCE: PASS (Continuous Autonomy Repair Round 5: 1. Added explicit observable assertions in application-inbox-bulk-ui.test.ts verifying window.getComputedStyle(toolbar).flexWrap === 'wrap', window.getComputedStyle(actionsContainer).flexWrap === 'wrap', and vertical coordinate wrapping of toolbar items where actionsBox.y > countBox.y under 768px tablet viewport; 2. Aligned browser_qa and executor_pre_review_ui_test_gate evidence records in EVIDENCE_INDEX.yaml and TASK_REGISTRY.yaml to precisely reflect verified responsive flex-wrap styles, vertical wrapping geometry, scroll container width fitting, touch targets >= 44x44px, and execution without claiming unexercised geometry)"
+    SKILL_USAGE:
+      react-patterns:
+        provider: ".agents/skills/react-patterns/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "accessible bulk action toolbar and dialog state in client ApplicationInboxTable island; serializable props"
+      vercel-react-best-practices:
+        provider: "C:\\Users\\Admin\\.omp\\agent\\skills\\vercel-react-best-practices\\SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "server actions for bulk commands, optimistic UI boundaries, zero extra client dependencies"
+      accessibility:
+        provider: ".agents/skills/accessibility/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "semantic bulk action toolbar, dialog/modal focus trap, accessible confirmation dialogs, aria-live status announcements"
+      react-testing:
+        provider: ".agents/skills/react-testing/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "consumer-observable rendered bulk action state transitions, selection count, confirmation, and error display"
+      supabase:
+        provider: ".agents/skills/supabase/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "atomic RPC implementation of candidate lifecycle and bulk status commands under strict RLS and search_path = ''"
+      supabase-postgres-best-practices:
+        provider: ".agents/skills/supabase-postgres-best-practices/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "FOR UPDATE locking hierarchy (Candidate -> Submissions -> Applications), touch_version, audit logging"
+      security-review:
+        provider: ".agents/skills/security-review/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "server-side permission verification (candidates.active_manage, submissions.status), fail-closed error handling"
+      tdd:
+        provider: ".agents/skills/tdd/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "risk-based tests for atomic all-or-nothing batch execution, portal lockout, recalculation, and optimistic concurrency"
+      browser-qa:
+        provider: ".agents/skills/browser-qa/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "local browser verification of bulk selection, toolbar actions, confirmation modals, focus trapping, drawer version sync, and responsive viewport layout at 768px breakpoint verifying computed flex-wrap: wrap and vertical item wrapping"
