@@ -109,6 +109,14 @@ Use:
 
 If tasks touch the same files, schema objects, migrations, or shared contract, serialize ownership or explicitly coordinate the merge boundary.
 
+## Autonomy & Parallel Coordination Authority
+
+For autonomous execution, scheduling, dual-lane eligibility, worker lifecycle, and integration flows, the single authoritative policies are:
+- `project_control/AUTONOMY_PARALLEL_GOVERNANCE.md` (scheduler, auto-advance, parallel gate, and lifecycle authority)
+- `project_control/AUTONOMY_RUN_STATE.yaml` (single live runtime state authority)
+- `project_control/TASK_REGISTRY.yaml` & `SLICE_REGISTRY.yaml` (task DAG structure and slice completion authority)
+
+All coordinators and agents must adhere to the ONE_FACT_ONE_AUTHORITY principle: derived or summary documents cannot override these canonical surfaces.
 ---
 
 # 4. OMP-Native Project Layout

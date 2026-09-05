@@ -3,11 +3,10 @@ run_id: 20260905-01
 mode: LOCAL_AUTONOMOUS_CONTINUOUS
 status: ACTIVE
 
-current_governance_review:
+governance_consolidation:
   status: READY_FOR_OWNER_REVIEW
-  target_commit: PENDING_GOVERNANCE_COMMIT
-
 autonomy_policy_activation:
+  policy_path: project_control/AUTONOMY_PARALLEL_GOVERNANCE.md
   auto_advance: PENDING_OWNER_REVIEW
   parallel_scheduler: PENDING_OWNER_REVIEW
   max_active_implementation_tasks: 1
@@ -24,7 +23,8 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_checkpoint: "2f1525787f2a4cb5ec8c5ffa949b5f1f5d410a9e"
+  last_verified_application_checkpoint: "2e786e194afefdf5b2b7dc6548c6438c6574f552"
+  last_verified_application_ci_run: "33970358657"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -87,7 +87,7 @@ governance_hotfix:
   ci_result: PASS
   skill_execution_receipt_contract: PASS
   graph_usage_receipt_contract: PASS
-governance_maintenance:
+historical_mcp_governance_maintenance:
   commit: "ffb7038e939599fd5bbbcda1592c25619ca6a624"
   ci_run_id: "33943629020"
   ci_result: PASS

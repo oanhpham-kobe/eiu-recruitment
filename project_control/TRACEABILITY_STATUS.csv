@@ -1,4 +1,4 @@
-Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,Commit,Notes (Reconciled through SLICE-03 / Tasks S00-01 to S03-06)
+Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,Commit,Notes (DERIVED / NON-AUTHORITATIVE / REPORTING ONLY — Reconciled through SLICE-03)
 ,review_pack/command_registry.yaml,provision_candidate_identity,web/src/lib/auth/candidate.ts,CAND-PROVISION-001,IMPLEMENTED,,a8a23f0,TASK-S01-003 candidate provisioning command
 ,review_pack/command_registry.yaml,start_candidate_form_session,web/src/lib/commands/form-session.ts,FORM-SESSION-001,IMPLEMENTED,,c7b40af,TASK-S02-002 form session lifecycle
 ,review_pack/command_registry.yaml,reserve_candidate_form_upload,supabase/migrations/20260905080000,STORAGE-RESERVATION-001,IMPLEMENTED,,75018b9,TASK-S02-003 private storage reservation

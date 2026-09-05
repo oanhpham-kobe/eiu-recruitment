@@ -944,3 +944,11 @@ tasks:
         applied: YES
         applied_to:
           - "local browser verification of bulk selection, toolbar actions, confirmation modals, focus trapping, drawer version sync, and responsive viewport layout at 768px breakpoint verifying computed flex-wrap: wrap and vertical item wrapping"
+
+  TASK-S04-001:
+    title: "Interview Round and Schedule schema migration, conflict locking, and participant data model"
+    slice: SLICE-04
+    status: PLANNED
+    depends_on: [TASK-S03-006]
+    execution_hold: "HELD_FOR_GOVERNANCE_REVIEW"
+    notes: "Frontier eligible on DAG; execution strictly held pending owner governance review."

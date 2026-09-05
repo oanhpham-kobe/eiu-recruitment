@@ -1,65 +1,94 @@
 # EIU Recruitment — Continuous Autonomy & Parallel Execution Governance
-## Document Version: 1.0 (PROPOSED / INACTIVE / PENDING OWNER REVIEW)
+## Document Version: 2.0 (PROPOSED / INACTIVE / PENDING OWNER REVIEW)
 ## Status: DRAFT_PENDING_OWNER_REVIEW (DO NOT ACTIVATE BEFORE OWNER SIGNOFF)
 
 ---
 
-## 1. Activation Hold & Governance Overrides
+## 1. Governance Topology & Authority Boundaries (ONE_FACT_ONE_AUTHORITY)
+
+Every project fact has exactly one canonical storage authority. Secondary files may reference, summarize, or derive views, but cannot maintain competing runtime copies:
+
+1. **Product / Business Authority (`recruitment_webapp/`):**
+   Sole authority for business logic, permissions, domain models, invariants, acceptance criteria, and Design System v1.8. Governance never alters these.
+2. **Global Router & Invariants (`AGENTS.md` & `.omp/RULES.md`):**
+   Portable router defining role split, security invariants, skill routing, and pointers to autonomy policies. Does not duplicate detailed scheduling logic.
+3. **Autonomy & Scheduling Authority (`project_control/AUTONOMY_PARALLEL_GOVERNANCE.md`):**
+   Sole authority for auto-advance, worker lifecycle, dual-lane scheduler, parallel eligibility, task isolation, and serial integration. No second scheduler policy file may exist.
+4. **Live Runtime State Authority (`project_control/AUTONOMY_RUN_STATE.yaml`):**
+   Sole live authority for run status, activation flags, active workers, bounded settled worker history, execution hold, frontier, stop gate, and verified CI checkpoints.
+5. **DAG Structure & Task State (`project_control/TASK_REGISTRY.yaml` & `SLICE_REGISTRY.yaml`):**
+   Authority for task dependencies, DAG definitions, slice completion, and materialized task status (`PLANNED`, `READY`, `IN_PROGRESS`, `REVIEW`, `DONE`, `BLOCKED`, `SUPERSEDED`, `CANCELLED`). Does not own live workers or active lanes.
+6. **Evidence Index (`project_control/EVIDENCE_INDEX.yaml`):**
+   Immutable index of compact verification receipts (exact SHA, test/review/CI links, policy gates). Does not duplicate full narrative or live state.
+7. **Derived Reporting Surfaces (`project_control/CURRENT_STATE.md` & `TRACEABILITY_STATUS.csv`):**
+   Strictly derived and non-authoritative reporting snapshots. Never used for scheduling, dispatch, or authorization.
+8. **Active Gap Register (`project_control/OPEN_GAPS.md`):**
+   Register for active unresolved gaps only. Historical resolutions are collapsed into references.
+
+### Governance Extension Rule (Growth Control)
+Before creating any new control-plane or governance document:
+1. Verify if the concern belongs to an existing authority listed above. If so, update that existing file.
+2. Create a new governance file only if it represents a fundamentally new authority domain and existing files would become incoherent if overloaded.
+3. A newly observed failure mode must result in repairing existing policies, updating the dynamic validator, or adding a regression test—never creating another policy layer.
+
+---
+
+## 2. Activation Hold & Governance Overrides
 
 Until explicit owner authorization activates this policy:
 
 ```yaml
-GOVERNANCE_MAINTENANCE:
-  status: IN_PROGRESS
+governance_maintenance:
+  status: READY_FOR_OWNER_REVIEW
 
-AUTONOMY_POLICY_ACTIVATION:
+autonomy_policy_activation:
+  policy_path: project_control/AUTONOMY_PARALLEL_GOVERNANCE.md
   auto_advance: PENDING_OWNER_REVIEW
   parallel_scheduler: PENDING_OWNER_REVIEW
   max_active_implementation_tasks: 1
 
-SLICE_04_EXECUTION:
+slice_04_execution:
   status: HELD_FOR_GOVERNANCE_REVIEW
+  rule: "Frontier includes TASK-S04-001 for planning visibility only. Execution, worktree creation, prompt authoring, and executor launch are explicitly HELD until owner reviews governance."
 ```
 
-- **Activation Override:** This activation hold explicitly overrides any prior auto-advance or continuous continuation instruction.
-- **Safe Frontier Visibility:** The presence of `TASK-S04-001` in the computed safe frontier does **not** authorize starting it, creating its worktree, authoring its execution prompt, launching its executor, or merging it during this governance maintenance cycle.
+- **Activation Override:** This activation hold overrides any auto-advance or continuous execution instruction.
+- **Frontier Independence:** Frontier visibility of `TASK-S04-001` does **not** authorize starting it, creating worktrees, authoring prompts, or launching executors during this maintenance cycle.
 
 ---
 
-## 2. Auto-Advance Policy (Future Rule — Currently Inactive)
+## 3. Auto-Advance Policy (Future Rule — Currently Inactive)
 
-### 2.1 Auto-Advance Invariant
+### 3.1 Auto-Advance Invariant
 When explicitly enabled by the owner:
 ```text
 IF:
   run.status == ACTIVE
   AND stop_gate == null
   AND safe_frontier.eligible_tasks is non-empty
-  AND auto_advance_policy == ENABLED
+  AND autonomy_policy_activation.auto_advance == ENABLED
 
 THEN:
-  Coordinator MUST automatically advance to the earliest eligible task on the safe frontier.
+  Coordinator MUST advance to the earliest eligible task on the safe frontier.
 ```
-- Merely computing, persisting, or reporting the frontier does **not** satisfy auto-advance.
-- Auto-advance requires actively transitioning the task through its formal lifecycle stages.
+- Computing, persisting, or reporting the frontier does **not** satisfy auto-advance. Auto-advance requires active progression through formal lifecycle stages.
 
-### 2.2 Task Lifecycle Stages
-To prevent ambiguous execution claims, each task must transition through distinct, observable states:
+### 3.2 Observable Task Lifecycle Stages
 1. `FRONTIER_AVAILABLE`: Task dependencies are satisfied; task is recognized on the computed safe frontier.
-2. `TASK_MATERIALIZED`: Task contract is derived from canonical sources; prompt file is authored.
+2. `TASK_MATERIALIZED`: Task contract derived from canonical sources; prompt authored.
 3. `PROMPT_REVIEWING`: Independent prompt review is running.
 4. `TASK_READY`: Prompt passed independent review with zero blockers.
-5. `TASK_STARTED`: Dedicated task branch and isolated worktree are created.
-6. `EXECUTOR_RUNNING`: Writing executor is actively implementing the approved prompt scope.
-7. `IMPLEMENTATION_REVIEWING`: Pre-review gate passed; independent read-only reviewer is evaluating the task SHA.
-8. `TASK_ACCEPTED`: Independent review passed; task commit is verified.
-9. `TASK_INTEGRATED`: Task commit is merged into the authorized integration branch.
-10. `CI_VERIFIED`: Exact merge SHA is pushed to remote origin and verified on GitHub Actions CI.
+5. `TASK_STARTED`: Dedicated task branch and isolated worktree created.
+6. `EXECUTOR_RUNNING`: Writing executor is implementing approved scope.
+7. `IMPLEMENTATION_REVIEWING`: Pre-review gate passed; independent reviewer evaluating exact task SHA.
+8. `TASK_ACCEPTED`: Independent review passed; task commit verified.
+9. `TASK_INTEGRATED`: Task commit merged into authorized integration branch.
+10. `CI_VERIFIED`: Exact merge SHA pushed and verified on GitHub Actions CI.
 
 *Rule:* Never state "continuing autonomously" when only `FRONTIER_AVAILABLE` is true.
 
-### 2.3 Informational Boundaries vs True Stop Conditions
-Once activated, normal lifecycle completions are **informational only** and must not pause execution:
+### 3.3 Informational Boundaries vs True Stop Conditions
+Once auto-advance is activated, normal lifecycle completions are **informational only** and do not pause execution:
 - Task completed or executor settled normally.
 - Prompt passed independent review.
 - Implementation passed independent review.
@@ -71,7 +100,7 @@ Once activated, normal lifecycle completions are **informational only** and must
 **True Stop Conditions Only:**
 The coordinator must STOP and seek owner instructions only when:
 1. A genuine owner/business/product/UX decision is required.
-2. Current authorization does not permit the necessary operation (e.g. review cap exhausted without scoped exception).
+2. Current authorization boundary is reached (e.g. review cap exhausted without scoped exception).
 3. A production, main-branch, or destructive external operation would be required.
 4. Safe dependency frontier is genuinely empty or blocked with no eligible tasks.
 5. A safety, security, privacy, or authorization invariant cannot be preserved.
@@ -80,23 +109,23 @@ The coordinator must STOP and seek owner instructions only when:
 
 ---
 
-## 3. Active Worker State Visibility & Registry
+## 4. Active Worker Model & Visibility
 
-To support future concurrent execution lanes cleanly, the coordinator maintains durable worker visibility in `AUTONOMY_RUN_STATE.yaml`:
+`active_workers` in `project_control/AUTONOMY_RUN_STATE.yaml` is the sole concurrency authority.
 
 ```yaml
-ACTIVE_WORKERS:
-  - task_id: string         # e.g. TASK-S04-001
+active_workers:
+  - task_id: string          # e.g. TASK-S04-001
     lane: "LANE_A" | "LANE_B"
     role: "EXECUTOR" | "REVIEWER"
-    branch: string          # e.g. oanhpham-kobe/TASK-S04-001-...
-    worktree: string        # filesystem path to isolated worktree
+    branch: string           # e.g. oanhpham-kobe/TASK-S04-001-...
+    worktree: string         # filesystem path to isolated worktree
     exact_sha: string | null # checked-out or reviewed commit SHA
     state: "STARTING" | "RUNNING" | "WAITING" | "REVIEWING" | "SETTLED" | "BLOCKED"
-    started_at: string      # ISO timestamp
+    started_at: string       # ISO timestamp
     last_observed_at: string # ISO timestamp
 
-WORKER_SETTLED_HISTORY:
+worker_settled_history:
   - task_id: string
     lane: "LANE_A" | "LANE_B"
     role: "EXECUTOR" | "REVIEWER"
@@ -105,29 +134,36 @@ WORKER_SETTLED_HISTORY:
     settled_at: string
 ```
 
-### Worker Invariants
+### Worker Invariants & Retention
 - **One Writer Per Worktree:** Exactly one writing executor may operate in an implementation worktree. Never allow two executors to write to the same worktree.
 - **No Duplicate Workers:** Exactly one executor per active task.
-- **Reviewer Independence:** Reviewers are strictly read-only and independently executed in separate processes.
+- **Reviewer Independence:** Reviewers are strictly read-only and execute independently in separate processes.
 - **Settlement Persistence:** Terminal idle appearance alone does not mean a worker has ceased to exist; state must be explicitly tracked.
 - **Normal Settlement:** Worker process exit after successful task completion is normal and does not halt the autonomy loop.
+- **Bounded Retention Rule:** `worker_settled_history` retains only the last 10 settled worker operations (operational debug window). Permanent task completion evidence belongs in `EVIDENCE_INDEX.yaml`.
+- **Legacy Compatibility Pointers:** `active_task`, `current_task`, and `current_slice` are summary/compatibility pointers only. They must never overwrite multi-worker state or serve as concurrency authority.
 
 ---
 
-## 4. Dual-Lane Execution Policy (Up to 2 Tasks)
+## 5. Dual-Lane Execution Policy (Up to 2 Tasks)
 
-- **Capacity ceiling:** `MAX_ACTIVE_IMPLEMENTATION_TASKS = 2`.
-- **Default state:** `PARALLEL_SCHEDULER_ENABLED = false` (currently disabled pending owner review).
-- **Conservative scheduling:** The coordinator must **never** force a second task merely to fill capacity. If only one safe task exists, run one lane.
-- **Lane B Admission:** Lane B may only be launched when the candidate task independently passes the **Parallel Eligibility Gate**.
+- **Capacity ceiling:** `max_active_implementation_tasks = 2`.
+- **Activation:** Permitted only when `autonomy_policy_activation.parallel_scheduler == ENABLED` and `max_active_implementation_tasks == 2`.
+- **Conservative scheduling:** The coordinator must **never** force two tasks merely to fill capacity. If only one safe task exists, run one lane.
+- **Scheduling Algorithm:**
+  1. Pick earliest safe eligible task A on frontier $\rightarrow$ dispatch to Lane A.
+  2. If capacity remains, evaluate candidate task B from frontier.
+  3. Execute Parallel Eligibility Gate (A $\leftrightarrow$ B).
+  4. If PASS: dispatch B to Lane B. If FAIL: serialize.
+- **Lane Refill:** When a lane frees up (task accepted, worker settled), check for a new candidate B on the current frontier, evaluate compatibility against the remaining active task, and launch B only if the gate passes.
 
 ---
 
-## 5. Parallel Eligibility Policy & Gate
+## 6. Parallel Eligibility Policy & Gate
 
 Before scheduling two tasks concurrently (Task A and Task B):
 1. **DAG Precondition:** Both tasks must independently belong to the safe dependency frontier (`depends_on` completely satisfied). The absence of a direct dependency edge is necessary, but **not sufficient**.
-2. **Eligibility Verification:** The coordinator must evaluate the 5-point parallel eligibility checklist and persist an audit receipt in `EVIDENCE_INDEX.yaml`:
+2. **Eligibility Verification:** The coordinator evaluates the 5-point parallel eligibility checklist and persists an audit receipt in `EVIDENCE_INDEX.yaml`:
 
 ```yaml
 PARALLEL_ELIGIBILITY:
@@ -176,18 +212,18 @@ PARALLEL_ELIGIBILITY:
 
 ---
 
-## 6. Graph Policy for Parallelization
+## 7. Graph Policy for Parallelization
 
 - Graph intelligence (CRG and GitNexus) is **mandatory** when evaluating parallel eligibility between concurrent candidate tasks, but **not required mechanically** for trivial or localized single-task implementation.
-- **CRG:** Used for broad module boundary discovery and changed-area diff triage.
-- **GitNexus:** Used for precise symbol caller/callee tracing, import analysis, and blast-radius overlap checks.
+- **CRG:** Broad module boundary discovery and changed-area diff triage.
+- **GitNexus:** Precise symbol caller/callee tracing, import analysis, and blast-radius overlap checks.
 - **Freshness Rule:** A graph query is invalid as evidence unless refreshed against the current integration HEAD.
 - **Database Authority:** Repository migrations, declarative schemas, and SQL test replays always outrank graph representations for database structure and RLS behavior.
 - **Graph Fallback:** If graph tooling is unavailable, fall back to direct dependency, source, and write-surface inspection; if independence is not overwhelmingly obvious, **default to SERIALIZE**. Never fabricate graph use.
 
 ---
 
-## 7. Do-Not-Parallel Rules (Mandatory Serialization)
+## 8. Do-Not-Parallel Rules (Mandatory Serialization)
 
 Two candidate tasks MUST serialize if ANY of the following apply:
 1. A direct dependency exists between them.
@@ -208,7 +244,7 @@ If **both** tasks introduce structural database migrations: **SERIALIZE**. Overr
 
 ---
 
-## 8. Worktree & Worker Isolation Policy
+## 9. Worktree & Worker Isolation Policy
 
 In dual-lane mode:
 ```text
@@ -222,9 +258,9 @@ Lane B: Task B  ->  Branch B  ->  Worktree B  ->  Executor B
 
 ---
 
-## 9. Serial Integration & Reconciliation Policy
+## 10. Serial Integration & Exact-SHA Reconciliation Policy
 
-While implementation and review may run in parallel across lanes, **integration into the integration branch MUST remain strictly serialized** under a single coordinator writer:
+While implementation and review may run concurrently across lanes, **integration into the integration branch MUST remain strictly serialized** under a single coordinator writer:
 
 ```text
 Task A passes Review
@@ -236,29 +272,30 @@ Push integration branch checkpoint
 Verify exact-SHA GitHub Actions CI passes
   ↓
 Before integrating Task B:
-  Rebase / compare Task B against NEW integration HEAD (containing Task A)
-  Verify Task B assumptions and contracts remain unbroken
+  Compare Task B to NEW integration HEAD without mutating Task B.
   ↓
-If compatible:
-  Merge Task B -> Push -> Verify exact-SHA CI
-If reconciliation required:
+Case 1: If reviewed Task B SHA and content remain unchanged and fully compatible:
+  Integrate Task B -> Push -> Verify exact-SHA CI.
+Case 2: If ANY change, rebase, cherry-pick, conflict repair, or reconciliation is required:
   Do NOT resolve substantive logic on integration branch!
   Reconcile inside Worktree B -> Amend Task B commit -> Rerun affected tests ->
   Obtain fresh independent review on exact amended SHA -> Integrate only after PASS.
 ```
 
+*Rule:* Never inherit review approval across a changed commit SHA.
+
 ---
 
-## 10. Lane Failure Isolation Policy
+## 11. Lane Failure Isolation Policy
 
 - A failure or review rejection in Lane A does **not** automatically halt Lane B, provided Lane B remains independent and uncoupled.
 - Freeze Lane B only if Lane A's defect affects a shared contract, schema, security invariant, or assumption on which Lane B materially depends.
 
 ---
 
-## 11. UI Pre-Review & Behavioral Verification Policy
+## 12. UI Pre-Review & Behavioral Verification Policy
 
-Before releasing an independent reviewer for material UI tasks:
+Before releasing an independent reviewer for material interactive UI work:
 - The executor must execute and persist a pre-review acceptance gate covering the applicable Design System v1.8 checklist, accessibility standards, and behavioral tests.
 - **Verification Rule:** `SOURCE_PRESENCE != INTERACTION_PROOF`. Asserting that a handler function, state setter, ref, or DOM attribute exists in source code does **not** prove interaction.
 - Rendered behavior claims (e.g. focus transitions, dialog traps, dropdown dismissals, reactive selection updates) require executed rendered assertions in a real browser engine (Playwright / Chromium).
@@ -267,7 +304,7 @@ Before releasing an independent reviewer for material UI tasks:
 
 ---
 
-## 12. Technical Decision Principle for Planners & Reviewers
+## 13. Technical Decision Principle for Planners & Reviewers
 
 - When canonical project sources and the current implementation provide sufficient information to resolve a technical defect, planners, reviewers, and executors must make the **safest minimal canonical technical decision directly**.
 - Do **not** defer internally resolvable technical choices to the project owner merely because multiple implementation options exist.

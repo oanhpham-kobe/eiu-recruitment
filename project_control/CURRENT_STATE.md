@@ -1,18 +1,16 @@
 # Current Implementation State — SLICE-03 Complete / SLICE-04 Held for Governance Review
 
-Source Baseline: Full Handover v1.17
-Source SHA256: `0b39c3615dd5b34e998527a1d273e0b846458c7bd4170be46c9bb670bfcb3498`
-Business Status: `Business Logic Core v1.2 = FROZEN`
-Technical Status: `Technical Architecture v1.17 = TECHNICAL SPECIFICATION FROZEN`
-Design Version: `Design System v1.8 CURRENT / REVIEWED`
-Implementation Gate: `INDEPENDENT IMPLEMENTATION REVIEW REQUIRED`
+> **DERIVED / NON-AUTHORITATIVE REPORTING SNAPSHOT ONLY**
+> DO NOT USE FOR SCHEDULING, DISPATCH, OR AUTHORIZATION.
+> Authoritative runtime state: `project_control/AUTONOMY_RUN_STATE.yaml`.
+> Authoritative DAG structure: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.
 
-Repository Root: `D:/orca/recruitment`
-Worktree: `D:/orca/recruitment/continuous-integration-20260905-01`
-Git: `INITIALIZED`
-Branch: `autonomy/continuous-integration-20260905-01`
-Integration HEAD: `2e786e194afefdf5b2b7dc6548c6438c6574f552` (exact-SHA Integration CI PASS: run `33970358657`)
-Last Completed Task: `TASK-S03-006` (Candidate Account Lifecycle & Application Inbox Bulk Actions; SLICE-03 complete)
+Last Completed Slice: `SLICE-03 HR Application Inbox / Application` (DONE)
+Next Eligible Slice: `SLICE-04 Interview Scheduling / Participants / Copy / Reactivate` (NOT_STARTED)
+Next Eligible Task: `TASK-S04-001` (HELD_FOR_GOVERNANCE_REVIEW)
+Execution Status: `HELD_FOR_GOVERNANCE_REVIEW`
+Last Application Integration CI Checkpoint: `2e786e194afefdf5b2b7dc6548c6438c6574f552` (GitHub Actions Run `33970358657`: PASS)
+Observed Main Branch HEAD: `eb64e381d9d86825b194df525ceed8e4930f30c2`
 Remote: `https://github.com/oanhpham-kobe/eiu-recruitment.git`
 
 SOURCE_ROOT: `recruitment_webapp`
