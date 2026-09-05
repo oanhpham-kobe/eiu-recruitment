@@ -665,14 +665,14 @@ tasks:
   TASK-S03-004:
     title: "HR Application Inbox grouped table UI shell, search/filter, and candidate expandable rows"
     slice: SLICE-03
-    status: REVIEW
+    status: DONE
     prompt:
       path: "project_control/prompts/SLICE-03_TASK-004_v1.md"
       sha256: "d84f5802a7b15911578de27ca070154822117fc1be0edf30c1c742d9c6dffa7d"
       independent_review: "PASS (final independent prompt review; no blockers)"
     implementation:
-      commit: "d456e1c"
-      independent_review: "FINAL_REPAIR_REVIEW_AUTHORIZED (one task-specific exception; previous review attempt 2/2 found two blockers)"
+      commit: "8eea72a4b9c34143560ee4687555972b066903cd"
+      independent_review: "PASS (REVIEW #3; task-specific final repair/re-review exception consumed; no blockers)"
     depends_on: [TASK-S03-003]
     skill_usage:
       react-patterns:
@@ -738,7 +738,7 @@ tasks:
           - "Fresh local browser fixture inspection confirmed 48px Select column, 48×44px checkbox label target, native control names, and table accessibility tree; no authorized seeded page session exists"
     evidence:
       - "EVIDENCE_INDEX: APPLICATION-INBOX-001"
-      - "INDEPENDENT_REVIEW: REPAIR_ONLY (reported blockers addressed; no second independent review run)"
+      - "INDEPENDENT_REVIEW #3: PASS (final SHA 8eea72a4b9c34143560ee4687555972b066903cd; no blockers)"
       - "FOCUSED_TEST: PASS (7/7; browser fixture drives Enter on A then Space on B and proves the production expansion transition fails when broken)"
       - "EXECUTOR_PRE_REVIEW_UI_TEST_GATE: PASS (direct v1.8 design/accessibility check plus fresh local Playwright verifies real 48×44px checkbox label target/focus and Enter A → expanded A, Space B → expanded B/A collapsed; no authorized seeded page session)"
       - "DIRECT_RPC_REPLAY: PASS (two rollback-isolated runs)"

@@ -26,22 +26,22 @@ authorization:
 
 active_task:
   id: TASK-S03-004
-  status: FINAL_REPAIR_AUTHORIZED
+  status: ACCEPTED_PENDING_EXACT_CI
   task_branch: oanhpham-kobe/TASK-S03-004-application-inbox
   task_worktree: "D:/orca/recruitment/TASK-S03-004-application-inbox"
   executor_prompt: "project_control/prompts/SLICE-03_TASK-004_v1.md"
   executor_prompt_sha256: "d84f5802a7b15911578de27ca070154822117fc1be0edf30c1c742d9c6dffa7d"
-  reviewer_status: "PROMPT: PASS; IMPLEMENTATION: FINAL REPAIR/REVIEW AUTHORIZED"
+  reviewer_status: "PROMPT: PASS; IMPLEMENTATION REVIEW #3: PASS; FINAL REPAIR/REVIEW EXCEPTION CONSUMED"
 last_accepted_task:
-  id: TASK-S03-003
-  commit: "dbf474bce94464abe29be242ec3a91cc05687a96"
+  id: TASK-S03-004
+  commit: "8eea72a4b9c34143560ee4687555972b066903cd"
   evidence:
-    - "BULK-COMMANDS-001: VERIFIED"
+    - "APPLICATION-INBOX-001: VERIFIED"
     - "prompt_reviewed: PASS"
-    - "implementation_reviewed: PASS (final independent direct-source review)"
-    - "skill_usage: VERIFIED (supabase, supabase-postgres-best-practices, security-review, tdd)"
-    - "local_clean_migration_replay: PASS"
-    - "github_ci: VERIFIED (Integration CI exact SHA dbf474bce94464abe29be242ec3a91cc05687a96; run 33943117083)"
+    - "executor_pre_review_ui_test_gate: PASS"
+    - "implementation_reviewed: PASS (independent REVIEW #3)"
+    - "skill_usage: VERIFIED (accessibility, react-testing, browser-qa receipts)"
+    - "github_ci: PENDING exact accepted integration checkpoint"
 github_ci:
   workflow: "Integration CI"
   commit_sha: "dbf474bce94464abe29be242ec3a91cc05687a96"
@@ -53,6 +53,10 @@ github_ci:
     typecheck: PASS
     build: PASS
     test: PASS
+pending_github_ci:
+  required_for_task: TASK-S03-004
+  workflow: "Integration CI"
+  reason: "accepted integration checkpoint must be pushed and matched to its exact SHA"
 governance_hotfix:
   commit: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
   ci_run_id: "33936480169"
@@ -69,14 +73,13 @@ blocked_tasks: []
 
 safe_frontier:
   eligible_tasks:
-    - TASK-S03-004
-  skipped_due_to_dependency:
     - TASK-S03-005
+  skipped_due_to_dependency: []
 
 stop_state:
   stop_gate: null
   reason: null
   observed_evidence:
-    - "User explicitly authorized one additional TASK-S03-004 repair/re-review cycle only."
+    - "User-authorized final TASK-S03-004 repair/re-review exception was consumed by independent REVIEW #3 PASS."
 
-next_action: "Repair the two named S03-004 review blockers in the existing task worktree; amend its sole task commit; then run exactly one final independent review."
+next_action: "Push the accepted TASK-S03-004 integration checkpoint, verify exact-SHA GitHub Actions CI, then execute TASK-S03-005."

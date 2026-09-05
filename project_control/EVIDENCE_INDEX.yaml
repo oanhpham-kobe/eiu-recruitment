@@ -690,7 +690,7 @@ implementation_evidence:
   APPLICATION-INBOX-001:
     task: TASK-S03-004
     operation: GROUPED_CANDIDATE_INBOX_ACCESSIBLE_READ_MODEL
-    status: REVIEW
+    status: ACCEPTED
     GRAPH_USAGE:
       route: DIRECT_SOURCE_LSP_ONLY
       graph_used: NO
@@ -711,7 +711,7 @@ implementation_evidence:
     npm_typecheck: "PASS (next typegen && tsc --noEmit)"
     npm_build: "PASS (Next.js 16.3.4 production build)"
     npm_test: "PASS (212/212)"
-    independent_review: "REPAIR_ONLY (addressed the reported blockers; no second independent review run)"
+    independent_review: "PASS (REVIEW #3 independently verified final amended task SHA 8eea72a4b9c34143560ee4687555972b066903cd; no blockers)"
     react_doctor: "REVIEWED (exit 1; score 46/100, 17 findings in changed scope, including ApplicationInboxTable size plus existing candidate/login findings; no unrelated remediation)"
     browser_qa: "PARTIAL (fresh local Playwright fixture and accessibility-tree inspection prove 48px Select column, 48×44px checkbox target, native names, and Enter/Space expansion; no authorized seeded page session exists)"
     secret_scan: "PASS (changed-task credential-assignment regex found no matches)"
