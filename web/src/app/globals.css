@@ -384,3 +384,330 @@ textarea {
   color: var(--ink-600);
   margin-bottom: var(--space-6);
 }
+
+/* Application Inbox: grouped Candidate table */
+.application-inbox {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.application-inbox__header h2 {
+  margin: 0;
+  color: var(--eiu-blue);
+  font-size: var(--font-size-page-title);
+  line-height: 1.2;
+}
+
+.application-inbox__header p {
+  margin: var(--space-2) 0 0;
+  color: var(--ink-600);
+}
+
+.application-inbox__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.application-inbox__toolbar label,
+.application-inbox__search {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--ink-950);
+  font-weight: var(--font-weight-semibold);
+}
+
+.application-inbox__toolbar input,
+.application-inbox__toolbar select {
+  min-height: var(--height-control);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink-950);
+  padding: 0 var(--space-3);
+}
+
+.application-inbox__search {
+  min-width: min(100%, 320px);
+  flex: 1 1 320px;
+}
+
+.application-inbox__selection {
+  margin: 0;
+  color: var(--ink-600);
+}
+
+.application-inbox__table-scroll {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: inset -12px 0 12px -16px var(--ink-950);
+}
+
+.application-inbox__table {
+  width: 1560px;
+  min-width: 1560px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.application-inbox__table th,
+.application-inbox__table td {
+  overflow-wrap: normal;
+  word-break: normal;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  text-align: left;
+  white-space: normal;
+}
+
+.application-inbox__table th {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+  background: var(--eiu-cream);
+  color: var(--ink-950);
+  font-weight: var(--font-weight-semibold);
+}
+
+.application-inbox__col--select {
+  width: 48px;
+}
+
+.application-inbox__col--name {
+  width: 220px;
+}
+
+.application-inbox__col--email {
+  width: 250px;
+}
+
+.application-inbox__col--dateOfBirth {
+  width: 130px;
+}
+
+.application-inbox__col--gender {
+  width: 100px;
+}
+
+.application-inbox__col--phone {
+  width: 150px;
+}
+
+.application-inbox__col--status {
+  width: 150px;
+}
+
+.application-inbox__col--hrNote {
+  width: 420px;
+}
+
+.application-inbox__col--action {
+  width: 92px;
+}
+
+.application-inbox__table th:first-child,
+.application-inbox__table td:first-child {
+  position: sticky;
+  z-index: 2;
+  left: 0;
+  background: var(--surface);
+}
+
+.application-inbox__table th:first-child {
+  z-index: 5;
+  background: var(--eiu-cream);
+}
+
+.application-inbox__table th:nth-child(2),
+.application-inbox__table td:nth-child(2) {
+  position: sticky;
+  z-index: 2;
+  left: 48px;
+  background: var(--surface);
+  box-shadow: 8px 0 10px -12px var(--ink-950);
+}
+
+.application-inbox__table th:nth-child(2) {
+  z-index: 5;
+  background: var(--eiu-cream);
+}
+
+.application-inbox__child-row td {
+  background: var(--eiu-cream);
+}
+
+.application-inbox__child-row td:first-child,
+.application-inbox__child-row td:nth-child(2) {
+  background: var(--eiu-cream);
+}
+.application-inbox__parent-row--expandable {
+  cursor: pointer;
+}
+
+.application-inbox__parent-row--expandable:hover td {
+  background: var(--eiu-cream);
+}
+
+.application-inbox__parent-row--expandable:hover td:first-child,
+.application-inbox__parent-row--expandable:hover td:nth-child(2) {
+  background: var(--eiu-cream);
+}
+
+.application-inbox__expand-button {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  width: 100%;
+  min-height: 44px;
+  gap: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.application-inbox__expand-button small {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--ink-600);
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-regular);
+}
+
+.application-inbox__table td.application-inbox__select-cell {
+  padding: 0;
+  vertical-align: middle;
+}
+
+.application-inbox__selection-control {
+  display: grid;
+  inline-size: 48px;
+  min-block-size: 44px;
+  place-items: center;
+  cursor: pointer;
+}
+
+.application-inbox__table input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.status-badge,
+.candidate-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--badge-width-submission);
+  min-height: var(--badge-min-height);
+  padding: 0 10px;
+  border-radius: var(--radius-badge);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  text-align: center;
+}
+
+.status-badge--warning {
+  color: var(--status-warning-text);
+  background: var(--status-warning-bg);
+}
+
+.status-badge--info {
+  color: var(--status-info-text);
+  background: var(--status-info-bg);
+}
+
+.status-badge--followup {
+  color: var(--status-followup-text);
+  background: var(--status-followup-bg);
+}
+
+.status-badge--success {
+  color: var(--status-success-text);
+  background: var(--status-success-bg);
+}
+
+.status-badge--neutral {
+  color: var(--status-neutral-text);
+  background: var(--status-neutral-bg);
+}
+
+.candidate-status-badge {
+  min-width: var(--badge-width-candidate);
+  margin-top: var(--space-2);
+  color: var(--status-danger-text);
+  background: var(--status-danger-bg);
+}
+
+.application-inbox__child-label {
+  color: var(--ink-600);
+  font-weight: var(--font-weight-semibold);
+}
+
+.application-inbox__feedback {
+  margin: 0;
+  padding: var(--space-6);
+  color: var(--ink-600);
+  text-align: center;
+}
+
+.application-inbox__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: var(--space-3);
+}
+
+.btn-secondary {
+  min-height: var(--height-control);
+  border: 1px solid var(--eiu-blue);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--eiu-blue);
+  padding: 0 var(--space-4);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: var(--space-4);
+  }
+
+  .application-inbox__toolbar {
+    align-items: stretch;
+  }
+
+  .application-inbox__toolbar label,
+  .application-inbox__search,
+  .application-inbox__toolbar input,
+  .application-inbox__toolbar select,
+  .application-inbox__toolbar .btn-secondary {
+    width: 100%;
+  }
+
+  .application-inbox__pagination {
+    justify-content: space-between;
+  }
+}

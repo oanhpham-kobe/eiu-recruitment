@@ -674,6 +674,82 @@ tasks:
       commit: "d456e1c"
       independent_review: "FINAL_REPAIR_REVIEW_AUTHORIZED (one task-specific exception; previous review attempt 2/2 found two blockers)"
     depends_on: [TASK-S03-003]
+    skill_usage:
+      react-patterns:
+        provider: ".agents/skills/react-patterns/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Kept the read page server-rendered and reduced the client island’s refetch state to an explicit success/failure transition that clears stale initial errors"
+          - "Kept the browser fixture’s expandedCandidateId as local useState and exercised the production row component’s one-open transition"
+      vercel-react-best-practices:
+        provider: "C:\\Users\\Admin\\.omp\\agent\\skills\\vercel-react-best-practices\\SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Preserved the bounded server read model and serializable Candidate page while avoiding a client-side data or bundle expansion"
+          - "Extracted the existing rows into a browser-safe client module so the focused fixture does not pull the server action into its browser bundle"
+      accessibility:
+        provider: ".agents/skills/accessibility/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Kept the native expanded button as the keyboard control and rendered each historical row in nine aligned table cells without a colspan overlay"
+          - "Wrapped the compact native checkbox in a 48×44px label target; label clicks, input focus, and parent-row isolation are browser-verified"
+      react-testing:
+        provider: ".agents/skills/react-testing/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Replaced source-text assertions with rendered DOM state assertions for aria-expanded, one-open behavior, separate historical cells, and successful-refetch recovery"
+          - "Replaced the static no-op callback rendering check with Playwright Enter/Space interaction against a stateful fixture that imports the production rows"
+      supabase:
+        provider: ".agents/skills/supabase/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Changed the invoker RPC’s timestamptz date predicates to explicit Asia/Ho_Chi_Minh boundaries and directly replayed the production function without weakening RLS"
+      supabase-postgres-best-practices:
+        provider: "skill://supabase-postgres-best-practices"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Used explicit timestamp-with-time-zone calendar boundaries and an isolated rollback RPC replay for the database function change"
+      security-review:
+        provider: ".agents/skills/security-review/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Preserved the existing server authorization predicate, security-invoker function, RLS-visible reads, and no-service-role boundary while repairing the date filter"
+      browser-qa:
+        provider: ".agents/skills/browser-qa/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Ran read-only local desktop and narrow browser QA plus accessibility-tree inspection; no authorized seeded session existed for grouped PII-row interaction"
+          - "Fresh local browser fixture inspection confirmed 48px Select column, 48×44px checkbox label target, native control names, and table accessibility tree; no authorized seeded page session exists"
+    evidence:
+      - "EVIDENCE_INDEX: APPLICATION-INBOX-001"
+      - "INDEPENDENT_REVIEW: REPAIR_ONLY (reported blockers addressed; no second independent review run)"
+      - "FOCUSED_TEST: PASS (7/7; browser fixture drives Enter on A then Space on B and proves the production expansion transition fails when broken)"
+      - "EXECUTOR_PRE_REVIEW_UI_TEST_GATE: PASS (direct v1.8 design/accessibility check plus fresh local Playwright verifies real 48×44px checkbox label target/focus and Enter A → expanded A, Space B → expanded B/A collapsed; no authorized seeded page session)"
+      - "DIRECT_RPC_REPLAY: PASS (two rollback-isolated runs)"
+      - "NPM_LINT: PASS (Biome checked 77 files, no fixes)"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (212/212)"
+      - "REACT_DOCTOR: REVIEWED (exit 1; score 46/100 with 17 pre-existing/task-scope findings, including ApplicationInboxTable size)"
+      - "BROWSER_QA: PARTIAL (fresh local Playwright fixture covers grouped control geometry, keyboard expansion, and accessibility tree; authorized page data remains unavailable)"
+      - "SECRET_SCAN: PASS"
+      - "DIFF_CHECK: PASS"
   TASK-S03-005:
     title: "Submission Detail Drawer, HR Note editor, document preview, and Application creation flow"
     slice: SLICE-03
