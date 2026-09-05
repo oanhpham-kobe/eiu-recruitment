@@ -34,32 +34,49 @@ active_task:
   reviewer_status: null
 
 last_accepted_task:
-  id: TASK-S02-002
-  commit: "c7b40af818d051bae580d40f45f18e29b89da5bf"
+  id: TASK-S02-003
+  commit: "75018b9d3c841a361a0a4c2c95be2fbbdbb558f5"
   evidence:
-    - "FORM-SESSION-001: VERIFIED"
+    - "STORAGE-RESERVATION-001: VERIFIED"
     - "prompt_reviewed: PASS"
-    - "prompt_sha256: 5db2c4a1c0492835f83e522122de12e83826d95e9b29887f8767268e18342ba3"
-    - "executor_commit: c7b40af818d051bae580d40f45f18e29b89da5bf"
+    - "prompt_sha256: 469b32a95e10a453602b7f231e871c8bd0aa46885cdcc62060bfef3c79473ef8"
+    - "executor_commit: 75018b9d3c841a361a0a4c2c95be2fbbdbb558f5"
     - "implementation_reviewed: PASS"
-    - "assertion_1_unauthenticated_call: PASS"
-    - "assertion_2_inactive_candidate: PASS"
-    - "assertion_3_missing_privacy_notice: PASS"
-    - "assertion_4_new_submission_session: PASS"
-    - "assertion_5_edit_foreign_or_missing: PASS"
-    - "assertion_6_edit_non_new_submission: PASS"
-    - "assertion_7_expired_session: PASS"
-    - "assertion_8_cancellation_and_terminal_guard: PASS"
-    - "tests: PASS (109/109)"
-    - "local_clean_migration_replay: PASS"
+    - "assertion_1_unauthenticated: PASS"
+    - "assertion_2_user_inactive: PASS"
+    - "assertion_3_not_found: PASS"
+    - "assertion_4_form_session_expired: PASS"
+    - "assertion_5_invalid_state: PASS"
+    - "assertion_6_document_type_validation: PASS"
+    - "assertion_7_file_extension_whitelist: PASS"
+    - "assertion_8_file_size_limit_5mb: PASS"
+    - "assertion_9_idempotent_reservation: PASS"
+    - "assertion_10_signed_upload_url_derivation: PASS"
+    - "assertion_11_latency_buffer_in_durable_expiry: PASS"
+    - "assertion_12_real_ordering_cancel_early_cleanup_late_upload: PASS"
+    - "assertion_13_candidate_quarantine_read_denied: PASS"
+    - "assertion_14_candidate_cannot_self_attest_scan_clean: PASS"
+    - "assertion_15_authoritative_scan_evidence_required: PASS"
+    - "assertion_16_storage_rls_cancelled_session_denial: PASS"
+    - "assertion_17_storage_rls_no_overwrite: PASS"
+    - "assertion_18_staging_add: PASS"
+    - "assertion_19_staging_replace_delete_in_new_submission: PASS"
+    - "assertion_20_staging_unready_or_expired_reservation: PASS"
+    - "assertion_21_submit_plan_validation_requires_clean: PASS"
+    - "assertion_22_edit_session_submission_no_longer_new_denial: PASS"
+    - "assertion_23_competing_transition_concurrency_test: PASS"
+    - "assertion_24_two_worker_cleanup_exclusivity_test: PASS"
+    - "assertion_25_crash_after_claim_lease_recovery_test: PASS"
+    - "assertion_26_declarative_storage_bucket_helper: PASS"
+    - "tests: PASS (135/135)"
+    - "local_clean_migration_replay: PASS (12/12 SQL assertions)"
 
 blocked_tasks: []
 
 safe_frontier:
   eligible_tasks:
-    - TASK-S02-003
-  skipped_due_to_dependency:
     - TASK-S02-004
+  skipped_due_to_dependency:
     - TASK-S02-005
 
 stop_state:
@@ -67,4 +84,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Prepare and independently review task execution prompt for TASK-S02-003 (Private Storage reservation and upload signing protocol)"
+next_action: "Prepare and independently review task execution prompt for TASK-S02-004 (Candidate Submission transactional commands: submit and update)"
