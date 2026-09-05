@@ -546,8 +546,60 @@ tasks:
   TASK-S03-002:
     title: "Application creation, assignment, and lifecycle commands"
     slice: SLICE-03
-    status: PLANNED
+    status: DONE
     depends_on: [TASK-S03-001]
+    prompt: "project_control/prompts/SLICE-03_TASK-002_v1.md"
+    prompt_sha256: "b01d2986ca1c9a8a38de2afa603eafb311e309a052f214b0bda58fb5a2c5a286"
+    review_status: "PASS (IndependentReviewer)"
+    skill_usage:
+      supabase:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Application lifecycle RPC integration and server client binding in application-lifecycle commands"
+      supabase-postgres-best-practices:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Authoring create_or_update_application and delete_or_inactivate_application with deterministic lock hierarchy"
+          - "Structurally empty default round predicate (is_structurally_empty_default_round) with zero copy references"
+          - "search_path = '' and grant revocation on all RPC functions"
+      security-review:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Authorizing applications.create, applications.manage, applications.delete, submissions.edit"
+          - "Durable application identity uniqueness enforcement and inactive duplicate ALREADY_EXISTS_INACTIVE denial"
+          - "Candidate verified email and identity immutability in HR note updates"
+      tdd:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Risk-based unit and integration test suite covering AC-APP-CREATE-01, AC-APP-DUP-01, AC-APP-DEL-01, AC-APP-INACT-01, AC-APP-RECALC-01 & 02, AC-HR-NOTE-01"
+          - "Testing optimistic versioning STALE_VERSION and hierarchy validation"
+    evidence:
+      - "EVIDENCE_INDEX: APP-LIFECYCLE-001"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_LINT: PASS (69 files, 0 fixes)"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (197/197)"
+      - "ASSERTION_1_CREATE_DEFAULT_ROUND1: PASS"
+      - "ASSERTION_2_DURABLE_IDENTITY_UNIQUENESS: PASS"
+      - "ASSERTION_3_STRUCTURALLY_EMPTY_HARD_DELETE: PASS"
+      - "ASSERTION_4_USED_APPLICATION_INACTIVATION: PASS"
+      - "ASSERTION_5_STATUS_RECALCULATION_INTEGRATION: PASS"
+      - "ASSERTION_6_HR_NOTE_UPDATE_EMAIL_IMMUTABLE: PASS"
+      - "ASSERTION_7_STALE_VERSION_GUARD: PASS"
+      - "ASSERTION_8_FORBIDDEN_ACTOR_GUARD: PASS"
+      - "ASSERTION_9_HIERARCHY_VALIDATION_GUARD: PASS"
+      - "ASSERTION_10_STRUCTURALLY_EMPTY_PREDICATE_LOGIC: PASS"
+      - "LOCAL_CLEAN_MIGRATION_REPLAY: PASS (unlinked disposable runtime on port 5642x, 0 residual containers, 4/4 SQL integration assertions passed)"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
   TASK-S03-003:
     title: "Bulk Submission status and bulk Application assignment transactional commands"
     slice: SLICE-03

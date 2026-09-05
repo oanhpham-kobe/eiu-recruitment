@@ -557,3 +557,57 @@ implementation_evidence:
     local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers, 7/7 SQL integration assertions passed)"
     source_integrity: "PASS (recruitment_webapp git diff is empty)"
     secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
+  APP-LIFECYCLE-001:
+    task: TASK-S03-002
+    operation: APPLICATION_CREATION_ASSIGNMENT_AND_LIFECYCLE_COMMANDS
+    status: REVIEW
+    prompt: "project_control/prompts/SLICE-03_TASK-002_v1.md"
+    prompt_sha256: "b01d2986ca1c9a8a38de2afa603eafb311e309a052f214b0bda58fb5a2c5a286"
+    migration: "supabase/migrations/20260905110000_application_lifecycle_commands.sql"
+    skill_usage:
+      supabase:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Application lifecycle RPC integration and server client binding in application-lifecycle commands"
+      supabase-postgres-best-practices:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Authoring create_or_update_application and delete_or_inactivate_application with deterministic lock hierarchy"
+          - "Structurally empty default round predicate (is_structurally_empty_default_round) with zero copy references"
+          - "search_path = '' and grant revocation on all RPC functions"
+      security-review:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Authorizing applications.create, applications.manage, applications.delete, submissions.edit"
+          - "Durable application identity uniqueness enforcement and inactive duplicate ALREADY_EXISTS_INACTIVE denial"
+          - "Candidate verified email and identity immutability in HR note updates"
+      tdd:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Risk-based unit and integration test suite covering AC-APP-CREATE-01, AC-APP-DUP-01, AC-APP-DEL-01, AC-APP-INACT-01, AC-APP-RECALC-01 & 02, AC-HR-NOTE-01"
+          - "Testing optimistic versioning STALE_VERSION and hierarchy validation"
+    assertion_1_create_default_round1: "PASS (allocates default Round 1 with AVAILABLE and INTERVIEW_SCHEDULING)"
+    assertion_2_durable_identity_uniqueness: "PASS (active duplicate updates existing row with version bump; inactive duplicate returns ALREADY_EXISTS_INACTIVE)"
+    assertion_3_structurally_empty_hard_delete: "PASS (structurally empty default Round 1 performs hard delete of round and application)"
+    assertion_4_used_application_inactivation: "PASS (application with business usage inactivates application and child rounds)"
+    assertion_5_status_recalculation_integration: "PASS (application creation recalculates submission to PROCESSED; deletion recalculates back to READ)"
+    assertion_6_hr_note_update_email_immutable: "PASS (update_submission_by_hr edits only hr_note, bumps version, preserves candidate email)"
+    assertion_7_stale_version_guard: "PASS (version mismatch in update_submission_by_hr returns STALE_VERSION)"
+    assertion_8_forbidden_actor_guard: "PASS (unauthorized caller without required permissions rejected with FORBIDDEN)"
+    assertion_9_hierarchy_validation_guard: "PASS (mismatched department_team or position hierarchy rejected with INVALID_HIERARCHY)"
+    assertion_10_structurally_empty_predicate_logic: "PASS (predicate verifies zero participants, reports, documents, copy references, and upload reservations)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_lint: "PASS (biome check; 69 files, 0 fixes)"
+    npm_build: "PASS (Next.js production build succeeded in 4.8s)"
+    npm_test: "PASS (197/197 tests pass, 0 fail; 10/10 application lifecycle tests pass)"
+    local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers, 4/4 SQL integration assertions passed)"
+    source_integrity: "PASS (recruitment_webapp git diff is empty)"
+    secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
