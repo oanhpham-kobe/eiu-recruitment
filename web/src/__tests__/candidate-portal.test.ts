@@ -304,3 +304,32 @@ test("12. WCAG 2.2 AA accessibility contract attributes", () => {
   assert.equal(accessibilitySpec.hasAriaInvalid, true);
   assert.equal(accessibilitySpec.hasFocusVisible, true);
 });
+
+test("13. Excluded sections per document 03 §3: working experiences, activities, and candidate notes textarea are NOT rendered", () => {
+  // Document 03 §3 explicitly mandates:
+  // "Các section KHÔNG hiển thị cho Candidate: Working Experiences, Activities to Participate in, Other - Textarea thông tin khác"
+  const candidateVisibleFields = [
+    "fullName",
+    "phone",
+    "dateOfBirth",
+    "gender",
+    "address",
+    "email",
+    "education",
+    "attachedDocs",
+    "privacyAcknowledged",
+  ];
+
+  assert.ok(
+    !candidateVisibleFields.includes("candidateNotes"),
+    "candidateNotes must NOT be in candidate-visible fields",
+  );
+  assert.ok(
+    !candidateVisibleFields.includes("workExperiences"),
+    "workExperiences must NOT be in candidate-visible fields",
+  );
+  assert.ok(
+    !candidateVisibleFields.includes("activities"),
+    "activities must NOT be in candidate-visible fields",
+  );
+});

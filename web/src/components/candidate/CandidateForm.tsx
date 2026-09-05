@@ -16,7 +16,7 @@ export interface CandidateFormData {
   dateOfBirth: string;
   gender: string;
   address: string;
-  candidateNotes: string;
+  candidateNotes?: string | null;
   education: EducationItem[];
   attachedDocs: StagedDocumentItem[];
   privacyAcknowledged: boolean;
@@ -53,7 +53,7 @@ export function CandidateForm({
     dateOfBirth: initialData?.dateOfBirth ?? "",
     gender: initialData?.gender ?? "MALE",
     address: initialData?.address ?? "",
-    candidateNotes: initialData?.candidateNotes ?? "",
+    candidateNotes: initialData?.candidateNotes ?? null,
     education: initialData?.education ?? [],
     attachedDocs: initialData?.attachedDocs ?? [],
     privacyAcknowledged: mode === "EDIT_SUBMISSION",
@@ -337,24 +337,6 @@ export function CandidateForm({
                 {errors.address}
               </span>
             )}
-          </div>
-
-          {/* Candidate Notes */}
-          <div className="form-group full-width">
-            <label className="form-label" htmlFor="candidateNotes">
-              Ghi chú thêm / Candidate Notes
-            </label>
-            <textarea
-              id="candidateNotes"
-              name="candidateNotes"
-              className="form-textarea"
-              value={formData.candidateNotes}
-              onChange={(e) =>
-                handleFieldChange("candidateNotes", e.target.value)
-              }
-              placeholder="Thông tin bổ sung bạn muốn gửi đến Hội đồng tuyển dụng..."
-              disabled={submitting}
-            />
           </div>
         </div>
       </fieldset>

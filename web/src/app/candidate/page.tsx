@@ -135,7 +135,6 @@ export default function CandidatePortalPage() {
         dateOfBirth: "1995-05-15",
         gender: "MALE",
         address: "Thủ Dầu Một, Bình Dương",
-        candidateNotes: "",
       });
       setActiveTab("NEW_APPLICATION");
     }
