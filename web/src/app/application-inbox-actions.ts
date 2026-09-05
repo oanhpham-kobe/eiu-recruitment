@@ -5,10 +5,238 @@ import {
   type ApplicationInboxReadResult,
   loadApplicationInbox,
 } from "@/lib/application-inbox/server";
+import {
+  type AssignmentOptions,
+  isPreviewableDocument,
+  type SubmissionDetail,
+} from "@/lib/application-inbox/submission-detail-model";
+import {
+  DocumentNotPreviewableError,
+  generateDocumentSignedUrl,
+  loadAssignmentOptions,
+  loadSubmissionDetail,
+  SubmissionDetailAccessError,
+  SubmissionDetailNotFoundError,
+  saveSubmissionHrNote,
+} from "@/lib/application-inbox/submission-detail-server";
+import {
+  type CreateOrUpdateApplicationData,
+  createOrUpdateApplication,
+  type UpdateSubmissionByHrData,
+} from "@/lib/commands/application-lifecycle";
 
 export async function queryApplicationInbox(input: {
   filters: ApplicationInboxFilters;
   page: number;
 }): Promise<ApplicationInboxReadResult> {
   return loadApplicationInbox({ filters: input.filters, page: input.page });
+}
+
+export async function getSubmissionDetailAction(
+  submissionId: string,
+): Promise<
+  | { success: true; data: SubmissionDetail }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    const detail = await loadSubmissionDetail(submissionId);
+    return { success: true, data: detail };
+  } catch (error) {
+    if (error instanceof SubmissionDetailAccessError) {
+      return { success: false, error: error.message, code: "FORBIDDEN" };
+    }
+    if (error instanceof SubmissionDetailNotFoundError) {
+      return { success: false, error: error.message, code: "NOT_FOUND" };
+    }
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Không thể tải thông tin chi tiết phiếu ứng tuyển.",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
+export async function getDocumentSignedUrlAction(options: {
+  submissionId: string;
+  documentId: string;
+  logicalDocumentId: string;
+  mode: "preview" | "download";
+}): Promise<
+  | {
+      success: true;
+      signedUrl: string;
+      previewUrl?: string;
+      originalFilename: string;
+      mimeType: string;
+    }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    if (options.mode === "preview") {
+      const detail = await loadSubmissionDetail(options.submissionId);
+      const doc = detail.documents.find(
+        (d) => d.document_id === options.documentId,
+      );
+      if (!doc) {
+        throw new SubmissionDetailNotFoundError("Không tìm thấy tài liệu.");
+      }
+      if (!isPreviewableDocument(doc.mime_type)) {
+        throw new DocumentNotPreviewableError();
+      }
+      const previewUrl = `/api/documents/preview/${encodeURIComponent(options.documentId)}?submissionId=${encodeURIComponent(options.submissionId)}&logicalDocumentId=${encodeURIComponent(options.logicalDocumentId)}`;
+      return {
+        success: true,
+        signedUrl: previewUrl,
+        previewUrl,
+        originalFilename: doc.original_filename,
+        mimeType: doc.mime_type,
+      };
+    }
+
+    const result = await generateDocumentSignedUrl(options);
+    return {
+      success: true,
+      signedUrl: result.signedUrl,
+      originalFilename: result.originalFilename,
+      mimeType: result.mimeType,
+    };
+  } catch (error) {
+    if (error instanceof DocumentNotPreviewableError) {
+      return {
+        success: false,
+        error: error.message,
+        code: "NOT_PREVIEWABLE",
+      };
+    }
+    if (error instanceof SubmissionDetailAccessError) {
+      return { success: false, error: error.message, code: "FORBIDDEN" };
+    }
+    if (error instanceof SubmissionDetailNotFoundError) {
+      return { success: false, error: error.message, code: "NOT_FOUND" };
+    }
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Không thể lấy liên kết tải tài liệu.",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
+export async function getAssignmentOptionsAction(): Promise<
+  | { success: true; data: AssignmentOptions }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    const options = await loadAssignmentOptions();
+    return { success: true, data: options };
+  } catch (error) {
+    if (error instanceof SubmissionDetailAccessError) {
+      return { success: false, error: error.message, code: "FORBIDDEN" };
+    }
+    console.error(
+      "[application-inbox-actions] getAssignmentOptionsAction failed:",
+      error,
+    );
+    return {
+      success: false,
+      error: "Không thể tải danh sách chọn vị trí.",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
+export async function updateSubmissionHrNoteAction(input: {
+  submissionId: string;
+  hrNote: string | null;
+  expectedVersion: number;
+}): Promise<
+  | { success: true; data: UpdateSubmissionByHrData }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    const result = await saveSubmissionHrNote(
+      input.submissionId,
+      input.hrNote,
+      input.expectedVersion,
+    );
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error.message,
+        code: result.error.code,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Không thể cập nhật ghi chú HR.",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
+export async function createApplicationAction(input: {
+  submissionId: string;
+  unitId: string;
+  departmentTeamId?: string;
+  positionId: string;
+  hrOwnerId: string;
+  idempotencyKey?: string;
+  confirmDuplicate?: boolean;
+}): Promise<
+  | { success: true; data: CreateOrUpdateApplicationData }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    const result = await createOrUpdateApplication(input);
+
+    if (!result.success) {
+      if (result.error.code === "INTERNAL_ERROR") {
+        console.error(
+          "[application-inbox-actions] createApplicationAction internal command error:",
+          result.error.message,
+        );
+        return {
+          success: false,
+          error: "Không thể tạo hoặc cập nhật Application.",
+          code: "INTERNAL_ERROR",
+        };
+      }
+      return {
+        success: false,
+        error: result.error.message,
+        code: result.error.code,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    console.error(
+      "[application-inbox-actions] createApplicationAction unexpected error:",
+      error,
+    );
+    return {
+      success: false,
+      error: "Không thể tạo hoặc cập nhật Application.",
+      code: "INTERNAL_ERROR",
+    };
+  }
 }

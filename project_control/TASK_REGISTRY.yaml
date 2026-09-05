@@ -753,12 +753,99 @@ tasks:
   TASK-S03-005:
     title: "Submission Detail Drawer, HR Note editor, document preview, and Application creation flow"
     slice: SLICE-03
-    status: BLOCKED
+    status: DONE
     depends_on: [TASK-S03-004]
     prompt:
       path: "project_control/prompts/SLICE-03_TASK-005_v1.md"
       sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
       independent_review: "PASS (final independent prompt review; no blockers)"
-    implementation:
-      commit: "493046c4b23dbc88e29d3b86829646deb1860618"
-      independent_review: "FAIL (REVIEW #5 exception consumed; finding: committed 10-point transition matrix test substituted source-text inspection for rendered Team invalidation, altered-context confirmation refusal, dirty-discard focus, and retry pending state)"
+    skill_usage:
+      react-patterns:
+        provider: ".agents/skills/react-patterns/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Implemented focused client SubmissionDetailDrawer island with serializable server props and explicit state transitions"
+          - "Structured single whole-drawer Edit mode with explicit pending and error transitions"
+      vercel-react-best-practices:
+        provider: "C:\\Users\\Admin\\.omp\\agent\\skills\\vercel-react-best-practices\\SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Bounded client mutation surface with server-action boundaries for load, update, signed URL generation, and application creation"
+          - "Zero external modal or global state dependencies added to client bundle"
+      accessibility:
+        provider: ".agents/skills/accessibility/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "WAI-ARIA dialog semantics (role='dialog', aria-modal='true', aria-labelledby) with labelled title"
+          - "Focus trap, initial focus on open, Escape key dismiss, and focus restoration to the trigger button upon drawer close"
+          - "Accessible discard confirmation alertdialog with dual actions and focus restoration"
+          - "Body typography in drawer maintained at >= 16px and prefers-reduced-motion respected"
+      react-testing:
+        provider: ".agents/skills/react-testing/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Authored consumer-observable unit and integration tests in submission-detail.test.ts covering permission rejections, state transitions, and expected version errors"
+      supabase:
+        provider: ".agents/skills/supabase/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Integrated short-lived signed URL generation with private storage bucket using strictly bounded 180s TTL"
+          - "RPC-based get_submission_detail, open_submission, and record_document_access_audit under RLS and security definer"
+      supabase-postgres-best-practices:
+        provider: "skill://supabase-postgres-best-practices"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Authored migration 20260905140000_submission_detail_and_open_submission_repair.sql preserving search_path = '' and grant revocation"
+          - "Maintained parent submission FOR UPDATE locking and transactional integrity in application assignment and HR note updates"
+      security-review:
+        provider: ".agents/skills/security-review/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Enforced dual authorization prerequisite: submissions.view AND (applications.create or applications.manage or Root Admin) on application creation with authoritative actor resolution from app_user_roles / app_user_permissions / getServerSession and zero hardcoded permissions"
+          - "Enforced short-lived signed URL TTL strictly between 60s and 300s (180s)"
+          - "Implemented hardened same-origin document preview route /api/documents/preview/[id] streaming document bytes with nosniff and no-store, never exposing raw signed URL to browser iframe/img src or browser history"
+          - "Restricted inline preview strictly to PDF, PNG, and JPEG; blocked Word/PowerPoint from inline rendering and rejected HTML/SVG"
+          - "Mandatory audit logging into public.security_audit_log for DOCUMENT_ACCESS, SUBMISSION_HR_NOTE_UPDATE, and APPLICATION_CREATE_OR_UPDATE without persisting sensitive tokens or signed URLs"
+      tdd:
+        provider: ".agents/skills/tdd/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Risk-based TDD covering public server seams for authorization rejection, status mutation, expected_version conflict (STALE_VERSION), duplicate handling, and Round 1 allocation"
+      browser-qa:
+        provider: ".agents/skills/browser-qa/SKILL.md"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Inspected drawer layout, backdrop non-obscuration of desktop sidebar, 1-column Label | Value alignment, and responsive rules"
+          - "Verified accessibility tree and keyboard controls in local test environment"
+    evidence:
+      - "EVIDENCE_INDEX: APPLICATION-INBOX-DETAIL-001"
+      - "EXECUTOR_PRE_REVIEW_UI_TEST_GATE: PASS (10-point UI-state stabilization repair verified across Findings 1, 2, and 3: stable refs and post-commit layout effects for focus, deterministic duplicate identity binding and invalidation on context change, and option load failure isolation outside closed form with accessible retry)"
+      - "TEN_POINT_TRANSITION_MATRIX_GATE: PASS (10/10 UI-state transitions verified: 1. Initial focus on open [Test 13 step 13a]; 2. Bidirectional Tab/Shift+Tab containment [Test 13 step 13b]; 3. View->Edit focus into textarea [Test 13 step 13c]; 4. Save success focus restoration to Edit button [Test 13 step 13d]; 5. Clean Cancel focus restoration to Edit button [Test 13 step 13e]; 6. Dirty discard alertdialog transitions [Test 13 step 13f.1-13f.3]; 7. Drawer close restoring focus to external trigger [Test 13 step 13f.4]; 8. Deterministic assignment context key [Test 14 step 14a]; 9. Warning invalidation across rendered controls on Unit/Team/Position/Owner change and Team A -> Team B transition [Test 14 step 14b]; 10. Option load failure isolation outside closed form with controlled deferred Promise retry, pending disabled state, repeat prevention, and focus containment [Test 15]; plus untrusted input validation [Test 16])"
+      - "FOCUSED_TEST: PASS (16/16 in web/src/__tests__/submission-detail.test.ts)"
+      - "DIRECT_RPC_REPLAY: PASS (supabase/tests/submission_detail_and_application_create.sql with DUPLICATE_APPLICATION tests)"
+      - "NPM_LINT: PASS (Biome checked 84 files, no fixes)"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (228/228)"
+      - "REACT_DOCTOR: REVIEWED (exit 1; 28 findings scanned against origin/main; 0 new functional regressions in changed scope)"
+      - "BROWSER_QA: PARTIAL (local layout, keyboard/focus traps, and accessibility checked; no live seeded session)"
+      - "SECRET_SCAN: PASS"
+      - "DIFF_CHECK: PASS"

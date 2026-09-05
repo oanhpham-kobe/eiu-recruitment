@@ -13,6 +13,7 @@ import {
   ApplicationInboxTableRows,
   SUBMISSION_STATUS_LABEL,
 } from "@/components/inbox/ApplicationInboxTableRows";
+import { SubmissionDetailDrawer } from "@/components/inbox/SubmissionDetailDrawer";
 import {
   APPLICATION_INBOX_COLUMNS,
   type ApplicationInboxFilters,
@@ -85,6 +86,49 @@ export function ApplicationInboxTable({
   );
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<Set<string>>(
     new Set(),
+  );
+  const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(
+    null,
+  );
+
+  const handleSubmissionUpdated = useCallback(
+    (updated: {
+      submissionId: string;
+      hrNote: string | null;
+      versionNo: number;
+      hasApplication: boolean;
+    }) => {
+      const updatedGroups = inboxState.inbox.groups.map((group) => {
+        const hasSub = group.submissions.some(
+          (s) => s.submissionId === updated.submissionId,
+        );
+        if (!hasSub) return group;
+
+        const updatedSubmissions = group.submissions.map((s) =>
+          s.submissionId === updated.submissionId
+            ? {
+                ...s,
+                hrNote: updated.hrNote,
+                hasApplication: updated.hasApplication,
+              }
+            : s,
+        );
+
+        return {
+          ...group,
+          submissions: updatedSubmissions,
+        };
+      });
+
+      dispatchInboxState({
+        type: "loaded",
+        inbox: {
+          ...inboxState.inbox,
+          groups: updatedGroups,
+        },
+      });
+    },
+    [inboxState.inbox],
   );
 
   const loadPage = useCallback(
@@ -337,6 +381,7 @@ export function ApplicationInboxTable({
               groups={inboxState.inbox.groups}
               expandedCandidateId={expandedCandidateId}
               selectedCandidateIds={selectedCandidateIds}
+              onOpenSubmission={setActiveSubmissionId}
               onToggleCandidate={toggleCandidate}
               onToggleSelectedCandidate={toggleSelectedCandidate}
             />
@@ -369,6 +414,12 @@ export function ApplicationInboxTable({
           </button>
         </nav>
       )}
+      <SubmissionDetailDrawer
+        submissionId={activeSubmissionId ?? ""}
+        isOpen={activeSubmissionId !== null}
+        onClose={() => setActiveSubmissionId(null)}
+        onSubmissionUpdated={handleSubmissionUpdated}
+      />
     </section>
   );
 }
