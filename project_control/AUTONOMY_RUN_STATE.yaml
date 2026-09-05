@@ -26,7 +26,7 @@ authorization:
 
 active_task:
   id: TASK-S03-006
-  status: ACCEPTED_PENDING_EXACT_CI
+  status: ACCEPTED
   task_branch: oanhpham-kobe/TASK-S03-006-bulk-lifecycle
   task_worktree: "D:/orca/recruitment/TASK-S03-006-bulk-lifecycle"
   executor_prompt: "project_control/prompts/SLICE-03_TASK-006_v1.md"
@@ -40,11 +40,11 @@ last_accepted_task:
     - "prompt_reviewed: PASS"
     - "executor_pre_review_ui_test_gate: PASS"
     - "implementation_reviewed: PASS (independent REVIEW #6)"
-    - "github_ci: PENDING exact accepted integration checkpoint"
+    - "github_ci: VERIFIED (Integration CI exact SHA 2e786e194afefdf5b2b7dc6548c6438c6574f552; run 33970358657)"
 github_ci:
   workflow: "Integration CI"
-  commit_sha: "4378773c32c3af30fb59665c194384c1a22a6184"
-  run_id: "33962024613"
+  commit_sha: "2e786e194afefdf5b2b7dc6548c6438c6574f552"
+  run_id: "33970358657"
   result: PASS
   checks:
     audit_dependencies: PASS
@@ -52,10 +52,6 @@ github_ci:
     typecheck: PASS
     build: PASS
     test: PASS
-pending_github_ci:
-  required_for_task: TASK-S03-006
-  workflow: "Integration CI"
-  reason: "accepted integration checkpoint must be pushed and matched to its exact SHA"
 governance_hotfix:
   commit: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
   ci_run_id: "33936480169"
@@ -71,12 +67,12 @@ governance_maintenance:
 blocked_tasks: []
 
 safe_frontier:
-  eligible_tasks: []
+  eligible_tasks:
+    - TASK-S04-001
   skipped_due_to_dependency: []
-
 stop_state:
   stop_gate: null
   reason: null
   observed_evidence:
     - "SLICE-03 is now complete (TASK-S03-001 through TASK-S03-006 ACCEPTED)."
-next_action: "Push accepted TASK-S03-006 integration checkpoint, verify exact-SHA CI, then recompute safe frontier for SLICE-04."
+next_action: "SLICE-03 complete. Advance to SLICE-04 (Interview Scheduling) by planning and executing TASK-S04-001."
