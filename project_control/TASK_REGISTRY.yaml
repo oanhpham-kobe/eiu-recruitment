@@ -760,5 +760,5 @@ tasks:
       sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
       independent_review: "PASS (final independent prompt review; no blockers)"
     implementation:
-      commit: "7a369a1410ab44bdfd9d4691af819bb87ed0c51e"
-      independent_review: "FAIL (Review attempt 3/2 reached review cap; two blockers: actor permission resolution in application-lifecycle.ts and same-origin preview path in SubmissionDetailDrawer.tsx)"
+      commit: "915d0a89c39e64e300e5630f4baf14be35f42eb0"
+      independent_review: "FAIL (REVIEW #4 exception consumed; findings: unmounted Edit button focus loss, warned assignment duplicate state unbinding on select change, and unopened assignment option error render)"
