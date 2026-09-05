@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getServerSession } from "@/lib/auth/session";
 import { createCommandRunner } from "@/lib/commands/runner";
 import {
   CommandErrorCode,
@@ -59,6 +60,77 @@ export type RecalculateSubmissionStatusData = {
   status_code: string;
   previous_status_code: string;
 };
+export type BulkLatestSubmissionStatusItemInput = {
+  candidateId: string;
+  expectedLatestSubmissionId: string;
+  expectedVersion: number;
+};
+
+export type BulkSetLatestSubmissionManualStatusInput = {
+  items: BulkLatestSubmissionStatusItemInput[];
+  statusCode: "NEW" | "READ";
+  idempotencyKey: string;
+};
+
+export type BulkSetLatestSubmissionManualStatusData = {
+  items: Array<{
+    candidate_id: string;
+    submission_id: string;
+    status_code: "NEW" | "READ";
+    version_no: number;
+  }>;
+  count: number;
+  idempotency_key: string;
+};
+
+function mapRpcErrorCode(rawCode: string | undefined): CommandErrorCode {
+  return (
+    CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
+    CommandErrorCode.INTERNAL_ERROR
+  );
+}
+
+function isValidPositiveInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+}
+
+async function defaultResolveBulkActor(
+  client?: SupabaseClient,
+): Promise<VerifiedActor | null> {
+  const supabase = client ?? (await createServerClient());
+  const session = await getServerSession(supabase);
+
+  if (!session.user) {
+    return null;
+  }
+
+  if (!session.user.isInternal) {
+    return {
+      authUserId: session.user.authUserId,
+      email: session.user.email,
+      isActive: true,
+      roles: session.user.roles,
+      permissions: session.user.permissions,
+    };
+  }
+
+  const { data: appUser } = await supabase
+    .from("app_users")
+    .select("is_root_admin")
+    .eq("auth_user_id", session.user.authUserId)
+    .maybeSingle();
+
+  return {
+    authUserId: session.user.authUserId,
+    email: session.user.email,
+    isActive: true,
+    roles:
+      appUser && typeof appUser === "object" && appUser.is_root_admin
+        ? [...session.user.roles, "ROOT_ADMIN"]
+        : session.user.roles,
+    permissions: session.user.permissions,
+  };
+}
 
 export type SubmissionStatusCommandDeps = {
   client?: SupabaseClient;
@@ -325,7 +397,129 @@ export function createSetSubmissionManualStatusCommand(
 }
 
 // -----------------------------------------------------------------------------
-// 3. Recalculate Submission Status Command
+// 3. Bulk Latest Submission Manual Status Command
+// -----------------------------------------------------------------------------
+
+export function createBulkSetLatestSubmissionManualStatusCommand(
+  supabase: SupabaseClient,
+): TrustedCommandDefinition<
+  BulkSetLatestSubmissionManualStatusInput,
+  string | undefined,
+  BulkSetLatestSubmissionManualStatusInput,
+  BulkSetLatestSubmissionManualStatusData
+> {
+  return {
+    name: "bulk_set_latest_submission_manual_status",
+    authorize(actor) {
+      if (
+        !actor.permissions.includes("submissions.status") &&
+        !actor.roles.includes("ROOT_ADMIN")
+      ) {
+        return {
+          authorized: false,
+          code: CommandErrorCode.FORBIDDEN,
+          reason: "Permission submissions.status required",
+        };
+      }
+      return { authorized: true };
+    },
+    validate(input) {
+      if (!Array.isArray(input.items) || input.items.length === 0) {
+        return { success: false, error: "At least one item is required" };
+      }
+      if (!["NEW", "READ"].includes(input.statusCode)) {
+        return {
+          success: false,
+          error: "Bulk manual status permits only NEW or READ",
+        };
+      }
+      if (!input.idempotencyKey || !UUID_REGEX.test(input.idempotencyKey)) {
+        return {
+          success: false,
+          error: "idempotencyKey must be a valid UUID",
+        };
+      }
+
+      const candidateIds = new Set<string>();
+      for (const item of input.items) {
+        if (!item.candidateId || !UUID_REGEX.test(item.candidateId)) {
+          return { success: false, error: "Invalid candidateId UUID" };
+        }
+        if (
+          !item.expectedLatestSubmissionId ||
+          !UUID_REGEX.test(item.expectedLatestSubmissionId)
+        ) {
+          return {
+            success: false,
+            error: "Invalid expectedLatestSubmissionId UUID",
+          };
+        }
+        if (!isValidPositiveInteger(item.expectedVersion)) {
+          return {
+            success: false,
+            error: "expectedVersion must be a positive safe integer",
+          };
+        }
+        if (candidateIds.has(item.candidateId)) {
+          return {
+            success: false,
+            error: "Duplicate candidateId is not allowed",
+          };
+        }
+        candidateIds.add(item.candidateId);
+      }
+      return { success: true, data: input };
+    },
+    async execute(_actor, validated) {
+      const { data, error } = await supabase.rpc(
+        "bulk_set_latest_submission_manual_status",
+        {
+          p_candidate_ids: validated.items.map((item) => item.candidateId),
+          p_status_code: validated.statusCode,
+          p_expected_latest_submission_ids: validated.items.map(
+            (item) => item.expectedLatestSubmissionId,
+          ),
+          p_expected_versions: validated.items.map(
+            (item) => item.expectedVersion,
+          ),
+          p_idempotency_key: validated.idempotencyKey,
+        },
+      );
+
+      if (error) {
+        return {
+          success: false,
+          error: {
+            code: CommandErrorCode.INTERNAL_ERROR,
+            message: error.message,
+          },
+        };
+      }
+
+      const result = data as {
+        success: boolean;
+        error_code?: string;
+        message?: string;
+        data?: BulkSetLatestSubmissionManualStatusData;
+      };
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          error: {
+            code: mapRpcErrorCode(result.error_code),
+            message: result.message || "Failed to update latest Submissions",
+          },
+        };
+      }
+
+      return { success: true, data: result.data };
+    },
+  };
+}
+
+// -----------------------------------------------------------------------------
+// 4. Recalculate Submission Status Command
 // -----------------------------------------------------------------------------
 
 export function createRecalculateSubmissionStatusCommand(
@@ -438,6 +632,20 @@ export async function setSubmissionManualStatus(
     deps.resolveActor ?? (() => defaultResolveActor(supabase));
   const runner = createCommandRunner({ resolveActor });
   return runner(createSetSubmissionManualStatusCommand(supabase), input);
+}
+
+export async function bulkSetLatestSubmissionManualStatus(
+  input: BulkSetLatestSubmissionManualStatusInput,
+  deps: SubmissionStatusCommandDeps = {},
+): Promise<CommandResult<BulkSetLatestSubmissionManualStatusData>> {
+  const supabase = deps.client ?? (await createServerClient());
+  const resolveActor =
+    deps.resolveActor ?? (() => defaultResolveBulkActor(supabase));
+  const runner = createCommandRunner({ resolveActor });
+  return runner(
+    createBulkSetLatestSubmissionManualStatusCommand(supabase),
+    input,
+  );
 }
 
 export async function recalculateSubmissionStatus(

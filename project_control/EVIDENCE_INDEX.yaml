@@ -623,3 +623,32 @@ implementation_evidence:
         typecheck: PASS
         test: PASS
         build: PASS
+
+  BULK-COMMANDS-001:
+    task: TASK-S03-003
+    operation: BULK_SUBMISSION_STATUS_AND_APPLICATION_ASSIGNMENT_TRANSACTIONAL_COMMANDS
+    status: REVIEW
+    review_remediation: "PENDING_REVIEW (independent-review blockers repaired; fresh evidence recorded)"
+    migration: "supabase/migrations/20260905120000_bulk_submission_status_and_application_assignment.sql"
+    GRAPH_USAGE:
+      route: DIRECT_SOURCE_LSP_ONLY
+      graph_used: NO
+      reason: "Localized batch RPCs and closest command wrappers have direct source contracts; no shared-symbol graph query is needed."
+      used_discovery_surfaces:
+        - "Direct source: canonical batch contracts, SQL schema/migrations, command wrappers, and tests"
+        - "LSP: status and reload requests were issued; no language server is configured in this worktree"
+    skill_usage_receipt: "PASS (SKILLS_LOCK hashes reconciled to the canonical .agents/skills providers; supabase=16817870f69bb9db58343cfa41c6fb864713c01f3680a64e0fb869605a5d81c3, supabase-postgres-best-practices=ad65e776f45e761bafc609d3f506c77c1032225aa65e0c4c02f241b8071e5855, tdd=cb01f66bebfaa25fa1f88e6b7e769cd9fd9f35b1120b8563749820738814c927; corrected providers reread and materially applied)"
+    lsp_status: "UNAVAILABLE (status and reload requests found no language server configured; direct source review was used)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_lint: "PASS (biome check; 70 files, 0 fixes)"
+    npm_build: "PASS (Next.js 16.3.4 production build)"
+    npm_test: "PASS (205/205, including 8/8 bulk command boundary tests)"
+    local_clean_migration_replay: "PASS (fresh unlinked disposable runtime at 5642x; migration chain applied and committed replay runner completed)"
+    overlap_assertions: "PASS (actual direct-RPC status/delete, assignment/delete, opposite-order bulk-status, bulk-status versus bulk-assignment, and same-identity bulk-assignment sessions with distinct keys 908/909 completed without deadlock; committed outcomes asserted)"
+    cross_command_lock_order: "PASS (bulk status: Candidate -> Submission -> Application; bulk assignment: references -> Candidate -> Submission -> Application; delete/inactivate: Submission -> Application)"
+    committed_direct_rpc_replay: "PASS (supabase/tests/bulk_commands_replay.sql plus run_bulk_commands_replay.sh against an unlinked disposable runtime)"
+    direct_rpc_contract: "PASS (SET ROLE authenticated permission matrix including Root Admin positive and HR-only denials; each status fingerprint component and assignment unit/team/position conflict varied independently; assignment audit fingerprint equals static SHA-256 630de6d75ff77a90e37fad37a3c5b07e81f35176fc8e671da83ad1edaf46c0d8; forced AFTER idempotency insert rollback verifies Application, Interview, Submission, activity, security-audit, and idempotency rows)"
+    rls_and_grants: "PASS (audit/idempotency tables have RLS; anon/PUBLIC do not execute the new SECURITY DEFINER RPCs)"
+    disposable_cleanup: "PASS (bulk-commands-replay containers stopped; no residual matching containers)"
+    secret_scan: "PASS (direct changed-task credential-assignment scan: no matches)"
+    diff_check: "PASS (git diff --check)"
