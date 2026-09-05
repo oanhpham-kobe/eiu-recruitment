@@ -26,12 +26,12 @@ authorization:
 
 active_task:
   id: TASK-S03-004
-  status: PROMPT_ACCEPTED
+  status: BLOCKED_REVIEW_LIMIT
   task_branch: oanhpham-kobe/TASK-S03-004-application-inbox
   task_worktree: "D:/orca/recruitment/TASK-S03-004-application-inbox"
   executor_prompt: "project_control/prompts/SLICE-03_TASK-004_v1.md"
   executor_prompt_sha256: "d84f5802a7b15911578de27ca070154822117fc1be0edf30c1c742d9c6dffa7d"
-  reviewer_status: "PROMPT: PASS; IMPLEMENTATION: PENDING"
+  reviewer_status: "PROMPT: PASS; IMPLEMENTATION: FAIL (attempt 2/2)"
 last_accepted_task:
   id: TASK-S03-003
   commit: "dbf474bce94464abe29be242ec3a91cc05687a96"
@@ -65,7 +65,9 @@ governance_maintenance:
   ci_result: PASS
   mcp_runtime_diagnostic: "CONFIGURED YES; DISCOVERED/CALLABLE/USED NO; supabase-dev startup HTTP 401 (redacted); direct fallback retained"
 
-blocked_tasks: []
+blocked_tasks:
+  - id: TASK-S03-004
+    reason: "Independent implementation review attempt 2/2 failed: checkbox touch target is below 44px and keyboard expansion lacks an interactive state-transition test."
 
 safe_frontier:
   eligible_tasks:
@@ -74,8 +76,10 @@ safe_frontier:
     - TASK-S03-005
 
 stop_state:
-  stop_gate: null
-  reason: null
-  observed_evidence: []
+  stop_gate: "IMPLEMENTATION_REVIEW_LIMIT"
+  reason: "TASK-S03-004 cannot be integrated after the second permitted independent implementation review failed."
+  observed_evidence:
+    - "Task commit d456e1c is clean and is the only commit atop 96c250a."
+    - "Final independent review: FAIL; no merge or integration CI was started."
 
-next_action: "Create the isolated TASK-S03-004 worktree and release exactly one executor."
+next_action: "Await explicit authorization to exceed the two-review cap or to abandon TASK-S03-004."
