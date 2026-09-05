@@ -11,7 +11,7 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_checkpoint: "ec739e98dcf8492a920ef89ee9ff8c14b622a32a"
+  last_verified_checkpoint: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -58,8 +58,8 @@ last_accepted_task:
     - "github_ci: VERIFIED (integration-ci exact SHA ec739e98dcf8492a920ef89ee9ff8c14b622a32a, run 33935403509, all required checks PASS)"
 github_ci:
   workflow: integration-ci
-  commit_sha: "ec739e98dcf8492a920ef89ee9ff8c14b622a32a"
-  run_id: "33935403509"
+  commit_sha: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
+  run_id: "33936480169"
   result: PASS
   checks:
     npm_ci: PASS
@@ -68,6 +68,12 @@ github_ci:
     typecheck: PASS
     test: PASS
     build: PASS
+governance_hotfix:
+  commit: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
+  ci_run_id: "33936480169"
+  ci_result: PASS
+  skill_execution_receipt_contract: PASS
+  graph_usage_receipt_contract: PASS
 
 blocked_tasks: []
 
@@ -83,4 +89,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Release TASK-S03-003 (Bulk Submission status and bulk Application assignment transactional commands); exact-SHA GitHub Actions CI is PASS for the integration checkpoint"
+next_action: "Release TASK-S03-003 from prompt SHA256 adf0e4de170db768075c9ace9ec5c13675d86bb4be15eccbd6f814064a4ddd8d; governance hotfix exact-SHA CI is PASS"
