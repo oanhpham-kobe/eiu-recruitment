@@ -157,7 +157,7 @@ async function defaultResolveActor(
   // Check internal user role
   const { data: appUser } = await supabase
     .from("app_users")
-    .select("app_user_id, is_active, is_root")
+    .select("app_user_id, is_active, is_root_admin")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
@@ -166,7 +166,7 @@ async function defaultResolveActor(
       authUserId: user.id,
       email: user.email,
       isActive: true,
-      roles: appUser.is_root ? ["ROOT_ADMIN", "HR"] : ["HR"],
+      roles: appUser.is_root_admin ? ["ROOT_ADMIN", "HR"] : ["HR"],
       permissions: ["submissions.view", "submissions.status"],
     };
   }

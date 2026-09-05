@@ -25,6 +25,7 @@ export type CreateOrUpdateApplicationInput = {
   positionId: string;
   hrOwnerId: string;
   idempotencyKey?: string;
+  confirmDuplicate?: boolean;
 };
 
 export type CreateOrUpdateApplicationData = {
@@ -107,49 +108,8 @@ async function defaultResolveActor(
     return null;
   }
 
-  const { data: appUser } = await supabase
-    .from("app_users")
-    .select("app_user_id, is_active, is_root")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
-
-  if (appUser && typeof appUser === "object" && appUser.is_active) {
-    return {
-      authUserId: user.id,
-      email: user.email,
-      isActive: true,
-      roles: appUser.is_root ? ["ROOT_ADMIN", "HR"] : ["HR"],
-      permissions: [
-        "applications.create",
-        "applications.manage",
-        "applications.delete",
-        "submissions.view",
-        "submissions.edit",
-        "submissions.status",
-      ],
-    };
-  }
-
-  return {
-    authUserId: user.id,
-    email: user.email,
-    isActive: true,
-    roles: ["GUEST"],
-    permissions: [],
-  };
-}
-
-async function defaultResolveBulkActor(
-  client?: SupabaseClient,
-): Promise<VerifiedActor | null> {
-  const supabase = client ?? (await createServerClient());
   const session = await getServerSession(supabase);
-
-  if (!session.user) {
-    return null;
-  }
-
-  if (!session.user.isInternal) {
+  if (session.user) {
     return {
       authUserId: session.user.authUserId,
       email: session.user.email,
@@ -159,23 +119,38 @@ async function defaultResolveBulkActor(
     };
   }
 
+  // Authoritative fallback: check if app_user exists but is inactive
   const { data: appUser } = await supabase
     .from("app_users")
-    .select("is_root_admin")
-    .eq("auth_user_id", session.user.authUserId)
+    .select("is_active")
+    .eq("auth_user_id", user.id)
     .maybeSingle();
 
+  if (
+    appUser &&
+    typeof appUser === "object" &&
+    "is_active" in appUser &&
+    !appUser.is_active
+  ) {
+    return {
+      authUserId: user.id,
+      email: user.email,
+      isActive: false,
+      roles: [],
+      permissions: [],
+    };
+  }
+
   return {
-    authUserId: session.user.authUserId,
-    email: session.user.email,
-    isActive: true,
-    roles:
-      appUser && typeof appUser === "object" && appUser.is_root_admin
-        ? [...session.user.roles, "ROOT_ADMIN"]
-        : session.user.roles,
-    permissions: session.user.permissions,
+    authUserId: user.id,
+    email: user.email,
+    isActive: false,
+    roles: ["GUEST"],
+    permissions: [],
   };
 }
+
+const defaultResolveBulkActor = defaultResolveActor;
 
 // -----------------------------------------------------------------------------
 // 1. Create or Update Application Command
@@ -195,18 +170,19 @@ export function createCreateOrUpdateApplicationCommand(
       return input.submissionId;
     },
     authorize(actor) {
+      const isRoot = actor.roles.includes("ROOT_ADMIN");
+      const canView = isRoot || actor.permissions.includes("submissions.view");
       const canManage =
+        isRoot ||
         actor.permissions.includes("applications.create") ||
-        actor.permissions.includes("applications.manage") ||
-        actor.roles.includes("ROOT_ADMIN") ||
-        actor.roles.includes("HR");
+        actor.permissions.includes("applications.manage");
 
-      if (!canManage) {
+      if (!canView || !canManage) {
         return {
           authorized: false,
           code: CommandErrorCode.FORBIDDEN,
           reason:
-            "Permission applications.create or applications.manage required",
+            "Permission submissions.view and (applications.create or applications.manage) required",
         };
       }
 
@@ -231,6 +207,15 @@ export function createCreateOrUpdateApplicationCommand(
       if (input.idempotencyKey && !UUID_REGEX.test(input.idempotencyKey)) {
         return { success: false, error: "Invalid idempotencyKey UUID" };
       }
+      if (
+        input.confirmDuplicate !== undefined &&
+        typeof input.confirmDuplicate !== "boolean"
+      ) {
+        return {
+          success: false,
+          error: "Invalid confirmDuplicate: must be a boolean or undefined",
+        };
+      }
       return { success: true, data: input };
     },
     async execute(_actor, validated) {
@@ -243,6 +228,7 @@ export function createCreateOrUpdateApplicationCommand(
           p_position_id: validated.positionId,
           p_hr_owner_id: validated.hrOwnerId,
           p_idempotency_key: validated.idempotencyKey ?? crypto.randomUUID(),
+          p_confirm_duplicate: validated.confirmDuplicate ?? false,
         },
       );
 
@@ -306,8 +292,7 @@ export function createDeleteOrInactivateApplicationCommand(
       const canDelete =
         actor.permissions.includes("applications.delete") ||
         actor.permissions.includes("applications.manage") ||
-        actor.roles.includes("ROOT_ADMIN") ||
-        actor.roles.includes("HR");
+        actor.roles.includes("ROOT_ADMIN");
 
       if (!canDelete) {
         return {
@@ -393,8 +378,7 @@ export function createUpdateSubmissionByHrCommand(
     authorize(actor) {
       const canEdit =
         actor.permissions.includes("submissions.edit") ||
-        actor.roles.includes("ROOT_ADMIN") ||
-        actor.roles.includes("HR");
+        actor.roles.includes("ROOT_ADMIN");
 
       if (!canEdit) {
         return {

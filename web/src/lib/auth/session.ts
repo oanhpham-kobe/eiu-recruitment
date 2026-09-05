@@ -101,6 +101,13 @@ export async function getServerSession(
     }
 
     const roles = extractRoles(appUser);
+    if (
+      "is_root_admin" in appUser &&
+      appUser.is_root_admin === true &&
+      !roles.includes("ROOT_ADMIN")
+    ) {
+      roles.push("ROOT_ADMIN");
+    }
     const permissions = extractPermissions(appUser);
 
     return {

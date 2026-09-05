@@ -48,12 +48,13 @@ interface ApplicationInboxTableRowsProps {
   groups: ApplicationInboxGroup[];
   onToggleCandidate: (candidateId: string) => void;
   onToggleSelectedCandidate: (candidateId: string, selected: boolean) => void;
+  onOpenSubmission?: (submissionId: string) => void;
   selectedCandidateIds: ReadonlySet<string>;
 }
-
 export function ApplicationInboxTableRows({
   expandedCandidateId,
   groups,
+  onOpenSubmission,
   onToggleCandidate,
   onToggleSelectedCandidate,
   selectedCandidateIds,
@@ -137,7 +138,19 @@ export function ApplicationInboxTableRows({
             )}
           </td>
           <td>{latest.hrNote ?? "—"}</td>
-          <td>—</td>
+          <td>
+            <button
+              type="button"
+              className="btn-secondary application-inbox__action-btn"
+              aria-label={`Xem chi tiết phiếu của Candidate ${latest.fullName}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenSubmission?.(latest.submissionId);
+              }}
+            >
+              Chi tiết
+            </button>
+          </td>
         </tr>
         {expanded &&
           group.submissions.slice(1).map((submission) => (
@@ -163,7 +176,19 @@ export function ApplicationInboxTableRows({
                 </span>
               </td>
               <td>{submission.hrNote ?? "—"}</td>
-              <td aria-hidden="true" />
+              <td>
+                <button
+                  type="button"
+                  className="btn-secondary application-inbox__action-btn"
+                  aria-label={`Xem chi tiết phiếu ngày ${formatSubmittedAt(submission.submittedAt)} của Candidate ${latest.fullName}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenSubmission?.(submission.submissionId);
+                  }}
+                >
+                  Chi tiết
+                </button>
+              </td>
             </tr>
           ))}
       </tbody>

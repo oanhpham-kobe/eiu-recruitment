@@ -70,7 +70,7 @@ function createMockSupabase(options: {
             data: {
               app_user_id: "u0000000-0000-0000-0000-000000000002",
               is_active: true,
-              is_root: false,
+              is_root_admin: false,
             },
             error: null,
           }),
