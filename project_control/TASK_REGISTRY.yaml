@@ -760,5 +760,5 @@ tasks:
       sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
       independent_review: "PASS (final independent prompt review; no blockers)"
     implementation:
-      commit: "915d0a89c39e64e300e5630f4baf14be35f42eb0"
-      independent_review: "FAIL (REVIEW #4 exception consumed; findings: unmounted Edit button focus loss, warned assignment duplicate state unbinding on select change, and unopened assignment option error render)"
+      commit: "493046c4b23dbc88e29d3b86829646deb1860618"
+      independent_review: "FAIL (REVIEW #5 exception consumed; finding: committed 10-point transition matrix test substituted source-text inspection for rendered Team invalidation, altered-context confirmation refusal, dirty-discard focus, and retry pending state)"

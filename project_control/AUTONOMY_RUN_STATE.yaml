@@ -31,7 +31,7 @@ active_task:
   task_worktree: "D:/orca/recruitment/TASK-S03-005-inbox-detail"
   executor_prompt: "project_control/prompts/SLICE-03_TASK-005_v1.md"
   executor_prompt_sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
-  reviewer_status: "PROMPT: PASS; IMPLEMENTATION REVIEW #4: FAIL (Exception consumed; stopped immediately per owner mandate)"
+  reviewer_status: "PROMPT: PASS; IMPLEMENTATION REVIEW #5: FAIL (Exception consumed; stopped immediately per owner mandate)"
 last_accepted_task:
   id: TASK-S03-004
   commit: "8eea72a4b9c34143560ee4687555972b066903cd"
@@ -76,11 +76,9 @@ safe_frontier:
 
 stop_state:
   stop_gate: REVIEW_CAP_EXCEEDED
-  reason: "TASK-S03-005 failed independent implementation review #4 exception. Stopped immediately per owner instruction."
+  reason: "TASK-S03-005 failed independent implementation review #5 exception. Stopped immediately per owner instruction."
   observed_evidence:
-    - "Reviewer FinalIndependentReviewerS03005 returned FAIL on exact task SHA 915d0a89c39e64e300e5630f4baf14be35f42eb0."
-    - "Finding 1: web/src/components/inbox/SubmissionDetailDrawer.tsx:558-564 modal focus is lost when the focused Edit button unmounts on entering edit mode or when save controls unmount."
-    - "Finding 2: web/src/components/inbox/SubmissionDetailDrawer.tsx:990-992 activeDuplicateWarning is not cleared when unit/team/position selections change, allowing confirmation of a different identity."
-    - "Finding 3: web/src/components/inbox/SubmissionDetailDrawer.tsx:422-426 assignment option load error is stored in state but rendered only inside showAssignForm branch."
+    - "Reviewer FinalIndependentReviewerS03005Round5 returned FAIL on exact task SHA 493046c4b23dbc88e29d3b86829646deb1860618."
+    - "Finding 1: web/src/__tests__/submission-detail.test.ts:1783-1790 substituted source-text checks for required Team invalidation and altered-context confirmation refusal; rendered tests also omitted claimed dirty-discard focus and retry pending state."
     - "Owner authorized repair exception for TASK-S03-005 is fully consumed."
 next_action: "STOP: TASK-S03-005 review exception is fully consumed. Do not perform another repair or review. Await new explicit owner authorization."
