@@ -753,5 +753,9 @@ tasks:
   TASK-S03-005:
     title: "Submission Detail Drawer, HR Note editor, document preview, and Application creation flow"
     slice: SLICE-03
-    status: PLANNED
+    status: READY_TO_EXECUTE
     depends_on: [TASK-S03-004]
+    prompt:
+      path: "project_control/prompts/SLICE-03_TASK-005_v1.md"
+      sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
+      independent_review: "PASS (final independent prompt review; no blockers)"

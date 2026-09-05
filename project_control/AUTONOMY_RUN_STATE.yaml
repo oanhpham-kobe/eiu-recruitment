@@ -25,13 +25,13 @@ authorization:
       merge_pr: false
 
 active_task:
-  id: TASK-S03-004
-  status: ACCEPTED
-  task_branch: oanhpham-kobe/TASK-S03-004-application-inbox
-  task_worktree: "D:/orca/recruitment/TASK-S03-004-application-inbox"
-  executor_prompt: "project_control/prompts/SLICE-03_TASK-004_v1.md"
-  executor_prompt_sha256: "d84f5802a7b15911578de27ca070154822117fc1be0edf30c1c742d9c6dffa7d"
-  reviewer_status: "PROMPT: PASS; IMPLEMENTATION REVIEW #3: PASS; exact integration CI PASS; FINAL REPAIR/REVIEW EXCEPTION CONSUMED"
+  id: TASK-S03-005
+  status: PROMPT_ACCEPTED_READY_FOR_WORKTREE
+  task_branch: oanhpham-kobe/TASK-S03-005-inbox-detail
+  task_worktree: "D:/orca/recruitment/TASK-S03-005-inbox-detail"
+  executor_prompt: "project_control/prompts/SLICE-03_TASK-005_v1.md"
+  executor_prompt_sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
+  reviewer_status: "PROMPT: PASS (ReviewS03005PromptRound3); IMPLEMENTATION: PENDING"
 last_accepted_task:
   id: TASK-S03-004
   commit: "8eea72a4b9c34143560ee4687555972b066903cd"
@@ -78,4 +78,4 @@ stop_state:
   observed_evidence:
     - "User-authorized final TASK-S03-004 repair/re-review exception was consumed by independent REVIEW #3 PASS."
 
-next_action: "Prepare and review the missing canonical execution prompt for eligible TASK-S03-005 before creating its isolated task worktree."
+next_action: "Create isolated worktree D:/orca/recruitment/TASK-S03-005-inbox-detail on branch oanhpham-kobe/TASK-S03-005-inbox-detail from the accepted integration baseline and launch execution."
