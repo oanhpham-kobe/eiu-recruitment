@@ -687,3 +687,32 @@ implementation_evidence:
         typecheck: PASS
         build: PASS
         test: PASS
+  APPLICATION-INBOX-001:
+    task: TASK-S03-004
+    operation: GROUPED_CANDIDATE_INBOX_ACCESSIBLE_READ_MODEL
+    status: REVIEW
+    GRAPH_USAGE:
+      route: DIRECT_SOURCE_LSP_ONLY
+      graph_used: NO
+      lsp_status: UNAVAILABLE
+      reason: "Direct canonical database migrations, RLS rules, server source, and focused tests are authoritative for this localized read-model change; no language server is configured in this worktree."
+      used_discovery_surfaces:
+        - "Direct source: inbox, acceptance, command, responsive, design-system, session, Supabase client, migration/RLS, and test sources"
+        - "LSP: UNAVAILABLE; direct source and focused search used instead"
+    authorization: "PASS (unauthenticated, Candidate, and internal caller without submissions.view reject before the RPC; the public invoker RPC independently gates PII on submissions.view or Root Admin)"
+    grouping_pagination: "PASS (direct isolated-RPC replay proves Candidate—not Submission—pagination: page 2 returns the complete deterministically ordered historical group)"
+    pii_search_and_filters: "PASS (name/email/phone search and supported status/date/activity/NEW-READ/Application filters remain request-local, debounced, and bounded before paging)"
+    timezone_date_bounds: "PASS (direct isolated-RPC replay proves Asia/Ho_Chi_Minh date bounds exclude 2026-09-02T00:00 local and retain 2026-09-01T23:59:59 local)"
+    table_contract: "PASS (semantic colgroup table with frozen 1560px widths, sticky Select/name context, native expanded controls, 48×44px checkbox label targets, and historical rows with nine separately aligned cells)"
+    focused_test: "PASS (7/7 application inbox tests; Playwright mounts production rows under local useState, activates A with Enter then B with Space, asserts one-open DOM state, and fails when nextExpandedCandidateId is broken)"
+    executor_pre_review_ui_test_gate: "PASS (Design System v1.8 table/expand-control checklist and accessibility requirements were directly checked; fresh local Playwright exercised the real labeled 48×44px checkbox target, native checkbox focus/name, Enter A → expanded A, Space B → expanded B, and collapsed A; no authorized seeded page session exists)"
+    direct_rpc_replay: "PASS (two consecutive rollback-isolated runs of supabase/tests/application_inbox_read.sql against the production RPC in an isolated local PostgreSQL container)"
+    npm_lint: "PASS (Biome checked 77 files, no fixes)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit)"
+    npm_build: "PASS (Next.js 16.3.4 production build)"
+    npm_test: "PASS (212/212)"
+    independent_review: "REPAIR_ONLY (addressed the reported blockers; no second independent review run)"
+    react_doctor: "REVIEWED (exit 1; score 46/100, 17 findings in changed scope, including ApplicationInboxTable size plus existing candidate/login findings; no unrelated remediation)"
+    browser_qa: "PARTIAL (fresh local Playwright fixture and accessibility-tree inspection prove 48px Select column, 48×44px checkbox target, native names, and Enter/Space expansion; no authorized seeded page session exists)"
+    secret_scan: "PASS (changed-task credential-assignment regex found no matches)"
+    diff_check: "PASS (git diff --check)"
