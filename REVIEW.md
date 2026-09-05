@@ -224,6 +224,15 @@ Default should be:
 
 Temporary write mode requires explicit task authorization and a non-production target.
 
+## Conditional MCP Runtime Evidence — HIGH
+
+Review MCP runtime evidence only when the task actually requires MCP:
+
+- [ ] configured, discovered, callable, and used are evidenced separately; `CONFIGURED != DISCOVERED != CALLABLE != USED`.
+- [ ] discovery, callability, and scope checks are safe and task-scoped.
+- [ ] if runtime proof is unavailable, direct source/LSP fallback is used, no MCP-use receipt is claimed, and the concrete tooling gap is reported.
+- [ ] repository database authority remains declarative schema, ordered migrations, direct SQL, and tests; Supabase MCP use is non-production, read-only inspection only.
+
 ---
 
 # 9. Privacy & Private Documents — BLOCKER

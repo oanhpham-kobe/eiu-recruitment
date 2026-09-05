@@ -437,6 +437,12 @@ Manage context per the project's Token Efficiency Policy when:
 
 # 7. MCP & Graph Tool Routing (v2.4)
 
+## MCP Runtime Availability Contract
+
+MCP runtime state is distinct: `CONFIGURED != DISCOVERED != CALLABLE != USED`.
+
+Perform safe discovery, callability, and scope checks only when the task actually needs MCP. If runtime discovery or callability cannot be proven, fall back to direct source/LSP, persist no MCP-use receipt, and report the concrete tooling gap; never fabricate MCP use. Repository database authority remains unchanged: declarative schema, ordered migrations, direct SQL, and tests. Supabase MCP is limited to non-production, read-only inspection.
+
 ## Context7 MCP
 
 `documentation-lookup` depends on Context7.
