@@ -483,8 +483,66 @@ tasks:
   TASK-S03-001:
     title: "Application Inbox status calculation schema and manual status transition commands"
     slice: SLICE-03
-    status: PLANNED
+    status: DONE
     depends_on: [TASK-S02-005]
+    prompt: "project_control/prompts/SLICE-03_TASK-001_v1.md"
+    prompt_sha256: "c515261bbc18c8ffa2bdc30cd2e0ba530a05d3ccdcc2221ec3ff468619077bb4"
+    review_status: "PASS (IndependentReviewer)"
+    skill_usage:
+      supabase:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Database schema definition for applications and interviews with RLS policies"
+          - "Server client integration in submission-status command definitions"
+      supabase-postgres-best-practices:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Authoring recalculate_submission_status with parent row lock FOR UPDATE"
+          - "Zero UUID sentinel in application_durable_identity_uq"
+          - "search_path = '' and grant revocation on all RPC functions"
+      security-review:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Conditional mutation on open_submission enforcing submissions.status permission"
+          - "Blocking manual assignment of PROCESSED, DONE, CLOSED"
+          - "Historical submission read-only guard and active Application guard preventing manual NEW/READ"
+      tdd:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Risk-based unit and integration test suite covering AC-OPEN-SUB-01 through 03, AC-STAT-01 through 03, AC-HIST-SUB-01, AC-RECALC-01 through 05"
+          - "Testing concurrency serialization on parent submission lock"
+    evidence:
+      - "EVIDENCE_INDEX: INBOX-STATUS-001"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_LINT: PASS (67 files, 0 fixes)"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (187/187)"
+      - "ASSERTION_1_OPEN_SUBMISSION_VIEW_ONLY: PASS"
+      - "ASSERTION_2_OPEN_SUBMISSION_FULL_HR: PASS"
+      - "ASSERTION_3_OPEN_SUBMISSION_UNAUTHORIZED_FORBIDDEN: PASS"
+      - "ASSERTION_4_MANUAL_STATUS_INVALID_ACTION: PASS"
+      - "ASSERTION_5_MANUAL_STATUS_TRANSITION_SUCCESS: PASS"
+      - "ASSERTION_6_MANUAL_STATUS_ACTIVE_APP_GUARD: PASS"
+      - "ASSERTION_7_HISTORICAL_SUBMISSION_READ_ONLY: PASS"
+      - "ASSERTION_8_OPTIMISTIC_VERSION_GUARD: PASS"
+      - "ASSERTION_9_RECALC_PRESERVES_MANUAL: PASS"
+      - "ASSERTION_10_RECALC_RESET_TO_READ: PASS"
+      - "ASSERTION_11_RECALC_PROCESSED: PASS"
+      - "ASSERTION_12_RECALC_HIRED_DONE: PASS"
+      - "ASSERTION_13_RECALC_ALL_REJECTED_CLOSED: PASS"
+      - "ASSERTION_14_CONCURRENCY_PARENT_LOCK: PASS"
+      - "ASSERTION_15_RECALCULATE_COMMAND_RPC: PASS"
+      - "LOCAL_CLEAN_MIGRATION_REPLAY: PASS (unlinked disposable runtime on port 5642x, 0 residual containers, 7/7 SQL integration assertions passed)"
+      - "SECRET_SCAN: PASS"
+      - "SOURCE_INTEGRITY: PASS"
   TASK-S03-002:
     title: "Application creation, assignment, and lifecycle commands"
     slice: SLICE-03

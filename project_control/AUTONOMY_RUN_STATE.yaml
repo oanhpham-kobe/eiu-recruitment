@@ -34,37 +34,39 @@ active_task:
   reviewer_status: null
 
 last_accepted_task:
-  id: TASK-S02-005
-  commit: "8693bc948a3bf6be5c8df59f1479fa6a9d7ebddb"
+  id: TASK-S03-001
+  commit: "1f87028ed0d5926509fa0cd4f685166dc0ab7340"
   evidence:
-    - "PORTAL-FORM-001: VERIFIED"
+    - "INBOX-STATUS-001: VERIFIED"
     - "prompt_reviewed: PASS"
-    - "prompt_sha256: 49ef3e28474feae5c2b13310028d32941ccbe521711d31984217b3e27954d083"
-    - "executor_commit: e2a63af0421d9331f8931720915006e9b2917a51"
+    - "prompt_sha256: c515261bbc18c8ffa2bdc30cd2e0ba530a05d3ccdcc2221ec3ff468619077bb4"
+    - "executor_commit: 1f87028ed0d5926509fa0cd4f685166dc0ab7340"
     - "implementation_reviewed: PASS"
-    - "skill_usage: VERIFIED (react-patterns, accessibility, vercel-react-best-practices, supabase loaded & applied)"
-    - "assertion_1_semantic_sections: PASS"
-    - "assertion_2_required_validation: PASS"
-    - "assertion_3_immutable_email: PASS"
-    - "assertion_4_dynamic_education_rows: PASS"
-    - "assertion_5_uploader_validation: PASS"
-    - "assertion_6_cv_requirement_enforced: PASS"
-    - "assertion_7_max_five_files_limit: PASS"
-    - "assertion_8_autosave_persistence: PASS"
-    - "assertion_9_autosave_status_messages: PASS"
-    - "assertion_10_submissions_list_3_status_mapping: PASS"
-    - "assertion_11_edit_submission_flow: PASS"
-    - "assertion_12_accessibility_wcag_aa: PASS"
-    - "assertion_13_excluded_sections_not_rendered: PASS"
-    - "tests: PASS (172/172)"
+    - "skill_usage: VERIFIED (supabase, supabase-postgres-best-practices, security-review, tdd loaded & applied)"
+    - "assertion_1_open_submission_view_only: PASS"
+    - "assertion_2_open_submission_full_hr: PASS"
+    - "assertion_3_open_submission_unauthorized_forbidden: PASS"
+    - "assertion_4_manual_status_invalid_action: PASS"
+    - "assertion_5_manual_status_transition_success: PASS"
+    - "assertion_6_manual_status_active_app_guard: PASS"
+    - "assertion_7_historical_submission_read_only: PASS"
+    - "assertion_8_optimistic_version_guard: PASS"
+    - "assertion_9_recalc_preserves_manual: PASS"
+    - "assertion_10_recalc_reset_to_read: PASS"
+    - "assertion_11_recalc_processed: PASS"
+    - "assertion_12_recalc_hired_done: PASS"
+    - "assertion_13_recalc_all_rejected_closed: PASS"
+    - "assertion_14_concurrency_parent_lock: PASS"
+    - "assertion_15_recalculate_command_rpc: PASS"
+    - "tests: PASS (187/187)"
+    - "local_clean_migration_replay: PASS (7/7 SQL assertions)"
 
 blocked_tasks: []
 
 safe_frontier:
   eligible_tasks:
-    - TASK-S03-001
-  skipped_due_to_dependency:
     - TASK-S03-002
+  skipped_due_to_dependency:
     - TASK-S03-003
     - TASK-S03-004
     - TASK-S03-005
@@ -74,4 +76,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Prepare and independently review task execution prompt for TASK-S03-001 (Application Inbox status calculation schema and manual status transition commands)"
+next_action: "Prepare and independently review task execution prompt for TASK-S03-002 (Application creation, assignment, and lifecycle commands)"

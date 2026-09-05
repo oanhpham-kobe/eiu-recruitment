@@ -497,3 +497,63 @@ implementation_evidence:
     npm_test: "PASS (172/172 tests pass, 0 fail; 13/13 candidate portal tests pass)"
     source_integrity: "PASS (recruitment_webapp git diff is empty)"
     secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
+  INBOX-STATUS-001:
+    task: TASK-S03-001
+    operation: APPLICATION_INBOX_STATUS_CALCULATION_SCHEMA_AND_MANUAL_STATUS_TRANSITION_COMMANDS
+    status: REVIEW
+    prompt: "project_control/prompts/SLICE-03_TASK-001_v1.md"
+    prompt_sha256: "c515261bbc18c8ffa2bdc30cd2e0ba530a05d3ccdcc2221ec3ff468619077bb4"
+    migration: "supabase/migrations/20260905100000_application_schema_and_status_commands.sql"
+    skill_usage:
+      supabase:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Database schema definition for applications and interviews with RLS policies"
+          - "Server client integration in submission-status command definitions"
+      supabase-postgres-best-practices:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Authoring recalculate_submission_status with parent row lock FOR UPDATE"
+          - "Zero UUID sentinel in application_durable_identity_uq"
+          - "search_path = '' and grant revocation on all RPC functions"
+      security-review:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Conditional mutation on open_submission enforcing submissions.status permission"
+          - "Blocking manual assignment of PROCESSED, DONE, CLOSED"
+          - "Historical submission read-only guard and active Application guard preventing manual NEW/READ"
+      tdd:
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Risk-based unit and integration test suite covering AC-OPEN-SUB-01 through 03, AC-STAT-01 through 03, AC-HIST-SUB-01, AC-RECALC-01 through 05"
+          - "Testing concurrency serialization on parent submission lock"
+    assertion_1_open_submission_view_only: "PASS (view-only HR opening NEW submission leaves status as NEW)"
+    assertion_2_open_submission_full_hr: "PASS (full HR opening NEW submission atomically transitions NEW -> READ)"
+    assertion_3_open_submission_unauthorized_forbidden: "PASS (unauthorized caller without submissions.view rejected with FORBIDDEN)"
+    assertion_4_manual_status_invalid_action: "PASS (manual request to set PROCESSED/DONE/CLOSED rejected with INVALID_ACTION)"
+    assertion_5_manual_status_transition_success: "PASS (manual transition NEW <-> READ succeeds when no active application exists, bumping version_no)"
+    assertion_6_manual_status_active_app_guard: "PASS (manual transition NEW/READ rejected with INVALID_STATE when active application exists)"
+    assertion_7_historical_submission_read_only: "PASS (attempt to change historical child submission status rejected with HISTORICAL_SUBMISSION_READ_ONLY)"
+    assertion_8_optimistic_version_guard: "PASS (version mismatch in set_submission_manual_status rejected with STALE_VERSION)"
+    assertion_9_recalc_preserves_manual: "PASS (recalculation with 0 applications preserves existing manual NEW or READ)"
+    assertion_10_recalc_reset_to_read: "PASS (recalculation after removing last application from PROCESSED/DONE/CLOSED returns READ)"
+    assertion_11_recalc_processed: "PASS (recalculation with active applications returns PROCESSED when in progress)"
+    assertion_12_recalc_hired_done: "PASS (recalculation with any active application HIRED returns DONE)"
+    assertion_13_recalc_all_rejected_closed: "PASS (recalculation with all active applications REJECTED returns CLOSED)"
+    assertion_14_concurrency_parent_lock: "PASS (two concurrent status recalculations serialize safely on parent submission lock)"
+    assertion_15_recalculate_command_rpc: "PASS (recalculateSubmissionStatus RPC command invocation verified)"
+    npm_typecheck: "PASS (next typegen && tsc --noEmit; 0 errors)"
+    npm_lint: "PASS (biome check; 67 files, 0 fixes)"
+    npm_build: "PASS (Next.js production build succeeded in 6.4s)"
+    npm_test: "PASS (187/187 tests pass, 0 fail; 15/15 submission status tests pass)"
+    local_clean_migration_replay: "PASS (unlinked disposable runtime on port 5642x, 0 residual containers, 7/7 SQL integration assertions passed)"
+    source_integrity: "PASS (recruitment_webapp git diff is empty)"
+    secret_scan: "PASS (working tree and staged diff checked; no credential assignments found)"
