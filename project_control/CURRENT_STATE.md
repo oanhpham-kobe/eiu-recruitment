@@ -8,11 +8,11 @@ Design Version: `Design System v1.8 CURRENT / REVIEWED`
 Implementation Gate: `INDEPENDENT IMPLEMENTATION REVIEW REQUIRED`
 
 Repository Root: `D:/orca/recruitment`
-Worktree: `D:/orca/recruitment/TASK-S02-003-storage-reservation`
+Worktree: `D:/orca/recruitment/TASK-S02-004-candidate-submission`
 Git: `INITIALIZED`
-Branch: `oanhpham-kobe/TASK-S02-003-storage-reservation`
-Local Starting HEAD: `dfac6d1556ff55d7193315d1bf2d3018f1a7d63c`
-Last Completed Task: `TASK-S02-003`
+Branch: `oanhpham-kobe/TASK-S02-004-candidate-submission`
+Local Starting HEAD: `844516a36614f3b73fc6e7c77ece481ab648f30a`
+Last Completed Task: `TASK-S02-004`
 Remote: `https://github.com/oanhpham-kobe/eiu-recruitment.git`
 
 SOURCE_ROOT: `recruitment_webapp`
@@ -20,12 +20,12 @@ SOURCE_PARITY_GATE: `PASS` (87/87 current-required paths verified byte-identical
 Authority Path Resolution: All Full Handover paths resolve relative to `SOURCE_ROOT = recruitment_webapp`.
 
 Current Slice: `SLICE-02 Candidate Form / Submission / Privacy / Documents` (IN_PROGRESS)
-Current Task: `TASK-S02-003 Private Storage reservation and upload signing protocol`
+Current Task: `TASK-S02-004 Candidate Submission transactional commands (submit and update)`
 Task Status: `DONE`
-Active Prompt: `project_control/prompts/SLICE-02_TASK-003_v13.md`
-Prompt SHA256: `469b32a95e10a453602b7f231e871c8bd0aa46885cdcc62060bfef3c79473ef8`
+Active Prompt: `project_control/prompts/SLICE-02_TASK-004_v1.md`
+Prompt SHA256: `5c8dbe350999bf83e0d3a618fc5fb9fb37d91df535fa3dd555775cd04a5eba4f`
 
-Workflow Release Scope: `TASK-S02-003`
+Workflow Release Scope: `TASK-S02-004`
 Workflow Release Status: `ACCEPTED_BY_INDEPENDENT_REVIEW`
 Identities & Tools:
 - GitHub: `oanhpham-kobe/eiu-recruitment` (PUBLIC; origin configured; branch `main` pushed; observed remote HEAD `7c7c2b378c24e64d95a4b25c1c709b2ee6b38756`)
@@ -43,7 +43,7 @@ Identities & Tools:
 - GitNexus: `1.6.10` (NOT_NEEDED for localized schema migration; MCP server normalized to `gitnexus-recruitment`)
 - Graphify: `0.9.47` (DORMANT; future optional discovery tool)
 
-NEXT_ACTION: Author and independently review task execution prompt for TASK-S02-004 (Candidate Submission transactional commands: submit and update).
+NEXT_ACTION: Author and independently review task execution prompt for TASK-S02-005 (Candidate Portal application form UI shell, autosave, and document uploader).
 
-Current Task Status: TASK-S00-001 through TASK-S00-005 are DONE (SLICE-00 COMPLETE). TASK-S01-001 through TASK-S01-005 are DONE (SLICE-01 COMPLETE). TASK-S02-001 is DONE. TASK-S02-002 is DONE. TASK-S02-003 is DONE. Next Task on Frontier: `TASK-S02-004` (eligible).
-Last Updated: `2026-09-05` (TASK-S02-003 independently accepted and integrated)
+Current Task Status: TASK-S00-001 through TASK-S00-005 are DONE (SLICE-00 COMPLETE). TASK-S01-001 through TASK-S01-005 are DONE (SLICE-01 COMPLETE). TASK-S02-001 is DONE. TASK-S02-002 is DONE. TASK-S02-003 is DONE. TASK-S02-004 is DONE. Next Task on Frontier: `TASK-S02-005` (eligible).
+Last Updated: `2026-09-05` (TASK-S02-004 independently accepted and integrated)
