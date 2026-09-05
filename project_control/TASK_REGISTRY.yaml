@@ -753,9 +753,12 @@ tasks:
   TASK-S03-005:
     title: "Submission Detail Drawer, HR Note editor, document preview, and Application creation flow"
     slice: SLICE-03
-    status: READY_TO_EXECUTE
+    status: BLOCKED
     depends_on: [TASK-S03-004]
     prompt:
       path: "project_control/prompts/SLICE-03_TASK-005_v1.md"
       sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
       independent_review: "PASS (final independent prompt review; no blockers)"
+    implementation:
+      commit: "7a369a1410ab44bdfd9d4691af819bb87ed0c51e"
+      independent_review: "FAIL (Review attempt 3/2 reached review cap; two blockers: actor permission resolution in application-lifecycle.ts and same-origin preview path in SubmissionDetailDrawer.tsx)"

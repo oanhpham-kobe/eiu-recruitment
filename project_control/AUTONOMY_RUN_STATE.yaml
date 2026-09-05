@@ -26,12 +26,12 @@ authorization:
 
 active_task:
   id: TASK-S03-005
-  status: PROMPT_ACCEPTED_READY_FOR_WORKTREE
+  status: BLOCKED_BY_REVIEW_CAP
   task_branch: oanhpham-kobe/TASK-S03-005-inbox-detail
   task_worktree: "D:/orca/recruitment/TASK-S03-005-inbox-detail"
   executor_prompt: "project_control/prompts/SLICE-03_TASK-005_v1.md"
   executor_prompt_sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
-  reviewer_status: "PROMPT: PASS (ReviewS03005PromptRound3); IMPLEMENTATION: PENDING"
+  reviewer_status: "PROMPT: PASS; IMPLEMENTATION REVIEW: FAIL (Review attempt 3/2 reached review cap; stopped per rule)"
 last_accepted_task:
   id: TASK-S03-004
   commit: "8eea72a4b9c34143560ee4687555972b066903cd"
@@ -65,17 +65,22 @@ governance_maintenance:
   ci_result: PASS
   mcp_runtime_diagnostic: "CONFIGURED YES; DISCOVERED/CALLABLE/USED NO; supabase-dev startup HTTP 401 (redacted); direct fallback retained"
 
-blocked_tasks: []
+blocked_tasks:
+  - id: TASK-S03-005
+    reason: "Independent review attempt 3/2 failed; global review cap reached without owner authorization."
 
 safe_frontier:
-  eligible_tasks:
-    - TASK-S03-005
-  skipped_due_to_dependency: []
+  eligible_tasks: []
+  skipped_due_to_dependency:
+    - TASK-S03-006
 
 stop_state:
-  stop_gate: null
-  reason: null
+  stop_gate: REVIEW_CAP_EXCEEDED
+  reason: "TASK-S03-005 failed independent implementation review attempt 3/2. Stopped per review cap governance."
   observed_evidence:
+    - "Reviewer IndependentReviewerS03005Round3 returned FAIL on exact task SHA 7a369a1410ab44bdfd9d4691af819bb87ed0c51e."
+    - "Blocker 1: web/src/lib/commands/application-lifecycle.ts:112-121 hard-codes full application/submission permissions for every active internal user before the RPC."
+    - "Blocker 2: web/src/components/inbox/SubmissionDetailDrawer.tsx:1235-1244 embeds external Storage signed URL directly instead of using required hardened same-origin preview path."
     - "User-authorized final TASK-S03-004 repair/re-review exception was consumed by independent REVIEW #3 PASS."
 
-next_action: "Create isolated worktree D:/orca/recruitment/TASK-S03-005-inbox-detail on branch oanhpham-kobe/TASK-S03-005-inbox-detail from the accepted integration baseline and launch execution."
+next_action: "STOP: TASK-S03-005 reached global review cap. Await explicit owner decision/authorization."
