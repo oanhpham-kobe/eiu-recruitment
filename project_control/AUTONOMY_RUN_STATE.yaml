@@ -25,13 +25,13 @@ authorization:
       merge_pr: false
 
 active_task:
-  id: TASK-S03-005
-  status: ACCEPTED
-  task_branch: oanhpham-kobe/TASK-S03-005-inbox-detail
-  task_worktree: "D:/orca/recruitment/TASK-S03-005-inbox-detail"
-  executor_prompt: "project_control/prompts/SLICE-03_TASK-005_v1.md"
-  executor_prompt_sha256: "cc00853f43dd5cfb825bed8af788d49f5223e7442ed4b608f980390a8dac49af"
-  reviewer_status: "PROMPT: PASS; IMPLEMENTATION REVIEW #6: PASS; CONTINUOUS VERIFICATION CLOSURE COMPLETE"
+  id: TASK-S03-006
+  status: PROMPT_ACCEPTED_READY_FOR_WORKTREE
+  task_branch: oanhpham-kobe/TASK-S03-006-bulk-lifecycle
+  task_worktree: "D:/orca/recruitment/TASK-S03-006-bulk-lifecycle"
+  executor_prompt: "project_control/prompts/SLICE-03_TASK-006_v1.md"
+  executor_prompt_sha256: "9e1ad4c3c87f986c693f39fea7733ec6bf3afe8d5dbff36893f08a756be74536"
+  reviewer_status: "PROMPT: PASS (ReviewS03006PromptRound2); IMPLEMENTATION: PENDING"
 last_accepted_task:
   id: TASK-S03-005
   commit: "cc742c9dd5ea4a1bcc97d23985be6e99e4243eba"
@@ -77,4 +77,4 @@ stop_state:
   reason: null
   observed_evidence:
     - "TASK-S03-005 passed independent implementation review #6 under authorized continuous verification closure."
-next_action: "Execute eligible TASK-S03-006 autonomously."
+next_action: "Create isolated worktree D:/orca/recruitment/TASK-S03-006-bulk-lifecycle on branch oanhpham-kobe/TASK-S03-006-bulk-lifecycle and launch executor."

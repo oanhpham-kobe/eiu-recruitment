@@ -853,3 +853,13 @@ tasks:
       - "BROWSER_QA: PARTIAL (local layout, keyboard/focus traps, and accessibility checked; no live seeded session)"
       - "SECRET_SCAN: PASS"
       - "DIFF_CHECK: PASS"
+
+  TASK-S03-006:
+    title: "Candidate Account Lifecycle & Application Inbox Bulk Actions"
+    slice: SLICE-03
+    status: READY_TO_EXECUTE
+    depends_on: [TASK-S03-005]
+    prompt:
+      path: "project_control/prompts/SLICE-03_TASK-006_v1.md"
+      sha256: "9e1ad4c3c87f986c693f39fea7733ec6bf3afe8d5dbff36893f08a756be74536"
+      independent_review: "PASS (final independent prompt review; no blockers)"
