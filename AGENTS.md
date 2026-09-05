@@ -803,3 +803,11 @@ For non-trivial work report:
 - deployment state if applicable.
 
 Do not promise background/future work.
+---
+
+## GitHub Actions CI Contract
+
+- Every accepted integration checkpoint must pass the exact pushed commit SHA in the GitHub Actions `integration-ci` workflow once CI is enabled.
+- CI runs on a clean `ubuntu-latest` runner with minimum `contents: read` permissions, the repository `web/package-lock.json`, Node.js `24.20.0`, npm `11.19.0`, and the required install, audit, lint, typecheck, test, and build checks.
+- CI is verification only: it has no deployment trigger, production credentials, or production resource access.
+- A CI failure is not an accepted integration checkpoint and must not be bypassed or weakened.

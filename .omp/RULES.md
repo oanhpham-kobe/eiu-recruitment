@@ -10,3 +10,4 @@
 8. Do not claim `done`, `fixed`, `pass`, or `ready` without fresh verification evidence.
 9. External skills/tools are advisory implementation aids, never a second business/design Source of Truth.
 10. After accepted setup, keep GitNexus MCP available as the default graph/impact engine; use it selectively for cross-module/shared/high-risk work, not mechanically for trivial edits.
+13. Accepted integration checkpoints require exact-SHA GitHub Actions Fast CI once CI is enabled. CI is clean-runner verification only: it never implies deploy authorization and never replaces local verification or independent review.

@@ -547,3 +547,18 @@ Every finding should include:
 5. verification required.
 
 Prefer fewer high-confidence findings over speculative nitpicks.
+---
+
+## GitHub Actions CI Evidence — HIGH
+
+- [ ] Exact pushed commit SHA is identified and matches the accepted checkpoint.
+- [ ] `npm ci` passes on the clean runner using `web/package-lock.json`.
+- [ ] `npm audit --audit-level=high` passes.
+- [ ] `npm run lint` passes.
+- [ ] `npm run typecheck` passes.
+- [ ] `npm run test` passes.
+- [ ] `npm run build` passes.
+- [ ] Workflow permissions are no broader than `contents: read`.
+- [ ] Workflow has no deployment trigger, production credential, or production resource.
+
+CI PASS is required after activation but is insufficient without local verification and independent review.
