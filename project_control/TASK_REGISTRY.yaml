@@ -604,12 +604,63 @@ tasks:
   TASK-S03-003:
     title: "Bulk Submission status and bulk Application assignment transactional commands"
     slice: SLICE-03
-    status: IN_PROGRESS
+    status: REVIEW
     depends_on: [TASK-S03-002]
     prompt:
       path: "project_control/prompts/SLICE-03_TASK-003_v1.md"
       sha256: "7a4cde67e161f6c2ed0f4752a21134693830d5a03f986c67677a42c3fd980529"
-      independent_review: PASS
+      independent_review: "FAIL (blockers received; remediated pending re-review)"
+    skill_usage:
+      supabase:
+        provider: ".agents/skills/supabase/SKILL.md"
+        sha256: "16817870f69bb9db58343cfa41c6fb864713c01f3680a64e0fb869605a5d81c3"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Security-definer Supabase RPC migration with RLS-enabled audit and idempotency tables"
+          - "Disposable local migration replay and direct authenticated RPC assertions"
+      supabase-postgres-best-practices:
+        provider: ".agents/skills/supabase-postgres-best-practices/SKILL.md"
+        sha256: "ad65e776f45e761bafc609d3f506c77c1032225aa65e0c4c02f241b8071e5855"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Deterministic Candidate, Submission, Application, and common-reference locking"
+          - "Transaction-scoped idempotency advisory locks, stable fingerprints, and all-or-nothing preflight"
+          - "Submission -> Application cross-command lock hierarchy, including delete_or_inactivate_application"
+      security-review:
+        provider: ".agents/skills/security-review/SKILL.md"
+        sha256: "fe6f9151fb15c1dffd47a55080c3ad147af7c95dd0ad3714735dec6824b060b7"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Server-derived active actor, exact permissions, RLS, and SECURITY DEFINER execute grants"
+          - "Untrusted bulk-input UUID, selection, version, status, and duplicate validation"
+      tdd:
+        provider: ".agents/skills/tdd/SKILL.md"
+        sha256: "cb01f66bebfaa25fa1f88e6b7e769cd9fd9f35b1120b8563749820738814c927"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "Command/RPC boundary tests for authorization order, validation, input order, error mapping, and idempotency forwarding"
+          - "Committed disposable direct-RPC replay coverage for SQL atomicity, authorization, idempotency, auditing, rollback, and concurrent overlap"
+    evidence:
+      - "EVIDENCE_INDEX: BULK-COMMANDS-001"
+      - "NPM_TYPECHECK: PASS"
+      - "NPM_LINT: PASS (70 files, 0 fixes)"
+      - "NPM_BUILD: PASS"
+      - "NPM_TEST: PASS (205/205)"
+      - "LOCAL_CLEAN_MIGRATION_REPLAY: PASS (fresh unlinked disposable runtime; committed direct-RPC fixture and overlap runner completed)"
+      - "SECRET_SCAN: PASS (direct changed-task credential-assignment scan: no matches)"
+      - "DIFF_CHECK: PASS"
+      - "DIRECT_RPC_REPLAY: PASS (authenticated permission matrix; post-idempotency rollback; exact static audit SHA-256; one-field status and assignment hierarchy fingerprint conflicts)"
+      - "WRAPPER_AUTHORIZATION: PASS (Root Admin bulk-status positive; HR-role-only denied by both wrappers)"
+      - "OVERLAP_REPLAY: PASS (opposite-order bulk status, status versus assignment, and same-identity assignment with distinct keys 908/909 completed without deadlock)"
+      - "SKILL_LOCK_PROVIDER_HASHES: PASS"
   TASK-S03-004:
     title: "HR Application Inbox grouped table UI shell, search/filter, and candidate expandable rows"
     slice: SLICE-03

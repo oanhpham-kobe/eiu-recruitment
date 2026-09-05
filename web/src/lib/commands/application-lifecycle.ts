@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getServerSession } from "@/lib/auth/session";
 import { createCommandRunner } from "@/lib/commands/runner";
 import {
   CommandErrorCode,
@@ -56,6 +57,34 @@ export type UpdateSubmissionByHrData = {
   version_no: number;
 };
 
+export type BulkCreateOrUpdateApplicationsInput = {
+  submissionIds: string[];
+  unitId: string;
+  departmentTeamId: string | null;
+  positionId: string;
+  hrOwnerId: string;
+  idempotencyKey: string;
+};
+
+export type BulkCreateOrUpdateApplicationsData = {
+  items: Array<{
+    submission_id: string;
+    application_id: string;
+    action: "CREATED" | "UPDATED";
+    version_no: number;
+    round1_interview_id: string;
+  }>;
+  count: number;
+  idempotency_key: string;
+};
+
+function mapRpcErrorCode(rawCode: string | undefined): CommandErrorCode {
+  return (
+    CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
+    CommandErrorCode.INTERNAL_ERROR
+  );
+}
+
 export type ApplicationLifecycleCommandDeps = {
   client?: SupabaseClient;
   resolveActor?: () => Promise<VerifiedActor | null>;
@@ -107,6 +136,44 @@ async function defaultResolveActor(
     isActive: true,
     roles: ["GUEST"],
     permissions: [],
+  };
+}
+
+async function defaultResolveBulkActor(
+  client?: SupabaseClient,
+): Promise<VerifiedActor | null> {
+  const supabase = client ?? (await createServerClient());
+  const session = await getServerSession(supabase);
+
+  if (!session.user) {
+    return null;
+  }
+
+  if (!session.user.isInternal) {
+    return {
+      authUserId: session.user.authUserId,
+      email: session.user.email,
+      isActive: true,
+      roles: session.user.roles,
+      permissions: session.user.permissions,
+    };
+  }
+
+  const { data: appUser } = await supabase
+    .from("app_users")
+    .select("is_root_admin")
+    .eq("auth_user_id", session.user.authUserId)
+    .maybeSingle();
+
+  return {
+    authUserId: session.user.authUserId,
+    email: session.user.email,
+    isActive: true,
+    roles:
+      appUser && typeof appUser === "object" && appUser.is_root_admin
+        ? [...session.user.roles, "ROOT_ADMIN"]
+        : session.user.roles,
+    permissions: session.user.permissions,
   };
 }
 
@@ -401,6 +468,123 @@ export function createUpdateSubmissionByHrCommand(
 }
 
 // -----------------------------------------------------------------------------
+// 4. Bulk Common Application Assignment Command
+// -----------------------------------------------------------------------------
+
+export function createBulkCreateOrUpdateApplicationsCommand(
+  supabase: SupabaseClient,
+): TrustedCommandDefinition<
+  BulkCreateOrUpdateApplicationsInput,
+  string | undefined,
+  BulkCreateOrUpdateApplicationsInput,
+  BulkCreateOrUpdateApplicationsData
+> {
+  return {
+    name: "bulk_create_or_update_applications",
+    authorize(actor) {
+      const canManage =
+        actor.permissions.includes("applications.manage") &&
+        actor.permissions.includes("submissions.view");
+      if (!canManage && !actor.roles.includes("ROOT_ADMIN")) {
+        return {
+          authorized: false,
+          code: CommandErrorCode.FORBIDDEN,
+          reason:
+            "Permissions applications.manage and submissions.view required",
+        };
+      }
+      return { authorized: true };
+    },
+    validate(input) {
+      if (
+        !Array.isArray(input.submissionIds) ||
+        input.submissionIds.length === 0
+      ) {
+        return {
+          success: false,
+          error: "At least one submissionId is required",
+        };
+      }
+      if (!input.unitId || !UUID_REGEX.test(input.unitId)) {
+        return { success: false, error: "Invalid unitId UUID" };
+      }
+      if (
+        input.departmentTeamId !== null &&
+        !UUID_REGEX.test(input.departmentTeamId)
+      ) {
+        return { success: false, error: "Invalid departmentTeamId UUID" };
+      }
+      if (!input.positionId || !UUID_REGEX.test(input.positionId)) {
+        return { success: false, error: "Invalid positionId UUID" };
+      }
+      if (!input.hrOwnerId || !UUID_REGEX.test(input.hrOwnerId)) {
+        return { success: false, error: "Invalid hrOwnerId UUID" };
+      }
+      if (!input.idempotencyKey || !UUID_REGEX.test(input.idempotencyKey)) {
+        return { success: false, error: "idempotencyKey must be a valid UUID" };
+      }
+
+      const submissionIds = new Set<string>();
+      for (const submissionId of input.submissionIds) {
+        if (!submissionId || !UUID_REGEX.test(submissionId)) {
+          return { success: false, error: "Invalid submissionId UUID" };
+        }
+        if (submissionIds.has(submissionId)) {
+          return {
+            success: false,
+            error: "Duplicate submissionId is not allowed",
+          };
+        }
+        submissionIds.add(submissionId);
+      }
+      return { success: true, data: input };
+    },
+    async execute(_actor, validated) {
+      const { data, error } = await supabase.rpc(
+        "bulk_create_or_update_applications",
+        {
+          p_submission_ids: validated.submissionIds,
+          p_unit_id: validated.unitId,
+          p_department_team_id: validated.departmentTeamId,
+          p_position_id: validated.positionId,
+          p_hr_owner_id: validated.hrOwnerId,
+          p_idempotency_key: validated.idempotencyKey,
+        },
+      );
+
+      if (error) {
+        return {
+          success: false,
+          error: {
+            code: CommandErrorCode.INTERNAL_ERROR,
+            message: error.message,
+          },
+        };
+      }
+
+      const result = data as {
+        success: boolean;
+        error_code?: string;
+        message?: string;
+        data?: BulkCreateOrUpdateApplicationsData;
+      };
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          error: {
+            code: mapRpcErrorCode(result.error_code),
+            message: result.message || "Failed to assign Applications",
+          },
+        };
+      }
+
+      return { success: true, data: result.data };
+    },
+  };
+}
+
+// -----------------------------------------------------------------------------
 // Public Helpers
 // -----------------------------------------------------------------------------
 
@@ -435,4 +619,15 @@ export async function updateSubmissionByHr(
     deps.resolveActor ?? (() => defaultResolveActor(supabase));
   const runner = createCommandRunner({ resolveActor });
   return runner(createUpdateSubmissionByHrCommand(supabase), input);
+}
+
+export async function bulkCreateOrUpdateApplications(
+  input: BulkCreateOrUpdateApplicationsInput,
+  deps: ApplicationLifecycleCommandDeps = {},
+): Promise<CommandResult<BulkCreateOrUpdateApplicationsData>> {
+  const supabase = deps.client ?? (await createServerClient());
+  const resolveActor =
+    deps.resolveActor ?? (() => defaultResolveBulkActor(supabase));
+  const runner = createCommandRunner({ resolveActor });
+  return runner(createBulkCreateOrUpdateApplicationsCommand(supabase), input);
 }

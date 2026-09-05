@@ -94,17 +94,17 @@ active_project_skills:
   - name: supabase
     source: https://github.com/supabase/agent-skills
     path: skills/supabase
-    sha256: "df6748d6360a2cfda72d2d607a6f2d2fde730a03247eafb457421089b93e2d78"
+    sha256: "16817870f69bb9db58343cfa41c6fb864713c01f3680a64e0fb869605a5d81c3"
     classification: "ACTIVE_PROJECT_SPECIALIST"
   - name: supabase-postgres-best-practices
     source: https://github.com/supabase/agent-skills
     path: skills/supabase-postgres-best-practices
-    sha256: "4d7d1bd60f2ad7fd0d510269279519059dcc630d832f4c241d90735244c70525"
+    sha256: "ad65e776f45e761bafc609d3f506c77c1032225aa65e0c4c02f241b8071e5855"
     classification: "ACTIVE_PROJECT_SPECIALIST"
   - name: tdd
     source: https://github.com/mattpocock/skills
     path: skills/engineering/tdd
-    sha256: "193b791c489d1640ccfb58d7cbd60fc9e059ef44632b3c92f208784cfe45ab78"
+    sha256: "cb01f66bebfaa25fa1f88e6b7e769cd9fd9f35b1120b8563749820738814c927"
     classification: "ACTIVE_PROJECT_SPECIALIST"
   - name: diagnosing-bugs
     source: https://github.com/mattpocock/skills
