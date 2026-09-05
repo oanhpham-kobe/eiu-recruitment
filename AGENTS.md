@@ -232,6 +232,34 @@ A task prompt should contain only:
 
 Executor and Reviewer records should likewise store only the evidence delta
 needed to prove compliance.
+
+## Skill Execution Receipt Contract
+
+Skill routing is not proof of skill use. For every `SKILLS_REQUIRED` entry:
+
+1. resolve the effective provider/path against `SKILLS_LOCK.yaml`;
+2. actually read the effective `SKILL.md` before dependent implementation;
+3. record `loaded: YES` only after that read;
+4. record `applied: YES` only when its guidance materially informs a concrete implementation, test, review, or verification decision;
+5. persist a compact runtime receipt after execution.
+
+`AVAILABLE != LOADED != APPLIED`.
+
+`SKILLS_REQUIRED`, `SKILLS_RESOLVED`, provider availability, planning text, and implementation resemblance are not runtime-use proof. Future prompts use only `SKILLS_REQUIRED`, `SKILLS_RESOLVED`, and `SKILLS_INTENDED_APPLICATION`; never pre-populate `SKILLS_APPLIED`.
+
+```yaml
+SKILL_USAGE:
+  <skill-name>:
+    provider: "<effective provider/path>"
+    availability: AVAILABLE
+    loaded: YES|NO
+    applied: YES|NO
+    applied_to:
+      - "<specific implementation/test/review decision>"
+    reason: "<required when loaded=NO or applied=NO>"
+```
+
+Do not copy skill contents into `project_control` or claim historical skill use without evidence. For an in-progress task released before this contract, record actual reads truthfully; load an unread required skill before remaining dependent work when possible, and let independent review determine any needed focused repair.
 ## 6.1 General implementation
 
 For a well-defined implementation task:
@@ -492,6 +520,23 @@ A graph query is invalid as task evidence until freshness has been established f
 2. **GitNexus Freshness Gate:** Before first query, verify index freshness (`gitnexus status`). If stale, refresh index (`gitnexus analyze --skip-git --index-only`).
 3. **Stale Fallback:** If freshness cannot be established, graph evidence is UNAVAILABLE; fall back to direct source, LSP, and search. Never use stale graph evidence.
 4. **Post-Change Invalidation:** Once implementation materially modifies source, all prior graph conclusions are STALE until refreshed if reused.
+
+## Task-Level Graph Usage Receipt
+
+Every implementation task records exactly one route: `DIRECT_SOURCE_LSP_ONLY`, `CRG`, `GITNEXUS`, or `CRG_THEN_GITNEXUS`. Routing is mandatory; graph execution is conditional.
+
+For localized work:
+
+```yaml
+GRAPH_USAGE:
+  route: DIRECT_SOURCE_LSP_ONLY
+  graph_used: NO
+  reason: "<why direct source + LSP is sufficient>"
+```
+
+Do not call or refresh graphs merely to create evidence. When CRG or GitNexus is used, persist its tool, freshness before use, refresh action, analyzed HEAD, concrete purpose, and `direct_source_crosscheck: PASS`; `CRG_THEN_GITNEXUS` records those facts for each graph used. Graph evidence without freshness, analyzed HEAD, or direct-source cross-check is invalid. After material source changes, refresh before reusing graph conclusions.
+
+Database authority remains ordered migrations, declarative schema, direct SQL, and tests. Graph output is never the effective database definition.
 
 ## Graph Authority Policy — Mandatory Hierarchy
 

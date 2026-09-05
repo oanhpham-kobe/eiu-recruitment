@@ -330,8 +330,13 @@ Verify where relevant:
 
 For major UI/pre-release:
 
-- run `frontend-checklist-global`;
-- run `browser-qa` on preview/staging.
+- verify canonical Design System v1.8;
+- apply the applicable Design Review Checklist;
+- use `accessibility`;
+- run `browser-qa` on preview/staging when a preview/staging target is available and authorized;
+- run React Doctor when applicable.
+
+`frontend-checklist-global` is deliberately excluded; do not reinstall it.
 
 ---
 
@@ -439,8 +444,8 @@ For high-risk diffs, prefer independent review.
 Suggested sequence:
 
 ```text
-code-review
--> OMP /review
+independent implementation Reviewer (`eiu-code-review` where applicable)
+-> OMP independent /review for high-risk work when useful
 -> ponytail-review if complexity increased
 -> verification-before-completion
 ```
@@ -472,6 +477,12 @@ Do not use stale `--diff` examples as the preferred form.
 
 Treat findings as review input; do not automatically rewrite unrelated code.
 
+
+## Skill Execution Evidence — HIGH
+
+For every task with `SKILLS_REQUIRED`, verify the effective `SKILLS_LOCK.yaml` provider, actual `SKILL.md` read state, concrete `applied_to` decisions, and truthful reasons for unloaded/non-applied skills. `SKILLS_INTENDED_APPLICATION` is planning only.
+
+Reject a receipt that treats `SKILLS_REQUIRED`, `SKILLS_RESOLVED`, availability, or pre-execution `SKILLS_APPLIED` as proof; claims `loaded: YES` without an actual read; claims `applied: YES` without a concrete decision; or fabricates historical evidence. Do not fail accepted historical tasks solely because they predate this contract.
 ---
 
 # 19. Graph Intelligence & Code Review Contracts (v2.4)
@@ -504,6 +515,10 @@ Verify:
 - [ ] actual source is inspected before assigning findings;
 - [ ] database findings are verified against migrations, schema, and direct SQL;
 - [ ] Graphify is recognized as dormant and non-authoritative.
+
+## Graph Usage Evidence — HIGH
+
+Verify persisted `GRAPH_USAGE`. For `DIRECT_SOURCE_LSP_ONLY`, require `graph_used: NO` and a concrete locality reason; absence of graph calls is correct. For graph-used tasks, require freshness before first query, refresh when stale, analyzed HEAD, route-matched purpose, and direct-source confirmation of material findings. Do not approve intended routing as graph evidence, and require fresh evidence before reusing graph conclusions after material changes.
 
 ---
 
