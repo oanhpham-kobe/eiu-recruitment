@@ -26,7 +26,7 @@ authorization:
 
 active_task:
   id: TASK-S03-005
-  status: ACCEPTED_PENDING_EXACT_CI
+  status: ACCEPTED
   task_branch: oanhpham-kobe/TASK-S03-005-inbox-detail
   task_worktree: "D:/orca/recruitment/TASK-S03-005-inbox-detail"
   executor_prompt: "project_control/prompts/SLICE-03_TASK-005_v1.md"
@@ -41,11 +41,11 @@ last_accepted_task:
     - "executor_pre_review_ui_test_gate: PASS"
     - "ten_point_transition_matrix_gate: PASS"
     - "implementation_reviewed: PASS (independent REVIEW #6)"
-    - "github_ci: PENDING exact accepted integration checkpoint"
+    - "github_ci: VERIFIED (Integration CI exact SHA 4378773c32c3af30fb59665c194384c1a22a6184; run 33962024613)"
 github_ci:
   workflow: "Integration CI"
-  commit_sha: "bef1a2f5846629d1102071f003455bb783d0f6f0"
-  run_id: "33950464523"
+  commit_sha: "4378773c32c3af30fb59665c194384c1a22a6184"
+  run_id: "33962024613"
   result: PASS
   checks:
     audit_dependencies: PASS
@@ -53,10 +53,6 @@ github_ci:
     typecheck: PASS
     build: PASS
     test: PASS
-pending_github_ci:
-  required_for_task: TASK-S03-005
-  workflow: "Integration CI"
-  reason: "accepted integration checkpoint must be pushed and matched to its exact SHA"
 governance_hotfix:
   commit: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
   ci_run_id: "33936480169"
@@ -81,4 +77,4 @@ stop_state:
   reason: null
   observed_evidence:
     - "TASK-S03-005 passed independent implementation review #6 under authorized continuous verification closure."
-next_action: "Push accepted TASK-S03-005 integration checkpoint, verify exact-SHA CI, then proceed autonomously to TASK-S03-006."
+next_action: "Execute eligible TASK-S03-006 autonomously."
