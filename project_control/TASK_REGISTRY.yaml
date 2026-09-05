@@ -857,12 +857,15 @@ tasks:
   TASK-S03-006:
     title: "Candidate Account Lifecycle & Application Inbox Bulk Actions"
     slice: SLICE-03
-    status: IMPLEMENTED
+    status: DONE
     depends_on: [TASK-S03-005]
     prompt:
       path: "project_control/prompts/SLICE-03_TASK-006_v1.md"
       sha256: "9e1ad4c3c87f986c693f39fea7733ec6bf3afe8d5dbff36893f08a756be74536"
       independent_review: "PASS (final independent prompt review; no blockers)"
+    implementation:
+      commit: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"
+      independent_review: "PASS (REVIEW #6; continuous verification closure completed with all blockers resolved)"
     evidence:
       - "APPLICATION-INBOX-BULK-001: IMPLEMENTED"
       - "NPM_LINT: PASS (Biome checked 88 files; 0 errors)"
@@ -875,6 +878,7 @@ tasks:
       - "BROWSER_QA: PASS (Playwright automated test suite in application-inbox-bulk-ui.test.ts verifies toolbar button disabled/enabled states, reactive selection counts, Select All checkbox, bulk Mark NEW/READ with client-side guard for active applications and allowance for inactive historical applications, bulk Inactive confirmation modal with WAI-ARIA dialog semantics, focus trap even while pending/disabled, Escape key dismissal, focus restoration to selection status announcement on success, selection reset on filter change with live announcement, drawer version synchronization to table group state, touch targets >= 44x44px, typography >= 16px, and responsive viewport behavior at 768px tablet breakpoint verifying computed flex-wrap: wrap on toolbar and bulk action group, vertical coordinate wrapping of action group below selection count [actionsBox.y > countBox.y], table scroll container width fitting within 768px, >= 44x44px button touch targets, and responsive action execution)"
       - "SECRET_SCAN: PASS (no credentials or tokens committed)"
       - "DIFF_CHECK: PASS (git diff --check is clean)"
+      - "INDEPENDENT_REVIEW: PASS (REVIEW #6 on exact SHA fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221; no blockers)"
       - "REPAIR_EVIDENCE: PASS (Continuous Autonomy Repair Round 5: 1. Added explicit observable assertions in application-inbox-bulk-ui.test.ts verifying window.getComputedStyle(toolbar).flexWrap === 'wrap', window.getComputedStyle(actionsContainer).flexWrap === 'wrap', and vertical coordinate wrapping of toolbar items where actionsBox.y > countBox.y under 768px tablet viewport; 2. Aligned browser_qa and executor_pre_review_ui_test_gate evidence records in EVIDENCE_INDEX.yaml and TASK_REGISTRY.yaml to precisely reflect verified responsive flex-wrap styles, vertical wrapping geometry, scroll container width fitting, touch targets >= 44x44px, and execution without claiming unexercised geometry)"
     SKILL_USAGE:
       react-patterns:

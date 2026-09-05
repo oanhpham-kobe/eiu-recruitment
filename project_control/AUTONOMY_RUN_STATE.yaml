@@ -26,22 +26,21 @@ authorization:
 
 active_task:
   id: TASK-S03-006
-  status: IMPLEMENTATION_COMPLETED_READY_FOR_REVIEW
+  status: ACCEPTED_PENDING_EXACT_CI
   task_branch: oanhpham-kobe/TASK-S03-006-bulk-lifecycle
   task_worktree: "D:/orca/recruitment/TASK-S03-006-bulk-lifecycle"
   executor_prompt: "project_control/prompts/SLICE-03_TASK-006_v1.md"
   executor_prompt_sha256: "9e1ad4c3c87f986c693f39fea7733ec6bf3afe8d5dbff36893f08a756be74536"
-  reviewer_status: "PROMPT: PASS (ReviewS03006PromptRound2); IMPLEMENTATION: READY_FOR_REVIEW"
+  reviewer_status: "PROMPT: PASS (ReviewS03006PromptRound2); IMPLEMENTATION REVIEW #6: PASS; CONTINUOUS VERIFICATION CLOSURE COMPLETE"
 last_accepted_task:
-  id: TASK-S03-005
-  commit: "cc742c9dd5ea4a1bcc97d23985be6e99e4243eba"
+  id: TASK-S03-006
+  commit: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"
   evidence:
-    - "APPLICATION-INBOX-DETAIL-001: VERIFIED"
+    - "APPLICATION-INBOX-BULK-001: VERIFIED"
     - "prompt_reviewed: PASS"
     - "executor_pre_review_ui_test_gate: PASS"
-    - "ten_point_transition_matrix_gate: PASS"
     - "implementation_reviewed: PASS (independent REVIEW #6)"
-    - "github_ci: VERIFIED (Integration CI exact SHA 4378773c32c3af30fb59665c194384c1a22a6184; run 33962024613)"
+    - "github_ci: PENDING exact accepted integration checkpoint"
 github_ci:
   workflow: "Integration CI"
   commit_sha: "4378773c32c3af30fb59665c194384c1a22a6184"
@@ -53,6 +52,10 @@ github_ci:
     typecheck: PASS
     build: PASS
     test: PASS
+pending_github_ci:
+  required_for_task: TASK-S03-006
+  workflow: "Integration CI"
+  reason: "accepted integration checkpoint must be pushed and matched to its exact SHA"
 governance_hotfix:
   commit: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
   ci_run_id: "33936480169"
@@ -68,13 +71,12 @@ governance_maintenance:
 blocked_tasks: []
 
 safe_frontier:
-  eligible_tasks:
-    - TASK-S03-006
+  eligible_tasks: []
   skipped_due_to_dependency: []
 
 stop_state:
   stop_gate: null
   reason: null
   observed_evidence:
-    - "TASK-S03-005 passed independent implementation review #6 under authorized continuous verification closure."
-next_action: "Create isolated worktree D:/orca/recruitment/TASK-S03-006-bulk-lifecycle on branch oanhpham-kobe/TASK-S03-006-bulk-lifecycle and launch executor."
+    - "SLICE-03 is now complete (TASK-S03-001 through TASK-S03-006 ACCEPTED)."
+next_action: "Push accepted TASK-S03-006 integration checkpoint, verify exact-SHA CI, then recompute safe frontier for SLICE-04."

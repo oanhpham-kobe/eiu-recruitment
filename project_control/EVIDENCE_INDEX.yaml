@@ -750,7 +750,7 @@ implementation_evidence:
   APPLICATION-INBOX-BULK-001:
     task: TASK-S03-006
     operation: CANDIDATE_ACCOUNT_LIFECYCLE_AND_INBOX_BULK_ACTIONS
-    status: IMPLEMENTED
+    status: ACCEPTED
     GRAPH_USAGE:
       route: DIRECT_SOURCE_LSP_ONLY
       graph_used: NO
@@ -777,3 +777,4 @@ implementation_evidence:
     secret_scan: "PASS (no credentials or tokens committed)"
     diff_check: "PASS (git diff --check is clean)"
     repair_evidence: "PASS (Continuous Autonomy Repair Round 5: 1. Added explicit observable assertions in application-inbox-bulk-ui.test.ts verifying window.getComputedStyle(toolbar).flexWrap === 'wrap', window.getComputedStyle(actionsContainer).flexWrap === 'wrap', and vertical coordinate wrapping of toolbar items where actionsBox.y > countBox.y under 768px tablet viewport; 2. Aligned browser_qa and executor_pre_review_ui_test_gate evidence records in EVIDENCE_INDEX.yaml and TASK_REGISTRY.yaml to precisely reflect verified responsive flex-wrap styles, vertical wrapping geometry, scroll container width fitting, touch targets >= 44x44px, and execution without claiming unexercised geometry)"
+    independent_review: "PASS (REVIEW #6 on exact SHA fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221; verified all-or-nothing candidate lifecycle, accurate audit previous_is_active diffs, row-bound optimistic tokens, accessible confirmation modals, and responsive layout assertions; no blockers)"
