@@ -24,7 +24,14 @@ authorization:
       create_pr: false
       merge_pr: false
 
-active_task: null
+active_task:
+  id: TASK-S03-004
+  status: PROMPT_ACCEPTED
+  task_branch: oanhpham-kobe/TASK-S03-004-application-inbox
+  task_worktree: "D:/orca/recruitment/TASK-S03-004-application-inbox"
+  executor_prompt: "project_control/prompts/SLICE-03_TASK-004_v1.md"
+  executor_prompt_sha256: "d84f5802a7b15911578de27ca070154822117fc1be0edf30c1c742d9c6dffa7d"
+  reviewer_status: "PROMPT: PASS; IMPLEMENTATION: PENDING"
 last_accepted_task:
   id: TASK-S03-003
   commit: "dbf474bce94464abe29be242ec3a91cc05687a96"
@@ -71,4 +78,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Derive and independently review the TASK-S03-004 HR Application Inbox prompt; then release exactly one executor in a separate Orca worktree."
+next_action: "Create the isolated TASK-S03-004 worktree and release exactly one executor."
