@@ -665,7 +665,11 @@ tasks:
   TASK-S03-004:
     title: "HR Application Inbox grouped table UI shell, search/filter, and candidate expandable rows"
     slice: SLICE-03
-    status: PLANNED
+    status: PROMPT_REVIEW
+    prompt:
+      path: "project_control/prompts/SLICE-03_TASK-004_v1.md"
+      sha256: "d84f5802a7b15911578de27ca070154822117fc1be0edf30c1c742d9c6dffa7d"
+      independent_review: PENDING
     depends_on: [TASK-S03-003]
   TASK-S03-005:
     title: "Submission Detail Drawer, HR Note editor, document preview, and Application creation flow"
