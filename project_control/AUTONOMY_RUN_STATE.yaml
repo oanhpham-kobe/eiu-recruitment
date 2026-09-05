@@ -11,7 +11,7 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_checkpoint: "ffb7038e939599fd5bbbcda1592c25619ca6a624"
+  last_verified_checkpoint: "2f1525787f2a4cb5ec8c5ffa949b5f1f5d410a9e"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -71,4 +71,4 @@ stop_state:
   reason: null
   observed_evidence: []
 
-next_action: "Rebase and integrate the prepared MCP runtime governance maintenance onto the verified TASK-S03-003 integration head before releasing TASK-S03-004."
+next_action: "Derive and independently review the TASK-S03-004 HR Application Inbox prompt; then release exactly one executor in a separate Orca worktree."
