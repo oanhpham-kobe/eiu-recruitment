@@ -1014,11 +1014,13 @@ tasks:
   TASK-S04-005:
     title: "Application reactivation and participant command contract repair"
     slice: SLICE-04
-    status: IN_PROGRESS
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-S04-003
     prompt: project_control/prompts/SLICE-04_TASK-005_v1.md
     prompt_sha256: 2f0559a0652f0a8304f885e2b0e9e006de4573d91523707fad8475157ca99ed2
-    prompt_review_status: "PASS (agent://TaskS04005PromptReReview; blockers: NONE)"
-    notes: "Source-backed prerequisite materialized from blocking independent UI prompt review. Exact repaired prompt independently re-reviewed PASS; eligible for Lane A executor dispatch."
+    implementation_sha: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"
+    review_status: "PASS (agent://TaskS04005ExactReReview; blockers: NONE)"
+    github_ci: "VERIFIED (run 34039979411; integration commit 8819d9fec1143e94aea7721e47ae84a8abcd82b9; PASS)"
+    notes: "Append-only reactivation/participant contract repair passed local replay and all Slice-04 regressions. Initial review found P1 predecessor idempotency and PostgREST named-argument compatibility defects; exact repair re-review passed. Exact integration CI passed."

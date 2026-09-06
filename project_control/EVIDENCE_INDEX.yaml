@@ -8,8 +8,8 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: SLICE_04_IN_PROGRESS_TASK_S04_003_ACCEPTED
-  note: "All tasks through TASK-S04-003 are independently reviewed, serially integrated, and verified on exact-SHA GitHub Actions CI."
+  status: SLICE_04_IN_PROGRESS_TASK_S04_005_ACCEPTED_MAINTENANCE_STOP
+  note: "All tasks through TASK-S04-005 are independently reviewed, serially integrated, and verified on exact-SHA GitHub Actions CI. Owner-authorized maintenance stop is armed before TASK-S04-004 dispatch."
 
   COPY-INTERVIEW-SCHEDULE-001:
     task: TASK-S04-003
@@ -26,6 +26,21 @@ implementation_evidence:
     implementation_review: "PASS (agent://TaskS04003FinalExactReview; blockers: NONE)"
     integration_commit: "f46ac9fbcc4356df4855aa715dcc56359ffe30c8"
     github_ci: "PASS (Integration CI run 34036486527; fast verification + database integration)"
+
+  APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001:
+    task: TASK-S04-005
+    operation: APPLICATION_REACTIVATION_AND_PARTICIPANT_RPC_CONTRACT_REPAIR
+    status: VERIFIED
+    prompt_sha256: "2f0559a0652f0a8304f885e2b0e9e006de4573d91523707fad8475157ca99ed2"
+    implementation_sha: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"
+    migration: "supabase/migrations/20260906090000_application_reactivation_and_participant_contract_repair.sql"
+    test_suite: "supabase/tests/application_reactivation_and_participant_contract_repair_test.sql"
+    local_reset: PASS
+    focused_test: PASS
+    Slice_04_regressions: PASS
+    implementation_review: "PASS (agent://TaskS04005ExactReReview; blockers: NONE)"
+    integration_commit: "8819d9fec1143e94aea7721e47ae84a8abcd82b9"
+    github_ci: "PASS (Integration CI run 34039979411; fast verification + database integration)"
 
   SOURCE-PARITY-001:
     gate: SOURCE_PARITY_GATE
