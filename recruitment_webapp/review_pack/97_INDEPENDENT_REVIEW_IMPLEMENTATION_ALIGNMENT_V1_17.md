@@ -1,5 +1,7 @@
 # 97. Independent Review — Implementation Alignment v1.17
 
+> **HISTORICAL / SUPERSEDED:** retained as v1.17 evidence only. Current authority is v1.18 alignment/gate in `source_registry.yaml`.
+
 **Status:** CURRENT / NORMATIVE  
 **Date:** 03/09/2026  
 **Baseline:** Full Handover v1.17 + Design System v1.8 + Responsive Prototype v1.10

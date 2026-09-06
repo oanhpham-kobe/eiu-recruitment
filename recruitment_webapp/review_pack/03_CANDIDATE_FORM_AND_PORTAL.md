@@ -15,28 +15,28 @@
 
 ### A. Thông tin chung (General Information)
 
-| Field | Kiểu nhập đề xuất | Required hiện tại |
-|---|---|---:|
-| Họ tên | Text | ✅ |
-| Ngày sinh | Date picker | ✅ |
-| Giới tính | Dropdown: Nam / Nữ | ✅ |
-| Địa chỉ hiện tại | Text | ✅ |
-| Email | Read-only, auto từ Auth | ✅ |
-| Số điện thoại | Text/Phone | ✅ |
+| Field | Kiểu nhập đề xuất | Ràng buộc / Validation | Required |
+|---|---|---|---:|
+| Họ tên | Text | Min 1, max 200 ký tự, trimmed | ✅ |
+| Ngày sinh | Date picker | Từ 1900-01-01 đến ngày hiện tại (TODAY) | ✅ |
+| Giới tính | Dropdown | `MALE` (Nam) / `FEMALE` (Nữ) — không có OTHER trong Phase 1 | ✅ |
+| Địa chỉ hiện tại | Text | Max 500 ký tự, trimmed | ✅ |
+| Email | Read-only, auto từ Auth | Verified Auth email, Candidate không được sửa | ✅ |
+| Số điện thoại | Text/Phone | Max 32 ký tự, chuẩn hóa số và dấu + đầu dòng | ✅ |
 
 ### B. Thông tin chi tiết (Details)
 
 #### 1. Quá trình học tập (Education)
 Cho phép nhiều record.
 
-| Field | Kiểu nhập |
-|---|---|
-| Thời gian | Khoảng thời gian / Year range |
-| Học vấn | Searchable dropdown từ Danh mục |
-| Chuyên ngành | Text |
-| Trường | Text |
+| Field | Kiểu nhập / DB column | Ràng buộc |
+|---|---|---|
+| Thời gian | `period_text` | Max 100 ký tự |
+| Học vấn | `qualification_id` | UUID chọn từ active `qualification_levels` |
+| Chuyên ngành | `major` | Max 255 ký tự |
+| Trường | `institution` | Max 255 ký tự |
 
-Nút: `+ Thêm quá trình học tập`. Phase 1 hiện **không bắt buộc tối thiểu 1 dòng Education và không đánh dấu 4 field Education là required**; nếu sau này đổi requiredness phải cập nhật Validation Contract/DTO/Acceptance trước khi đổi prototype.
+Nút: `+ Thêm quá trình học tập`. Cho phép tối đa 20 dòng. Thứ tự `sort_order` do server đánh số 1-based (1..n); không chấp nhận sort_order = 0. Phase 1 **không bắt buộc tối thiểu 1 dòng Education và không đánh dấu 4 field Education là required**; nếu cung cấp qualification_id thì phải active.
 
 ### C. Hồ sơ đính kèm
 
@@ -53,13 +53,13 @@ Upload policy Phase 1:
 - tối đa **5 MB/file**;
 - backend validate type/size và versioning, không chỉ dựa vào frontend.
 
-### D. Xác nhận quyền riêng tư
-- Candidate đọc server-pinned Privacy Notice và thực hiện **một Privacy acknowledgement** theo version được pin.
+### D. Xác nhận quyền riêng tư (Strong-current Privacy Notice)
+- Candidate Form Session mở sẽ pin một bản Privacy Notice version hiển thị.
+- **Strong-current verification:** khi Candidate nhấn Submit hoặc Save Edit, backend kiểm tra lại version hiện hành (`is_current=true`). Nếu notice version đã thay đổi giữa phiên, lệnh bị từ chối với lỗi stable `PRIVACY_NOTICE_CHANGED`, giữ nguyên draft/session và yêu cầu Candidate xác nhận phiên bản notice mới trước khi thử lại.
 - Không có accuracy-attestation checkbox/DB record thứ hai trong Phase 1.
 - NEW_SUBMISSION: acknowledgement **unchecked by default**; Candidate phải chủ động chọn trước Submit.
-- EDIT_SUBMISSION: nếu exact pinned notice version đã được acknowledge cho Submission/version tương ứng thì UI có thể render satisfied; notice version mới phải yêu cầu acknowledgement mới.
-- Submit.
-
+- EDIT_SUBMISSION: nếu exact pinned notice version đã được acknowledge cho Submission thì coi như đã xác nhận; nếu notice version thay đổi hoặc chưa acknowledge version đó thì bắt buộc xác nhận.
+- Bản ghi vật lý lưu tại `privacy_acknowledgements(submission_id, notice_version, acknowledged_at, source_code)`.
 ## 3. Các section KHÔNG hiển thị cho Candidate
 
 Vẫn có schema trong hệ thống nhưng chỉ HR thấy và edit:
@@ -82,7 +82,7 @@ Vẫn có schema trong hệ thống nhưng chỉ HR thấy và edit:
 ### Other
 - Textarea thông tin khác.
 
-Các trường này nên lưu theo Submission để bảo toàn snapshot của từng lần ứng tuyển.
+Candidate Submit/Edit **tuyệt đối không nhận, không sửa, không xóa và không ghi đè** các field/bảng con thuộc quyền HR (`other_info`, `hr_note`, `submission_work_experiences`, `submission_activities`). Khi Candidate cập nhật phiếu, dữ liệu HR-only này được giữ nguyên vẹn.
 
 ## 4. Submit logic
 
@@ -169,6 +169,33 @@ Khi HR Active lại Candidate, hệ thống tính lại trạng thái từng Sub
 - Có Application đang xử lý → `PROCESSED`.
 - Không còn active Application → `READ`; HR có thể Mark New nếu muốn Candidate sửa.
 
+
+## 9. Portal Security & Integration Baseline
+
+### Route Guard
+Các route `/candidate/*` được bảo vệ bằng server-side session guard (`web/src/app/candidate/layout.tsx`):
+- Chưa đăng nhập → redirect về `/auth/candidate`.
+- Candidate inactive hoặc chưa provision hợp lệ → chặn truy cập protected portal.
+- Route guard là lớp phòng thủ bổ sung, không thay thế DB RLS.
+
+### Authoritative Upload Reservation Protocol
+Client/browser **không được tự sinh reservation ID hay temp object path**. Luồng upload bắt buộc:
+1. `reserve_candidate_form_upload` → nhận `reservation_id` và `temp_bucket/temp_path` có thẩm quyền từ server;
+2. Upload file vào đúng path với `upsert=false`;
+3. `record_candidate_upload_completed`;
+4. Quét malware / clean check;
+5. `stage_candidate_document_change` (`ADD`, `REPLACE`, `DELETE`).
+
+### Session-Scoped Autosave (PII Protection)
+- Bản nháp Candidate PII chỉ được lưu trong `sessionStorage`, **không dùng persistent localStorage**.
+- Khóa lưu trữ gắn với Form Session ID thực tế và `expires_at`.
+- Hết hạn Form Session → bản nháp không còn hiệu lực và bị xóa.
+- Tự động xóa draft khi Submit thành công, Cancel, Logout hoặc session rơi vào terminal state.
+- Refresh trong cùng browser session vẫn khôi phục được draft.
+
+### Strict CSP
+- Không dùng `unsafe-inline` cho Content Security Policy. Toàn bộ inline presentation styles chuyển sang CSS classes.
+- Route Candidate Auth và Candidate Portal bắt buộc render không có vi phạm CSP.
 ## Candidate Form transaction model
 - Opening a new form creates a short-lived Candidate Form Session, **not** a Submission.
 - Files upload to temp/quarantine under that session.

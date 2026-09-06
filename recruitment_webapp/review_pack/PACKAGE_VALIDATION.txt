@@ -1,5 +1,5 @@
-PACKAGE VALIDATION — Full Handover v1.17 / Design System v1.8 / Responsive v1.10 — 2026-09-03
-TOTAL=511 PASS=511 FAIL=0
+PACKAGE VALIDATION — Full Handover v1.18 / Design System v1.8 / Responsive v1.10 — 2026-09-06
+TOTAL=515 PASS=515 FAIL=0
 
 PASS | file 00_README.md
 PASS | file FINAL_REVIEW_GUIDE.md
@@ -70,13 +70,13 @@ PASS | source_registry parses
 PASS | validation_contract parses
 PASS | critical_control_registry parses
 PASS | seed parses
-PASS | Technical version 1.17
+PASS | Technical version 1.18
 PASS | Design version 1.8
 PASS | App spec responsive baseline v1.10
 PASS | Business core 1.2 frozen
 PASS | Scope current versions
 PASS | Gate status current
-PASS | Historical registry exact | {'49_TECHNICAL_REVIEW_VERCEL_SUPABASE.md': 'HISTORICAL', '56_EXTERNAL_REVIEW_V2_RESOLUTION.md': 'HISTORICAL', '57_TECHNICAL_PRECODE_GATE_V1_4.md': 'HISTORICAL', '60_EXTERNAL_REVIEW_V3_RESOLUTION.md': 'HISTORICAL', '65_TECHNICAL_PRECODE_GATE_V1_5.md': 'HISTORICAL', '69_EXTERNAL_REVIEW_V4_RESOLUTION.md': 'HISTORICAL', '71_TECHNICAL_PRECODE_GATE_V1_6.md': 'HISTORICAL', '72_EXTERNAL_REVIEW_V5_RESOLUTION.md': 'HISTORICAL', '74_TECHNICAL_PRECODE_GATE_V1_7.md': 'HISTORICAL', '77_EXTERNAL_REVIEW_V6_RESOLUTION.md': 'HISTORICAL', '79_TECHNICAL_PRECODE_GATE_V1_8.md': 'HISTORICAL', '80_EXTERNAL_REVIEW_V7_RESOLUTION.md': 'HISTORICAL', '82_TECHNICAL_PRECODE_GATE_V1_9.md': 'HISTORICAL', '83_EXTERNAL_REVIEW_V7_IMPLEMENTATION_ALIGNMENT_V1_10.md': 'HISTORICAL', '84_TECHNICAL_PRECODE_GATE_V1_10.md': 'HISTORICAL', '85_EXTERNAL_REVIEW_V8_IMPLEMENTATION_ALIGNMENT_V1_11.md': 'HISTORICAL', '86_TECHNICAL_PRECODE_GATE_V1_11.md': 'HISTORICAL', '87_EXTERNAL_REVIEW_V9_IMPLEMENTATION_ALIGNMENT_V1_12.md': 'HISTORICAL', '88_TECHNICAL_PRECODE_GATE_V1_12.md': 'HISTORICAL', '89_EXTERNAL_REVIEW_V10_IMPLEMENTATION_ALIGNMENT_V1_13.md': 'HISTORICAL', '90_TECHNICAL_PRECODE_GATE_V1_13.md': 'HISTORICAL', '91_EXTERNAL_REVIEW_V11_IMPLEMENTATION_ALIGNMENT_V1_14.md': 'HISTORICAL', '92_TECHNICAL_PRECODE_GATE_V1_14.md': 'HISTORICAL', '93_EXTERNAL_REVIEW_V12_IMPLEMENTATION_ALIGNMENT_V1_15.md': 'HISTORICAL', '94_TECHNICAL_PRECODE_GATE_V1_15.md': 'HISTORICAL', '95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md': 'HISTORICAL', '96_TECHNICAL_PRECODE_GATE_V1_16.md': 'HISTORICAL'}
+PASS | Historical registry exact | {'49_TECHNICAL_REVIEW_VERCEL_SUPABASE.md': 'HISTORICAL', '56_EXTERNAL_REVIEW_V2_RESOLUTION.md': 'HISTORICAL', '57_TECHNICAL_PRECODE_GATE_V1_4.md': 'HISTORICAL', '60_EXTERNAL_REVIEW_V3_RESOLUTION.md': 'HISTORICAL', '65_TECHNICAL_PRECODE_GATE_V1_5.md': 'HISTORICAL', '69_EXTERNAL_REVIEW_V4_RESOLUTION.md': 'HISTORICAL', '71_TECHNICAL_PRECODE_GATE_V1_6.md': 'HISTORICAL', '72_EXTERNAL_REVIEW_V5_RESOLUTION.md': 'HISTORICAL', '74_TECHNICAL_PRECODE_GATE_V1_7.md': 'HISTORICAL', '77_EXTERNAL_REVIEW_V6_RESOLUTION.md': 'HISTORICAL', '79_TECHNICAL_PRECODE_GATE_V1_8.md': 'HISTORICAL', '80_EXTERNAL_REVIEW_V7_RESOLUTION.md': 'HISTORICAL', '82_TECHNICAL_PRECODE_GATE_V1_9.md': 'HISTORICAL', '83_EXTERNAL_REVIEW_V7_IMPLEMENTATION_ALIGNMENT_V1_10.md': 'HISTORICAL', '84_TECHNICAL_PRECODE_GATE_V1_10.md': 'HISTORICAL', '85_EXTERNAL_REVIEW_V8_IMPLEMENTATION_ALIGNMENT_V1_11.md': 'HISTORICAL', '86_TECHNICAL_PRECODE_GATE_V1_11.md': 'HISTORICAL', '87_EXTERNAL_REVIEW_V9_IMPLEMENTATION_ALIGNMENT_V1_12.md': 'HISTORICAL', '88_TECHNICAL_PRECODE_GATE_V1_12.md': 'HISTORICAL', '89_EXTERNAL_REVIEW_V10_IMPLEMENTATION_ALIGNMENT_V1_13.md': 'HISTORICAL', '90_TECHNICAL_PRECODE_GATE_V1_13.md': 'HISTORICAL', '91_EXTERNAL_REVIEW_V11_IMPLEMENTATION_ALIGNMENT_V1_14.md': 'HISTORICAL', '92_TECHNICAL_PRECODE_GATE_V1_14.md': 'HISTORICAL', '93_EXTERNAL_REVIEW_V12_IMPLEMENTATION_ALIGNMENT_V1_15.md': 'HISTORICAL', '94_TECHNICAL_PRECODE_GATE_V1_15.md': 'HISTORICAL', '95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md': 'HISTORICAL', '96_TECHNICAL_PRECODE_GATE_V1_16.md': 'HISTORICAL', '97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md': 'HISTORICAL', '98_TECHNICAL_PRECODE_GATE_V1_17.md': 'HISTORICAL'}
 PASS | Historical banner 49_TECHNICAL_REVIEW_VERCEL_SUPABASE.md
 PASS | Historical banner 56_EXTERNAL_REVIEW_V2_RESOLUTION.md
 PASS | Historical banner 57_TECHNICAL_PRECODE_GATE_V1_4.md
@@ -104,17 +104,19 @@ PASS | Historical banner 93_EXTERNAL_REVIEW_V12_IMPLEMENTATION_ALIGNMENT_V1_15.m
 PASS | Historical banner 94_TECHNICAL_PRECODE_GATE_V1_15.md
 PASS | Historical banner 95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md
 PASS | Historical banner 96_TECHNICAL_PRECODE_GATE_V1_16.md
+PASS | Historical banner 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
+PASS | Historical banner 98_TECHNICAL_PRECODE_GATE_V1_17.md
 PASS | Current review pointer
 PASS | Current precode pointer
 PASS | Current entrypoint 00_README.md
 PASS | Current entrypoint FINAL_REVIEW_GUIDE.md
 PASS | Current entrypoint 16_AI_REVIEW_AND_BUILD_PROMPT.md
 PASS | Current entrypoint 52_TECHNICAL_GATE_STATUS.md
-PASS | Current entrypoint 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
+PASS | Current entrypoint 99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md
 PASS | Current entrypoint 73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md
 PASS | Current entrypoint 78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md
 PASS | Current entrypoint 81_RESPONSIVE_PROTOTYPE_INTEGRATION.md
-PASS | Current entrypoint 98_TECHNICAL_PRECODE_GATE_V1_17.md
+PASS | Current entrypoint 100_TECHNICAL_PRECODE_GATE_V1_18.md
 PASS | Current review pointer 00_README.md
 PASS | Current gate pointer 00_README.md
 PASS | Design 1.8 00_README.md
@@ -153,8 +155,10 @@ PASS | All-in-One excludes 93_EXTERNAL_REVIEW_V12_IMPLEMENTATION_ALIGNMENT_V1_15
 PASS | All-in-One excludes 94_TECHNICAL_PRECODE_GATE_V1_15.md
 PASS | All-in-One excludes 95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md
 PASS | All-in-One excludes 96_TECHNICAL_PRECODE_GATE_V1_16.md
-PASS | All-in-One includes current v1.17 alignment
-PASS | All-in-One generated v1.17
+PASS | All-in-One excludes 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
+PASS | All-in-One excludes 98_TECHNICAL_PRECODE_GATE_V1_17.md
+PASS | All-in-One includes current v1.18 alignment
+PASS | All-in-One generated v1.18
 PASS | Acceptance IDs unique | duplicates=[]
 PASS | Acceptance AC-STAT-03
 PASS | Acceptance AC-STAT-04
@@ -272,8 +276,8 @@ PASS | No forbidden email wording retries do not duplicate sends
 PASS | No forbidden email wording retry must not create duplicate messages
 PASS | Email at-least-once current
 PASS | Email outbox before commit
-PASS | Command registry version 1.17
-PASS | Command registry count 59 | commands=59
+PASS | Command registry version 1.18
+PASS | Command registry count 62 | commands=62
 PASS | Command names unique
 PASS | Registry commands in contract | []
 PASS | Registry commands in coverage | []
@@ -284,8 +288,8 @@ PASS | Side effects reactivate_application | missing=[]
 PASS | Side effects readd_interview_participant | missing=[]
 PASS | Side effects delete_unused_candidate | missing=[]
 PASS | Side effects delete_unused_submission | missing=[]
-PASS | Permission matrix parses nonzero | rows=23
-PASS | Permission SQL/seed nonzero | sql=23 seed=23
+PASS | Permission matrix parses nonzero | rows=25
+PASS | Permission SQL/seed nonzero | sql=25 seed=25
 PASS | Permission SQL/seed alignment | sql_only=[] seed_only=[]
 PASS | Permission candidates.delete_unused
 PASS | Permission emails.history_delete
@@ -371,8 +375,8 @@ PASS | AC privacy publish
 PASS | Candidate inactive DB check
 PASS | Candidate inactive contract
 PASS | AC candidate inactive
-PASS | Schema header v1.17
-PASS | Design README tracks Full v1.17
+PASS | Schema header v1.18
+PASS | Design README tracks Full v1.18
 PASS | Report lifecycle DB check
 PASS | AC report lifecycle
 PASS | Guarantees change_report_status | missing=[]
@@ -381,12 +385,12 @@ PASS | Guarantees delete_email_history | missing=[]
 PASS | Zero UUID Team sentinel reserved
 PASS | Zero UUID invariant documented
 PASS | README current review path only
-PASS | Owner decisions current v1.17
+PASS | Owner decisions current v1.18
 PASS | UI spec Design v1.8
 PASS | Current normative amendment headings consolidated
 PASS | Audit at-most-one human actor
 PASS | SHA256 format checks
-PASS | Source registry v1.17
+PASS | Source registry v1.18
 PASS | Current review/gate pointers
 PASS | CURRENT/NORMATIVE baseline assertions are v1.14 coherent
 PASS | Review v6 matrix resolution
@@ -443,7 +447,7 @@ PASS | Critical controls declare semantics
 PASS | Critical control no generic-toast criterion
 PASS | V8 batch Interview status permission parity
 PASS | V8 permissions matrix granular split
-PASS | V8 app_spec version coherence retained in v1.17
+PASS | V8 app_spec version coherence retained in v1.18
 PASS | V8 legacy Mark New structured key removed
 PASS | V8 open_submission conditional metadata
 PASS | V8 interviewer report OR authorization
@@ -456,7 +460,7 @@ PASS | V8 NEW Privacy explicit default
 PASS | V8 privacy-only confirmation
 PASS | V8 inactive Candidate single-bulk parity
 PASS | V8 Form Session lifecycle machine contract
-PASS | V8 current START_HERE gate wording retained in v1.17
+PASS | V8 current START_HERE gate wording retained in v1.18
 PASS | V8 review matrix resolved
 PASS | V9 review matrix resolved
 PASS | V10 Education SQL nullable parity
@@ -469,7 +473,7 @@ PASS | V10 responsive v1.9 browser evidence
 PASS | V10 review matrix resolved
 PASS | V10 validator labels current
 PASS | V10 manifest verifier derives labels
-PASS | V11 current baseline machine coherence v1.17
+PASS | V11 current baseline machine coherence v1.18
 PASS | V11 nullable Education qualification guard
 PASS | V11 bulk schedule Active Participant parity
 PASS | V11 bulk schedule behavior acceptance
@@ -478,7 +482,7 @@ PASS | V11 canonical Reactivate present
 PASS | V11 legacy Reactivate forbidden
 PASS | V11 user command self-contained participant guard
 PASS | V11 responsive README authority
-PASS | V11 current source pointers v1.17
+PASS | V11 current source pointers v1.18
 PASS | V11 acceptance additions
 PASS | V11 review matrix resolved
 PASS | V11 validators expose no-write mode
@@ -499,10 +503,10 @@ PASS | IR16 Copy in app_spec conflict engine
 PASS | IR16 Copy in concurrency shared engine
 PASS | IR16 critical Copy browser QA IDs resolve | []
 PASS | IR16 used target Round1 Copy QA exists
-PASS | IR16 All-in-One generator label v1.17
+PASS | IR16 All-in-One generator label v1.18
 PASS | All-in-One deterministic equality | PASS: All-in-One CURRENT-only deterministic equality
-PASS | v1.17 alignment current
-PASS | Precode gate v1.17 ready to implement
+PASS | v1.18 alignment current
+PASS | Precode gate v1.18 ready to implement
 PASS | Production not ready
 PASS | Operational participant helper in SQL
 PASS | Operational participant guard in commands

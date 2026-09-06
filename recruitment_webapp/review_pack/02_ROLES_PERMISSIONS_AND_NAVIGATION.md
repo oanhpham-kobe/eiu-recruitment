@@ -29,7 +29,8 @@ Hệ thống vẫn dùng permission granular, nhưng **HR mới được tạo m
 | `submissions.status` | Mark New/Read, xử lý status |
 | `candidates.active_manage` | Active/Inactive Candidate account |
 | `candidates.delete_unused` | Hard-delete Candidate chưa có Submission/business usage |
-| `applications.manage` | Tạo/update/delete-or-inactive Application |
+| `applications.view` | Xem Application rows/details |
+| `applications.manage` | Tạo/update/delete-or-inactive Application; requires `applications.view` |
 | `interviews.view` | Xem page Interview |
 | `interviews.manage` | Tạo/Edit/Copy/Delete-or-inactive Session |
 | `interviews.status` | Đổi Interview Schedule Status |
@@ -47,11 +48,12 @@ Hệ thống vẫn dùng permission granular, nhưng **HR mới được tạo m
 | `users.directory_manage` | Thêm/sửa/inactive internal user directory; được sửa email typo **chỉ khi user chưa bind Auth** |
 | `users.identity_manage` | Security identity rebinding; **Root Admin only trong Phase 1** |
 | `users.permissions_manage` | **Root Admin only** |
+| `candidates.identity_manage` | Khôi phục email đăng nhập Candidate; Root Admin implicit, HR delegated nếu được cấp (không thuộc default HR) |
 
 Root Admin có implicit allow cho tất cả permission.
 
 ### Default HR Permission Set
-Khi Root Admin tạo/gán role `Chuyên viên HR`, hệ thống mặc định cấp **toàn bộ HR permission codes** (không gồm `users.identity_manage`, `users.permissions_manage` và các Root-only recovery actions). Root Admin có thể revoke từng quyền sau đó.
+Khi Root Admin tạo/gán role `Chuyên viên HR`, hệ thống mặc định cấp **toàn bộ HR permission codes** (bao gồm `applications.view`, nhưng không gồm `candidates.identity_manage`, `users.identity_manage`, `users.permissions_manage` và các Root-only recovery actions). Root Admin có thể revoke từng quyền sau đó.
 
 Hệ quả quan trọng: HR mặc định có `submissions.status`, vì vậy workflow bình thường vẫn là **mở Submission NEW → READ**. Permission granular tồn tại để hỗ trợ HR Limited, không phải để HR mặc định thiếu quyền.
 

@@ -1,4 +1,4 @@
-# 13. Acceptance Criteria — Business Core v1.2 + Technical Architecture v1.17
+# 13. Acceptance Criteria — Business Core v1.2 + Technical Architecture v1.18
 
 Business rules remain frozen except the explicitly accepted Final Decision timestamp correction. Technical architecture remains under Technical Closure Gate.
 
@@ -325,8 +325,8 @@ Production go-live additionally requires the checklist in `45_PRODUCTION_UAT_GAT
 - **AC-SCH-ROOM-BULK-01:** a Room overlap in any selected Interview blocks the whole schedule-status batch when the format uses a Room.
 - **AC-SCH-INTERVIEWER-BULK-01:** an Interviewer overlap in any selected Interview blocks the whole schedule-status batch.
 - **AC-REACT-CANON-01:** Application Reactivate evaluates only non-elapsed children satisfying `reactivation_conflict_relevant`; fully elapsed historical intervals never block lifecycle recovery.
-- **AC-SOURCE-BASELINE-01:** all CURRENT machine baseline declarations resolve to Full/Technical v1.17, Design v1.8 and Responsive v1.10, while historical versions are allowed only in explicitly historical/changelog evidence.
-- **AC-RESP-AUTH-01:** Responsive `README.md` and `VERSION.md` both declare Responsive v1.10 authority against Full Handover v1.17 + Design System v1.8.
+- **AC-SOURCE-BASELINE-01:** all CURRENT machine baseline declarations resolve to Full/Technical v1.18, Design v1.8 and Responsive v1.10, while historical versions are allowed only in explicitly historical/changelog evidence.
+- **AC-RESP-AUTH-01:** Responsive `README.md` and `VERSION.md` both declare Responsive v1.10 authority against Full Handover v1.18 + Design System v1.8.
 
 
 ## Targeted acceptance additions — current
@@ -344,11 +344,24 @@ Production go-live additionally requires the checklist in `45_PRODUCTION_UAT_GAT
 
 - **AC-GATE-SEQ-01:** Technical Specification Freeze is a semantic/source gate before coding; production migrations/RLS/RPC/race/storage/performance/backup/deployment evidence is required at Implementation Validation/Migration Freeze after implementation exists, not both before and after Technical Freeze.
 - **AC-COPY-CMD-01:** Copy draft performs no DB mutation; Save Copy maps to exactly `copy_interview_schedule`, which atomically selects/fills the target Round, records provenance, applies Active-Participant and Candidate/Room/Interviewer conflict guards, is idempotent, and audits.
-- **AC-SOURCE-RESP-VERSION-01:** CURRENT scope/design/prototype authority declares Full/Technical v1.17 + Design v1.8 + Responsive Prototype v1.10; stale current v1.9/v1.12/v1.15 authority assertions are forbidden outside historical/changelog context.
+- **AC-SOURCE-RESP-VERSION-01:** CURRENT scope/design/prototype authority declares Full/Technical v1.18 + Design v1.8 + Responsive Prototype v1.10; stale current v1.9/v1.12/v1.15/v1.17 authority assertions are forbidden outside historical/changelog context.
 ## Source-sync / critical Copy evidence
 
 - **AC-COPY-ENGINE-01:** `copy_interview_schedule` is declared as a user of the canonical shared Candidate/Room/Interviewer schedule-conflict engine in command contract, structured app spec and concurrency spec.
 - **AC-RP-COPY-USED-01:** Save Copy to another Application whose default Round1 is already business-used creates the next legal round, preserves existing Round1 and records Copy provenance.
 - **AC-CRIT-COPY-QA-01:** every `INTERVIEW-COPY-SAVE.browser_qa` ID resolves to a current Responsive Browser QA result; unresolved QA IDs fail package validation.
-- **AC-ALLINONE-LABEL-01:** generated All-in-One header and validator expectation match current Full Handover v1.17; stale generated current-version labels are forbidden.
+- **AC-ALLINONE-LABEL-01:** generated All-in-One header and validator expectation match current Full Handover v1.18; stale generated current-version labels are forbidden.
+
+## Technical Source v1.18 Acceptance Additions
+- **AC-APP-VIEW-01:** HR user with `applications.view` or `applications.manage` can SELECT Application rows; caller with only `submissions.view` is denied Application SELECT.
+- **AC-CAND-CORR-01:** HR user with `submissions.edit` can correct Candidate full_name, phone, date_of_birth, gender_code, current_address via `correct_submission_candidate_fields_by_hr` with optimistic version check, validation bounds, and audit logging changed field names without dumping full PII.
+- **AC-CAND-REC-01:** Root Admin or HR with `candidates.identity_manage` can recover Candidate login email identity via `recover_candidate_email_identity`, updating verified Auth identity and Candidate record while preserving historical Submission email snapshots and revoking obsolete sessions.
+- **AC-PRIV-STG-01:** Candidate Submit and Save Edit verify that the presented notice version matches the current effective published version at transaction time; mismatch returns stable `PRIVACY_NOTICE_CHANGED`, preserving form session and draft for retry.
+- **AC-RESCHED-01:** `reschedule_confirmed_interview` atomically re-checks Candidate/Room/Interviewer conflicts, updates schedule/meeting details, and resets Schedule Status to `AWAITING`; conflict or validation failure rolls back all changes.
+- **AC-ROUND-HIRED-01:** Creating next Interview round is blocked if the latest active Interview has report status `HIRED`; Schedule Status `CANCELLED` does not block creating next round.
+- **AC-REPORT-HIST-01:** Interviewer has read-only access to historical Interview rounds they personally participated in (`interview_participants.is_current=true`); report write requires target Interview is Application Current Round, caller is current participant, and report status is non-final/writable.
+- **AC-REPORT-MERGE-01:** Report save applies field-aware merge using `expected_version_no` and `base_values`; disjoint field updates merge cleanly, same-field conflict on HR update rejects with `STALE_VERSION`.
+- **AC-RESOLVE-OUTCOME-01:** Application effective outcome is resolved solely from Application Current Round (highest `round_no` among access-active Interviews): HIRED => HIRED, REJECTED => REJECTED, otherwise IN_PROGRESS.
+- **AC-DETAIL-PURE-01:** `get_submission_detail()` is a pure read and never mutates Submission status from NEW to READ; only explicit user-intent `open_submission()` may execute NEW->READ transition.
+- **AC-DOC-MAT-01:** Candidate document staged ADD creates a new logical document header without requiring `UNIQUE(submission_id, document_type_id)`; multiple logical files of the same type may coexist; Candidate-created rows set candidate creator/uploader metadata and NULL app_user.
 

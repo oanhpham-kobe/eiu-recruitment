@@ -5,7 +5,7 @@ def sources():
     reg=yaml.safe_load((B/'source_registry.yaml').read_text(encoding='utf-8'))
     return [B/x['file'] for x in reg['documents'] if x.get('status')=='CURRENT' and x.get('normative') and (B/x['file']).exists()]
 def render():
-    parts=['# 15. ALL-IN-ONE SPEC — GENERATED v1.17','', '> DO NOT EDIT MANUALLY. Generated deterministically from CURRENT normative numbered modules listed in `source_registry.yaml`.', '> HISTORICAL/SUPERSEDED review and gate documents are excluded from the normative body.', '> Regenerate after source changes; validation fails on byte drift.','']
+    parts=['# 15. ALL-IN-ONE SPEC — GENERATED v1.18','', '> DO NOT EDIT MANUALLY. Generated deterministically from CURRENT normative numbered modules listed in `source_registry.yaml`.', '> HISTORICAL/SUPERSEDED review and gate documents are excluded from the normative body.', '> Regenerate after source changes; validation fails on byte drift.','']
     for p in sources(): parts += ['\n---\n',f'<!-- SOURCE: {p.name} -->\n',p.read_text(encoding='utf-8').rstrip(),'\n']
     return '\n'.join(parts).rstrip()+'\n'
 def main():

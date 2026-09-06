@@ -34,5 +34,13 @@ Because both pointer changes are in one transaction, a failure rolls back to the
 - prior acknowledgements still resolve immutable old version;
 - `AC-PRIV-PUBLISH-01` passes.
 
+## Strong-Current Enforcement on Submit/Save (Owner Decision K)
+Khi một phiên bản Privacy Notice mới được switch sang current:
+1. Các Form Session đang mở đã pin notice version trước đó;
+2. Khi Candidate gửi lệnh Submit hoặc Save Edit, backend kiểm tra lại version hiện hành có hiệu lực (`is_current=true`) ngay trong transaction;
+3. Nếu notice version đã thay đổi, lệnh bị từ chối với lỗi `PRIVACY_NOTICE_CHANGED`;
+4. Tuyệt đối không commit mutation hồ sơ hay ghi nhận acknowledgement theo version cũ;
+5. Draft và Form Session được bảo toàn để Candidate đọc nội dung mới, tick xác nhận phiên bản mới và gửi lại.
+
 ## Rollback
 If a post-switch operational issue requires rollback, switch current pointer back to the prior already-published effective version in one audited transaction. Never edit published content in place.

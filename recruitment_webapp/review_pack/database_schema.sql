@@ -1,5 +1,5 @@
 -- App Tuyển dụng EIU
--- Technical starter schema v1.17 — 2026-09-03
+-- Technical starter schema v1.18 — 2026-09-06
 -- IMPORTANT: This is a reviewed implementation starter, NOT a production migration bundle.
 -- Production requires the RLS/GRANT/RPC/security tests in CURRENT/NORMATIVE entries of source_registry.yaml plus the current implementation gate. Owner decisions 1–4 are closed; official PDF layout is deferred.
 
@@ -1327,7 +1327,12 @@ $$;
 create or replace function private.protect_candidate_verified_email()
 returns trigger language plpgsql set search_path = '' as $$
 begin
-  if new.email is distinct from old.email then raise exception 'CANDIDATE_VERIFIED_EMAIL_IMMUTABLE' using errcode='23514'; end if;
+  if new.email is distinct from old.email then
+    if current_setting('recruitment.candidate_email_recovery_active', true) = 'on' then
+      return new;
+    end if;
+    raise exception 'CANDIDATE_VERIFIED_EMAIL_IMMUTABLE' using errcode='23514';
+  end if;
   return new;
 end; $$;
 
@@ -1774,6 +1779,7 @@ insert into public.permissions(permission_code, description) values
   ('submissions.status','Change submission status'),
   ('candidates.active_manage','Activate/inactivate candidate accounts'),
   ('candidates.delete_unused','Hard-delete unused Candidate only'),
+  ('applications.view','View applications'),
   ('applications.manage','Manage applications'),
   ('interviews.view','View interviews'),
   ('interviews.manage','Create/edit/copy/delete-or-inactivate interviews'),
@@ -1791,7 +1797,8 @@ insert into public.permissions(permission_code, description) values
   ('master_data.manage','Manage allowed master data'),
   ('users.directory_manage','Manage internal user directory/business profile; unbound email typo only'),
   ('users.identity_manage','Manage bound Auth identity — Root Admin only'),
-  ('users.permissions_manage','Manage HR permissions — Root Admin only')
+  ('users.permissions_manage','Manage HR permissions — Root Admin only'),
+  ('candidates.identity_manage','Manage Candidate login email identity recovery')
 on conflict (permission_code) do update set description = excluded.description;
 
 -- -----------------------------------------------------------------------------
@@ -1813,7 +1820,7 @@ on conflict (permission_code) do update set description = excluded.description;
 insert into public.permission_dependencies(permission_code, requires_permission_code) values
   ('submissions.edit','submissions.view'),
   ('submissions.status','submissions.view'),
-  ('applications.manage','submissions.view'),
+  ('applications.manage','applications.view'),
   ('interviews.manage','interviews.view'),
   ('interviews.status','interviews.view'),
   ('interviews.participants','interviews.view'),

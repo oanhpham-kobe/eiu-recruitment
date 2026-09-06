@@ -9,6 +9,9 @@
 | Candidate Reactivation Rule | lifecycle exception: no active Application → `READ` |
 | Interview `access_active` | `Application.is_active AND Interview.is_active` |
 | Current Round | highest `round_no` among `access_active` Interviews |
+| Authoritative Outcome Resolver | Application outcome derives solely from Current Round: HIRED => HIRED, REJECTED => REJECTED, otherwise IN_PROGRESS |
+| Create Next Round Gate | latest relevant Interview must be active AND `report_status_code <> HIRED`; CANCELLED schedule status does not block |
+| Strong-Current Privacy Notice | submit/update requires current effective published version; mismatch returns `PRIVACY_NOTICE_CHANGED` |
 | Interview `resource_blocking` | `access_active AND schedule_status_code != CANCELLED AND start_at/end_at exist` |
 | `reactivation_conflict_relevant` | **Application Reactivate-only**: `resource_blocking AND end_at > transaction_now`; fully elapsed rows are historical and do not block lifecycle recovery |
 | Application Durable Identity | globally unique `(submission_id, unit_id, department_team_id, position_id)` across history |
@@ -35,3 +38,17 @@ Operational Email History deletion requires explicit `TEST_RECORD` or `WRONG_REC
 
 ## Copy provenance usage
 A Round is not structurally empty when `copied_from_interview_id IS NOT NULL` or any Interview references it as `copied_from_interview_id`. Copy provenance therefore counts as business usage for copy/delete decisions.
+
+## Authoritative Application Outcome Resolver
+Outcome của Application được xác định **duy nhất** từ Current Round (vòng có `round_no` cao nhất trong các Interview `access_active`):
+- Current Round có `report_status_code = 'HIRED'` → `HIRED`
+- Current Round có `report_status_code = 'REJECTED'` → `REJECTED`
+- Các trường hợp còn lại → `IN_PROGRESS`.
+Các vòng phỏng vấn cũ hơn không tham gia tính toán outcome này. Toàn bộ các luồng recalculation (Submission recalculation, Candidate reactivation) bắt buộc dùng chung resolver này.
+
+## Create Next Round Gate
+Điều kiện tạo vòng phỏng vấn tiếp theo:
+1. Interview có `round_no` cao nhất hiện tại phải đang active (`is_active=true`);
+2. `report_status_code` của round active đó phải khác `HIRED` (`report_status_code <> 'HIRED'`);
+3. Schedule Status `CANCELLED` (Đã hủy) **không chặn** việc tạo vòng mới;
+4. Trạng thái lịch không có lộ trình chuyển đổi bắt buộc; cho phép nhảy trực tiếp giữa các trạng thái hợp lệ.

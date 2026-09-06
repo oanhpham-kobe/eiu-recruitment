@@ -69,8 +69,8 @@ Root Admin:
 | `candidates` | own active | provisioning/profile command only | permissioned | candidate-active command | no | no |
 | `submissions` | own | Candidate command only while NEW | `submissions.view` | `submissions.edit/status` commands | no | no |
 | `submission_documents` | own | upload commands | `submissions.view/edit` as defined | document commands | no | no |
-| `applications` | no | no | `applications.manage` or page-read permission path | commands | contextual minimal if needed | no |
-| `interviews` | no | no | `interviews.view`/manage | commands | access-active participant + visible | no |
+| `applications` | no | no | Root OR `applications.view` OR `applications.manage` (không dùng `submissions.view`) | commands | contextual minimal if needed | no |
+| `interviews` | no | no | Root OR `interviews.view` OR `interviews.manage` (không dùng `submissions.view`) | commands | access-active participant + visible (historical READ: participated rounds; WRITE: current round + writable status) | no |
 | `interview_participants` | no | no | permissioned | participant commands | current session list only | no |
 | `interview_documents` | no | no | permissioned | document commands | access-active participant + visible | no |
 | `interview_reports` | no | no | `reports.view` | report commands | shared current-session read | own report command only |

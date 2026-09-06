@@ -4,7 +4,7 @@
 
 **Responsive Prototype v1.10** is the executable responsive reference bundled with this handover.
 
-The Full Handover v1.17 bundle includes `responsive_prototype/` v1.10 for one-package external + owner review. It is executable HTML/CSS/JS prototype evidence, not production React implementation.
+The Full Handover v1.18 bundle includes `responsive_prototype/` v1.10 for one-package external + owner review. It is executable HTML/CSS/JS prototype evidence, not production React implementation.
 
 ## Frozen-for-current-UAT responsive corrections
 - Candidate Inbox parent row derives Status/HR Note from deterministic latest Submission; Candidate Inactive is a separate lifecycle badge.
@@ -21,4 +21,4 @@ The Full Handover v1.17 bundle includes `responsive_prototype/` v1.10 for one-pa
 - Mobile/Tablet/Desktop share business actions; bulk selection/status behavior uses the same underlying workflow and remains independently testable.
 
 ## Authority
-Business/security/command semantics come from Full Handover v1.17. Visual/responsive tokens/components come from Design System v1.8. Owner-approved UAT corrections are recorded here and in Design System v1.8.
+Business/security/command semantics come from Full Handover v1.18. Visual/responsive tokens/components come from Design System v1.8. Owner-approved UAT corrections are recorded here and in Design System v1.8.

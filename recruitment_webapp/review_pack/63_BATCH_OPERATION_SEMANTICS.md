@@ -36,3 +36,8 @@ Frontend code must not emulate these lifecycle/status batches by invoking single
 - **Candidate lifecycle batch parity:** each selected Candidate receives the same `is_active/inactive_at/inactive_by` state transition and per-Submission reactivation recalculation as `set_candidate_active`; per-Candidate audit plus one batch audit event; any stale item aborts all.
 - **Interview delete/inactivate batch:** prevalidate all hard-delete temp-upload cleanup prerequisites and durably capture all required cleanup intents before deleting any selected Interview.
 - **Report Status batch:** re-resolve Current Round + optimistic versions for the full set; one stale/current-round mismatch aborts all; successful commit recalculates every affected Submission.
+
+## Deterministic Bulk Locking & Bounded Batch Size
+Tất cả các bulk commands tác động lên nhiều thực thể bắt buộc:
+1. **Sắp xếp target IDs xác định:** sắp xếp toàn bộ danh sách ID theo thứ tự tăng dần (`ORDER BY id ASC`) trước khi acquire row locks để loại trừ nguy cơ deadlock giữa các transaction chạy song song;
+2. **Bounded batch size:** áp dụng giới hạn kích thước mảng đầu vào tối đa là **100 items** cho mỗi lần gọi lệnh; request vượt quá 100 items sẽ bị từ chối với `VALIDATION_ERROR`.

@@ -101,7 +101,7 @@ c('Non-root other permissions hidden','Non-root Directory Manager' in t('PAGE_OV
 
 # v1.8 owner-approved responsive UAT rules
 c('Responsive prototype v1.10 authority','Responsive Prototype **v1.10**' in t('RESPONSIVE.md'))
-c('Design README responsive v1.10 current','Responsive Prototype:** v1.10' in t('00_README.md') and 'Full Handover v1.17' in t('00_README.md'))
+c('Design README responsive v1.10 current','Responsive Prototype:** v1.10' in t('00_README.md') and 'Full Handover v1.18' in t('00_README.md'))
 c('Status badge 144px benchmark','144px' in t('RESPONSIVE.md') and '144px' in t('PAGE_OVERRIDES_V1_8.md'))
 c('Status menu anchored to trigger','anchored to the status badge/button bounds' in t('RESPONSIVE.md') and 'must not use the exact pointer click coordinates' in t('PATTERNS.md'))
 c('Status menu dismiss + focus restore','Escape restores focus' in t('RESPONSIVE.md') and 'same-trigger toggle' in t('PATTERNS.md'))

@@ -39,7 +39,7 @@ Server-generated object key; preserve original filename only as metadata; normal
 7. Cancel/expiry cleans pending objects; persisted current versions remain unchanged. Async cleanup is housekeeping only; wall-clock expiry blocks Stage/Save/Submit/Finalize synchronously.
 8. Image EXIF/geolocation metadata is stripped where practical before final object promotion.
 
-Logical model uses a header (`submission_document_logicals` / `interview_document_logicals`) that fixes parent + `document_type_id`, and version rows cannot switch parent/type.
+Logical model uses a header (`submission_document_logicals` / `interview_document_logicals`) that fixes parent + `document_type_id`, and version rows cannot switch parent/type. Bảng `submission_document_logicals(submission_id, document_type_id)` **KHÔNG PHẢI là unique constraint**; nhiều file cùng loại (ví dụ nhiều chứng chỉ) được phép tồn tại trong hạn mức max 5 files. Staged `ADD` luôn tạo một logical document header mới; staged `REPLACE` và `DELETE` bắt buộc trỏ tới `logical_document_id` cụ thể đã có. Client/browser **tuyệt đối không tự sinh reservation ID hay temp object path** mà phải qua lệnh server có thẩm quyền `reserve_candidate_form_upload`.
 
 ## Interview reservation / hard-delete protocol
 - `upload_reservations.interview_id` is a real FK to `interviews(interview_id)` with `ON DELETE RESTRICT`; an Interview reservation cannot reference a nonexistent parent.

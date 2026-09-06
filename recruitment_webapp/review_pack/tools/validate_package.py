@@ -2,7 +2,7 @@ from pathlib import Path
 import argparse,csv,json,re,subprocess,sys,hashlib
 import yaml
 B=Path(__file__).resolve().parents[1]
-ap=argparse.ArgumentParser(description='Validate EIU Recruitment Full Handover v1.17')
+ap=argparse.ArgumentParser(description='Validate EIU Recruitment Full Handover v1.18')
 ap.add_argument('--design-dir',required=True,help='Path to extracted EIU Recruitment Design System v1.8')
 ap.add_argument('--responsive-dir',required=True,help='Path to extracted Responsive Prototype v1.10')
 ap.add_argument('--no-write',action='store_true',help='Validate without rewriting PACKAGE_VALIDATION.txt')
@@ -37,34 +37,34 @@ except Exception as e: seed={}; c('seed parses',False,str(e))
 
 # Versions and current gate
 prod=app.get('product',{})
-c('Technical version 1.17',prod.get('document_version')=='1.17' and prod.get('technical_architecture',{}).get('version')=='1.17' and app.get('version')=='1.17')
+c('Technical version 1.18',prod.get('document_version')=='1.18' and prod.get('technical_architecture',{}).get('version')=='1.18' and app.get('version')=='1.18')
 c('Design version 1.8',prod.get('design_system',{}).get('version')=='1.8' and dtxt('00_README.md').startswith('# EIU Recruitment Design System v1.8'))
-c('App spec responsive baseline v1.10',app.get('responsive_prototype',{}).get('version')=='1.10' and app.get('responsive_prototype',{}).get('authority')=='Design System v1.8 + Full Handover v1.17' and app.get('responsive_prototype',{}).get('status')=='READY_FOR_OWNER_VISUAL_UAT')
+c('App spec responsive baseline v1.10',app.get('responsive_prototype',{}).get('version')=='1.10' and app.get('responsive_prototype',{}).get('authority')=='Design System v1.8 + Full Handover v1.18' and app.get('responsive_prototype',{}).get('status')=='READY_FOR_OWNER_VISUAL_UAT')
 c('Business core 1.2 frozen',prod.get('business_logic_core',{}).get('version')=='1.2' and prod.get('business_logic_core',{}).get('status')=='FROZEN')
-c('Scope current versions','v1.8 CURRENT' in txt('14_SCOPE_AND_OPEN_ITEMS.md') and 'v1.17 TECHNICAL SPECIFICATION FROZEN' in txt('14_SCOPE_AND_OPEN_ITEMS.md'))
-c('Gate status current','Design System v1.8' in txt('52_TECHNICAL_GATE_STATUS.md') and 'Technical Architecture v1.17' in txt('52_TECHNICAL_GATE_STATUS.md') and 'Responsive Prototype v1.10' in txt('52_TECHNICAL_GATE_STATUS.md') and 'READY TO IMPLEMENT' in txt('52_TECHNICAL_GATE_STATUS.md'))
+c('Scope current versions','v1.8 CURRENT' in txt('14_SCOPE_AND_OPEN_ITEMS.md') and 'v1.18 TECHNICAL SPECIFICATION FROZEN' in txt('14_SCOPE_AND_OPEN_ITEMS.md'))
+c('Gate status current','Design System v1.8' in txt('52_TECHNICAL_GATE_STATUS.md') and 'Technical Architecture v1.18' in txt('52_TECHNICAL_GATE_STATUS.md') and 'Responsive Prototype v1.10' in txt('52_TECHNICAL_GATE_STATUS.md') and 'READY TO IMPLEMENT' in txt('52_TECHNICAL_GATE_STATUS.md'))
 
 # Source governance
-hist_expected={'49_TECHNICAL_REVIEW_VERCEL_SUPABASE.md','56_EXTERNAL_REVIEW_V2_RESOLUTION.md','57_TECHNICAL_PRECODE_GATE_V1_4.md','60_EXTERNAL_REVIEW_V3_RESOLUTION.md','65_TECHNICAL_PRECODE_GATE_V1_5.md','69_EXTERNAL_REVIEW_V4_RESOLUTION.md','71_TECHNICAL_PRECODE_GATE_V1_6.md','72_EXTERNAL_REVIEW_V5_RESOLUTION.md','74_TECHNICAL_PRECODE_GATE_V1_7.md','77_EXTERNAL_REVIEW_V6_RESOLUTION.md','79_TECHNICAL_PRECODE_GATE_V1_8.md','80_EXTERNAL_REVIEW_V7_RESOLUTION.md','82_TECHNICAL_PRECODE_GATE_V1_9.md','83_EXTERNAL_REVIEW_V7_IMPLEMENTATION_ALIGNMENT_V1_10.md','84_TECHNICAL_PRECODE_GATE_V1_10.md','85_EXTERNAL_REVIEW_V8_IMPLEMENTATION_ALIGNMENT_V1_11.md','86_TECHNICAL_PRECODE_GATE_V1_11.md','87_EXTERNAL_REVIEW_V9_IMPLEMENTATION_ALIGNMENT_V1_12.md','88_TECHNICAL_PRECODE_GATE_V1_12.md','89_EXTERNAL_REVIEW_V10_IMPLEMENTATION_ALIGNMENT_V1_13.md','90_TECHNICAL_PRECODE_GATE_V1_13.md','91_EXTERNAL_REVIEW_V11_IMPLEMENTATION_ALIGNMENT_V1_14.md','92_TECHNICAL_PRECODE_GATE_V1_14.md','93_EXTERNAL_REVIEW_V12_IMPLEMENTATION_ALIGNMENT_V1_15.md','94_TECHNICAL_PRECODE_GATE_V1_15.md','95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md','96_TECHNICAL_PRECODE_GATE_V1_16.md'}
+hist_expected={'49_TECHNICAL_REVIEW_VERCEL_SUPABASE.md','56_EXTERNAL_REVIEW_V2_RESOLUTION.md','57_TECHNICAL_PRECODE_GATE_V1_4.md','60_EXTERNAL_REVIEW_V3_RESOLUTION.md','65_TECHNICAL_PRECODE_GATE_V1_5.md','69_EXTERNAL_REVIEW_V4_RESOLUTION.md','71_TECHNICAL_PRECODE_GATE_V1_6.md','72_EXTERNAL_REVIEW_V5_RESOLUTION.md','74_TECHNICAL_PRECODE_GATE_V1_7.md','77_EXTERNAL_REVIEW_V6_RESOLUTION.md','79_TECHNICAL_PRECODE_GATE_V1_8.md','80_EXTERNAL_REVIEW_V7_RESOLUTION.md','82_TECHNICAL_PRECODE_GATE_V1_9.md','83_EXTERNAL_REVIEW_V7_IMPLEMENTATION_ALIGNMENT_V1_10.md','84_TECHNICAL_PRECODE_GATE_V1_10.md','85_EXTERNAL_REVIEW_V8_IMPLEMENTATION_ALIGNMENT_V1_11.md','86_TECHNICAL_PRECODE_GATE_V1_11.md','87_EXTERNAL_REVIEW_V9_IMPLEMENTATION_ALIGNMENT_V1_12.md','88_TECHNICAL_PRECODE_GATE_V1_12.md','89_EXTERNAL_REVIEW_V10_IMPLEMENTATION_ALIGNMENT_V1_13.md','90_TECHNICAL_PRECODE_GATE_V1_13.md','91_EXTERNAL_REVIEW_V11_IMPLEMENTATION_ALIGNMENT_V1_14.md','92_TECHNICAL_PRECODE_GATE_V1_14.md','93_EXTERNAL_REVIEW_V12_IMPLEMENTATION_ALIGNMENT_V1_15.md','94_TECHNICAL_PRECODE_GATE_V1_15.md','95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md','96_TECHNICAL_PRECODE_GATE_V1_16.md','97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md','98_TECHNICAL_PRECODE_GATE_V1_17.md'}
 status={d.get('file'):d.get('status') for d in sreg.get('documents',[])}
 c('Historical registry exact',all(status.get(x)=='HISTORICAL' for x in hist_expected),str({x:status.get(x) for x in sorted(hist_expected)}))
 for f in sorted(hist_expected): c('Historical banner '+f,'HISTORICAL / SUPERSEDED' in txt(f))
-c('Current review pointer',sreg.get('current_review_resolution')=='97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md')
-c('Current precode pointer',sreg.get('current_precode_gate')=='98_TECHNICAL_PRECODE_GATE_V1_17.md')
+c('Current review pointer',sreg.get('current_review_resolution')=='99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md')
+c('Current precode pointer',sreg.get('current_precode_gate')=='100_TECHNICAL_PRECODE_GATE_V1_18.md')
 entry=set(sreg.get('current_entrypoints',[]))
-for f in ['00_README.md','FINAL_REVIEW_GUIDE.md','16_AI_REVIEW_AND_BUILD_PROMPT.md','52_TECHNICAL_GATE_STATUS.md','97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md','73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md','78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md','81_RESPONSIVE_PROTOTYPE_INTEGRATION.md','98_TECHNICAL_PRECODE_GATE_V1_17.md']:
+for f in ['00_README.md','FINAL_REVIEW_GUIDE.md','16_AI_REVIEW_AND_BUILD_PROMPT.md','52_TECHNICAL_GATE_STATUS.md','99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md','73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md','78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md','81_RESPONSIVE_PROTOTYPE_INTEGRATION.md','100_TECHNICAL_PRECODE_GATE_V1_18.md']:
     c('Current entrypoint '+f,f in entry)
 for f in ['00_README.md','FINAL_REVIEW_GUIDE.md','16_AI_REVIEW_AND_BUILD_PROMPT.md']:
     tt=txt(f)
-    c('Current review pointer '+f,'97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md' in tt)
-    c('Current gate pointer '+f,'98_TECHNICAL_PRECODE_GATE_V1_17.md' in tt)
+    c('Current review pointer '+f,'99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md' in tt)
+    c('Current gate pointer '+f,'100_TECHNICAL_PRECODE_GATE_V1_18.md' in tt)
     c('Design 1.8 '+f,'Design System v1.8' in tt or 'Design System:** v1.7' in tt or 'Design System v1.8' in tt)
 c('README technical current range','responsive prototype' in txt('00_README.md').lower())
 c('AI historical rule explicit','HISTORICAL' in txt('16_AI_REVIEW_AND_BUILD_PROMPT.md') and 'must never override current behavior' in txt('16_AI_REVIEW_AND_BUILD_PROMPT.md'))
 allone=txt('15_ALL_IN_ONE_SPEC.md')
 for f in sorted(hist_expected): c('All-in-One excludes '+f,f'<!-- SOURCE: {f} -->' not in allone)
-c('All-in-One includes current v1.17 alignment','<!-- SOURCE: 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md -->' in allone and '<!-- SOURCE: 98_TECHNICAL_PRECODE_GATE_V1_17.md -->' in allone)
-c('All-in-One generated v1.17',allone.startswith('# 15. ALL-IN-ONE SPEC — GENERATED v1.17'))
+c('All-in-One includes current v1.18 alignment','<!-- SOURCE: 99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md -->' in allone and '<!-- SOURCE: 100_TECHNICAL_PRECODE_GATE_V1_18.md -->' in allone)
+c('All-in-One generated v1.18',allone.startswith('# 15. ALL-IN-ONE SPEC — GENERATED v1.18'))
 
 # Acceptance IDs
 acc=txt('13_ACCEPTANCE_CRITERIA_AND_TEST_CASES.md')
@@ -165,8 +165,8 @@ c('Email outbox before commit','inside the same candidate submit/update transact
 
 # Command registry presence + side effects + acceptance
 cmds=[x.get('command') for x in reg.get('commands',[]) if x.get('command')]
-c('Command registry version 1.17',str(reg.get('version'))=='1.17')
-c('Command registry count 59',len(cmds)==59,f'commands={len(cmds)}')
+c('Command registry version 1.18',str(reg.get('version'))=='1.18')
+c('Command registry count 62',len(cmds)==62,f'commands={len(cmds)}')
 c('Command names unique',len(cmds)==len(set(cmds)))
 coverage=txt('55_COMMAND_COVERAGE_MATRIX.md')
 missing_contract=[x for x in cmds if x not in contract]
@@ -319,8 +319,8 @@ c('Candidate inactive contract','inactive_at=now()' in contract and 'clear `inac
 c('AC candidate inactive','AC-CAND-INACTIVE-01' in acc)
 
 # P1-08 version coherence
-c('Schema header v1.17',sql.startswith('-- App Tuyển dụng EIU\n-- Technical starter schema v1.17 — 2026-09-03'))
-c('Design README tracks Full v1.17','Full Handover v1.17' in dtxt('00_README.md'))
+c('Schema header v1.18',sql.startswith('-- App Tuyển dụng EIU\n-- Technical starter schema v1.18 — 2026-09-06'))
+c('Design README tracks Full v1.18','Full Handover v1.18' in dtxt('00_README.md'))
 
 # P1-09 report lifecycle DB check
 reporttbl=re.search(r'create table if not exists public.interview_reports.*?\);',sql,re.S).group(0)
@@ -340,8 +340,8 @@ for cmd,tags in {
 c('Zero UUID Team sentinel reserved','department_team_zero_uuid_reserved_ck' in sql and "department_team_id <> '00000000-0000-0000-0000-000000000000'::uuid" in sql)
 c('Zero UUID invariant documented','Zero-UUID Team sentinel' in txt('40_DATABASE_INVARIANTS.md'))
 readme=txt('00_README.md')
-c('README current review path only','97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md' in readme and '98_TECHNICAL_PRECODE_GATE_V1_17.md' in readme and '72_EXTERNAL_REVIEW_V5_RESOLUTION.md' not in readme and '74_TECHNICAL_PRECODE_GATE_V1_7.md' not in readme)
-c('Owner decisions current v1.17','Current status (v1.17)' in txt('50_OWNER_DECISIONS_PENDING.md') and 'v1.16 independent implementation-readiness review' in txt('50_OWNER_DECISIONS_PENDING.md'))
+c('README current review path only','99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md' in readme and '100_TECHNICAL_PRECODE_GATE_V1_18.md' in readme and '72_EXTERNAL_REVIEW_V5_RESOLUTION.md' not in readme and '74_TECHNICAL_PRECODE_GATE_V1_7.md' not in readme)
+c('Owner decisions current v1.18','Current status (v1.18)' in txt('50_OWNER_DECISIONS_PENDING.md') and 'Owner Decisions A–K canonicalized' in txt('50_OWNER_DECISIONS_PENDING.md'))
 c('UI spec Design v1.8',txt('10_UI_UX_SPEC.md').startswith('# 10. UI/UX Specification — aligned with Design System v1.8'))
 legacy_heading_patterns=[r'^## v1\.\d',r'^## Explicit trusted-command addendum — current v1\.',r'^## Inherited .*current in v1\.',r'^## Current .*— v1\.']
 current_norm=[d.get('file') for d in sreg.get('documents',[]) if d.get('status')=='CURRENT' and d.get('normative') and str(d.get('file','')).endswith('.md')]
@@ -356,10 +356,10 @@ c('Audit at-most-one human actor','activity_one_human_actor_ck' in sql and 'secu
 c('SHA256 format checks',sql.count("~ '^[0-9A-Fa-f]{64}$'") >= 3)
 
 # Source/current version registry
-c('Source registry v1.17',str(sreg.get('version'))=='1.17' and sreg.get('technical_architecture')=='1.17' and sreg.get('design_system')=='1.8')
-c('Current review/gate pointers',sreg.get('current_review_resolution')=='97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md' and sreg.get('current_precode_gate')=='98_TECHNICAL_PRECODE_GATE_V1_17.md')
+c('Source registry v1.18',str(sreg.get('version'))=='1.18' and sreg.get('technical_architecture')=='1.18' and sreg.get('design_system')=='1.8')
+c('Current review/gate pointers',sreg.get('current_review_resolution')=='99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md' and sreg.get('current_precode_gate')=='100_TECHNICAL_PRECODE_GATE_V1_18.md')
 current_baseline_text='\n'.join(txt(f) for f in current_norm)
-stale_current_patterns=[r'Technical Architecture v1\.9',r'Responsive Prototype v1\.5',r'80_EXTERNAL_REVIEW_V7_RESOLUTION\.md',r'82_TECHNICAL_PRECODE_GATE_V1_9\.md',r'332/332',r'299/299',r'65/65',r'54 unique',r'Review 77',r'Gate 79']
+stale_current_patterns=[r'Technical Architecture v1\.9',r'Technical Architecture v1\.17',r'Responsive Prototype v1\.5',r'80_EXTERNAL_REVIEW_V7_RESOLUTION\.md',r'82_TECHNICAL_PRECODE_GATE_V1_9\.md',r'332/332',r'299/299',r'65/65',r'54 unique',r'Review 77',r'Gate 79']
 stale_current_hits=[pat for pat in stale_current_patterns if re.search(pat,current_baseline_text,re.I)]
 c('CURRENT/NORMATIVE baseline assertions are v1.14 coherent',not stale_current_hits,', '.join(stale_current_hits))
 c('Review v6 matrix resolution',all(rid in txt('technical_review_matrix.csv') and 'RESOLVED_V1_9' in next((line for line in txt('technical_review_matrix.csv').splitlines() if line.startswith(rid+',')),'') for rid in ['RV7-P0-01','RV7-P0-02','RV7-P0-03','RV7-P1-01','RV7-P1-10']))
@@ -437,7 +437,7 @@ single_status=by.get('change_interview_schedule_status',{})
 bulk_status=by.get('bulk_change_interview_schedule_status',{})
 c('V8 batch Interview status permission parity',single_status.get('permission')=='interviews.status' and bulk_status.get('permission')=='interviews.status' and 'interviews.status` + view' in coverage)
 c('V8 permissions matrix granular split','Manage Interview,No,Yes,If interviews.manage,' in txt('permissions_matrix.csv') and 'Change Interview Status,No,Yes,If interviews.status,' in txt('permissions_matrix.csv'))
-c('V8 app_spec version coherence retained in v1.17',app.get('version')=='1.17' and prod.get('document_version')=='1.17' and prod.get('technical_architecture',{}).get('version')=='1.17' and app.get('responsive_prototype',{}).get('version')=='1.10')
+c('V8 app_spec version coherence retained in v1.18',app.get('version')=='1.18' and prod.get('document_version')=='1.18' and prod.get('technical_architecture',{}).get('version')=='1.18' and app.get('responsive_prototype',{}).get('version')=='1.10')
 c('V8 legacy Mark New structured key removed','mark_submission_new' not in app.get('bulk_semantics',{}) and app.get('bulk_semantics',{}).get('submission_manual_status')=='ALL_OR_NOTHING')
 open_cmd=by.get('open_submission',{}); open_auth=open_cmd.get('authorization',{}) or {}; cm=open_auth.get('conditional_mutation',{}) or {}
 c('V8 open_submission conditional metadata',open_auth.get('base_permission')=='submissions.view' and cm.get('permission')=='submissions.status' and cm.get('transition')=='NEW_TO_READ' and 'submissions.status_code' in cm.get('writes',[]))
@@ -453,7 +453,7 @@ c('V8 NEW Privacy explicit default','state.candidatePrivacyAckV17=(mode===\'EDIT
 c('V8 privacy-only confirmation','no separate accuracy-attestation checkbox' in r17 and 'Không có accuracy-attestation checkbox/DB record thứ hai' in txt('03_CANDIDATE_FORM_AND_PORTAL.md'))
 c('V8 inactive Candidate single-bulk parity','Candidate Active/Inactive does not restrict internal HR manual NEW/READ' in contract and app.get('candidate_lifecycle',{}).get('manual_submission_status_requires_candidate_active') is False and 'Bulk inactive Candidate parity succeeds' in rtxt('tools/validate_responsive_v17.py'))
 c('V8 Form Session lifecycle machine contract',vc.get('candidate_form_session_lifecycle',{}).get('terminal_reopen_allowed') is False and app.get('candidate_form_session',{}).get('terminal_reopen_allowed') is False)
-c('V8 current START_HERE gate wording retained in v1.17','Technical Architecture v1.17 — TECHNICAL SPECIFICATION FROZEN' in (B.parent/'START_HERE.txt').read_text() and 'Technical Architecture v1.17: **TECHNICAL SPECIFICATION FROZEN**' in txt('52_TECHNICAL_GATE_STATUS.md') and 'Implementation Gate: **READY TO IMPLEMENT**' in txt('52_TECHNICAL_GATE_STATUS.md'))
+c('V8 current START_HERE gate wording retained in v1.18','Technical Architecture v1.18 — TECHNICAL SPECIFICATION FROZEN' in (B.parent/'START_HERE.txt').read_text() and 'Technical Architecture v1.18: **TECHNICAL SPECIFICATION FROZEN**' in txt('52_TECHNICAL_GATE_STATUS.md') and 'Implementation Gate: **READY TO IMPLEMENT**' in txt('52_TECHNICAL_GATE_STATUS.md'))
 c('V8 review matrix resolved',all(rid in txt('technical_review_matrix.csv') and 'RESOLVED_V1_11' in next((line for line in txt('technical_review_matrix.csv').splitlines() if line.startswith(rid+',')),'') for rid in ['RV8-P0-01','RV8-P0-02','RV8-P1-01','RV8-P1-02','RV8-P1-03','RV8-P1-04','RV8-P1-05','RV8-P1-06','RV8-P1-07','RV8-P1-08','RV8-P1-09']))
 c('V9 review matrix resolved',all(rid in txt('technical_review_matrix.csv') and 'RESOLVED_V1_12' in next((line for line in txt('technical_review_matrix.csv').splitlines() if line.startswith(rid+',')),'') for rid in ['RV9-P0-01','RV9-P0-02','RV9-P0-03','RV9-P1-01','RV9-P1-02','RV9-P1-03','RV9-P1-04','RV9-P1-05','RV9-P1-06','RV9-P1-07']))
 
@@ -468,12 +468,12 @@ c('V10 user lifecycle registry guard','block_active_application_owner_without_re
 c('V10 FINAL_REVIEW_GUIDE registered current nonnormative',any(d.get('file')=='FINAL_REVIEW_GUIDE.md' and d.get('status')=='CURRENT' and d.get('normative') is False for d in sreg.get('documents',[])))
 c('V10 responsive v1.9 browser evidence',(RP/'tools/validate_responsive_v19.py').exists() and all(x in rtxt('tools/validate_responsive_v19.py') for x in ['Application modal uses exact SubmissionSelector','Create blocks inactive selected Participant','Copy blocks inactive prefilled Participant']))
 c('V10 review matrix resolved',all(rid in txt('technical_review_matrix.csv') and 'RESOLVED_V1_13' in next((line for line in txt('technical_review_matrix.csv').splitlines() if line.startswith(rid+',')),'') for rid in ['RV10-P0-01','RV10-P0-02','RV10-P0-03','RV10-P1-01','RV10-P1-02','RV10-P1-03','RV10-P1-04','RV10-P1-05']))
-c('V10 validator labels current','Technical version 1.17' in txt('tools/validate_package.py') and 'Responsive prototype v1.10 authority' in dtxt('tools/validate_design.py'))
+c('V10 validator labels current','Technical version 1.18' in txt('tools/validate_package.py') and 'Responsive prototype v1.10 authority' in dtxt('tools/validate_design.py'))
 c('V10 manifest verifier derives labels','TARGETS = [ROOT/\'review_pack\', ROOT/\'design_system\', ROOT/\'responsive_prototype\']' in txt('tools/verify_manifests.py') and "replace('# MANIFEST — ','')" in txt('tools/verify_manifests.py'))
 
 # External Review v11 semantic/database/source checks
 vcbase=vc.get('current_baseline',{}) or {}
-c('V11 current baseline machine coherence v1.17',vcbase=={'full_handover':'1.17','technical_architecture':'1.17','design_system':'1.8','responsive_prototype':'1.10'} and 'Full Handover v1.17' in txt('critical_control_registry.yaml') and 'Responsive Prototype v1.10' in txt('critical_control_registry.yaml'))
+c('V11 current baseline machine coherence v1.18',vcbase=={'full_handover':'1.18','technical_architecture':'1.18','design_system':'1.8','responsive_prototype':'1.10'} and 'Full Handover v1.18' in txt('critical_control_registry.yaml') and 'Responsive Prototype v1.10' in txt('critical_control_registry.yaml'))
 c('V11 nullable Education qualification guard',"new.qualification_id is not null and (tg_op='INSERT' or new.qualification_id is distinct from old.qualification_id)" in sql and 'INACTIVE_QUALIFICATION_NOT_SELECTABLE' in sql)
 bulk_status=by.get('bulk_change_interview_schedule_status',{})
 c('V11 bulk schedule Active Participant parity','validate_current_participants_operationally_eligible' in bulk_status.get('side_effects',[]) and 'shared_candidate_room_interviewer_conflict_recheck' in bulk_status.get('side_effects',[]) and 'no_resource_blocking_interview_with_inactive_current_participant' in bulk_status.get('guarantees',[]))
@@ -484,8 +484,8 @@ legacy_react='Application Reactivate re-checks every child that would become res
 c('V11 canonical Reactivate present','NON-ELAPSED' in interview_src and 'reactivation_conflict_relevant = resource_blocking AND end_at > transaction_now' in interview_src and 'Fully elapsed historical intervals do **not** block lifecycle recovery' in interview_src)
 c('V11 legacy Reactivate forbidden',legacy_react not in interview_src)
 c('V11 user command self-contained participant guard','FUTURE_INTERVIEW_PARTICIPANT_REASSIGN_REQUIRED' in re.search(r'### `set_internal_user_active.*?(?=\n### )',contract,re.S).group(0))
-c('V11 responsive README authority',rtxt('README.md').startswith('# EIU Recruitment — Responsive Clickable Prototype v1.10') and 'Full Handover **v1.17**' in rtxt('README.md') and 'Full Handover v1.17' in rtxt('VERSION.md'))
-c('V11 current source pointers v1.17',sreg.get('version')=='1.17' and sreg.get('technical_architecture')=='1.17' and sreg.get('current_review_resolution')=='97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md' and sreg.get('current_precode_gate')=='98_TECHNICAL_PRECODE_GATE_V1_17.md')
+c('V11 responsive README authority',rtxt('README.md').startswith('# EIU Recruitment — Responsive Clickable Prototype v1.10') and 'Full Handover **v1.18**' in rtxt('README.md') and 'Full Handover v1.18' in rtxt('VERSION.md'))
+c('V11 current source pointers v1.18',sreg.get('version')=='1.18' and sreg.get('technical_architecture')=='1.18' and sreg.get('current_review_resolution')=='99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md' and sreg.get('current_precode_gate')=='100_TECHNICAL_PRECODE_GATE_V1_18.md')
 c('V11 acceptance additions',all(x in acc for x in ['AC-EDU-NULL-01','AC-EDU-NULL-02','AC-EDU-NULL-03','AC-PART-OPER-BULK-01','AC-BULK-SCH-01','AC-SCH-CANDIDATE-BULK-01','AC-SCH-ROOM-BULK-01','AC-SCH-INTERVIEWER-BULK-01','AC-REACT-CANON-01','AC-SOURCE-BASELINE-01','AC-RESP-AUTH-01']))
 c('V11 review matrix resolved',all(rid in txt('technical_review_matrix.csv') and 'RESOLVED_V1_14' in next((line for line in txt('technical_review_matrix.csv').splitlines() if line.startswith(rid+',')),'') for rid in ['RV11-P0-01','RV11-P0-02','RV11-P0-03','RV11-P1-01','RV11-P1-02','RV11-P1-03','RV11-P1-04','RV11-P1-05']))
 
@@ -505,7 +505,7 @@ crit_ids={x.get('control_id'):x for x in crit.get('critical_controls',[])}
 c('V12 single Interview status critical control','INTERVIEW-SINGLE-SCHEDULE-STATUS' in crit_ids and crit_ids['INTERVIEW-SINGLE-SCHEDULE-STATUS'].get('permission')=='interviews.status' and bool(crit_ids['INTERVIEW-SINGLE-SCHEDULE-STATUS'].get('browser_qa')))
 c('V12 bulk Interview status critical browser evidence','INTERVIEW-BULK-SCHEDULE-STATUS' in crit_ids and bool(crit_ids['INTERVIEW-BULK-SCHEDULE-STATUS'].get('browser_qa')))
 c('V12 command-specific batch acceptance',all(x in bcand.get('acceptance',[]) for x in ['AC-BULK-CAND-LIFE-01','AC-BULK-CAND-LIFE-02']) and 'AC-BULK-INT-DEL-01' in by.get('bulk_delete_or_inactivate_interviews',{}).get('acceptance',[]) and 'AC-BULK-REPORT-01' in by.get('bulk_change_report_status',{}).get('acceptance',[]))
-c('V14 current review/gate files',status.get('97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md')=='CURRENT' and status.get('98_TECHNICAL_PRECODE_GATE_V1_17.md')=='CURRENT' and status.get('95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md')=='HISTORICAL' and status.get('96_TECHNICAL_PRECODE_GATE_V1_16.md')=='HISTORICAL')
+c('V14 current review/gate files',status.get('99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md')=='CURRENT' and status.get('100_TECHNICAL_PRECODE_GATE_V1_18.md')=='CURRENT' and status.get('97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md')=='HISTORICAL' and status.get('98_TECHNICAL_PRECODE_GATE_V1_17.md')=='HISTORICAL')
 c('V12 stale current review path forbidden','Reviewer: `89 → 73 → 78 → 81 → 90`' not in txt('00_README.md') and 'v1.12 is the current implementation-contract' not in txt('01_PRODUCT_SCOPE_AND_ARCHITECTURE.md'))
 c('V12 internal email whitespace hardening','AC-INT-EMAIL-WS-01' in acc and "internal_email_domain_ck check (lower(email::text) ~ '^[^@[:space:]]+@eiu\\.edu\\.vn$')" in sql)
 
@@ -517,17 +517,17 @@ qa_names=[x.get('name','') for x in qa_results.get('results',[])] if isinstance(
 copy_qa_ids=['RP-COPY-01','RP-COPY-02','RP-COPY-03','RP-COPY-04']
 c('IR16 critical Copy browser QA IDs resolve',all(any(name.startswith(qid+' ') for name in qa_names) for qid in copy_qa_ids),str([q for q in copy_qa_ids if not any(name.startswith(q+' ') for name in qa_names)]))
 c('IR16 used target Round1 Copy QA exists',any(name.startswith('RP-COPY-02 ') for name in qa_names) and 'qaCopyUsed' in rtxt('tools/validate_responsive_v110.py'))
-c('IR16 All-in-One generator label v1.17','GENERATED v1.17' in txt('tools/generate_all_in_one.py'))
+c('IR16 All-in-One generator label v1.18','GENERATED v1.18' in txt('tools/generate_all_in_one.py'))
 
 # Generated equality
 proc=subprocess.run([sys.executable,str(B/'tools/generate_all_in_one.py'),'--check'],capture_output=True,text=True)
 c('All-in-One deterministic equality',proc.returncode==0,(proc.stdout if proc.returncode==0 else proc.stdout+proc.stderr).strip())
 
 # Review v5 resolution claims all findings addressed and gate is not frozen
-c('v1.17 alignment current','Independent Review' in txt('97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md') and 'CURRENT / NORMATIVE' in txt('97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md'))
+c('v1.18 alignment current','Independent Review' in txt('99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md') and 'CURRENT / NORMATIVE' in txt('99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md'))
 review_matrix=txt('technical_review_matrix.csv')
 
-c('Precode gate v1.17 ready to implement','TECHNICAL SPECIFICATION FROZEN' in txt('98_TECHNICAL_PRECODE_GATE_V1_17.md') and 'READY TO IMPLEMENT' in txt('98_TECHNICAL_PRECODE_GATE_V1_17.md'))
+c('Precode gate v1.18 ready to implement','TECHNICAL SPECIFICATION FROZEN' in txt('100_TECHNICAL_PRECODE_GATE_V1_18.md') and 'READY TO IMPLEMENT' in txt('100_TECHNICAL_PRECODE_GATE_V1_18.md'))
 c('Production not ready','Production Ready' in txt('00_README.md') and '**NO**' in txt('00_README.md'))
 
 # v1.12 review-v9 leverage checks
@@ -541,7 +541,7 @@ c('Critical Candidate auth vocabulary canonical','candidate_own_submission' not 
 c('Responsive retained schedule/copy override',(RP/'responsive-v18.js').exists() and all(x in rtxt('responsive-v18.js') for x in ['conflictKindsV18','isStructurallyEmptyRoundV18','copiedFromInterviewId']))
 
 passed=sum(ok for ok,_,_ in r); failed=len(r)-passed
-out=['PACKAGE VALIDATION — Full Handover v1.17 / Design System v1.8 / Responsive v1.10 — 2026-09-03',f'TOTAL={len(r)} PASS={passed} FAIL={failed}','']
+out=['PACKAGE VALIDATION — Full Handover v1.18 / Design System v1.8 / Responsive v1.10 — 2026-09-06',f'TOTAL={len(r)} PASS={passed} FAIL={failed}','']
 for ok,n,d in r: out.append(f"{'PASS' if ok else 'FAIL'} | {n}"+(f' | {d}' if d else ''))
 if not a.no_write:
     (B/'PACKAGE_VALIDATION.txt').write_text('\n'.join(out)+'\n')

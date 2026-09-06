@@ -49,6 +49,59 @@ Reject if:
 - stale memory/old docs are treated as more authoritative than current source;
 - a generic best practice overrides a project-specific invariant.
 
+
+## Finding Disposition Contract
+
+Every material review finding must be dispositioned as exactly one of:
+
+- `BLOCKING_REPAIR`
+- `NEEDS_SOURCE_DISCOVERY`
+- `OWNER_DECISION_REQUIRED`
+- `CLOSED_AS_DESIGNED`
+- `DEFER_UNTIL_FEATURE`
+- `DEFER_UNTIL_PREPROD`
+- `STALE_OR_NOT_APPLICABLE`
+
+Rules:
+
+1. `BLOCKING_REPAIR`
+   - current defect is proven;
+   - source/evidence is sufficient;
+   - reviewer must state exact evidence, root cause, direct repair, and exact
+     verification;
+   - do not bounce a knowable repair back as vague investigation.
+
+2. `NEEDS_SOURCE_DISCOVERY`
+   - use only when current source/runtime evidence is genuinely insufficient;
+   - state exactly what evidence must be obtained;
+   - do not guess.
+
+3. `OWNER_DECISION_REQUIRED`
+   - use only for genuine business/product/policy/privacy/scope/production or
+     other explicit authorization decisions;
+   - do not escalate resolvable technical choices.
+
+4. `CLOSED_AS_DESIGNED`
+   - behavior is an explicit current Owner/canonical decision;
+   - reviewer may note risk/trade-off but must not reopen it as technical debt
+     without new regression evidence or an explicit change request.
+
+5. `DEFER_UNTIL_FEATURE`
+   - valid unresolved concern whose triggering feature does not yet exist;
+   - it must return as acceptance criteria when that feature begins.
+
+6. `DEFER_UNTIL_PREPROD`
+   - valid unresolved operational/release concern that is not an implementation
+     blocker yet;
+   - it must be resolved by its recorded pre-production trigger/exit condition.
+
+7. `STALE_OR_NOT_APPLICABLE`
+   - current source/runtime proves the finding is already fixed, superseded, or
+     does not apply.
+
+Review severity and lifecycle disposition are separate concepts.
+Do not convert every best-practice suggestion into a blocker.
+Do not call a deferred item "resolved forever".
 ---
 
 # 3. Security & Authorization — BLOCKER

@@ -1,8 +1,8 @@
-version: '1.17'
-technical_architecture: '1.17'
+version: '1.18'
+technical_architecture: '1.18'
 design_system: '1.8'
-current_review_resolution: 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
-current_precode_gate: 98_TECHNICAL_PRECODE_GATE_V1_17.md
+current_review_resolution: 99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md
+current_precode_gate: 100_TECHNICAL_PRECODE_GATE_V1_18.md
 documents:
 - file: 00_README.md
   status: CURRENT
@@ -255,12 +255,21 @@ documents:
   status: HISTORICAL
   normative: false
 - file: 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
-  status: CURRENT
-  normative: true
+  status: HISTORICAL
+  normative: false
 - file: 98_TECHNICAL_PRECODE_GATE_V1_17.md
+  status: HISTORICAL
+  normative: false
+- file: CHANGELOG_V1_17.md
+  status: HISTORICAL
+  normative: false
+- file: 99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md
   status: CURRENT
   normative: true
-- file: CHANGELOG_V1_17.md
+- file: 100_TECHNICAL_PRECODE_GATE_V1_18.md
+  status: CURRENT
+  normative: true
+- file: CHANGELOG_V1_18.md
   status: CURRENT
   normative: false
 current_entrypoints:
@@ -268,11 +277,11 @@ current_entrypoints:
 - FINAL_REVIEW_GUIDE.md
 - 16_AI_REVIEW_AND_BUILD_PROMPT.md
 - 52_TECHNICAL_GATE_STATUS.md
-- 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
+- 99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md
 - 73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md
 - 78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md
 - 81_RESPONSIVE_PROTOTYPE_INTEGRATION.md
-- 98_TECHNICAL_PRECODE_GATE_V1_17.md
+- 100_TECHNICAL_PRECODE_GATE_V1_18.md
 historical_numbered_files:
 - 49_TECHNICAL_REVIEW_VERCEL_SUPABASE.md
 - 56_EXTERNAL_REVIEW_V2_RESOLUTION.md
@@ -301,4 +310,6 @@ historical_numbered_files:
 - 94_TECHNICAL_PRECODE_GATE_V1_15.md
 - 95_INDEPENDENT_PLANNER_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_16.md
 - 96_TECHNICAL_PRECODE_GATE_V1_16.md
+- 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md
+- 98_TECHNICAL_PRECODE_GATE_V1_17.md
 all_in_one_policy: CURRENT_NORMATIVE_NUMBERED_ONLY; historical/superseded excluded

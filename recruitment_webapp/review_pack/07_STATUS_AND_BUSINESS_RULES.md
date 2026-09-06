@@ -40,20 +40,22 @@ Identity:
 
 Nếu khác identity → Application khác.
 
-Effective outcome:
-- Current Round report_status HIRED → HIRED
-- Current Round report_status REJECTED → REJECTED
-- Khác → IN_PROGRESS
-
-## 4. Interview Schedule Status
+Authoritative effective outcome resolver:
+- Outcome của Application được tính **DUY NHẤT từ Current Round** (Interview có `round_no` lớn nhất trong các session `access_active` của Application đó):
+  - Current Round `report_status_code = 'HIRED'` → `HIRED`
+  - Current Round `report_status_code = 'REJECTED'` → `REJECTED`
+  - Các trường hợp còn lại → `IN_PROGRESS`
+- Các vòng active cũ hơn **tuyệt đối không độc lập quyết định outcome của Application**.
+- Toàn bộ logic tính toán Submission status (`recalculate_submission_status`) và Candidate reactivation recalculation bắt buộc dùng chung một resolver nội bộ duy nhất; không lặp lại mệnh đề `EXISTS(historical HIRED/REJECTED)`.
+- Hàm `recalculate_submission_status` là internal helper: thu hồi quyền chạy của `PUBLIC`, `anon`, `authenticated`; chỉ cấp cho `postgres` và `service_role`.
+## 4. Interview Schedule Status (Owner Decision A)
 
 `AVAILABLE / SCHEDULED / AWAITING / CONFIRMED / CANCELLED`
 
-- HR đổi thủ công.
-- Không ép sequence.
-- CONFIRMED khóa Edit.
-- CANCELLED/inactive session không block conflict.
-
+- HR đổi thủ công; **không có sequence bắt buộc**, cho phép chuyển trực tiếp giữa các trạng thái.
+- Mỗi Interview round có đúng một Schedule Status tại một thời điểm.
+- `CONFIRMED` khóa Edit thông thường; muốn đổi lịch phải qua trusted action `reschedule_confirmed_interview`.
+- `CANCELLED` là trạng thái lịch, **không chặn tạo vòng tiếp theo** và không tính vào xung đột tài nguyên (`resource_blocking`).
 ## 5. Report Status
 
 Thuộc Interview Session:

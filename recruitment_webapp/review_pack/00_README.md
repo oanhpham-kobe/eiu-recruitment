@@ -1,13 +1,13 @@
-# App Tuyển dụng EIU — Full Handover v1.17
+# App Tuyển dụng EIU — Full Handover v1.18
 
-**Ngày cập nhật:** 03/09/2026  
+**Ngày cập nhật:** 06/09/2026  
 **Business Logic Core:** v1.2 **FROZEN**  
 **Design System:** v1.8 **CURRENT** — included in combined review bundle and supplied separately  
-**Technical Architecture:** v1.17 **TECHNICAL SPECIFICATION FROZEN**  
+**Technical Architecture:** v1.18 **TECHNICAL SPECIFICATION FROZEN**  
 **Production Ready:** **NO**
 
-## 1. Mục đích của v1.17
-v1.17 giữ nguyên Business Logic Core, four-gate implementation model và executable Responsive Prototype v1.10; đóng independent review của v1.16 bằng cách propagate `copy_interview_schedule` vào mọi canonical schedule-engine declaration, bổ sung stable Copy browser-QA evidence, làm sạch generated All-in-One labeling và pin lại current source/gate. Technical Architecture v1.17 vẫn TECHNICAL SPECIFICATION FROZEN; Implementation Gate = READY TO IMPLEMENT; Production Ready = NO.
+## 1. Mục đích của v1.18
+v1.18 giữ nguyên Business Logic Core v1.2, four-gate implementation model và executable Responsive Prototype v1.10; tích hợp toàn diện các quyết định Owner Decisions A–K và hoàn thiện chuẩn hóa source trước thềm Slice 04. Technical Architecture v1.18 vẫn là TECHNICAL SPECIFICATION FROZEN; Implementation Gate = READY TO IMPLEMENT; Production Ready = NO.
 
 ## 2. Business đã chốt
 - `Candidate → Submission → Application → Interview Session (1..N) → Participant → Report`.
@@ -57,11 +57,11 @@ Responsive Prototype v1.10 is bundled for desktop/tablet/mobile visual UAT again
 ## 6. Cách đọc
 ### Reviewer tổng quát
 1. `FINAL_REVIEW_GUIDE.md`
-2. `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`
+2. `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`
 3. `73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md`
 4. `78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md`
 5. `70_SEMANTIC_VALIDATION_GATE.md`
-6. `98_TECHNICAL_PRECODE_GATE_V1_17.md`
+6. `100_TECHNICAL_PRECODE_GATE_V1_18.md`
 7. `75_RELEASE_EVIDENCE_MATRIX.md`
 8. `81_RESPONSIVE_PROTOTYPE_INTEGRATION.md`
 8. `15_ALL_IN_ONE_SPEC.md` — generated from CURRENT normative sources only
@@ -82,7 +82,7 @@ Responsive Prototype v1.10 is bundled for desktop/tablet/mobile visual UAT again
 - `tools/validate_package.py` — inspectable/re-runnable package validator; Design ZIP includes its own `tools/validate_design.py`.
 
 ## 9. Gate status
-See `52_TECHNICAL_GATE_STATUS.md` and `98_TECHNICAL_PRECODE_GATE_V1_17.md`.
+See `52_TECHNICAL_GATE_STATUS.md` and `100_TECHNICAL_PRECODE_GATE_V1_18.md`.
 
 Business/Technical Specification Freeze does not mean Implementation Validation or Production Ready. Real migration/RLS/RPC/race/storage/performance/backup/deployment evidence is a post-coding gate.
 
@@ -95,9 +95,9 @@ Prior v1.5/v1.6 review/gate documents are retained as HISTORICAL/SUPERSEDED in `
 
 
 
-## Current review path — v1.17
-Use `source_registry.yaml` as the authority. Current alignment = `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`; current gate = `98_TECHNICAL_PRECODE_GATE_V1_17.md`. Historical review/gate files never override current behavior. Responsive Prototype v1.10 remains the executable visual-UAT reference for Design System v1.8.
+## Current review path — v1.18
+Use `source_registry.yaml` as the authority. Current alignment = `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`; current gate = `100_TECHNICAL_PRECODE_GATE_V1_18.md`. Historical review/gate files never override current behavior. Responsive Prototype v1.10 remains the executable visual-UAT reference for Design System v1.8.
 
 Current numbered technical/review modules extend through doc 96. `source_registry.yaml` remains the authority; do not infer current status from numeric range alone.
 
-Current alignment resolution: `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`; current pre-code/implementation gate: `98_TECHNICAL_PRECODE_GATE_V1_17.md`. Independent Review of Full Handover v1.16 is the latest external source-readiness evidence; doc 97 records its alignment.
+Current alignment resolution: `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`; current pre-code/implementation gate: `100_TECHNICAL_PRECODE_GATE_V1_18.md`. Independent Review v1.18 is the latest source-readiness evidence; doc 99 records its alignment.

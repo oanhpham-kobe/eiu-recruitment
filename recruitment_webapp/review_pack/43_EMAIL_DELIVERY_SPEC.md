@@ -34,3 +34,9 @@ Specifications and acceptance tests must use “prevent duplicate logical enqueu
 
 Candidate Submission notification rows carry nullable `submission_id` so a Submit/Update email is traceable to the exact Submission even when one Candidate has many historical Submissions.
 
+## Stale preview / outbox guard
+Preview và send email nghiệp vụ/lịch phỏng vấn bắt buộc bind với phiên bản dữ liệu và danh sách participant chính xác. Nếu lịch hoặc danh sách người nhận thay đổi trước khi enqueue/send, outbox không được gửi dữ liệu cũ; lệnh phải kiểm tra fingerprint/version tại ranh giới enqueue/send.
+
+## Non-production environment safety
+Môi trường non-production (DEV/Local/CI) mặc định an toàn: environment code là `TEST`, **tuyệt đối không hardcode `'PRODUCTION'` trong các RPC nghiệp vụ**. DEV và CI không được gửi email tới người nhận thực bên ngoài trừ khi có cấu hình trusted riêng biệt.
+

@@ -1,10 +1,10 @@
-# 16. AI Review & Build Prompt — CURRENT v1.17
+# 16. AI Review & Build Prompt — CURRENT v1.18
 
 Use only CURRENT normative sources from `source_registry.yaml`. HISTORICAL/SUPERSEDED review/gate files are evidence only. HISTORICAL files must never override current behavior.
 
 ## Review mode
-Baseline: Business Logic v1.2 FROZEN, Design System v1.8 CURRENT, Technical Architecture v1.17 TECHNICAL SPECIFICATION FROZEN, Implementation Gate READY TO IMPLEMENT. Read core modules 01–14, current technical modules listed in `source_registry.yaml`, `73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md`, `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`, `78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md`, and `98_TECHNICAL_PRECODE_GATE_V1_17.md`. Then inspect `app_spec.yaml`, `command_registry.yaml`, `database_schema.sql`, `validation_contract.yaml`, permissions/status matrices and Design System v1.8.
-Current alignment resolution: `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`; current pre-code/implementation authorization gate: `98_TECHNICAL_PRECODE_GATE_V1_17.md`. Historical modules must never override current behavior.
+Baseline: Business Logic v1.2 FROZEN, Design System v1.8 CURRENT, Technical Architecture v1.18 TECHNICAL SPECIFICATION FROZEN, Implementation Gate READY TO IMPLEMENT. Read core modules 01–14, current technical modules listed in `source_registry.yaml`, `73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md`, `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`, `78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md`, and `100_TECHNICAL_PRECODE_GATE_V1_18.md`. Then inspect `app_spec.yaml`, `command_registry.yaml`, `database_schema.sql`, `validation_contract.yaml`, permissions/status matrices and Design System v1.8.
+Current alignment resolution: `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`; current pre-code/implementation authorization gate: `100_TECHNICAL_PRECODE_GATE_V1_18.md`. Historical modules must never override current behavior.
 
 Check cross-layer traceability: Actor → Permission → UI → exactly one trusted mutation command → lock/version/transaction → DB invariant → side effects → audit → behavior-specific acceptance. Flag contradiction rather than resolving it by guessing.
 

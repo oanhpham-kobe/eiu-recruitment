@@ -6,6 +6,7 @@ Edit submission,Only NEW; email immutable,Yes,If submissions.edit,No,Yes
 Change submission status,No,Yes,If submissions.status,No,Yes
 Active/Inactive Candidate,No,Yes,If candidates.active_manage,No,Yes
 Manage Application,No,Yes,If applications.manage,No,Yes
+View Application,No,Yes,If applications.view,No,Yes
 Manage Interview,No,Yes,If interviews.manage,Contextual read only,Yes
 Change Interview Status,No,Yes,If interviews.status,Contextual read only,Yes
 Manage participants/documents/email,No,Yes,By corresponding permission,No,Yes
@@ -22,3 +23,4 @@ View Email History,No,Yes,If emails.history_view + parent context,No,Yes
 Delete Email History,No,Yes,If emails.history_view + emails.history_delete + parent context,No,Yes
 Active/Inactive HR-role internal user,No,No,No — Root only,No,Yes
 Change Application HR owner,No,Yes,If applications.manage,No,Yes
+Candidate email identity recovery,No,No,If candidates.identity_manage,No,Yes

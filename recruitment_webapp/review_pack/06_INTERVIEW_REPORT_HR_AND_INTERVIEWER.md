@@ -98,12 +98,21 @@ Nếu HR có permission `reports.edit_interviewer`, ở từng interviewer repor
 - Hiện lại: dữ liệu cũ xuất hiện lại.
 - HR filter: Tất cả / Đang hiển thị / Đang ẩn.
 
-## 8. Interviewer View
+## 8. Interviewer View (Owner Decision I — Historical Access & Write Authorization)
 
-Interviewer page cũng hiển thị một dòng theo Current Round nếu:
-- họ là current participant của Current Round;
-- Session visible;
-- User active.
+### Quyền READ (Xem lịch sử)
+- Interviewer được phép **READ các Interview round lịch sử mà họ đã trực tiếp tham gia** (yêu cầu: active internal user, có row `interview_participants.is_current=true` tại đúng Interview đó, parent Application và Interview đang `access_active`, và session `visible_to_interviewers=true`).
+- Việc Application có Current Round mới **không tước quyền đọc** các round trước mà interviewer đã tham gia.
+- Participant bị gỡ khỏi round sẽ mất quyền truy cập round đó.
+- Không có quyền xem bắc cầu sang các vòng hoặc Candidate mà interviewer không tham gia.
+
+### Quyền WRITE (Ghi / Sửa Report)
+- Ghi/sửa báo cáo yêu cầu đồng thời:
+  1. Target Interview phải là **Current Round của Application**;
+  2. Caller sở hữu report gắn với current participant row của mình;
+  3. Caller là active internal user;
+  4. Session visible và `access_active`;
+  5. `report_status_code` của **chính Interview đó đang ở trạng thái non-final / writable** (không phải `HIRED` hoặc `REJECTED`). Không dùng report status của vòng khác để kiểm tra.
 
 Drawer Interviewer = **Interview info + Report info**.
 
@@ -114,10 +123,9 @@ Chưa có report:
 Đã có:
 `Edit | Xem | Tải PDF`
 
-Nếu Report Status Current Round = `HIRED` hoặc `REJECTED`:
+Nếu Report Status của target Interview = `HIRED` hoặc `REJECTED`:
 - Interviewer không được Edit.
 - Muốn Edit lại → HR đổi status về non-final.
-
 ## 9. Form report cá nhân
 
 **Hard rule:** Báo cáo phỏng vấn **không có chấm điểm/scoring/rating/star/thang điểm**. Không developer/AI nào được tự bổ sung cơ chế điểm nếu chưa có Change Request nghiệp vụ mới.
@@ -131,13 +139,24 @@ Các field không bắt buộc:
 4. Điểm mạnh và hạn chế / Strengths and Limitations
 5. Khác / Other
 
-### Decision block
+### Decision block & Blank Conclusion (Owner Decision F)
 - Kết luận / Conclusion
 - Dự kiến công việc cụ thể được phân công / Expected Specific Job Assigned
 - Thời gian dự kiến tuyển dụng / Expected Recruitment Time
 
-Mỗi interviewer có 1 report riêng cho mỗi Interview Session.
+**Quy tắc để trống:** HR **được phép set `HIRED` hoặc `REJECTED` ngay cả khi Conclusion, Expected Job và Expected Recruitment Time để trống**. Không tạo invariant bắt buộc phải có Conclusion mới được chốt kết quả.
 
+Thứ tự xác định Final Decision Source trong production: timestamp quyết định hợp lệ mới nhất (`decision_updated_at DESC`), sau đó tie-break bằng Report UUID xác định.
+
+### Field-Aware Report Merge
+Khi lưu/cập nhật report:
+- Request gửi kèm `expected_version_no` và giá trị gốc `base_values` cho từng field được patch;
+- Server lock row report và so sánh giá trị hiện tại trong DB với `base_values`:
+  - `current == base`: patch an toàn;
+  - `current != base`: conflict trên cùng field.
+- Với HR: conflict trên cùng field → từ chối với `STALE_VERSION` để reload; các field khác nhau (disjoint) được merge tự động.
+- Với Interviewer sửa report của chính mình: áp dụng owner-wins cho eligible conflict cùng field; các field khác nhau được merge.
+- Chỉ khi có thay đổi thực tế ở 3 final decision fields thì metadata quyết định mới được cập nhật.
 ## 10. Preview/PDF
 
 ### Evaluation

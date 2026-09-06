@@ -14,6 +14,7 @@ Every production mutation maps to one explicit trusted command. Rows without a c
 | HR opens NEW | `submissions.view` + `submissions.status` | `open_submission` | atomic NEW→READ | yes | view-only vs full HR |
 | View-only HR opens | `submissions.view` | `open_submission` | no mutation | no write audit required; read audit per policy | view-only |
 | HR edits Submission | `submissions.edit` + view | `update_submission_by_hr` | optimistic | yes | DTO separation |
+| HR Candidate field correction | `submissions.edit` + view | `correct_submission_candidate_fields_by_hr` | Submission FOR UPDATE + optimistic version + cache refresh | yes | audit changed field names / AC-CAND-CORR-01 |
 | HR add/replace/delete Submission documents | `submissions.edit` + `submissions.view` | `mutate_submission_documents_by_hr` | Submission/logical locks + version bump | yes | max5/CV/CLEAN |
 | Manual Submission status | `submissions.status` + view | `set_submission_manual_status` | parent lock | yes | only NEW/READ |
 | Derived Submission status | system/internal | `recalculate_submission_status` | Submission FOR UPDATE | yes | concurrent outcomes |
@@ -27,6 +28,7 @@ Every production mutation maps to one explicit trusted command. Rows without a c
 | Copy schedule draft/prefill | `interviews.manage` + view | client draft only — **no trusted mutation** | no DB mutation until Save | no | draft only |
 | Save Copy Interview schedule | `interviews.manage` + view | `copy_interview_schedule` | target Application/Interview locks + deterministic resource locks + idempotency | yes | AC-23 / AC-COPY-03 / AC-COPY-CMD-01 / AC-PART-OPER-COPY-01 |
 | Save/reschedule | `interviews.manage` + view | `save_interview_schedule` | Interview row → resource locks | yes | race conflicts |
+| Reschedule confirmed Interview | `interviews.manage` + view | `reschedule_confirmed_interview` | target CONFIRMED + shared resource locks + status AWAITING | yes | atomic reschedule / AC-RESCHED-01 |
 | Change schedule status | `interviews.status` + view | `change_interview_schedule_status` | shared conflict framework if operational | yes | CANCELLED→active |
 | Reactivate Interview | `interviews.manage` + view | `reactivate_interview` | Interview row → resource locks | yes | middle-round block |
 | Delete/Inactive Interview | `interviews.manage` + view | `delete_or_inactivate_interview` | latest guard + durable Interview temp cleanup + Submission recalc | yes | used/unused + no orphan reservation/object |
@@ -62,6 +64,7 @@ Every production mutation maps to one explicit trusted command. Rows without a c
 | Root identity recovery | break-glass operators | `root_admin_break_glass_recovery` | maintenance/recovery | immutable security audit | staging rehearsal |
 | Grant permission | Root | `grant_hr_permission` | dependency validation | security audit | invalid combination rejected |
 | Revoke permission | Root | `revoke_hr_permission` | dependency validation | security audit | invalid combination rejected |
+| Candidate email identity recovery | `candidates.identity_manage` (Root implicit) | `recover_candidate_email_identity` | unique new email + Auth identity update + session revoke | yes | audit identity recovery / AC-CAND-REC-01 |
 
 Grouped pagination/search are read contracts rather than mutations: Candidate Inbox pages Candidate groups; Interview/Report pages Application groups; PII search value is not persisted in URL.
 

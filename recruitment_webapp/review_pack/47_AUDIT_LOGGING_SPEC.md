@@ -10,6 +10,12 @@ Immutable/privileged, phục vụ trace quyền và dữ liệu nhạy cảm.
 
 Việc HR xóa một Email History record **không xóa Security Audit Log**.
 
+### Same-Transaction Requirement & Rollback on Failure
+Toàn bộ Security Audit bắt buộc được ghi **trong cùng một database transaction với mutation nghiệp vụ**. Nếu việc ghi log audit thất bại, toàn bộ transaction nghiệp vụ phải rollback.
+
+### Payload tối thiểu (Data Minimization)
+Payload audit phải mang tính chất tối thiểu và theo từng event: chỉ ghi nhận danh sách tên trường thay đổi (`changed FIELD NAMES`), metadata actor/entity/version và lý do (nếu có). **Tuyệt đối không dump toàn bộ row PII cũ/mới** vào audit log.
+
 ## 2. Events bắt buộc
 
 - login success/failure (theo privacy policy);

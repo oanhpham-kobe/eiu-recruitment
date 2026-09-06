@@ -4,7 +4,7 @@
 **Responsive UX-UAT prototype — user visual corrections applied and button flows re-audited.**
 
 Authority:
-- Full Handover **v1.17**
+- Full Handover **v1.18**
 - Design System **v1.8**
 
 This package is a static HTML/CSS/JS prototype. It does not replace the Handover or Design System source of truth and does not implement backend/RLS/database behavior.
@@ -81,4 +81,4 @@ Open `index.html` in a browser. Useful routes:
 Browser QA in this package verifies the static prototype only. It does not prove production React/Next.js, Supabase, RLS, email delivery or database behavior. Production engineering tests remain separate implementation/release gates.
 
 ## Production implementation note
-This static prototype intentionally retains layered historical overrides so reviewers can trace incremental amendments. **Do not copy the override chain into production.** Production React/Next.js components and state transitions must be implemented fresh from the current Full Handover v1.17 + Design System v1.8 contracts, with Responsive v1.10 used only as executable interaction/reference evidence.
+This static prototype intentionally retains layered historical overrides so reviewers can trace incremental amendments. **Do not copy the override chain into production.** Production React/Next.js components and state transitions must be implemented fresh from the current Full Handover v1.18 + Design System v1.8 contracts, with Responsive v1.10 used only as executable interaction/reference evidence.

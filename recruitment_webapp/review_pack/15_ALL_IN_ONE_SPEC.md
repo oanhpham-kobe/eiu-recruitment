@@ -1,4 +1,4 @@
-# 15. ALL-IN-ONE SPEC — GENERATED v1.17
+# 15. ALL-IN-ONE SPEC — GENERATED v1.18
 
 > DO NOT EDIT MANUALLY. Generated deterministically from CURRENT normative numbered modules listed in `source_registry.yaml`.
 > HISTORICAL/SUPERSEDED review and gate documents are excluded from the normative body.
@@ -9,16 +9,16 @@
 
 <!-- SOURCE: 00_README.md -->
 
-# App Tuyển dụng EIU — Full Handover v1.17
+# App Tuyển dụng EIU — Full Handover v1.18
 
-**Ngày cập nhật:** 03/09/2026  
+**Ngày cập nhật:** 06/09/2026  
 **Business Logic Core:** v1.2 **FROZEN**  
 **Design System:** v1.8 **CURRENT** — included in combined review bundle and supplied separately  
-**Technical Architecture:** v1.17 **TECHNICAL SPECIFICATION FROZEN**  
+**Technical Architecture:** v1.18 **TECHNICAL SPECIFICATION FROZEN**  
 **Production Ready:** **NO**
 
-## 1. Mục đích của v1.17
-v1.17 giữ nguyên Business Logic Core, four-gate implementation model và executable Responsive Prototype v1.10; đóng independent review của v1.16 bằng cách propagate `copy_interview_schedule` vào mọi canonical schedule-engine declaration, bổ sung stable Copy browser-QA evidence, làm sạch generated All-in-One labeling và pin lại current source/gate. Technical Architecture v1.17 vẫn TECHNICAL SPECIFICATION FROZEN; Implementation Gate = READY TO IMPLEMENT; Production Ready = NO.
+## 1. Mục đích của v1.18
+v1.18 giữ nguyên Business Logic Core v1.2, four-gate implementation model và executable Responsive Prototype v1.10; tích hợp toàn diện các quyết định Owner Decisions A–K và hoàn thiện chuẩn hóa source trước thềm Slice 04. Technical Architecture v1.18 vẫn là TECHNICAL SPECIFICATION FROZEN; Implementation Gate = READY TO IMPLEMENT; Production Ready = NO.
 
 ## 2. Business đã chốt
 - `Candidate → Submission → Application → Interview Session (1..N) → Participant → Report`.
@@ -68,11 +68,11 @@ Responsive Prototype v1.10 is bundled for desktop/tablet/mobile visual UAT again
 ## 6. Cách đọc
 ### Reviewer tổng quát
 1. `FINAL_REVIEW_GUIDE.md`
-2. `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`
+2. `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`
 3. `73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md`
 4. `78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md`
 5. `70_SEMANTIC_VALIDATION_GATE.md`
-6. `98_TECHNICAL_PRECODE_GATE_V1_17.md`
+6. `100_TECHNICAL_PRECODE_GATE_V1_18.md`
 7. `75_RELEASE_EVIDENCE_MATRIX.md`
 8. `81_RESPONSIVE_PROTOTYPE_INTEGRATION.md`
 8. `15_ALL_IN_ONE_SPEC.md` — generated from CURRENT normative sources only
@@ -93,7 +93,7 @@ Responsive Prototype v1.10 is bundled for desktop/tablet/mobile visual UAT again
 - `tools/validate_package.py` — inspectable/re-runnable package validator; Design ZIP includes its own `tools/validate_design.py`.
 
 ## 9. Gate status
-See `52_TECHNICAL_GATE_STATUS.md` and `98_TECHNICAL_PRECODE_GATE_V1_17.md`.
+See `52_TECHNICAL_GATE_STATUS.md` and `100_TECHNICAL_PRECODE_GATE_V1_18.md`.
 
 Business/Technical Specification Freeze does not mean Implementation Validation or Production Ready. Real migration/RLS/RPC/race/storage/performance/backup/deployment evidence is a post-coding gate.
 
@@ -106,12 +106,12 @@ Prior v1.5/v1.6 review/gate documents are retained as HISTORICAL/SUPERSEDED in `
 
 
 
-## Current review path — v1.17
-Use `source_registry.yaml` as the authority. Current alignment = `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`; current gate = `98_TECHNICAL_PRECODE_GATE_V1_17.md`. Historical review/gate files never override current behavior. Responsive Prototype v1.10 remains the executable visual-UAT reference for Design System v1.8.
+## Current review path — v1.18
+Use `source_registry.yaml` as the authority. Current alignment = `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`; current gate = `100_TECHNICAL_PRECODE_GATE_V1_18.md`. Historical review/gate files never override current behavior. Responsive Prototype v1.10 remains the executable visual-UAT reference for Design System v1.8.
 
 Current numbered technical/review modules extend through doc 96. `source_registry.yaml` remains the authority; do not infer current status from numeric range alone.
 
-Current alignment resolution: `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`; current pre-code/implementation gate: `98_TECHNICAL_PRECODE_GATE_V1_17.md`. Independent Review of Full Handover v1.16 is the latest external source-readiness evidence; doc 97 records its alignment.
+Current alignment resolution: `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`; current pre-code/implementation gate: `100_TECHNICAL_PRECODE_GATE_V1_18.md`. Independent Review v1.18 is the latest source-readiness evidence; doc 99 records its alignment.
 
 
 
@@ -256,7 +256,8 @@ Hệ thống vẫn dùng permission granular, nhưng **HR mới được tạo m
 | `submissions.status` | Mark New/Read, xử lý status |
 | `candidates.active_manage` | Active/Inactive Candidate account |
 | `candidates.delete_unused` | Hard-delete Candidate chưa có Submission/business usage |
-| `applications.manage` | Tạo/update/delete-or-inactive Application |
+| `applications.view` | Xem Application rows/details |
+| `applications.manage` | Tạo/update/delete-or-inactive Application; requires `applications.view` |
 | `interviews.view` | Xem page Interview |
 | `interviews.manage` | Tạo/Edit/Copy/Delete-or-inactive Session |
 | `interviews.status` | Đổi Interview Schedule Status |
@@ -274,11 +275,12 @@ Hệ thống vẫn dùng permission granular, nhưng **HR mới được tạo m
 | `users.directory_manage` | Thêm/sửa/inactive internal user directory; được sửa email typo **chỉ khi user chưa bind Auth** |
 | `users.identity_manage` | Security identity rebinding; **Root Admin only trong Phase 1** |
 | `users.permissions_manage` | **Root Admin only** |
+| `candidates.identity_manage` | Khôi phục email đăng nhập Candidate; Root Admin implicit, HR delegated nếu được cấp (không thuộc default HR) |
 
 Root Admin có implicit allow cho tất cả permission.
 
 ### Default HR Permission Set
-Khi Root Admin tạo/gán role `Chuyên viên HR`, hệ thống mặc định cấp **toàn bộ HR permission codes** (không gồm `users.identity_manage`, `users.permissions_manage` và các Root-only recovery actions). Root Admin có thể revoke từng quyền sau đó.
+Khi Root Admin tạo/gán role `Chuyên viên HR`, hệ thống mặc định cấp **toàn bộ HR permission codes** (bao gồm `applications.view`, nhưng không gồm `candidates.identity_manage`, `users.identity_manage`, `users.permissions_manage` và các Root-only recovery actions). Root Admin có thể revoke từng quyền sau đó.
 
 Hệ quả quan trọng: HR mặc định có `submissions.status`, vì vậy workflow bình thường vẫn là **mở Submission NEW → READ**. Permission granular tồn tại để hỗ trợ HR Limited, không phải để HR mặc định thiếu quyền.
 
@@ -405,28 +407,28 @@ UI ẩn nút **không đủ**. Backend/RLS phải enforce:
 
 ### A. Thông tin chung (General Information)
 
-| Field | Kiểu nhập đề xuất | Required hiện tại |
-|---|---|---:|
-| Họ tên | Text | ✅ |
-| Ngày sinh | Date picker | ✅ |
-| Giới tính | Dropdown: Nam / Nữ | ✅ |
-| Địa chỉ hiện tại | Text | ✅ |
-| Email | Read-only, auto từ Auth | ✅ |
-| Số điện thoại | Text/Phone | ✅ |
+| Field | Kiểu nhập đề xuất | Ràng buộc / Validation | Required |
+|---|---|---|---:|
+| Họ tên | Text | Min 1, max 200 ký tự, trimmed | ✅ |
+| Ngày sinh | Date picker | Từ 1900-01-01 đến ngày hiện tại (TODAY) | ✅ |
+| Giới tính | Dropdown | `MALE` (Nam) / `FEMALE` (Nữ) — không có OTHER trong Phase 1 | ✅ |
+| Địa chỉ hiện tại | Text | Max 500 ký tự, trimmed | ✅ |
+| Email | Read-only, auto từ Auth | Verified Auth email, Candidate không được sửa | ✅ |
+| Số điện thoại | Text/Phone | Max 32 ký tự, chuẩn hóa số và dấu + đầu dòng | ✅ |
 
 ### B. Thông tin chi tiết (Details)
 
 #### 1. Quá trình học tập (Education)
 Cho phép nhiều record.
 
-| Field | Kiểu nhập |
-|---|---|
-| Thời gian | Khoảng thời gian / Year range |
-| Học vấn | Searchable dropdown từ Danh mục |
-| Chuyên ngành | Text |
-| Trường | Text |
+| Field | Kiểu nhập / DB column | Ràng buộc |
+|---|---|---|
+| Thời gian | `period_text` | Max 100 ký tự |
+| Học vấn | `qualification_id` | UUID chọn từ active `qualification_levels` |
+| Chuyên ngành | `major` | Max 255 ký tự |
+| Trường | `institution` | Max 255 ký tự |
 
-Nút: `+ Thêm quá trình học tập`. Phase 1 hiện **không bắt buộc tối thiểu 1 dòng Education và không đánh dấu 4 field Education là required**; nếu sau này đổi requiredness phải cập nhật Validation Contract/DTO/Acceptance trước khi đổi prototype.
+Nút: `+ Thêm quá trình học tập`. Cho phép tối đa 20 dòng. Thứ tự `sort_order` do server đánh số 1-based (1..n); không chấp nhận sort_order = 0. Phase 1 **không bắt buộc tối thiểu 1 dòng Education và không đánh dấu 4 field Education là required**; nếu cung cấp qualification_id thì phải active.
 
 ### C. Hồ sơ đính kèm
 
@@ -443,13 +445,13 @@ Upload policy Phase 1:
 - tối đa **5 MB/file**;
 - backend validate type/size và versioning, không chỉ dựa vào frontend.
 
-### D. Xác nhận quyền riêng tư
-- Candidate đọc server-pinned Privacy Notice và thực hiện **một Privacy acknowledgement** theo version được pin.
+### D. Xác nhận quyền riêng tư (Strong-current Privacy Notice)
+- Candidate Form Session mở sẽ pin một bản Privacy Notice version hiển thị.
+- **Strong-current verification:** khi Candidate nhấn Submit hoặc Save Edit, backend kiểm tra lại version hiện hành (`is_current=true`). Nếu notice version đã thay đổi giữa phiên, lệnh bị từ chối với lỗi stable `PRIVACY_NOTICE_CHANGED`, giữ nguyên draft/session và yêu cầu Candidate xác nhận phiên bản notice mới trước khi thử lại.
 - Không có accuracy-attestation checkbox/DB record thứ hai trong Phase 1.
 - NEW_SUBMISSION: acknowledgement **unchecked by default**; Candidate phải chủ động chọn trước Submit.
-- EDIT_SUBMISSION: nếu exact pinned notice version đã được acknowledge cho Submission/version tương ứng thì UI có thể render satisfied; notice version mới phải yêu cầu acknowledgement mới.
-- Submit.
-
+- EDIT_SUBMISSION: nếu exact pinned notice version đã được acknowledge cho Submission thì coi như đã xác nhận; nếu notice version thay đổi hoặc chưa acknowledge version đó thì bắt buộc xác nhận.
+- Bản ghi vật lý lưu tại `privacy_acknowledgements(submission_id, notice_version, acknowledged_at, source_code)`.
 ## 3. Các section KHÔNG hiển thị cho Candidate
 
 Vẫn có schema trong hệ thống nhưng chỉ HR thấy và edit:
@@ -472,7 +474,7 @@ Vẫn có schema trong hệ thống nhưng chỉ HR thấy và edit:
 ### Other
 - Textarea thông tin khác.
 
-Các trường này nên lưu theo Submission để bảo toàn snapshot của từng lần ứng tuyển.
+Candidate Submit/Edit **tuyệt đối không nhận, không sửa, không xóa và không ghi đè** các field/bảng con thuộc quyền HR (`other_info`, `hr_note`, `submission_work_experiences`, `submission_activities`). Khi Candidate cập nhật phiếu, dữ liệu HR-only này được giữ nguyên vẹn.
 
 ## 4. Submit logic
 
@@ -559,6 +561,33 @@ Khi HR Active lại Candidate, hệ thống tính lại trạng thái từng Sub
 - Có Application đang xử lý → `PROCESSED`.
 - Không còn active Application → `READ`; HR có thể Mark New nếu muốn Candidate sửa.
 
+
+## 9. Portal Security & Integration Baseline
+
+### Route Guard
+Các route `/candidate/*` được bảo vệ bằng server-side session guard (`web/src/app/candidate/layout.tsx`):
+- Chưa đăng nhập → redirect về `/auth/candidate`.
+- Candidate inactive hoặc chưa provision hợp lệ → chặn truy cập protected portal.
+- Route guard là lớp phòng thủ bổ sung, không thay thế DB RLS.
+
+### Authoritative Upload Reservation Protocol
+Client/browser **không được tự sinh reservation ID hay temp object path**. Luồng upload bắt buộc:
+1. `reserve_candidate_form_upload` → nhận `reservation_id` và `temp_bucket/temp_path` có thẩm quyền từ server;
+2. Upload file vào đúng path với `upsert=false`;
+3. `record_candidate_upload_completed`;
+4. Quét malware / clean check;
+5. `stage_candidate_document_change` (`ADD`, `REPLACE`, `DELETE`).
+
+### Session-Scoped Autosave (PII Protection)
+- Bản nháp Candidate PII chỉ được lưu trong `sessionStorage`, **không dùng persistent localStorage**.
+- Khóa lưu trữ gắn với Form Session ID thực tế và `expires_at`.
+- Hết hạn Form Session → bản nháp không còn hiệu lực và bị xóa.
+- Tự động xóa draft khi Submit thành công, Cancel, Logout hoặc session rơi vào terminal state.
+- Refresh trong cùng browser session vẫn khôi phục được draft.
+
+### Strict CSP
+- Không dùng `unsafe-inline` cho Content Security Policy. Toàn bộ inline presentation styles chuyển sang CSS classes.
+- Route Candidate Auth và Candidate Portal bắt buộc render không có vi phạm CSP.
 ## Candidate Form transaction model
 - Opening a new form creates a short-lived Candidate Form Session, **not** a Submission.
 - Files upload to temp/quarantine under that session.
@@ -633,18 +662,19 @@ Click phiếu con → mở Drawer đúng Submission đó.
 
 ## 3. Search / Filter
 
-Search theo kiểu autocomplete / combobox từng ký tự:
-- Họ tên.
-- Email.
-- SĐT.
+Quy tắc tìm kiếm server-side chuẩn hóa:
+- **Debounce:** 300 ms trên ô nhập liệu.
+- **Tìm kiếm Họ tên (Name broad search):** yêu cầu tối thiểu 2 ký tự (`length >= 2`). Không thực hiện quét broad `%x%` với 1 ký tự duy nhất.
+- **Email & Số điện thoại:** tìm kiếm exact/prefix có thể kích hoạt ngay (email lower-case exact/prefix; SĐT chuẩn hóa số exact/prefix).
+- **Phân trang:** mặc định 25 records/trang; hỗ trợ các tùy chọn 25, 50, 100.
+- **Bảo vệ PII trong URL:** chuỗi tìm kiếm PII (họ tên, email, SĐT) chỉ nằm trong request/client state, **không serialize vào browser URL, query string, browser history hay telemetry**.
 
-Filter đề xuất:
+Filter nghiệp vụ:
 - Trạng thái.
 - Ngày ứng tuyển.
 - Active / Inactive.
 - Mới / đã đọc.
 - Có/Chưa có Application.
-
 ## 4. Submission status
 
 Business status của Submission:
@@ -654,14 +684,11 @@ Business status của Submission:
 - `DONE` – Hoàn tất thành công theo kết quả Application.
 - `CLOSED` – Các Application kết thúc không tuyển.
 
-### New / Read
-- Submit mới → New.
-- Candidate chỉ được edit khi Submission còn `NEW`. Đây là chủ ý nghiệp vụ để HR không bỏ sót thay đổi sau khi đã đọc.
-- HR mặc định có quyền `submissions.status`; khi HR mở phiếu `NEW` → hệ thống tự chuyển `READ`.
-- Nếu một HR Limited chỉ có `submissions.view` nhưng không có `submissions.status`, mở phiếu là read-only và **không mutation**.
-- Candidate muốn sửa sau khi HR đã đọc phải liên hệ HR; HR chủ động Mark as New.
-- HR có thể Mark as New để tự nhắc xử lý lại hoặc mở lại quyền chỉnh Candidate theo rule.
-
+### New / Read (Pure Detail Read vs. Explicit Open)
+- Submit mới → `NEW`.
+- **Pure detail read (`get_submission_detail`):** chỉ đọc dữ liệu chi tiết phiếu, **tuyệt đối không làm thay đổi trạng thái từ NEW sang READ**. Các tác vụ passive server render, data fetch, prefetch, refresh danh sách hay background preview bắt buộc chỉ gọi `get_submission_detail`.
+- **Explicit open (`open_submission`):** là lệnh ghi nhận chủ ý của người dùng khi HR click mở chi tiết phiếu `NEW`. Khi caller có đủ quyền (`submissions.view + submissions.status`), lệnh chuyển trạng thái `NEW → READ`. Nếu caller chỉ có `submissions.view`, lệnh là read-only và không mutation.
+- Candidate chỉ được edit khi Submission còn `NEW`. Sau khi phiếu sang `READ`, Candidate muốn sửa phải liên hệ HR để HR chủ động Mark as New.
 ### Processed → New
 Không cho chuyển trực tiếp nếu còn Application liên quan.
 
@@ -868,15 +895,17 @@ Khi tạo Application mới, hệ thống tạo Interview Session Vòng 1:
   - single assignment có thể nhập ngay;
   - bulk assignment để trống.
 
-## 7. Tạo vòng tiếp theo
+## 7. Tạo vòng tiếp theo (Owner Decision A)
 
 - `1 Application → N Interview Sessions`.
 - Vòng mới giữ nguyên identity của Application.
 - `round_no = max(round_no) + 1`.
 - Demo Topic **luôn để trống** ở vòng mới; HR tự điền.
-- Chỉ được tạo vòng mới nếu record có round_no lớn nhất đang Active.
-- Nếu round cuối đang Inactive → phải Reactivate hoặc Hard Delete hợp lệ trước; không tạo vòng mới.
-
+- **Điều kiện tạo vòng mới (Create-next-round gate):**
+  1. Record có `round_no` lớn nhất hiện có **bắt buộc đang Active** (`is_active=true`). Nếu round cuối đang Inactive → phải Reactivate hoặc Hard Delete hợp lệ trước; không tạo vòng mới.
+  2. Round active cuối cùng **chưa có kết quả `HIRED`** (`report_status_code <> 'HIRED'`). Kết quả `HIRED` là điểm kết thúc tuyển dụng cho Application này, không được tạo thêm vòng sau.
+  3. Trạng thái lịch `CANCELLED` (Đã hủy) **không chặn tạo vòng tiếp theo**; chỉ cần round active cuối cùng chưa `HIRED`.
+- Schedule Status không có lộ trình chuyển đổi bắt buộc; cho phép nhảy trực tiếp giữa các trạng thái hợp lệ. Mỗi Interview round có đúng một Schedule Status tại một thời điểm.
 ### Delete/Inactive round
 - Chỉ round có `round_no` lớn nhất hiện có mới được Delete/Inactive.
 - Không được Delete/Inactive vòng giữa khi còn vòng sau.
@@ -1146,12 +1175,21 @@ Nếu HR có permission `reports.edit_interviewer`, ở từng interviewer repor
 - Hiện lại: dữ liệu cũ xuất hiện lại.
 - HR filter: Tất cả / Đang hiển thị / Đang ẩn.
 
-## 8. Interviewer View
+## 8. Interviewer View (Owner Decision I — Historical Access & Write Authorization)
 
-Interviewer page cũng hiển thị một dòng theo Current Round nếu:
-- họ là current participant của Current Round;
-- Session visible;
-- User active.
+### Quyền READ (Xem lịch sử)
+- Interviewer được phép **READ các Interview round lịch sử mà họ đã trực tiếp tham gia** (yêu cầu: active internal user, có row `interview_participants.is_current=true` tại đúng Interview đó, parent Application và Interview đang `access_active`, và session `visible_to_interviewers=true`).
+- Việc Application có Current Round mới **không tước quyền đọc** các round trước mà interviewer đã tham gia.
+- Participant bị gỡ khỏi round sẽ mất quyền truy cập round đó.
+- Không có quyền xem bắc cầu sang các vòng hoặc Candidate mà interviewer không tham gia.
+
+### Quyền WRITE (Ghi / Sửa Report)
+- Ghi/sửa báo cáo yêu cầu đồng thời:
+  1. Target Interview phải là **Current Round của Application**;
+  2. Caller sở hữu report gắn với current participant row của mình;
+  3. Caller là active internal user;
+  4. Session visible và `access_active`;
+  5. `report_status_code` của **chính Interview đó đang ở trạng thái non-final / writable** (không phải `HIRED` hoặc `REJECTED`). Không dùng report status của vòng khác để kiểm tra.
 
 Drawer Interviewer = **Interview info + Report info**.
 
@@ -1162,10 +1200,9 @@ Chưa có report:
 Đã có:
 `Edit | Xem | Tải PDF`
 
-Nếu Report Status Current Round = `HIRED` hoặc `REJECTED`:
+Nếu Report Status của target Interview = `HIRED` hoặc `REJECTED`:
 - Interviewer không được Edit.
 - Muốn Edit lại → HR đổi status về non-final.
-
 ## 9. Form report cá nhân
 
 **Hard rule:** Báo cáo phỏng vấn **không có chấm điểm/scoring/rating/star/thang điểm**. Không developer/AI nào được tự bổ sung cơ chế điểm nếu chưa có Change Request nghiệp vụ mới.
@@ -1179,13 +1216,24 @@ Các field không bắt buộc:
 4. Điểm mạnh và hạn chế / Strengths and Limitations
 5. Khác / Other
 
-### Decision block
+### Decision block & Blank Conclusion (Owner Decision F)
 - Kết luận / Conclusion
 - Dự kiến công việc cụ thể được phân công / Expected Specific Job Assigned
 - Thời gian dự kiến tuyển dụng / Expected Recruitment Time
 
-Mỗi interviewer có 1 report riêng cho mỗi Interview Session.
+**Quy tắc để trống:** HR **được phép set `HIRED` hoặc `REJECTED` ngay cả khi Conclusion, Expected Job và Expected Recruitment Time để trống**. Không tạo invariant bắt buộc phải có Conclusion mới được chốt kết quả.
 
+Thứ tự xác định Final Decision Source trong production: timestamp quyết định hợp lệ mới nhất (`decision_updated_at DESC`), sau đó tie-break bằng Report UUID xác định.
+
+### Field-Aware Report Merge
+Khi lưu/cập nhật report:
+- Request gửi kèm `expected_version_no` và giá trị gốc `base_values` cho từng field được patch;
+- Server lock row report và so sánh giá trị hiện tại trong DB với `base_values`:
+  - `current == base`: patch an toàn;
+  - `current != base`: conflict trên cùng field.
+- Với HR: conflict trên cùng field → từ chối với `STALE_VERSION` để reload; các field khác nhau (disjoint) được merge tự động.
+- Với Interviewer sửa report của chính mình: áp dụng owner-wins cho eligible conflict cùng field; các field khác nhau được merge.
+- Chỉ khi có thay đổi thực tế ở 3 final decision fields thì metadata quyết định mới được cập nhật.
 ## 10. Preview/PDF
 
 ### Evaluation
@@ -1292,20 +1340,22 @@ Identity:
 
 Nếu khác identity → Application khác.
 
-Effective outcome:
-- Current Round report_status HIRED → HIRED
-- Current Round report_status REJECTED → REJECTED
-- Khác → IN_PROGRESS
-
-## 4. Interview Schedule Status
+Authoritative effective outcome resolver:
+- Outcome của Application được tính **DUY NHẤT từ Current Round** (Interview có `round_no` lớn nhất trong các session `access_active` của Application đó):
+  - Current Round `report_status_code = 'HIRED'` → `HIRED`
+  - Current Round `report_status_code = 'REJECTED'` → `REJECTED`
+  - Các trường hợp còn lại → `IN_PROGRESS`
+- Các vòng active cũ hơn **tuyệt đối không độc lập quyết định outcome của Application**.
+- Toàn bộ logic tính toán Submission status (`recalculate_submission_status`) và Candidate reactivation recalculation bắt buộc dùng chung một resolver nội bộ duy nhất; không lặp lại mệnh đề `EXISTS(historical HIRED/REJECTED)`.
+- Hàm `recalculate_submission_status` là internal helper: thu hồi quyền chạy của `PUBLIC`, `anon`, `authenticated`; chỉ cấp cho `postgres` và `service_role`.
+## 4. Interview Schedule Status (Owner Decision A)
 
 `AVAILABLE / SCHEDULED / AWAITING / CONFIRMED / CANCELLED`
 
-- HR đổi thủ công.
-- Không ép sequence.
-- CONFIRMED khóa Edit.
-- CANCELLED/inactive session không block conflict.
-
+- HR đổi thủ công; **không có sequence bắt buộc**, cho phép chuyển trực tiếp giữa các trạng thái.
+- Mỗi Interview round có đúng một Schedule Status tại một thời điểm.
+- `CONFIRMED` khóa Edit thông thường; muốn đổi lịch phải qua trusted action `reschedule_confirmed_interview`.
+- `CANCELLED` là trạng thái lịch, **không chặn tạo vòng tiếp theo** và không tính vào xung đột tài nguyên (`resource_blocking`).
 ## 5. Report Status
 
 Thuộc Interview Session:
@@ -1424,10 +1474,30 @@ One form submission snapshot:
 
 Invariant: `email_snapshot = Candidate.email` at creation/update of identity snapshot.
 
-Candidate writable DTO excludes all internal/system fields. HR uses a separate HR patch DTO.
+Candidate-owned mutable fields in Candidate Submit/Edit:
+- `full_name` (min 1, max 200, trimmed)
+- `phone` (max 32, normalized)
+- `date_of_birth` (1900-01-01 .. TODAY)
+- `gender_code` (`MALE` | `FEMALE`)
+- `current_address` (max 500)
+- Education child rows: `period_text` (<=100), `qualification_id` (active FK), `major` (<=255), `institution` (<=255), `sort_order` (1-based 1..n). Optional.
+- Candidate documents.
 
-Children: Education, Working Experiences, Activities, Documents, Privacy Acknowledgement.
+Verified email (`email_snapshot`) derives from Auth and is immutable for the Candidate.
 
+HR-only fields: `other_info`, `hr_note`, `submission_work_experiences`, `submission_activities`. Candidate Submit/Edit **tuyệt đối không nhận, không sửa, không xóa và không ghi đè** các field/bảng con này.
+
+Children: Education, Working Experiences (HR-only), Activities (HR-only), Documents, Privacy Acknowledgement.
+
+### Privacy Acknowledgement
+Physical identity: `(submission_id, notice_version)`.
+Physical columns:
+- `privacy_acknowledgement_id` (PK, UUID)
+- `submission_id` (FK to submissions)
+- `notice_version` (text)
+- `acknowledged_at` (timestamptz)
+- `source_code` (text, e.g. `'CANDIDATE_PORTAL'`)
+Không có các cột `candidate_id`, `submission_version_no`, hay `privacy_notice_version`.
 ## 3. Submission Documents
 ### Submission Document Logical Header
 Stable business identity for one document across immutable versions:
@@ -1438,6 +1508,11 @@ Stable business identity for one document across immutable versions:
 
 The logical header owns **parent Submission + document type**. Those semantic fields are immutable once created.
 
+**Non-unique document type invariant:** `submission_document_logicals(submission_id, document_type_id)` **KHÔNG PHẢI là unique key**. Một Submission có thể có nhiều logical document cùng `document_type_id` (ví dụ 2 file CERTIFICATE) miễn là tổng số file hiện hành thỏa mãn giới hạn `max 5 files`. Staged `ADD` luôn tạo một logical document header mới; staged `REPLACE` và `DELETE` bắt buộc trỏ tới một `logical_document_id` cụ thể đã tồn tại.
+
+Metadata creator / uploader tuân thủ XOR:
+- Logical header do Candidate tạo: `created_by_candidate_id = Candidate`, `created_by_app_user_id = NULL`.
+- Document version do Candidate upload: `uploaded_by_candidate_id = Candidate`, `uploaded_by_app_user_id = NULL`.
 ### Submission Document Version
 Immutable storage/version record:
 - `document_id`
@@ -2131,7 +2206,7 @@ Chưa production-ready cho tới khi pass `45_PRODUCTION_UAT_GATE.md` và owner 
 
 <!-- SOURCE: 13_ACCEPTANCE_CRITERIA_AND_TEST_CASES.md -->
 
-# 13. Acceptance Criteria — Business Core v1.2 + Technical Architecture v1.17
+# 13. Acceptance Criteria — Business Core v1.2 + Technical Architecture v1.18
 
 Business rules remain frozen except the explicitly accepted Final Decision timestamp correction. Technical architecture remains under Technical Closure Gate.
 
@@ -2458,8 +2533,8 @@ Production go-live additionally requires the checklist in `45_PRODUCTION_UAT_GAT
 - **AC-SCH-ROOM-BULK-01:** a Room overlap in any selected Interview blocks the whole schedule-status batch when the format uses a Room.
 - **AC-SCH-INTERVIEWER-BULK-01:** an Interviewer overlap in any selected Interview blocks the whole schedule-status batch.
 - **AC-REACT-CANON-01:** Application Reactivate evaluates only non-elapsed children satisfying `reactivation_conflict_relevant`; fully elapsed historical intervals never block lifecycle recovery.
-- **AC-SOURCE-BASELINE-01:** all CURRENT machine baseline declarations resolve to Full/Technical v1.17, Design v1.8 and Responsive v1.10, while historical versions are allowed only in explicitly historical/changelog evidence.
-- **AC-RESP-AUTH-01:** Responsive `README.md` and `VERSION.md` both declare Responsive v1.10 authority against Full Handover v1.17 + Design System v1.8.
+- **AC-SOURCE-BASELINE-01:** all CURRENT machine baseline declarations resolve to Full/Technical v1.18, Design v1.8 and Responsive v1.10, while historical versions are allowed only in explicitly historical/changelog evidence.
+- **AC-RESP-AUTH-01:** Responsive `README.md` and `VERSION.md` both declare Responsive v1.10 authority against Full Handover v1.18 + Design System v1.8.
 
 
 ## Targeted acceptance additions — current
@@ -2477,13 +2552,26 @@ Production go-live additionally requires the checklist in `45_PRODUCTION_UAT_GAT
 
 - **AC-GATE-SEQ-01:** Technical Specification Freeze is a semantic/source gate before coding; production migrations/RLS/RPC/race/storage/performance/backup/deployment evidence is required at Implementation Validation/Migration Freeze after implementation exists, not both before and after Technical Freeze.
 - **AC-COPY-CMD-01:** Copy draft performs no DB mutation; Save Copy maps to exactly `copy_interview_schedule`, which atomically selects/fills the target Round, records provenance, applies Active-Participant and Candidate/Room/Interviewer conflict guards, is idempotent, and audits.
-- **AC-SOURCE-RESP-VERSION-01:** CURRENT scope/design/prototype authority declares Full/Technical v1.17 + Design v1.8 + Responsive Prototype v1.10; stale current v1.9/v1.12/v1.15 authority assertions are forbidden outside historical/changelog context.
+- **AC-SOURCE-RESP-VERSION-01:** CURRENT scope/design/prototype authority declares Full/Technical v1.18 + Design v1.8 + Responsive Prototype v1.10; stale current v1.9/v1.12/v1.15/v1.17 authority assertions are forbidden outside historical/changelog context.
 ## Source-sync / critical Copy evidence
 
 - **AC-COPY-ENGINE-01:** `copy_interview_schedule` is declared as a user of the canonical shared Candidate/Room/Interviewer schedule-conflict engine in command contract, structured app spec and concurrency spec.
 - **AC-RP-COPY-USED-01:** Save Copy to another Application whose default Round1 is already business-used creates the next legal round, preserves existing Round1 and records Copy provenance.
 - **AC-CRIT-COPY-QA-01:** every `INTERVIEW-COPY-SAVE.browser_qa` ID resolves to a current Responsive Browser QA result; unresolved QA IDs fail package validation.
-- **AC-ALLINONE-LABEL-01:** generated All-in-One header and validator expectation match current Full Handover v1.17; stale generated current-version labels are forbidden.
+- **AC-ALLINONE-LABEL-01:** generated All-in-One header and validator expectation match current Full Handover v1.18; stale generated current-version labels are forbidden.
+
+## Technical Source v1.18 Acceptance Additions
+- **AC-APP-VIEW-01:** HR user with `applications.view` or `applications.manage` can SELECT Application rows; caller with only `submissions.view` is denied Application SELECT.
+- **AC-CAND-CORR-01:** HR user with `submissions.edit` can correct Candidate full_name, phone, date_of_birth, gender_code, current_address via `correct_submission_candidate_fields_by_hr` with optimistic version check, validation bounds, and audit logging changed field names without dumping full PII.
+- **AC-CAND-REC-01:** Root Admin or HR with `candidates.identity_manage` can recover Candidate login email identity via `recover_candidate_email_identity`, updating verified Auth identity and Candidate record while preserving historical Submission email snapshots and revoking obsolete sessions.
+- **AC-PRIV-STG-01:** Candidate Submit and Save Edit verify that the presented notice version matches the current effective published version at transaction time; mismatch returns stable `PRIVACY_NOTICE_CHANGED`, preserving form session and draft for retry.
+- **AC-RESCHED-01:** `reschedule_confirmed_interview` atomically re-checks Candidate/Room/Interviewer conflicts, updates schedule/meeting details, and resets Schedule Status to `AWAITING`; conflict or validation failure rolls back all changes.
+- **AC-ROUND-HIRED-01:** Creating next Interview round is blocked if the latest active Interview has report status `HIRED`; Schedule Status `CANCELLED` does not block creating next round.
+- **AC-REPORT-HIST-01:** Interviewer has read-only access to historical Interview rounds they personally participated in (`interview_participants.is_current=true`); report write requires target Interview is Application Current Round, caller is current participant, and report status is non-final/writable.
+- **AC-REPORT-MERGE-01:** Report save applies field-aware merge using `expected_version_no` and `base_values`; disjoint field updates merge cleanly, same-field conflict on HR update rejects with `STALE_VERSION`.
+- **AC-RESOLVE-OUTCOME-01:** Application effective outcome is resolved solely from Application Current Round (highest `round_no` among access-active Interviews): HIRED => HIRED, REJECTED => REJECTED, otherwise IN_PROGRESS.
+- **AC-DETAIL-PURE-01:** `get_submission_detail()` is a pure read and never mutates Submission status from NEW to READ; only explicit user-intent `open_submission()` may execute NEW->READ transition.
+- **AC-DOC-MAT-01:** Candidate document staged ADD creates a new logical document header without requiring `UNIQUE(submission_id, document_type_id)`; multiple logical files of the same type may coexist; Candidate-created rows set candidate creator/uploader metadata and NULL app_user.
 
 
 
@@ -2491,7 +2579,7 @@ Production go-live additionally requires the checklist in `45_PRODUCTION_UAT_GAT
 
 <!-- SOURCE: 14_SCOPE_AND_OPEN_ITEMS.md -->
 
-# 14. Scope & Open Items — v1.17
+# 14. Scope & Open Items — v1.18
 
 ## Business Logic
 **v1.2 FROZEN.** Reopen only through Change Request or a proven contradiction.
@@ -2500,7 +2588,7 @@ Production go-live additionally requires the checklist in `45_PRODUCTION_UAT_GAT
 **v1.8 CURRENT.** Desktop foundation current; Desktop prototype must be resynced/UAT-approved. Detailed iPad/mobile design is not frozen. Candidate Portal mobile is a go-live requirement.
 
 ## Technical Architecture
-**v1.17 TECHNICAL SPECIFICATION FROZEN / READY TO IMPLEMENT.** Current technical source extends through docs 97–98 and uses `source_registry.yaml` for CURRENT/HISTORICAL governance. Technical Specification Freeze is semantic/source freeze; post-coding implementation evidence is a separate gate.
+**v1.18 TECHNICAL SPECIFICATION FROZEN / READY TO IMPLEMENT.** Current technical source extends through docs 99–100 and uses `source_registry.yaml` for CURRENT/HISTORICAL governance. Technical Specification Freeze is semantic/source freeze; post-coding implementation evidence is a separate gate.
 
 ## Owner decisions
 Closed:
@@ -2534,13 +2622,13 @@ Dashboard; Nhu cầu tuyển dụng; Candidate Database; KPI & Reports; Offer/Ap
 
 <!-- SOURCE: 16_AI_REVIEW_AND_BUILD_PROMPT.md -->
 
-# 16. AI Review & Build Prompt — CURRENT v1.17
+# 16. AI Review & Build Prompt — CURRENT v1.18
 
 Use only CURRENT normative sources from `source_registry.yaml`. HISTORICAL/SUPERSEDED review/gate files are evidence only. HISTORICAL files must never override current behavior.
 
 ## Review mode
-Baseline: Business Logic v1.2 FROZEN, Design System v1.8 CURRENT, Technical Architecture v1.17 TECHNICAL SPECIFICATION FROZEN, Implementation Gate READY TO IMPLEMENT. Read core modules 01–14, current technical modules listed in `source_registry.yaml`, `73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md`, `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`, `78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md`, and `98_TECHNICAL_PRECODE_GATE_V1_17.md`. Then inspect `app_spec.yaml`, `command_registry.yaml`, `database_schema.sql`, `validation_contract.yaml`, permissions/status matrices and Design System v1.8.
-Current alignment resolution: `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`; current pre-code/implementation authorization gate: `98_TECHNICAL_PRECODE_GATE_V1_17.md`. Historical modules must never override current behavior.
+Baseline: Business Logic v1.2 FROZEN, Design System v1.8 CURRENT, Technical Architecture v1.18 TECHNICAL SPECIFICATION FROZEN, Implementation Gate READY TO IMPLEMENT. Read core modules 01–14, current technical modules listed in `source_registry.yaml`, `73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md`, `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`, `78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md`, and `100_TECHNICAL_PRECODE_GATE_V1_18.md`. Then inspect `app_spec.yaml`, `command_registry.yaml`, `database_schema.sql`, `validation_contract.yaml`, permissions/status matrices and Design System v1.8.
+Current alignment resolution: `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`; current pre-code/implementation authorization gate: `100_TECHNICAL_PRECODE_GATE_V1_18.md`. Historical modules must never override current behavior.
 
 Check cross-layer traceability: Actor → Permission → UI → exactly one trusted mutation command → lock/version/transaction → DB invariant → side effects → audit → behavior-specific acceptance. Flag contradiction rather than resolving it by guessing.
 
@@ -2590,17 +2678,28 @@ Upload Reservations are subordinate to the Form Session. ADD/REPLACE Stage and S
 
 ## 4. Candidate Submission commands
 ### `submit_candidate_submission(form_session_id, payload, privacy_notice_version, idempotency_key)`
-Actor: Candidate. Preconditions: verified identity, active Candidate, unexpired `OPEN` NEW_SUBMISSION form session (`expires_at > transaction_now`), required CV pending/finalizable, max 5 files, all ADD/REPLACE reservations unexpired + `VALIDATED` + malware `CLEAN`.
+Actor: Candidate. Preconditions: verified identity, active Candidate, unexpired `OPEN` NEW_SUBMISSION form session (`expires_at > transaction_now`), required CV pending/finalizable, max 5 files, all ADD reservations unexpired + `VALIDATED` + malware `CLEAN`.
+
+Payload allowlist:
+- `full_name` (min 1, max 200, trimmed, required)
+- `phone` (max 32, normalized, required)
+- `date_of_birth` (1900-01-01 .. TODAY, required)
+- `gender` (`MALE` | `FEMALE`, required; no OTHER in Phase 1)
+- `address` / `current_address` (max 500, trimmed, required)
+- `education` (array of optional child rows: `period_text`, `qualification_id`, `major`, `institution`, `sort_order` 1-based; max 20 rows)
+- Document upload reservations / staged operations.
+
+Verified email (`email_snapshot`) derives exclusively from verified Auth identity and is immutable. The command rejects `candidate_notes`, `work_experiences`, and `activities`.
 
 Transaction:
 1. lock Candidate/form session and synchronously recheck `status=OPEN AND expires_at > transaction_now`;
-2. validate `CandidateSubmissionCreate` allowlist and privacy acknowledgement;
-3. run the locked staged-document-plan validator (all ADD/REPLACE uploads VALIDATED+CLEAN, effective file count ≤5, effective current CV exists);
-4. create Submission snapshot and children;
-5. bind/finalize staged document changes into logical document headers + immutable versions;
-6. enforce current CV invariant again after materialization;
-7. create privacy acknowledgement;
-8. update Candidate current profile only because this becomes latest submitted snapshot;
+2. **Strong-current privacy notice verification:** assert presented `privacy_notice_version` equals current effective published version (`is_current=true`). If notice version has changed since session open, reject with `PRIVACY_NOTICE_CHANGED`, preserving form session and draft for retry;
+3. validate `CandidateSubmissionCreate` allowlist and bounds;
+4. run the locked staged-document-plan validator (all ADD uploads VALIDATED+CLEAN, effective file count ≤5, effective current CV exists);
+5. create Submission snapshot with canonical columns (`full_name, phone, date_of_birth, gender_code, current_address, email_snapshot`);
+6. bind/finalize staged document changes into logical document headers + immutable versions. Staged ADD inserts a NEW `submission_document_logicals` header without requiring `UNIQUE(submission_id, document_type_id)`; sets `created_by_candidate_id = Candidate, created_by_app_user_id = NULL`; versions set `uploaded_by_candidate_id = Candidate, uploaded_by_app_user_id = NULL`;
+7. create privacy acknowledgement in `privacy_acknowledgements(submission_id, notice_version, acknowledged_at, source_code)`;
+8. update Candidate current profile because this becomes latest submitted snapshot;
 9. enqueue HR notification;
 10. mark form session SUBMITTED;
 11. audit + commit.
@@ -2608,19 +2707,69 @@ Transaction:
 No Submission row is pre-created merely by opening the form.
 
 ### `update_candidate_submission(form_session_id, payload, privacy_acknowledged, idempotency_key)`
-Actor: Candidate owner. Re-check on Save: Candidate active, Form Session still `OPEN` and unexpired, Submission still `NEW`, expected version matches; every staged ADD/REPLACE reservation is also unexpired at transaction time. The Form Session has server-pinned `presented_privacy_notice_version`; Save requires acknowledgement of that exact version. Same Submission/version acknowledgement is idempotently reused; a new version is inserted. Text/file changes save atomically; Cancel applies neither. Validate the locked staged-document plan before materialization; finalization re-checks Candidate Active + Submission NEW. Any text or file-only successful Save touches the Submission aggregate and increments `version_no` exactly once. Refresh Candidate current-profile only if this is the latest surviving snapshot. Enqueue exact-`submission_id` HR notification inside the same transaction before commit; provider delivery is asynchronous. Older Submission edit never overwrites newer profile cache.
+Actor: Candidate owner. Re-check on Save: Candidate active, Form Session still `OPEN` and unexpired, Submission still `NEW`, expected version matches; every staged ADD/REPLACE reservation is also unexpired at transaction time.
+
+Same payload allowlist as Submit. Candidate Edit **tuyệt đối không nhận, không sửa, không xóa và không ghi đè** các field/bảng con thuộc quyền HR: `other_info`, `hr_note`, `submission_work_experiences`, `submission_activities`. Dữ liệu HR-only này được bảo toàn nguyên vẹn sau update.
+
+**Strong-current privacy notice verification:** The Form Session has server-pinned `presented_privacy_notice_version`; Save requires acknowledgement of that exact version. Transaction asserts that the effective published notice has not changed. If notice version changed, reject with `PRIVACY_NOTICE_CHANGED`, preserving draft.
+
+Staged REPLACE/DELETE target an existing `logical_document_id`. Staged ADD inserts a new logical header. Any text or file-only successful Save touches Submission aggregate and increments `version_no` exactly once. Refresh Candidate current-profile cache when this Submission is latest. Enqueue exact-`submission_id` HR notification inside the same transaction before commit; audit + commit.
+
+### `get_submission_detail(submission_id)` — Pure Read
+Requires `submissions.view`. Pure data retrieval; **tuyệt đối không bao giờ làm thay đổi trạng thái từ NEW sang READ**. Passive server render, data fetch, prefetch, refresh danh sách hay background preview bắt buộc chỉ gọi hàm này.
+
+### `open_submission(submission_id)` — Explicit Open Command
+Explicit user-intent command invoked when HR explicitly opens a NEW submission from inbox. Requires `submissions.view`. If actor also has `submissions.status` and current status is `NEW`, atomically sets `READ`. If actor lacks `submissions.status`, execution is read-only without mutation.
 
 ### `update_submission_by_hr()`
-`submissions.edit`; HR-specific DTO only. Candidate verified email/security identity is immutable. After update, call `refresh_candidate_current_profile(candidate_id)` when the edited Submission is latest; older Submission edits do not alter Candidate cache.
+`submissions.edit`; HR-specific DTO only. Candidate verified email/security identity is immutable. Candidate-owned fields are edited via dedicated correction command. After update, call `refresh_candidate_current_profile(candidate_id)` when the edited Submission is latest; older Submission edits do not alter Candidate cache.
 
-### `open_submission()`
-Requires `submissions.view`. If actor also has `submissions.status` and current state is `NEW`, atomically set `READ`. Otherwise pure read. Default HR has both permissions.
+### `correct_submission_candidate_fields_by_hr(submission_id, full_name, phone, date_of_birth, gender_code, current_address, expected_version, reason)`
+Dedicated trusted correction action (Owner Decision G). Permission: `submissions.edit` (or Root implicit).
+Allowed fields ONLY: `full_name`, `phone`, `date_of_birth`, `gender_code`, `current_address`.
+Email is NOT editable through ordinary correction.
+Requirements:
+1. lock target Submission row `FOR UPDATE` and assert optimistic `expected_version`;
+2. require at least one correction field provided (null means unpatched);
+3. validate provided fields against canonical Candidate validation bounds;
+4. update provided fields, bump `version_no`, record `updated_by_internal_user_id`;
+5. refresh Candidate current profile cache if this Submission is latest;
+6. record same-transaction Security Audit: changed FIELD NAMES, actor/entity/version metadata, optional reason (no full old/new PII dump);
+7. rollback all changes if audit insert fails.
 
+### `recover_candidate_email_identity(candidate_id, new_email, reason)`
+Dedicated trusted action for Candidate email recovery (Owner Decision H).
+Permission: `candidates.identity_manage` (Root Admin implicit; specific HR by explicit delegation only; NOT default HR).
+Requirements:
+1. target Candidate exists;
+2. `new_email` normalized and unique across all Candidate accounts;
+3. verified Auth identity update/rebind;
+4. update Candidate login identity (`candidates.email`);
+5. historical Submission `email_snapshot` remains unchanged (immutable history);
+6. future Submissions use the new verified email;
+7. revoke obsolete sessions/binding where supported;
+8. sets transaction-local setting `recruitment.candidate_email_recovery_active = 'on'` to safely pass `private.protect_candidate_verified_email()` trigger while keeping ordinary updates strictly blocked with `CANDIDATE_VERIFIED_EMAIL_IMMUTABLE`;
+9. mandatory same-transaction Security Audit.
 ### `set_submission_manual_status(candidate_id, status, expected_latest_submission_id, expected_version)`
 Only the **deterministic latest Submission** of the Candidate may be manually changed. Backend locks Candidate, resolves latest Submission by `submitted_at DESC, submission_id DESC`, compares `expected_latest_submission_id` + optimistic version, then allows only `NEW`/`READ` when no active Application exists. **Neither `NEW` nor `READ` may be written manually while any active Application exists.** Historical child Submission status is read-only for the Phase-1 workflow and crafted exact-Submission requests cannot bypass this rule. Starter SQL must expose only a Candidate-level/latest-safe helper (or an equivalently guarded helper); an exact historical `submission_id` writer is forbidden. `PROCESSED`, `DONE`, `CLOSED` are system-derived only. Candidate Active/Inactive does not restrict internal HR manual NEW/READ; inactivity affects Candidate Portal access only. Bulk manual-status mutation is ALL_OR_NOTHING and uses the exact same latest-only eligibility rule.
 
 ### `recalculate_submission_status(submission_id)`
-Single authoritative status calculator. Mandatory parent `Submission FOR UPDATE` lock before evaluating Applications. Rules: no active Application → preserve existing manual `NEW/READ`; if coming from a derived state after the final Application is removed, return `READ`; any effective current Application `HIRED` → `DONE`; all active Applications `REJECTED` → `CLOSED`; otherwise with active Application → `PROCESSED`. Every Application/current-round/report-outcome mutation invokes this before commit.
+Internal authoritative status calculator. Mandatory parent `Submission FOR UPDATE` lock before evaluating Applications.
+
+**Authoritative Application outcome resolver:** Application outcome derives solely from the Current Round (highest `round_no` among `access_active` Interviews for that Application):
+- Current Round `report_status_code = HIRED` → `HIRED`
+- Current Round `report_status_code = REJECTED` → `REJECTED`
+- Otherwise → `IN_PROGRESS`.
+Older active rounds never independently determine Application outcome.
+
+Rules for Submission recalculation:
+- No active Application → preserve existing manual `NEW/READ`;
+- If coming from a derived state after the final Application is removed/inactivated → return `READ`;
+- Any active Application effective Current Round outcome `HIRED` → `DONE`;
+- All active Applications effective Current Round outcome `REJECTED` → `CLOSED`;
+- Otherwise with active Application → `PROCESSED`.
+
+**Helper security:** `public.recalculate_submission_status(uuid)` is an INTERNAL helper. Execute permission is revoked from `PUBLIC, anon, authenticated` and granted only to `postgres, service_role`. Trusted SECURITY DEFINER business commands execute it under their definer context.
 
 ### Submission delete reachability + `delete_unused_candidate()`
 **Normal production HR does not hard-delete a successfully submitted Submission.** Candidate Submit/Update mandatorily creates retained PRODUCTION email trace bound to the exact `submission_id`; that trace is downstream business history, therefore every normal production submitted Submission is retention-managed rather than eligible for a Phase-1 HR hard-delete command. `delete_unused_submission` is classified **MAINTENANCE_ONLY** for test/import/data-repair states that never acquired retained production business usage; it is not exposed in normal HR UI/permissions. Retained PRODUCTION email usage still **blocks `delete_unused_submission()`** even in that maintenance path.
@@ -2639,8 +2788,25 @@ Empty auto-created Round 1 is an owned default child and does not count as busin
 
 ## 6. Interview rounds, Copy and schedule
 ### `create_next_interview_round()`
-Lock Application + latest Interview. Latest round must be active. Allocate `max(round_no)+1`; Demo Topic blank; idempotent. Recalculate Submission if current-round semantics change.
+Lock Application + latest Interview.
 
+**Gate (Owner Decision A):**
+1. Latest relevant existing Interview must be active (`is_active=true`).
+2. Latest relevant active Interview `report_status_code <> 'HIRED'`. If `HIRED`, new round creation is terminal and rejected.
+3. Schedule Status `CANCELLED` **does NOT block** creating the next round.
+Allocate `max(round_no)+1`; Demo Topic blank; idempotent. Recalculate parent Submission if current-round semantics change.
+
+### `reschedule_confirmed_interview(interview_id, start_at, end_at, interview_format_id, room_id, meeting_link, expected_version, idempotency_key)`
+Dedicated trusted action (Owner Decision J). Permission: `interviews.manage`.
+Target Interview must currently have `schedule_status_code = 'CONFIRMED'`.
+Atomic transaction:
+1. lock target Interview row, verify `CONFIRMED` status and `expected_version`;
+2. revalidate every current Participant is an Active Internal User;
+3. acquire deterministic Candidate/Room/Interviewer resource locks;
+4. re-check `[start_at, end_at)` schedule conflicts;
+5. update schedule time, format, room/link and set `schedule_status_code = 'AWAITING'`;
+6. record Security Audit;
+7. on any validation, conflict, or audit failure, rollback all changes: original schedule and `CONFIRMED` status remain intact.
 ### `copy_interview_schedule()` — dedicated trusted Save-Copy command
 The Copy UI may create a client-side draft/prefill, but that draft performs **no DB mutation**. Pressing **Save Copy** invokes exactly this trusted command; no generic “normal save command” may infer Copy semantics.
 
@@ -2702,8 +2868,13 @@ Input complete current list; expected versions; temporary ordering strategy prev
 
 ## 9. Reports
 ### `save_interviewer_report()`
-No scoring. Field-aware patch. HR stale edit blocks/reloads; Interviewer wins same-field conflict under merge rule. Only changes to the 3 Final Decision fields update `decision_updated_at/by`; qualitative edits never move Final Decision Source.
-
+No scoring. Field-aware patch:
+- Request passes `expected_version_no` and `base_values` for each patched field;
+- Server locks report row and compares current DB value with `base_values`:
+  - `current == base`: safe field patch;
+  - `current != base`: same-field conflict. HR stale conflict rejects with `STALE_VERSION`; Interviewer editing own report resolves with owner-wins. Disjoint fields merge cleanly.
+- Only actual changes to the 3 Final Decision fields update `decision_updated_at/by`; qualitative edits never move Final Decision Source.
+- **Blank conclusion allowed (Owner Decision F):** HR may set `HIRED` or `REJECTED` even when Conclusion, Expected Job, and Expected Recruitment Time are blank. No Conclusion-required invariant.
 ### `update_hr_report_note(interview_id, hr_report_note, expected_version)`
 Requires `reports.view + reports.manage_status`. Edits **only** HR-only `hr_report_note`; it never changes `report_status_code`, Application `hr_owner_id`, or `interview_note`. Optimistic versioning + audit are mandatory. `hr_report_note` remains excluded from every Interviewer-readable projection.
 
@@ -2885,6 +3056,56 @@ For Phase 1, retained **PRODUCTION** Email Outbox/Email History usage is downstr
 
 Plain contract summary: retained PRODUCTION email usage is downstream history and makes normal production Submission hard-delete ineligible; `delete_unused_submission` is MAINTENANCE_ONLY.
 
+## Stable Command Error Codes
+All backend commands, TypeScript adapters, and RPCs use this canonical stable error-code registry:
+
+| Error Code | Category / Meaning |
+|---|---|
+| `UNAUTHENTICATED` | Caller is not authenticated |
+| `FORBIDDEN` | Caller lacks required permission or authorization |
+| `NOT_FOUND` | Target entity not found |
+| `INVALID_STATE` | Operation illegal in target entity's current status |
+| `VALIDATION_ERROR` | Request payload fails validation contract or bounds |
+| `STALE_VERSION` | Optimistic concurrency conflict / version mismatch |
+| `FORM_SESSION_EXPIRED` | Candidate Form Session expired |
+| `UPLOAD_RESERVATION_EXPIRED` | Upload reservation expired |
+| `DUPLICATE_APPLICATION` | Exact duplicate Application assignment |
+| `APPLICATION_DURABLE_IDENTITY_IMMUTABLE` | Attempt to mutate immutable Application identity |
+| `PRIVACY_NOTICE_UNAVAILABLE` | No current effective privacy notice published |
+| `PRIVACY_NOTICE_CHANGED` | Privacy notice changed between session open and submit/update |
+| `SCHEDULE_CONFLICT_CANDIDATE` | Candidate has overlapping operational schedule |
+| `SCHEDULE_CONFLICT_INTERVIEWER` | Interviewer has overlapping operational schedule |
+| `SCHEDULE_CONFLICT_ROOM` | Room has overlapping operational schedule |
+| `LATEST_ROUND_REQUIRED` | Operation permitted only on latest Interview round |
+| `ROOT_ADMIN_PROTECTED` | Root Admin account identity protected |
+| `IDENTITY_REBIND_FORBIDDEN` | Identity rebinding not authorized |
+| `USER_INACTIVE` | Caller or target user account is inactive |
+| `UPLOAD_LIMIT_EXCEEDED` | File size or count limit exceeded |
+| `UNSUPPORTED_FILE_TYPE` | File extension/type not permitted |
+| `MALWARE_SCAN_REQUIRED` | File has not passed malware scan |
+| `IDEMPOTENCY_REPLAY` | Idempotent command replay |
+| `INVALID_PERMISSION_DEPENDENCY` | Permission prerequisite violated |
+| `INACTIVE_DOCUMENT_TYPE` | Document type is inactive in master data |
+| `INVALID_DOCUMENT_TYPE` | Unknown document type |
+| `INVALID_FILE_TYPE` | Declared file type invalid |
+| `FILE_SIZE_EXCEEDED` | File exceeds maximum allowed size (5 MB) |
+| `INVALID_ACTION` | Action code or transition not permitted |
+| `INVALID_CONTENT_SIGNATURE` | File magic bytes do not match declared type |
+| `INVALID_MIME_TYPE` | MIME type not allowed |
+| `INVALID_DOCUMENT_TARGET` | Staged document target logical document invalid |
+| `UPLOAD_RESERVATION_NOT_CLEAN` | Upload reservation not in clean/validated state |
+| `MAX_FIVE_CURRENT_DOCUMENTS_EXCEEDED` | Total current files exceeds maximum of 5 |
+| `REQUIRED_CV_DOCUMENT_MISSING` | Mandatory CV/Resume missing from document plan |
+| `HISTORICAL_SUBMISSION_READ_ONLY` | Historical Submission status cannot be mutated |
+| `ALREADY_EXISTS_INACTIVE` | Target entity already exists in inactive state |
+| `INVALID_HIERARCHY` | Unit, Team, and Position hierarchy mismatch |
+| `INTERNAL_ERROR` | Unexpected server or database exception |
+| `CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED` | Participant is inactive and must be reassigned before scheduling |
+| `INACTIVE_QUALIFICATION_NOT_SELECTABLE` | Selected qualification level is inactive |
+| `ACTIVE_APPLICATION_OWNER_REASSIGN_REQUIRED` | Cannot inactivate HR user or remove HR role while user owns active Applications |
+| `FUTURE_INTERVIEW_PARTICIPANT_REASSIGN_REQUIRED` | Cannot inactivate user while user is current participant on future operational interview |
+| `USER_INACTIVE_NOT_SELECTABLE` | Inactive internal user cannot be re-added as active participant |
+
 
 
 ---
@@ -3025,8 +3246,8 @@ Root Admin:
 | `candidates` | own active | provisioning/profile command only | permissioned | candidate-active command | no | no |
 | `submissions` | own | Candidate command only while NEW | `submissions.view` | `submissions.edit/status` commands | no | no |
 | `submission_documents` | own | upload commands | `submissions.view/edit` as defined | document commands | no | no |
-| `applications` | no | no | `applications.manage` or page-read permission path | commands | contextual minimal if needed | no |
-| `interviews` | no | no | `interviews.view`/manage | commands | access-active participant + visible | no |
+| `applications` | no | no | Root OR `applications.view` OR `applications.manage` (không dùng `submissions.view`) | commands | contextual minimal if needed | no |
+| `interviews` | no | no | Root OR `interviews.view` OR `interviews.manage` (không dùng `submissions.view`) | commands | access-active participant + visible (historical READ: participated rounds; WRITE: current round + writable status) | no |
 | `interview_participants` | no | no | permissioned | participant commands | current session list only | no |
 | `interview_documents` | no | no | permissioned | document commands | access-active participant + visible | no |
 | `interview_reports` | no | no | `reports.view` | report commands | shared current-session read | own report command only |
@@ -3123,7 +3344,7 @@ Hard invariants must not depend only on frontend behavior.
 8. Current participant user/order unique; participant order >0.
 9. Active report belongs to a Participant; one active/non-archived report per Participant.
 10. Decision metadata moves only when one of the 3 final fields changes.
-11. Logical documents: unique `(logical_document_id,version_no)`, unique current version per logical document, unique storage path, ≤5 MB/file. Max 5 current files per parent enforced in parent-locked finalize command.
+11. Logical documents: unique `(logical_document_id,version_no)`, unique current version per logical document, unique storage path, ≤5 MB/file. Bảng `submission_document_logicals(submission_id, document_type_id)` **KHÔNG PHẢI là unique key**; nhiều file cùng loại được phép tồn tại trong hạn mức max 5 current files. Metadata creator/uploader tuân thủ XOR (Candidate vs internal user). Server đánh số `sort_order` 1-based (`1..n`). Max 5 current files per parent enforced in parent-locked finalize command.
 12. Interview operational/report notes are separate columns with separate authorization.
 13. Internal bound Auth identity cannot be rebound by ordinary directory update; Root identity protected.
 14. Master-data FK/reference integrity; referenced item is inactive rather than hard-deleted.
@@ -3136,8 +3357,9 @@ Hard invariants must not depend only on frontend behavior.
 - Staged Candidate document mutation rows are valid only while the Form Session is `OPEN` **and `expires_at > transaction_now`**; NEW_SUBMISSION permits staged `ADD` only; reservation/session/type identity must match; one reservation cannot back multiple staged mutations; one persisted logical document cannot have multiple simultaneous pending mutations in the same session.
 - Before Candidate Submit/Save, `private.validate_candidate_form_document_plan()` must run under the locked Form Session and enforce: Form Session unexpired; every ADD/REPLACE reservation unexpired + `VALIDATED` + malware `CLEAN`; effective current file count ≤5; at least one effective current CV remains. Cleanup workers are housekeeping only and never define business validity.
 - Document logical header fixes parent + document type; every version under a logical ID inherits the same parent/type.
-- Privacy acknowledgement stores `submission_id`; Candidate derives via Submission.
-- Submission status manual set is limited to NEW/READ. PROCESSED/DONE/CLOSED are derived by one authoritative recalculation function.
+- Privacy acknowledgement lưu theo `(submission_id, notice_version)` với các cột vật lý: `privacy_acknowledgement_id, submission_id, notice_version, acknowledged_at, source_code`. Không có các cột `candidate_id`, `submission_version_no`, `privacy_notice_version`.
+- Submission status manual set is limited to NEW/READ. PROCESSED/DONE/CLOSED are derived by one authoritative recalculation function. Outcome của Application được tính duy nhất từ Current Round (highest `round_no` among access-active Interviews: HIRED => HIRED, REJECTED => REJECTED, otherwise IN_PROGRESS). Internal helper `recalculate_submission_status(uuid)` thu hồi execute của `PUBLIC, anon, authenticated`; chỉ cấp cho `postgres, service_role`.
+- Tạo vòng tiếp theo yêu cầu round cuối cùng đang Active và có `report_status_code <> 'HIRED'`. Trạng thái lịch `CANCELLED` không chặn tạo vòng tiếp theo.
 - Outcome-changing transactions lock parent Submission before recalculation.
 - Schedule-resource transactions lock target Interview before reading participant set and acquiring Candidate/Room/Interviewer locks.
 - Referenced master structural semantics are immutable; inactive historical references remain valid.
@@ -3237,7 +3459,7 @@ Server-generated object key; preserve original filename only as metadata; normal
 7. Cancel/expiry cleans pending objects; persisted current versions remain unchanged. Async cleanup is housekeeping only; wall-clock expiry blocks Stage/Save/Submit/Finalize synchronously.
 8. Image EXIF/geolocation metadata is stripped where practical before final object promotion.
 
-Logical model uses a header (`submission_document_logicals` / `interview_document_logicals`) that fixes parent + `document_type_id`, and version rows cannot switch parent/type.
+Logical model uses a header (`submission_document_logicals` / `interview_document_logicals`) that fixes parent + `document_type_id`, and version rows cannot switch parent/type. Bảng `submission_document_logicals(submission_id, document_type_id)` **KHÔNG PHẢI là unique constraint**; nhiều file cùng loại (ví dụ nhiều chứng chỉ) được phép tồn tại trong hạn mức max 5 files. Staged `ADD` luôn tạo một logical document header mới; staged `REPLACE` và `DELETE` bắt buộc trỏ tới `logical_document_id` cụ thể đã có. Client/browser **tuyệt đối không tự sinh reservation ID hay temp object path** mà phải qua lệnh server có thẩm quyền `reserve_candidate_form_upload`.
 
 ## Interview reservation / hard-delete protocol
 - `upload_reservations.interview_id` is a real FK to `interviews(interview_id)` with `ON DELETE RESTRICT`; an Interview reservation cannot reference a nonexistent parent.
@@ -3324,6 +3546,12 @@ Specifications and acceptance tests must use “prevent duplicate logical enqueu
 
 Candidate Submission notification rows carry nullable `submission_id` so a Submit/Update email is traceable to the exact Submission even when one Candidate has many historical Submissions.
 
+## Stale preview / outbox guard
+Preview và send email nghiệp vụ/lịch phỏng vấn bắt buộc bind với phiên bản dữ liệu và danh sách participant chính xác. Nếu lịch hoặc danh sách người nhận thay đổi trước khi enqueue/send, outbox không được gửi dữ liệu cũ; lệnh phải kiểm tra fingerprint/version tại ranh giới enqueue/send.
+
+## Non-production environment safety
+Môi trường non-production (DEV/Local/CI) mặc định an toàn: environment code là `TEST`, **tuyệt đối không hardcode `'PRODUCTION'` trong các RPC nghiệp vụ**. DEV và CI không được gửi email tới người nhận thực bên ngoài trừ khi có cấu hình trusted riêng biệt.
+
 
 
 ---
@@ -3370,7 +3598,8 @@ Không commit secret vào repo. Deployment/API tokens phải nằm trong secure 
 - migration CI checks;
 - apply staging before production;
 - rollback/forward-fix runbook;
-- seed only master/test data phù hợp, không production PII.
+- seed only master/test data phù hợp, không production PII;
+- quy tắc expand/contract: thay đổi schema trong production phải đi theo hướng additive trước, cập nhật code tương thích, backfill/validate, và sau cùng mới contract/deprecate; áp dụng statement/lock timeout phù hợp; tuyệt đối không rewrite các migration đã được accepted trong lịch sử.
 
 ## 5. Preview branch risk guard
 
@@ -3410,6 +3639,16 @@ Alert tối thiểu:
 - no direct manual production DB edits ngoài emergency runbook;
 - post-deploy smoke tests.
 
+
+## Database-enabled Integration CI Gate
+Mỗi integration commit trên CI bắt buộc chạy qua job DB integration tự động:
+1. Checkout exact pushed integration SHA;
+2. Cài đặt Supabase CLI theo phiên bản pinned;
+3. Khởi động local Supabase;
+4. Chạy `supabase db reset` (replay sạch từ số 0);
+5. Kiểm tra schema, RPC smoke, RLS persona assertions (anon, Candidate, HR, Root);
+6. Test Candidate Submit/Update, quy trình document ADD/REPLACE/DELETE và outcome resolver;
+7. Dọn dẹp/tắt local Supabase.
 
 ## 9. Dependency pinning / Auth regression
 - Commit package lockfile.
@@ -3598,6 +3837,12 @@ Immutable/privileged, phục vụ trace quyền và dữ liệu nhạy cảm.
 
 Việc HR xóa một Email History record **không xóa Security Audit Log**.
 
+### Same-Transaction Requirement & Rollback on Failure
+Toàn bộ Security Audit bắt buộc được ghi **trong cùng một database transaction với mutation nghiệp vụ**. Nếu việc ghi log audit thất bại, toàn bộ transaction nghiệp vụ phải rollback.
+
+### Payload tối thiểu (Data Minimization)
+Payload audit phải mang tính chất tối thiểu và theo từng event: chỉ ghi nhận danh sách tên trường thay đổi (`changed FIELD NAMES`), metadata actor/entity/version và lý do (nếu có). **Tuyệt đối không dump toàn bộ row PII cũ/mới** vào audit log.
+
 ## 2. Events bắt buộc
 
 - login success/failure (theo privacy policy);
@@ -3664,11 +3909,16 @@ Required for Candidate Submit, Create Application, Create Next Round, Copy/Save 
 ## Optimistic locking
 Mutable entities use `version_no`; client sends expected version. Stale update fails unless the specific report merge algorithm safely merges disjoint patches.
 
-## Report concurrency
-Each Interviewer owns a distinct report. HR may edit that report with permission. Patch only changed fields. Disjoint field changes can merge. Same-field conflict: Interviewer ownership wins; HR stale write is rejected/reloaded. No stale whole-row overwrite.
-
-Decision fields form one logical block for source semantics; any final-field change updates `decision_updated_at/by`; qualitative edits do not. Timestamp + report UUID tie-break is sufficient Phase 1; revision sequence is optional P2 hardening.
-
+## Report concurrency & Field-Aware Merge
+Mỗi Interviewer sở hữu một report riêng. HR có thể sửa report theo quyền được cấp.
+- Request patch gửi kèm `expected_version_no` và `base_values` cho từng field được sửa.
+- Server lock row report và so sánh giá trị hiện tại trong DB với `base_values`:
+  - `current == base`: patch an toàn;
+  - `current != base`: conflict trên cùng field.
+- Với HR: conflict cùng field → từ chối với `STALE_VERSION` để client reload; các field disjoint được merge tự động.
+- Với Interviewer sửa report của chính mình: owner-wins cho eligible conflict cùng field; các field disjoint được merge.
+- Tuyệt đối không cho phép ghi đè toàn bộ row (whole-row overwrite) khi stale.
+- Decision fields form one logical block: chỉ khi một trong 3 final fields thực sự thay đổi thì mới cập nhật `decision_updated_at/by`.
 ## Mandatory schedule consistency
 Transaction alone under Read Committed is insufficient. Every mutation that can create/restore an operational interval must:
 1. identify Candidate, Room, current Interviewers;
@@ -3684,6 +3934,19 @@ Interval semantic: `[start_at,end_at)`. Do not use the legacy overloaded `effect
 - `resource_blocking` = `access_active` + schedule status not `CANCELLED` + both interval endpoints present.
 Every `resource_blocking` Interview participates in conflict checks, whether or not it is Current Round.
 
+
+## Confirmed Reschedule Concurrency (Owner Decision J)
+Khi một Interview đang ở trạng thái `CONFIRMED` cần đổi lịch/phòng/meeting link:
+- Thao tác diễn ra qua một backend transaction nguyên tử duy nhất (`reschedule_confirmed_interview`);
+- Kiểm tra quyền `interviews.manage`, optimistic version, idempotency;
+- Thực hiện khóa tài nguyên Candidate/Room/Interviewer và kiểm tra conflict theo framework chuẩn;
+- Cập nhật thời gian/phòng/link và đồng thời chuyển `schedule_status_code` thành `AWAITING` trong cùng một transaction;
+- Nếu có bất kỳ lỗi validation, conflict hoặc audit nào, toàn bộ transaction rollback: lịch cũ và trạng thái `CONFIRMED` ban đầu được giữ nguyên vẹn.
+
+## Deterministic Bulk Locking
+Tất cả các thao tác hàng loạt (bulk operations) tác động lên nhiều row bắt buộc phải:
+1. Sắp xếp danh sách target ID theo thứ tự tăng dần xác định (deterministic ascending order) trước khi acquire row locks để chống deadlock;
+2. Áp dụng giới hạn kích thước batch xác định (bounded batch size: tối đa 100 items/lần).
 ## Participant concurrency
 Add/remove/re-add/reorder lock the Interview. Reorder writes a complete ordered set; no duplicate current order. Re-add to an already scheduled Interview revalidates conflict.
 
@@ -3709,7 +3972,7 @@ Candidate Save/Submit uses form-session idempotency; staged file changes and tex
 
 # 50. Owner Decisions — Current Resolved / Deferred
 
-**Current status (v1.17): no unresolved owner decision from the v1.16 independent implementation-readiness review.** Business Logic Core v1.2 remains FROZEN.
+**Current status (v1.18): Owner Decisions A–K canonicalized.** Business Logic Core v1.2 remains FROZEN.
 
 ## Resolved owner decisions
 - Candidate schedule conflict = **BLOCK** across Applications.
@@ -3723,6 +3986,19 @@ Candidate Save/Submit uses form-session idempotency; staged file changes and tex
 - Candidate Reactivate + no active Application → `READ`. Generic recalculation still preserves untouched manual `NEW/READ`.
 - Internal bound identity rebind = Root-only; unbound email typo may be directory-edited.
 - Internal User hard-delete = **Root maintenance-only** when unbound, non-HR, non-Root and never referenced; no normal HR UI delete.
+
+## Owner Decisions A–K (Canonical in v1.18)
+- **A. Interview Round / Schedule Status:** `HIRED` is terminal for future Interview rounds. Latest relevant active Interview `report_status_code = HIRED` => no next round. Latest relevant active Interview not `HIRED` => next round allowed, including when Schedule Status is `CANCELLED`. `CANCELLED` does not block a future round. Latest round being inactive continues to block new-round creation until valid Reactivate/hard-delete handling. Schedule Status has no mandatory sequential transition path; direct jumps are allowed. One Interview round has exactly one Schedule Status at a time.
+- **B. Effective Outcome:** Keep current aggregation: any active Application whose effective Current Round outcome is `HIRED` causes Submission `DONE`; otherwise use the newest/highest relevant active round according to existing canonical aggregation.
+- **C. HR Permissions:** Keep Phase 1 default Full HR permission policy plus granular revoke. Do not introduce HR role-profile redesign.
+- **D. Candidate Reactivate:** Keep deliberate exception: no active Application after Candidate reactivation => Submission `READ`, not `NEW`.
+- **E. Repository Visibility:** Keep repository PUBLIC intentionally.
+- **F. Final Decision Content:** HR MAY set `HIRED` or `REJECTED` even when Conclusion, Expected Job, and Expected Recruitment Time are blank. Do not create a Conclusion-required invariant.
+- **G. HR Candidate-data Correction:** HR may correct Candidate-entered full name, phone, date of birth, gender, and current address through a trusted Correction action (`correct_submission_candidate_fields_by_hr`) with actor, changed-field names, timestamp, Security Audit, and optional reason. Email is not changed through ordinary correction.
+- **H. Candidate Email Recovery:** Root Admin OR delegated HR with specific permission (`candidates.identity_manage`) may replace a Candidate's lost old login email with a new email, preserving the same `candidate_id` and history. New email must not belong to another Candidate. Safely update/rebind verified Auth identity + Candidate account, revoke obsolete session/binding where supported, write Security Audit, preserve historical Submission `email_snapshot`, and use the new verified email for future submissions.
+- **I. Historical Interviewer Access:** Interviewer may READ historical Interview rounds they personally participated in. They may not read unrelated Candidate/Interview history. Historical access is read-only. Removed/non-current participant loses access. WRITE requires target Interview is Application Current Round, participant current/eligible, and target Interview's OWN `report_status_code` writable/non-final.
+- **J. Confirmed Reschedule:** `CONFIRMED` + successful schedule/room change => one atomic backend action (`reschedule_confirmed_interview`); conflict recheck + schedule mutation + status mutation occur in one transaction; on success status becomes `AWAITING`; on failure original schedule and `CONFIRMED` status remain unchanged. HR manually confirms again later.
+- **K. Privacy Notice:** Strong-current semantics. Session may pin the notice presented at open, but Submit/Save re-resolves current effective published notice. If different, reject with stable code `PRIVACY_NOTICE_CHANGED`, preserve draft/session, and require acknowledgement of the current version before retry.
 
 ## Deferred owner artifact
 Official EIU Interview Report pixel-perfect PDF template is **DEFERRED** until the owner supplies the approved template. Report data/logic remains current; this deferral blocks only final PDF layout/UAT, not foundation/schema work.
@@ -3780,22 +4056,22 @@ This is treated as a **risk signal, not a platform guarantee**. Therefore final 
 
 <!-- SOURCE: 52_TECHNICAL_GATE_STATUS.md -->
 
-# 52. Technical Gate Status — CURRENT v1.17
+# 52. Technical Gate Status — CURRENT v1.18
 
 - Business Logic Core v1.2: **FROZEN**
 - Design System v1.8: **CURRENT / REVIEWED**
 - Responsive Prototype v1.10: **CROSS-LAYER-ALIGNED / READY FOR OWNER VISUAL UAT / NOT FROZEN**
-- Technical Architecture v1.17: **TECHNICAL SPECIFICATION FROZEN**
+- Technical Architecture v1.18: **TECHNICAL SPECIFICATION FROZEN**
 - Implementation Gate: **READY TO IMPLEMENT**
 - Implementation Validation / Migration Freeze: **PENDING ACTUAL CODE EVIDENCE**
 - Production Ready: **NO**
 
-Current review-alignment resolution: `97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md`.
+Current review-alignment resolution: `99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md`.
 Latest independent planning review evidence: `review_inputs/independent_planner_review_v1_0_vs_handover_v1_15_2026-09-03.md`; doc 97 records its source alignment.
 Current canonical predicates: `73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md`.
 Privacy publication procedure: `78_PRIVACY_NOTICE_PUBLICATION_RUNBOOK.md`.
 Current responsive integration: `81_RESPONSIVE_PROTOTYPE_INTEGRATION.md`.
-Current pre-code/implementation authorization gate: `98_TECHNICAL_PRECODE_GATE_V1_17.md`.
+Current pre-code/implementation authorization gate: `100_TECHNICAL_PRECODE_GATE_V1_18.md`.
 
 `READY TO IMPLEMENT` is a source gate, not an instruction to run an old/draft executor prompt. Executor authorization remains explicit in the current prompt/workflow.
 
@@ -3805,18 +4081,18 @@ Current pre-code/implementation authorization gate: `98_TECHNICAL_PRECODE_GATE_V
 
 <!-- SOURCE: 53_FINAL_CONSISTENCY_VALIDATION.md -->
 
-# 53. Final Consistency Validation — v1.17
+# 53. Final Consistency Validation — v1.18
 
-**Validation date:** 03/09/2026  
-**Baseline:** Full Handover v1.17 + Technical Architecture v1.17 + Design System v1.8 + Responsive Prototype v1.10
+**Validation date:** 06/09/2026  
+**Baseline:** Full Handover v1.18 + Technical Architecture v1.18 + Design System v1.8 + Responsive Prototype v1.10
 
 ## Working-package validation evidence
-- Full Handover semantic/cross-design/responsive validator: **511/511 PASS**.
+- Full Handover semantic/cross-design/responsive validator: **515/515 PASS**.
 - Design System validator: **73/73 PASS — 0 FAIL**.
 - Responsive Browser QA v1.10: **108/108 PASS** across 360 / 390 / 430 / 768 / 1024 / 1280 px.
 - Acceptance IDs: unique.
-- Trusted commands: **59 unique**; the overlapping bulk writer was removed and Candidate-level bulk latest-Submission semantics are ALL_OR_NOTHING.
-- Source registry/current pointers: current Review Alignment **97** / Gate **98**; superseded review/gate files are historical only.
+- Trusted commands: **62 unique**; the overlapping bulk writer was removed and Candidate-level bulk latest-Submission semantics are ALL_OR_NOTHING.
+- Source registry/current pointers: current Review Alignment **99** / Gate **100**; superseded review/gate files are historical only.
 - Candidate lifecycle and Submission workflow are separated; parent rows derive deterministic latest Submission state.
 - Report Status belongs to Current Interview; Application outcome is derived; Final Decision Source uses `decisionUpdatedAt`.
 - Candidate NEW/EDIT enforces CV required and staged ADD / REPLACE / DELETE with Cancel-discard and stale-save blocking.
@@ -3831,7 +4107,7 @@ These results prove consistency of the **specification and executable review pro
 The released ZIP must be extracted and validated again from extracted contents, including MANIFEST SHA-256 verification, deterministic All-in-One check, Responsive v1.10 browser QA evidence and ZIP integrity test. Final extracted-package counts are recorded in `PACKAGE_VALIDATION.txt`, `DESIGN_VALIDATION.txt`, and `responsive_prototype/RESPONSIVE_BROWSER_QA_v1.10.md`.
 
 ## Gate status
-Business Logic Core remains **FROZEN**. Technical Architecture v1.17 is **TECHNICAL SPECIFICATION FROZEN** and the source-level Implementation Gate is **READY TO IMPLEMENT**. Responsive Prototype v1.10 remains **READY FOR OWNER VISUAL UAT / NOT YET FROZEN**. Actual migration/RLS/RPC/race/storage/performance/backup/deployment evidence is required later at **Implementation Validation / Migration Freeze**. Production Ready remains **NO**.
+Business Logic Core remains **FROZEN**. Technical Architecture v1.18 is **TECHNICAL SPECIFICATION FROZEN** and the source-level Implementation Gate is **READY TO IMPLEMENT**. Responsive Prototype v1.10 remains **READY FOR OWNER VISUAL UAT / NOT YET FROZEN**. Actual migration/RLS/RPC/race/storage/performance/backup/deployment evidence is required later at **Implementation Validation / Migration Freeze**. Production Ready remains **NO**.
 
 
 
@@ -3921,6 +4197,7 @@ Every production mutation maps to one explicit trusted command. Rows without a c
 | HR opens NEW | `submissions.view` + `submissions.status` | `open_submission` | atomic NEW→READ | yes | view-only vs full HR |
 | View-only HR opens | `submissions.view` | `open_submission` | no mutation | no write audit required; read audit per policy | view-only |
 | HR edits Submission | `submissions.edit` + view | `update_submission_by_hr` | optimistic | yes | DTO separation |
+| HR Candidate field correction | `submissions.edit` + view | `correct_submission_candidate_fields_by_hr` | Submission FOR UPDATE + optimistic version + cache refresh | yes | audit changed field names / AC-CAND-CORR-01 |
 | HR add/replace/delete Submission documents | `submissions.edit` + `submissions.view` | `mutate_submission_documents_by_hr` | Submission/logical locks + version bump | yes | max5/CV/CLEAN |
 | Manual Submission status | `submissions.status` + view | `set_submission_manual_status` | parent lock | yes | only NEW/READ |
 | Derived Submission status | system/internal | `recalculate_submission_status` | Submission FOR UPDATE | yes | concurrent outcomes |
@@ -3934,6 +4211,7 @@ Every production mutation maps to one explicit trusted command. Rows without a c
 | Copy schedule draft/prefill | `interviews.manage` + view | client draft only — **no trusted mutation** | no DB mutation until Save | no | draft only |
 | Save Copy Interview schedule | `interviews.manage` + view | `copy_interview_schedule` | target Application/Interview locks + deterministic resource locks + idempotency | yes | AC-23 / AC-COPY-03 / AC-COPY-CMD-01 / AC-PART-OPER-COPY-01 |
 | Save/reschedule | `interviews.manage` + view | `save_interview_schedule` | Interview row → resource locks | yes | race conflicts |
+| Reschedule confirmed Interview | `interviews.manage` + view | `reschedule_confirmed_interview` | target CONFIRMED + shared resource locks + status AWAITING | yes | atomic reschedule / AC-RESCHED-01 |
 | Change schedule status | `interviews.status` + view | `change_interview_schedule_status` | shared conflict framework if operational | yes | CANCELLED→active |
 | Reactivate Interview | `interviews.manage` + view | `reactivate_interview` | Interview row → resource locks | yes | middle-round block |
 | Delete/Inactive Interview | `interviews.manage` + view | `delete_or_inactivate_interview` | latest guard + durable Interview temp cleanup + Submission recalc | yes | used/unused + no orphan reservation/object |
@@ -3969,6 +4247,7 @@ Every production mutation maps to one explicit trusted command. Rows without a c
 | Root identity recovery | break-glass operators | `root_admin_break_glass_recovery` | maintenance/recovery | immutable security audit | staging rehearsal |
 | Grant permission | Root | `grant_hr_permission` | dependency validation | security audit | invalid combination rejected |
 | Revoke permission | Root | `revoke_hr_permission` | dependency validation | security audit | invalid combination rejected |
+| Candidate email identity recovery | `candidates.identity_manage` (Root implicit) | `recover_candidate_email_identity` | unique new email + Auth identity update + session revoke | yes | audit identity recovery / AC-CAND-REC-01 |
 
 Grouped pagination/search are read contracts rather than mutations: Candidate Inbox pages Candidate groups; Interview/Report pages Application groups; PII search value is not persisted in URL.
 
@@ -4057,21 +4336,29 @@ Candidate can access own Submission document metadata/path only through authoriz
 
 ## HR
 Permission helpers evaluate active `app_users`, role/permission, with Root implicit allow.
-- `submissions.view`: read only.
+- `submissions.view`: read Submission rows only.
 - `submissions.status`: authorizes status mutation including open NEW→READ.
+- `applications.view` / `applications.manage`: authorizes Application table SELECT (`Root OR applications.view OR applications.manage`). **Tuyệt đối không dùng `submissions.view` để cấp quyền SELECT bảng applications.**
+- `interviews.view` / `interviews.manage`: authorizes Interview table SELECT (`Root OR interviews.view OR interviews.manage`). **Tuyệt đối không dùng `submissions.view` để cấp quyền SELECT bảng interviews.**
 - other mutations require their granular code.
 - default HR receives all HR codes, but RLS/command still evaluates explicit effective permissions.
-
 ## Interviewer
-Contextual visibility requires all:
-`app_user.is_active`
-`application.is_active`
-`interview.is_active`
-`participant.is_current`
-`visible_to_interviewers=true`.
+### Historical READ (Owner Decision I)
+Interviewer có quyền **SELECT / READ các Interview round và report lịch sử mà họ đã trực tiếp tham gia**:
+- `app_user.is_active`
+- `application.is_active`
+- `interview.is_active`
+- `participant.is_current` trên chính Interview đó
+- `visible_to_interviewers=true`.
+Application có Current Round mới **không tước quyền đọc** các round trước mà interviewer đã tham gia. Không có quyền xem các vòng hoặc Candidate mà interviewer không tham gia.
 
-Interviewer report write is limited to the report associated with that current Participant and non-final Report Status. Interviewer may read shared report preview fields but **never** `hr_report_note`.
-
+### Report WRITE (Ghi / Sửa Report)
+Quyền ghi/sửa báo cáo yêu cầu:
+- Target Interview là **Current Round của Application**;
+- Caller sở hữu report gắn với current participant row của mình;
+- Target Interview đang `access_active` và visible;
+- `report_status_code` của **chính target Interview đó đang ở trạng thái non-final / writable** (không phải `HIRED` hay `REJECTED`).
+Interviewer may read shared report preview fields but **never** `hr_report_note`.
 ## Internal identity
 `users.directory_manage` can mutate business profile and unbound email typo only. Bound `auth_user_id/email/provider binding` cannot be changed by this permission. Root-only identity command executes through a protected RPC/recovery path.
 
@@ -4198,6 +4485,11 @@ Frontend code must not emulate these lifecycle/status batches by invoking single
 - **Candidate lifecycle batch parity:** each selected Candidate receives the same `is_active/inactive_at/inactive_by` state transition and per-Submission reactivation recalculation as `set_candidate_active`; per-Candidate audit plus one batch audit event; any stale item aborts all.
 - **Interview delete/inactivate batch:** prevalidate all hard-delete temp-upload cleanup prerequisites and durably capture all required cleanup intents before deleting any selected Interview.
 - **Report Status batch:** re-resolve Current Round + optimistic versions for the full set; one stale/current-round mismatch aborts all; successful commit recalculates every affected Submission.
+
+## Deterministic Bulk Locking & Bounded Batch Size
+Tất cả các bulk commands tác động lên nhiều thực thể bắt buộc:
+1. **Sắp xếp target IDs xác định:** sắp xếp toàn bộ danh sách ID theo thứ tự tăng dần (`ORDER BY id ASC`) trước khi acquire row locks để loại trừ nguy cơ deadlock giữa các transaction chạy song song;
+2. **Bounded batch size:** áp dụng giới hạn kích thước mảng đầu vào tối đa là **100 items** cho mỗi lần gọi lệnh; request vượt quá 100 items sẽ bị từ chối với `VALIDATION_ERROR`.
 
 
 
@@ -4344,14 +4636,14 @@ Candidate Update uses the Candidate mutation endpoint limit keyed by Candidate i
 
 <!-- SOURCE: 70_SEMANTIC_VALIDATION_GATE.md -->
 
-# 70. Semantic Cross-layer Validation Gate — v1.17
+# 70. Semantic Cross-layer Validation Gate — v1.18
 
 **Status:** CURRENT / NORMATIVE
 
-The validator must fail on semantic drift, not only missing files or tokens. Current expected package versions are **Technical Architecture v1.17** and **Design System v1.8**.
+The validator must fail on semantic drift, not only missing files or tokens. Current expected package versions are **Technical Architecture v1.18** and **Design System v1.8**.
 
 ## Mandatory semantic checks
-1. **Source governance:** CURRENT entrypoints point to Alignment Resolution 93, Domain Glossary 73, Privacy Publication Runbook 78, Responsive Integration 81 and Pre-code Gate 94. HISTORICAL/SUPERSEDED modules are excluded from normative All-in-One.
+1. **Source governance:** CURRENT entrypoints point to Alignment Resolution 99, Domain Glossary 73, Privacy Publication Runbook 78, Responsive Integration 81 and Pre-code Gate 100. HISTORICAL/SUPERSEDED modules are excluded from normative All-in-One.
 2. **Acceptance traceability:** Acceptance IDs are unique; command acceptance references exist and behavior-specific commands carry required guarantee tags.
 3. **One protected mutable field → one command:** `interviews.report_status_code` has exactly one trusted writer (`change_report_status`); `update_hr_report_note` cannot write Report Status.
 4. **Outcome side effects:** every Application/current-round/outcome-changing command declares authoritative Submission recalculation where required.
@@ -4369,7 +4661,7 @@ The validator must fail on semantic drift, not only missing files or tokens. Cur
 16. **Email/malware/upload:** provider delivery is at-least-once; client retry prevents duplicate logical enqueue only; malware CLEAN and frozen Phase-1 whitelist/5 MB/max-five rules are mandatory.
 17. **Delete lifecycle:** unused hard-delete capabilities map to exact permissions or explicit MAINTENANCE_ONLY paths; empty auto Round 1 exception is consistent.
 18. **Current-source consolidation:** CURRENT/NORMATIVE modules state canonical behavior in place and do not rely on later versioned clarification blocks to override earlier text.
-19. **Version coherence:** schema/design/current status headers match Technical v1.17 / Design v1.8 / Responsive Prototype v1.10.
+19. **Version coherence:** schema/design/current status headers match Technical v1.18 / Design v1.8 / Responsive Prototype v1.10.
 20. **Batch selection entity coherence:** Application Inbox checkbox entity = Candidate; `bulk_set_latest_submission_manual_status` accepts Candidate IDs, resolves deterministic latest Submission under lock, revalidates expected latest IDs/versions, and is the only active batch writer for manual NEW/READ.
 21. **Candidate lifecycle separation:** Candidate Inactive never appears in the Submission status enum or writes `INACTIVE` to Submission; parent Candidate summary derives latest Submission state.
 22. **Phase-1 navigation:** rendered persona routes are a subset of the frozen Phase-1 navigation registry; `FUTURE_HIDDEN / NOT_RENDERED` routes are absent from ordinary UAT navigation.
@@ -4416,6 +4708,9 @@ PASS proves specification consistency against implemented checks only. It does *
 | Candidate Reactivation Rule | lifecycle exception: no active Application → `READ` |
 | Interview `access_active` | `Application.is_active AND Interview.is_active` |
 | Current Round | highest `round_no` among `access_active` Interviews |
+| Authoritative Outcome Resolver | Application outcome derives solely from Current Round: HIRED => HIRED, REJECTED => REJECTED, otherwise IN_PROGRESS |
+| Create Next Round Gate | latest relevant Interview must be active AND `report_status_code <> HIRED`; CANCELLED schedule status does not block |
+| Strong-Current Privacy Notice | submit/update requires current effective published version; mismatch returns `PRIVACY_NOTICE_CHANGED` |
 | Interview `resource_blocking` | `access_active AND schedule_status_code != CANCELLED AND start_at/end_at exist` |
 | `reactivation_conflict_relevant` | **Application Reactivate-only**: `resource_blocking AND end_at > transaction_now`; fully elapsed rows are historical and do not block lifecycle recovery |
 | Application Durable Identity | globally unique `(submission_id, unit_id, department_team_id, position_id)` across history |
@@ -4442,6 +4737,20 @@ Operational Email History deletion requires explicit `TEST_RECORD` or `WRONG_REC
 
 ## Copy provenance usage
 A Round is not structurally empty when `copied_from_interview_id IS NOT NULL` or any Interview references it as `copied_from_interview_id`. Copy provenance therefore counts as business usage for copy/delete decisions.
+
+## Authoritative Application Outcome Resolver
+Outcome của Application được xác định **duy nhất** từ Current Round (vòng có `round_no` cao nhất trong các Interview `access_active`):
+- Current Round có `report_status_code = 'HIRED'` → `HIRED`
+- Current Round có `report_status_code = 'REJECTED'` → `REJECTED`
+- Các trường hợp còn lại → `IN_PROGRESS`.
+Các vòng phỏng vấn cũ hơn không tham gia tính toán outcome này. Toàn bộ các luồng recalculation (Submission recalculation, Candidate reactivation) bắt buộc dùng chung resolver này.
+
+## Create Next Round Gate
+Điều kiện tạo vòng phỏng vấn tiếp theo:
+1. Interview có `round_no` cao nhất hiện tại phải đang active (`is_active=true`);
+2. `report_status_code` của round active đó phải khác `HIRED` (`report_status_code <> 'HIRED'`);
+3. Schedule Status `CANCELLED` (Đã hủy) **không chặn** việc tạo vòng mới;
+4. Trạng thái lịch không có lộ trình chuyển đổi bắt buộc; cho phép nhảy trực tiếp giữa các trạng thái hợp lệ.
 
 
 
@@ -4519,6 +4828,14 @@ Because both pointer changes are in one transaction, a failure rolls back to the
 - prior acknowledgements still resolve immutable old version;
 - `AC-PRIV-PUBLISH-01` passes.
 
+## Strong-Current Enforcement on Submit/Save (Owner Decision K)
+Khi một phiên bản Privacy Notice mới được switch sang current:
+1. Các Form Session đang mở đã pin notice version trước đó;
+2. Khi Candidate gửi lệnh Submit hoặc Save Edit, backend kiểm tra lại version hiện hành có hiệu lực (`is_current=true`) ngay trong transaction;
+3. Nếu notice version đã thay đổi, lệnh bị từ chối với lỗi `PRIVACY_NOTICE_CHANGED`;
+4. Tuyệt đối không commit mutation hồ sơ hay ghi nhận acknowledgement theo version cũ;
+5. Draft và Form Session được bảo toàn để Candidate đọc nội dung mới, tick xác nhận phiên bản mới và gửi lại.
+
 ## Rollback
 If a post-switch operational issue requires rollback, switch current pointer back to the prior already-published effective version in one audited transaction. Never edit published content in place.
 
@@ -4534,7 +4851,7 @@ If a post-switch operational issue requires rollback, switch current pointer bac
 
 **Responsive Prototype v1.10** is the executable responsive reference bundled with this handover.
 
-The Full Handover v1.17 bundle includes `responsive_prototype/` v1.10 for one-package external + owner review. It is executable HTML/CSS/JS prototype evidence, not production React implementation.
+The Full Handover v1.18 bundle includes `responsive_prototype/` v1.10 for one-package external + owner review. It is executable HTML/CSS/JS prototype evidence, not production React implementation.
 
 ## Frozen-for-current-UAT responsive corrections
 - Candidate Inbox parent row derives Status/HR Note from deterministic latest Submission; Candidate Inactive is a separate lifecycle badge.
@@ -4551,79 +4868,114 @@ The Full Handover v1.17 bundle includes `responsive_prototype/` v1.10 for one-pa
 - Mobile/Tablet/Desktop share business actions; bulk selection/status behavior uses the same underlying workflow and remains independently testable.
 
 ## Authority
-Business/security/command semantics come from Full Handover v1.17. Visual/responsive tokens/components come from Design System v1.8. Owner-approved UAT corrections are recorded here and in Design System v1.8.
+Business/security/command semantics come from Full Handover v1.18. Visual/responsive tokens/components come from Design System v1.8. Owner-approved UAT corrections are recorded here and in Design System v1.8.
 
 
 
 ---
 
-<!-- SOURCE: 97_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_17.md -->
+<!-- SOURCE: 99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md -->
 
-# 97. Independent Review — Implementation Alignment v1.17
+# 99. Independent Review — Implementation Alignment v1.18
 
 **Status:** CURRENT / NORMATIVE  
-**Date:** 03/09/2026  
-**Baseline:** Full Handover v1.17 + Design System v1.8 + Responsive Prototype v1.10
+**Date:** 06/09/2026  
+**Baseline:** Full Handover v1.18 + Design System v1.8 + Responsive Prototype v1.10
 
 ## Purpose
-This alignment closes the independent review of Full Handover v1.16 (Freeze / Implementation Readiness). It does **not** reopen Business Logic Core v1.2 or change the four-gate implementation model. Technical Specification remains frozen.
+This alignment incorporates Owner Decisions A–K and closes the external review and implementation-branch stabilization findings prior to Slice 04. It does **not** reopen Business Logic Core v1.2 or change the four-gate implementation model. Technical Specification remains frozen.
 
-## Closed findings
+## Closed findings and canonical clarifications
 
-### 1. Copy command is propagated through the canonical schedule engine
-`copy_interview_schedule` is now listed in `app_spec.yaml -> schedule_conflicts.engine_used_by`. `48_IDEMPOTENCY_CONCURRENCY_SPEC.md` explicitly includes **Save Copy** in the shared deterministic Candidate/Room/Interviewer lock + conflict engine. The client Copy draft remains non-mutating.
+### 1. Owner Decisions A–K canonicalized
+- **A. Interview Round / Schedule Status:** `HIRED` is terminal for future rounds. Latest relevant active Interview report_status `HIRED` => no next round. Latest active not `HIRED` => next round allowed, including when Schedule Status is `CANCELLED`. `CANCELLED` does not block a future round. Latest inactive round continues to block until Reactivate/hard-delete. Schedule Status has no mandatory sequence; direct jumps allowed. Exactly one Schedule Status per round.
+- **B. Effective Outcome:** Aggregation unchanged: any active Application with Current Round `HIRED` causes Submission `DONE`; otherwise newest/highest relevant active round.
+- **C. HR Permissions:** Phase 1 default Full HR permission policy plus granular revoke retained.
+- **D. Candidate Reactivate:** Deliberate exception: no active Application after Candidate reactivation => Submission `READ`, not `NEW`.
+- **E. Repository Visibility:** Repository remains PUBLIC intentionally.
+- **F. Final Decision Content:** Blank Conclusion, Expected Job, Expected Recruitment Time allowed with `HIRED` / `REJECTED`.
+- **G. HR Candidate-data Correction:** Trusted correction action `correct_submission_candidate_fields_by_hr` with actor, changed field names, timestamp, Security Audit, optional reason.
+- **H. Candidate Email Recovery:** Trusted action `recover_candidate_email_identity`, permission `candidates.identity_manage` (Root implicit), unique new email, update verified Auth identity and Candidate account, preserve historical Submission `email_snapshot`.
+- **I. Historical Interviewer Access:** Interviewer may READ historical Interview rounds personally participated in (read-only); WRITE requires Application Current Round, current participant, non-final/writable report_status.
+- **J. Confirmed Reschedule:** Dedicated trusted action `reschedule_confirmed_interview`, atomic conflict recheck + schedule update + status reset to `AWAITING`.
+- **K. Privacy Notice:** Strong-current semantics: session pins presentation version, submit/update requires current effective published version; mismatch => `PRIVACY_NOTICE_CHANGED`.
 
-### 2. Critical Copy controls have resolvable browser-QA evidence
-`INTERVIEW-COPY-SAVE.browser_qa` IDs `RP-COPY-01..04` now resolve to current Responsive v1.10 browser evidence. Coverage includes:
-- structurally empty target Round1 → fill Round1;
-- used target Round1 → create next legal round;
-- Demo Topic remains blank;
-- source schedule/logistics are preserved in the Copy draft/save simulation.
+### 2. Permissions and RLS separation
+- Added `applications.view` and `candidates.identity_manage`.
+- Dependency: `applications.manage -> applications.view`.
+- Application HR read requires Root OR `applications.view` OR `applications.manage`.
+- Interview HR read requires Root OR `interviews.view` OR `interviews.manage`.
+- Neither table uses `submissions.view` as a substitute read permission.
 
-### 3. Generated All-in-One evidence is labeled v1.17
-The generator and validator no longer advertise stale v1.15 generation labels. `15_ALL_IN_ONE_SPEC.md` is regenerated from CURRENT/NORMATIVE numbered modules and remains non-normative convenience evidence.
+### 3. Candidate field ownership and validation bounds
+- Candidate-owned fields: `full_name` (<=200), `phone` (<=32 normalized), `date_of_birth` (1900-01-01..today), `gender` (MALE/FEMALE), `current_address` (<=500), Education child rows, Candidate documents.
+- Verified email is immutable from Auth.
+- HR-only fields (`other_info`, `hr_note`, experiences, activities) are not accepted or cleared by Candidate Submit/Edit.
+- Education child model aligns with physical schema: `period_text`, `qualification_id`, `major`, `institution`, `sort_order`.
 
-### 4. No-Handoff Continuity is implementation governance, not business authority
-The independent review's No-Handoff Continuity recommendation is accepted for the **Implementation Executor/Planner workflow**. It is implemented in the revised Executor/Planner packs and initial `project_control/` bootstrap, not as a Candidate/HR business rule. Frozen EIU source continues to define WHAT the system must do; repository-backed `project_control/` records WHERE implementation currently is and its evidence.
+### 4. Detail read vs explicit open
+- `get_submission_detail()` is a pure read and never mutates `NEW -> READ`.
+- `open_submission()` is the explicit user-intent command that executes `NEW -> READ` when authorized.
+
+### 5. Authoritative Application outcome resolver
+- Current Round is the highest `round_no` among access-active Interviews for that Application.
+- Current Round `HIRED` => `HIRED`; `REJECTED` => `REJECTED`; otherwise `IN_PROGRESS`.
+- Single internal resolver shared by Submission recalculation and Candidate reactivation.
+- Internal helper `recalculate_submission_status(uuid)` has deny-by-default execution ACL.
+
+### 6. Document materialization and portal security
+- Candidate document ADD creates a new logical header; no `UNIQUE(submission_id, document_type_id)` constraint.
+- Server derives one-based `sort_order` (1..n).
+- Privacy acknowledgement table physical identity: `(submission_id, notice_version)`.
+- Server route boundary `/candidate/*` redirects unauthenticated users to `/auth/candidate`.
+- Upload UI follows authoritative reservation protocol.
+- Draft autosave uses `sessionStorage` with Form Session ID binding and expiry cleanup.
+- Strict CSP without `unsafe-inline`.
+
+### 7. Integration CI and email safety
+- Database-enabled Integration CI gate executes zero-base migration replay, schema smoke, RLS persona checks, Candidate Submit/Update and document protocol tests.
+- Non-production Outbox environment defaults to `TEST`.
 
 ## Freeze consequence
-Technical Architecture v1.17 remains **TECHNICAL SPECIFICATION FROZEN**. Source-level Implementation Gate remains **READY TO IMPLEMENT**. Gate 3 still requires actual post-code migration/RLS/RPC/race/storage/performance/backup/deployment evidence. Production Ready remains **NO**.
+Technical Architecture v1.18 remains **TECHNICAL SPECIFICATION FROZEN**. Source-level Implementation Gate remains **READY TO IMPLEMENT**. Gate 3 still requires actual post-code migration/RLS/RPC/race/storage/performance/backup/deployment evidence. Production Ready remains **NO**.
 
 
 
 ---
 
-<!-- SOURCE: 98_TECHNICAL_PRECODE_GATE_V1_17.md -->
+<!-- SOURCE: 100_TECHNICAL_PRECODE_GATE_V1_18.md -->
 
-# 98. Technical Pre-code / Implementation Authorization Gate — v1.17
+# 100. Technical Pre-code / Implementation Authorization Gate — v1.18
 
 **Status:** TECHNICAL SPECIFICATION FROZEN / READY TO IMPLEMENT  
-**Date:** 03/09/2026
+**Date:** 06/09/2026
 
 ## Current authority
 - Business Logic Core v1.2 = **FROZEN**
 - Design System v1.8 = **CURRENT / REVIEWED**
-- Technical Architecture v1.17 = **TECHNICAL SPECIFICATION FROZEN**
+- Technical Architecture v1.18 = **TECHNICAL SPECIFICATION FROZEN**
 - Responsive Prototype v1.10 = **READY FOR OWNER VISUAL UAT / NOT FROZEN**
 - Implementation Gate = **READY TO IMPLEMENT**
 - Implementation Validation / Migration Freeze = **PENDING ACTUAL CODE EVIDENCE**
 - Production Ready = **NO**
 
 ## Gate sequence
-The v1.16 four-gate model remains unchanged:
+The four-gate model remains unchanged:
 1. Technical Specification Freeze — PASS.
 2. Approved for Implementation — PASS at source level.
 3. Implementation Validation / Migration Freeze — PENDING actual code evidence.
 4. Production UAT / Production Ready — PENDING.
 
-## Copy schedule-engine closure
-`copy_interview_schedule` is the dedicated Save-Copy trusted mutation and is explicitly part of the shared schedule-conflict engine in both structured `app_spec.yaml` and `48_IDEMPOTENCY_CONCURRENCY_SPEC.md`. It must acquire/recheck deterministic Candidate/Room/Interviewer resources and Active current-Participant eligibility before committing an operational interval.
-
-## Critical browser-evidence closure
-Copy critical-control IDs `RP-COPY-01..04` resolve to current Responsive v1.10 browser evidence, including the used-target-Round1 → next legal round branch.
-
-## Implementation-governance note
-Before Slice 00 executes, the implementation repository should initialize the approved `project_control/` No-Handoff Continuity state from the revised Executor/Planner workflow. This is an implementation-governance requirement and does not redefine EIU business behavior.
+## Technical source v1.18 closure
+- Owner Decisions A–K canonicalized and documented across specification owners.
+- Direct-repair findings from implementation-branch review addressed at canonical source.
+- Permissions `applications.view` and `candidates.identity_manage` added with prerequisite `applications.manage -> applications.view`.
+- RLS read separation: Application HR read uses `Root OR applications.view OR applications.manage`; Interview HR read uses `Root OR interviews.view OR interviews.manage`.
+- Candidate input allowlist and validation bounds frozen; HR-only child records protected.
+- Privacy strong-current verification enforced.
+- Trusted commands `reschedule_confirmed_interview`, `correct_submission_candidate_fields_by_hr`, and `recover_candidate_email_identity` specified.
+- Authoritative Current-Round outcome resolver and internal helper ACL protection specified.
+- Database-enabled Integration CI and non-production Outbox TEST safety required.
 
 ## Executor authorization
-This source baseline is **READY TO IMPLEMENT**. A Planner may issue an `EXECUTION_STATUS: AUTHORIZED` Slice00 prompt only after re-pinning this exact ZIP/hash and completing the user's independent prompt-review workflow. Production Ready remains NO.
+This source baseline is **READY TO IMPLEMENT**. A Planner may issue an `EXECUTION_STATUS: AUTHORIZED` prompt only after pinning this exact baseline and completing the user's independent prompt-review workflow. Production Ready remains NO.

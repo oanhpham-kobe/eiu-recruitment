@@ -38,18 +38,19 @@ Click phiếu con → mở Drawer đúng Submission đó.
 
 ## 3. Search / Filter
 
-Search theo kiểu autocomplete / combobox từng ký tự:
-- Họ tên.
-- Email.
-- SĐT.
+Quy tắc tìm kiếm server-side chuẩn hóa:
+- **Debounce:** 300 ms trên ô nhập liệu.
+- **Tìm kiếm Họ tên (Name broad search):** yêu cầu tối thiểu 2 ký tự (`length >= 2`). Không thực hiện quét broad `%x%` với 1 ký tự duy nhất.
+- **Email & Số điện thoại:** tìm kiếm exact/prefix có thể kích hoạt ngay (email lower-case exact/prefix; SĐT chuẩn hóa số exact/prefix).
+- **Phân trang:** mặc định 25 records/trang; hỗ trợ các tùy chọn 25, 50, 100.
+- **Bảo vệ PII trong URL:** chuỗi tìm kiếm PII (họ tên, email, SĐT) chỉ nằm trong request/client state, **không serialize vào browser URL, query string, browser history hay telemetry**.
 
-Filter đề xuất:
+Filter nghiệp vụ:
 - Trạng thái.
 - Ngày ứng tuyển.
 - Active / Inactive.
 - Mới / đã đọc.
 - Có/Chưa có Application.
-
 ## 4. Submission status
 
 Business status của Submission:
@@ -59,14 +60,11 @@ Business status của Submission:
 - `DONE` – Hoàn tất thành công theo kết quả Application.
 - `CLOSED` – Các Application kết thúc không tuyển.
 
-### New / Read
-- Submit mới → New.
-- Candidate chỉ được edit khi Submission còn `NEW`. Đây là chủ ý nghiệp vụ để HR không bỏ sót thay đổi sau khi đã đọc.
-- HR mặc định có quyền `submissions.status`; khi HR mở phiếu `NEW` → hệ thống tự chuyển `READ`.
-- Nếu một HR Limited chỉ có `submissions.view` nhưng không có `submissions.status`, mở phiếu là read-only và **không mutation**.
-- Candidate muốn sửa sau khi HR đã đọc phải liên hệ HR; HR chủ động Mark as New.
-- HR có thể Mark as New để tự nhắc xử lý lại hoặc mở lại quyền chỉnh Candidate theo rule.
-
+### New / Read (Pure Detail Read vs. Explicit Open)
+- Submit mới → `NEW`.
+- **Pure detail read (`get_submission_detail`):** chỉ đọc dữ liệu chi tiết phiếu, **tuyệt đối không làm thay đổi trạng thái từ NEW sang READ**. Các tác vụ passive server render, data fetch, prefetch, refresh danh sách hay background preview bắt buộc chỉ gọi `get_submission_detail`.
+- **Explicit open (`open_submission`):** là lệnh ghi nhận chủ ý của người dùng khi HR click mở chi tiết phiếu `NEW`. Khi caller có đủ quyền (`submissions.view + submissions.status`), lệnh chuyển trạng thái `NEW → READ`. Nếu caller chỉ có `submissions.view`, lệnh là read-only và không mutation.
+- Candidate chỉ được edit khi Submission còn `NEW`. Sau khi phiếu sang `READ`, Candidate muốn sửa phải liên hệ HR để HR chủ động Mark as New.
 ### Processed → New
 Không cho chuyển trực tiếp nếu còn Application liên quan.
 

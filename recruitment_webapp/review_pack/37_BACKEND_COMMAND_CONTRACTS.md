@@ -31,17 +31,28 @@ Upload Reservations are subordinate to the Form Session. ADD/REPLACE Stage and S
 
 ## 4. Candidate Submission commands
 ### `submit_candidate_submission(form_session_id, payload, privacy_notice_version, idempotency_key)`
-Actor: Candidate. Preconditions: verified identity, active Candidate, unexpired `OPEN` NEW_SUBMISSION form session (`expires_at > transaction_now`), required CV pending/finalizable, max 5 files, all ADD/REPLACE reservations unexpired + `VALIDATED` + malware `CLEAN`.
+Actor: Candidate. Preconditions: verified identity, active Candidate, unexpired `OPEN` NEW_SUBMISSION form session (`expires_at > transaction_now`), required CV pending/finalizable, max 5 files, all ADD reservations unexpired + `VALIDATED` + malware `CLEAN`.
+
+Payload allowlist:
+- `full_name` (min 1, max 200, trimmed, required)
+- `phone` (max 32, normalized, required)
+- `date_of_birth` (1900-01-01 .. TODAY, required)
+- `gender` (`MALE` | `FEMALE`, required; no OTHER in Phase 1)
+- `address` / `current_address` (max 500, trimmed, required)
+- `education` (array of optional child rows: `period_text`, `qualification_id`, `major`, `institution`, `sort_order` 1-based; max 20 rows)
+- Document upload reservations / staged operations.
+
+Verified email (`email_snapshot`) derives exclusively from verified Auth identity and is immutable. The command rejects `candidate_notes`, `work_experiences`, and `activities`.
 
 Transaction:
 1. lock Candidate/form session and synchronously recheck `status=OPEN AND expires_at > transaction_now`;
-2. validate `CandidateSubmissionCreate` allowlist and privacy acknowledgement;
-3. run the locked staged-document-plan validator (all ADD/REPLACE uploads VALIDATED+CLEAN, effective file count ≤5, effective current CV exists);
-4. create Submission snapshot and children;
-5. bind/finalize staged document changes into logical document headers + immutable versions;
-6. enforce current CV invariant again after materialization;
-7. create privacy acknowledgement;
-8. update Candidate current profile only because this becomes latest submitted snapshot;
+2. **Strong-current privacy notice verification:** assert presented `privacy_notice_version` equals current effective published version (`is_current=true`). If notice version has changed since session open, reject with `PRIVACY_NOTICE_CHANGED`, preserving form session and draft for retry;
+3. validate `CandidateSubmissionCreate` allowlist and bounds;
+4. run the locked staged-document-plan validator (all ADD uploads VALIDATED+CLEAN, effective file count ≤5, effective current CV exists);
+5. create Submission snapshot with canonical columns (`full_name, phone, date_of_birth, gender_code, current_address, email_snapshot`);
+6. bind/finalize staged document changes into logical document headers + immutable versions. Staged ADD inserts a NEW `submission_document_logicals` header without requiring `UNIQUE(submission_id, document_type_id)`; sets `created_by_candidate_id = Candidate, created_by_app_user_id = NULL`; versions set `uploaded_by_candidate_id = Candidate, uploaded_by_app_user_id = NULL`;
+7. create privacy acknowledgement in `privacy_acknowledgements(submission_id, notice_version, acknowledged_at, source_code)`;
+8. update Candidate current profile because this becomes latest submitted snapshot;
 9. enqueue HR notification;
 10. mark form session SUBMITTED;
 11. audit + commit.
@@ -49,19 +60,69 @@ Transaction:
 No Submission row is pre-created merely by opening the form.
 
 ### `update_candidate_submission(form_session_id, payload, privacy_acknowledged, idempotency_key)`
-Actor: Candidate owner. Re-check on Save: Candidate active, Form Session still `OPEN` and unexpired, Submission still `NEW`, expected version matches; every staged ADD/REPLACE reservation is also unexpired at transaction time. The Form Session has server-pinned `presented_privacy_notice_version`; Save requires acknowledgement of that exact version. Same Submission/version acknowledgement is idempotently reused; a new version is inserted. Text/file changes save atomically; Cancel applies neither. Validate the locked staged-document plan before materialization; finalization re-checks Candidate Active + Submission NEW. Any text or file-only successful Save touches the Submission aggregate and increments `version_no` exactly once. Refresh Candidate current-profile only if this is the latest surviving snapshot. Enqueue exact-`submission_id` HR notification inside the same transaction before commit; provider delivery is asynchronous. Older Submission edit never overwrites newer profile cache.
+Actor: Candidate owner. Re-check on Save: Candidate active, Form Session still `OPEN` and unexpired, Submission still `NEW`, expected version matches; every staged ADD/REPLACE reservation is also unexpired at transaction time.
+
+Same payload allowlist as Submit. Candidate Edit **tuyệt đối không nhận, không sửa, không xóa và không ghi đè** các field/bảng con thuộc quyền HR: `other_info`, `hr_note`, `submission_work_experiences`, `submission_activities`. Dữ liệu HR-only này được bảo toàn nguyên vẹn sau update.
+
+**Strong-current privacy notice verification:** The Form Session has server-pinned `presented_privacy_notice_version`; Save requires acknowledgement of that exact version. Transaction asserts that the effective published notice has not changed. If notice version changed, reject with `PRIVACY_NOTICE_CHANGED`, preserving draft.
+
+Staged REPLACE/DELETE target an existing `logical_document_id`. Staged ADD inserts a new logical header. Any text or file-only successful Save touches Submission aggregate and increments `version_no` exactly once. Refresh Candidate current-profile cache when this Submission is latest. Enqueue exact-`submission_id` HR notification inside the same transaction before commit; audit + commit.
+
+### `get_submission_detail(submission_id)` — Pure Read
+Requires `submissions.view`. Pure data retrieval; **tuyệt đối không bao giờ làm thay đổi trạng thái từ NEW sang READ**. Passive server render, data fetch, prefetch, refresh danh sách hay background preview bắt buộc chỉ gọi hàm này.
+
+### `open_submission(submission_id)` — Explicit Open Command
+Explicit user-intent command invoked when HR explicitly opens a NEW submission from inbox. Requires `submissions.view`. If actor also has `submissions.status` and current status is `NEW`, atomically sets `READ`. If actor lacks `submissions.status`, execution is read-only without mutation.
 
 ### `update_submission_by_hr()`
-`submissions.edit`; HR-specific DTO only. Candidate verified email/security identity is immutable. After update, call `refresh_candidate_current_profile(candidate_id)` when the edited Submission is latest; older Submission edits do not alter Candidate cache.
+`submissions.edit`; HR-specific DTO only. Candidate verified email/security identity is immutable. Candidate-owned fields are edited via dedicated correction command. After update, call `refresh_candidate_current_profile(candidate_id)` when the edited Submission is latest; older Submission edits do not alter Candidate cache.
 
-### `open_submission()`
-Requires `submissions.view`. If actor also has `submissions.status` and current state is `NEW`, atomically set `READ`. Otherwise pure read. Default HR has both permissions.
+### `correct_submission_candidate_fields_by_hr(submission_id, full_name, phone, date_of_birth, gender_code, current_address, expected_version, reason)`
+Dedicated trusted correction action (Owner Decision G). Permission: `submissions.edit` (or Root implicit).
+Allowed fields ONLY: `full_name`, `phone`, `date_of_birth`, `gender_code`, `current_address`.
+Email is NOT editable through ordinary correction.
+Requirements:
+1. lock target Submission row `FOR UPDATE` and assert optimistic `expected_version`;
+2. require at least one correction field provided (null means unpatched);
+3. validate provided fields against canonical Candidate validation bounds;
+4. update provided fields, bump `version_no`, record `updated_by_internal_user_id`;
+5. refresh Candidate current profile cache if this Submission is latest;
+6. record same-transaction Security Audit: changed FIELD NAMES, actor/entity/version metadata, optional reason (no full old/new PII dump);
+7. rollback all changes if audit insert fails.
 
+### `recover_candidate_email_identity(candidate_id, new_email, reason)`
+Dedicated trusted action for Candidate email recovery (Owner Decision H).
+Permission: `candidates.identity_manage` (Root Admin implicit; specific HR by explicit delegation only; NOT default HR).
+Requirements:
+1. target Candidate exists;
+2. `new_email` normalized and unique across all Candidate accounts;
+3. verified Auth identity update/rebind;
+4. update Candidate login identity (`candidates.email`);
+5. historical Submission `email_snapshot` remains unchanged (immutable history);
+6. future Submissions use the new verified email;
+7. revoke obsolete sessions/binding where supported;
+8. sets transaction-local setting `recruitment.candidate_email_recovery_active = 'on'` to safely pass `private.protect_candidate_verified_email()` trigger while keeping ordinary updates strictly blocked with `CANDIDATE_VERIFIED_EMAIL_IMMUTABLE`;
+9. mandatory same-transaction Security Audit.
 ### `set_submission_manual_status(candidate_id, status, expected_latest_submission_id, expected_version)`
 Only the **deterministic latest Submission** of the Candidate may be manually changed. Backend locks Candidate, resolves latest Submission by `submitted_at DESC, submission_id DESC`, compares `expected_latest_submission_id` + optimistic version, then allows only `NEW`/`READ` when no active Application exists. **Neither `NEW` nor `READ` may be written manually while any active Application exists.** Historical child Submission status is read-only for the Phase-1 workflow and crafted exact-Submission requests cannot bypass this rule. Starter SQL must expose only a Candidate-level/latest-safe helper (or an equivalently guarded helper); an exact historical `submission_id` writer is forbidden. `PROCESSED`, `DONE`, `CLOSED` are system-derived only. Candidate Active/Inactive does not restrict internal HR manual NEW/READ; inactivity affects Candidate Portal access only. Bulk manual-status mutation is ALL_OR_NOTHING and uses the exact same latest-only eligibility rule.
 
 ### `recalculate_submission_status(submission_id)`
-Single authoritative status calculator. Mandatory parent `Submission FOR UPDATE` lock before evaluating Applications. Rules: no active Application → preserve existing manual `NEW/READ`; if coming from a derived state after the final Application is removed, return `READ`; any effective current Application `HIRED` → `DONE`; all active Applications `REJECTED` → `CLOSED`; otherwise with active Application → `PROCESSED`. Every Application/current-round/report-outcome mutation invokes this before commit.
+Internal authoritative status calculator. Mandatory parent `Submission FOR UPDATE` lock before evaluating Applications.
+
+**Authoritative Application outcome resolver:** Application outcome derives solely from the Current Round (highest `round_no` among `access_active` Interviews for that Application):
+- Current Round `report_status_code = HIRED` → `HIRED`
+- Current Round `report_status_code = REJECTED` → `REJECTED`
+- Otherwise → `IN_PROGRESS`.
+Older active rounds never independently determine Application outcome.
+
+Rules for Submission recalculation:
+- No active Application → preserve existing manual `NEW/READ`;
+- If coming from a derived state after the final Application is removed/inactivated → return `READ`;
+- Any active Application effective Current Round outcome `HIRED` → `DONE`;
+- All active Applications effective Current Round outcome `REJECTED` → `CLOSED`;
+- Otherwise with active Application → `PROCESSED`.
+
+**Helper security:** `public.recalculate_submission_status(uuid)` is an INTERNAL helper. Execute permission is revoked from `PUBLIC, anon, authenticated` and granted only to `postgres, service_role`. Trusted SECURITY DEFINER business commands execute it under their definer context.
 
 ### Submission delete reachability + `delete_unused_candidate()`
 **Normal production HR does not hard-delete a successfully submitted Submission.** Candidate Submit/Update mandatorily creates retained PRODUCTION email trace bound to the exact `submission_id`; that trace is downstream business history, therefore every normal production submitted Submission is retention-managed rather than eligible for a Phase-1 HR hard-delete command. `delete_unused_submission` is classified **MAINTENANCE_ONLY** for test/import/data-repair states that never acquired retained production business usage; it is not exposed in normal HR UI/permissions. Retained PRODUCTION email usage still **blocks `delete_unused_submission()`** even in that maintenance path.
@@ -80,8 +141,25 @@ Empty auto-created Round 1 is an owned default child and does not count as busin
 
 ## 6. Interview rounds, Copy and schedule
 ### `create_next_interview_round()`
-Lock Application + latest Interview. Latest round must be active. Allocate `max(round_no)+1`; Demo Topic blank; idempotent. Recalculate Submission if current-round semantics change.
+Lock Application + latest Interview.
 
+**Gate (Owner Decision A):**
+1. Latest relevant existing Interview must be active (`is_active=true`).
+2. Latest relevant active Interview `report_status_code <> 'HIRED'`. If `HIRED`, new round creation is terminal and rejected.
+3. Schedule Status `CANCELLED` **does NOT block** creating the next round.
+Allocate `max(round_no)+1`; Demo Topic blank; idempotent. Recalculate parent Submission if current-round semantics change.
+
+### `reschedule_confirmed_interview(interview_id, start_at, end_at, interview_format_id, room_id, meeting_link, expected_version, idempotency_key)`
+Dedicated trusted action (Owner Decision J). Permission: `interviews.manage`.
+Target Interview must currently have `schedule_status_code = 'CONFIRMED'`.
+Atomic transaction:
+1. lock target Interview row, verify `CONFIRMED` status and `expected_version`;
+2. revalidate every current Participant is an Active Internal User;
+3. acquire deterministic Candidate/Room/Interviewer resource locks;
+4. re-check `[start_at, end_at)` schedule conflicts;
+5. update schedule time, format, room/link and set `schedule_status_code = 'AWAITING'`;
+6. record Security Audit;
+7. on any validation, conflict, or audit failure, rollback all changes: original schedule and `CONFIRMED` status remain intact.
 ### `copy_interview_schedule()` — dedicated trusted Save-Copy command
 The Copy UI may create a client-side draft/prefill, but that draft performs **no DB mutation**. Pressing **Save Copy** invokes exactly this trusted command; no generic “normal save command” may infer Copy semantics.
 
@@ -143,8 +221,13 @@ Input complete current list; expected versions; temporary ordering strategy prev
 
 ## 9. Reports
 ### `save_interviewer_report()`
-No scoring. Field-aware patch. HR stale edit blocks/reloads; Interviewer wins same-field conflict under merge rule. Only changes to the 3 Final Decision fields update `decision_updated_at/by`; qualitative edits never move Final Decision Source.
-
+No scoring. Field-aware patch:
+- Request passes `expected_version_no` and `base_values` for each patched field;
+- Server locks report row and compares current DB value with `base_values`:
+  - `current == base`: safe field patch;
+  - `current != base`: same-field conflict. HR stale conflict rejects with `STALE_VERSION`; Interviewer editing own report resolves with owner-wins. Disjoint fields merge cleanly.
+- Only actual changes to the 3 Final Decision fields update `decision_updated_at/by`; qualitative edits never move Final Decision Source.
+- **Blank conclusion allowed (Owner Decision F):** HR may set `HIRED` or `REJECTED` even when Conclusion, Expected Job, and Expected Recruitment Time are blank. No Conclusion-required invariant.
 ### `update_hr_report_note(interview_id, hr_report_note, expected_version)`
 Requires `reports.view + reports.manage_status`. Edits **only** HR-only `hr_report_note`; it never changes `report_status_code`, Application `hr_owner_id`, or `interview_note`. Optimistic versioning + audit are mandatory. `hr_report_note` remains excluded from every Interviewer-readable projection.
 
@@ -325,3 +408,53 @@ For Phase 1, retained **PRODUCTION** Email Outbox/Email History usage is downstr
 
 
 Plain contract summary: retained PRODUCTION email usage is downstream history and makes normal production Submission hard-delete ineligible; `delete_unused_submission` is MAINTENANCE_ONLY.
+
+## Stable Command Error Codes
+All backend commands, TypeScript adapters, and RPCs use this canonical stable error-code registry:
+
+| Error Code | Category / Meaning |
+|---|---|
+| `UNAUTHENTICATED` | Caller is not authenticated |
+| `FORBIDDEN` | Caller lacks required permission or authorization |
+| `NOT_FOUND` | Target entity not found |
+| `INVALID_STATE` | Operation illegal in target entity's current status |
+| `VALIDATION_ERROR` | Request payload fails validation contract or bounds |
+| `STALE_VERSION` | Optimistic concurrency conflict / version mismatch |
+| `FORM_SESSION_EXPIRED` | Candidate Form Session expired |
+| `UPLOAD_RESERVATION_EXPIRED` | Upload reservation expired |
+| `DUPLICATE_APPLICATION` | Exact duplicate Application assignment |
+| `APPLICATION_DURABLE_IDENTITY_IMMUTABLE` | Attempt to mutate immutable Application identity |
+| `PRIVACY_NOTICE_UNAVAILABLE` | No current effective privacy notice published |
+| `PRIVACY_NOTICE_CHANGED` | Privacy notice changed between session open and submit/update |
+| `SCHEDULE_CONFLICT_CANDIDATE` | Candidate has overlapping operational schedule |
+| `SCHEDULE_CONFLICT_INTERVIEWER` | Interviewer has overlapping operational schedule |
+| `SCHEDULE_CONFLICT_ROOM` | Room has overlapping operational schedule |
+| `LATEST_ROUND_REQUIRED` | Operation permitted only on latest Interview round |
+| `ROOT_ADMIN_PROTECTED` | Root Admin account identity protected |
+| `IDENTITY_REBIND_FORBIDDEN` | Identity rebinding not authorized |
+| `USER_INACTIVE` | Caller or target user account is inactive |
+| `UPLOAD_LIMIT_EXCEEDED` | File size or count limit exceeded |
+| `UNSUPPORTED_FILE_TYPE` | File extension/type not permitted |
+| `MALWARE_SCAN_REQUIRED` | File has not passed malware scan |
+| `IDEMPOTENCY_REPLAY` | Idempotent command replay |
+| `INVALID_PERMISSION_DEPENDENCY` | Permission prerequisite violated |
+| `INACTIVE_DOCUMENT_TYPE` | Document type is inactive in master data |
+| `INVALID_DOCUMENT_TYPE` | Unknown document type |
+| `INVALID_FILE_TYPE` | Declared file type invalid |
+| `FILE_SIZE_EXCEEDED` | File exceeds maximum allowed size (5 MB) |
+| `INVALID_ACTION` | Action code or transition not permitted |
+| `INVALID_CONTENT_SIGNATURE` | File magic bytes do not match declared type |
+| `INVALID_MIME_TYPE` | MIME type not allowed |
+| `INVALID_DOCUMENT_TARGET` | Staged document target logical document invalid |
+| `UPLOAD_RESERVATION_NOT_CLEAN` | Upload reservation not in clean/validated state |
+| `MAX_FIVE_CURRENT_DOCUMENTS_EXCEEDED` | Total current files exceeds maximum of 5 |
+| `REQUIRED_CV_DOCUMENT_MISSING` | Mandatory CV/Resume missing from document plan |
+| `HISTORICAL_SUBMISSION_READ_ONLY` | Historical Submission status cannot be mutated |
+| `ALREADY_EXISTS_INACTIVE` | Target entity already exists in inactive state |
+| `INVALID_HIERARCHY` | Unit, Team, and Position hierarchy mismatch |
+| `INTERNAL_ERROR` | Unexpected server or database exception |
+| `CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED` | Participant is inactive and must be reassigned before scheduling |
+| `INACTIVE_QUALIFICATION_NOT_SELECTABLE` | Selected qualification level is inactive |
+| `ACTIVE_APPLICATION_OWNER_REASSIGN_REQUIRED` | Cannot inactivate HR user or remove HR role while user owns active Applications |
+| `FUTURE_INTERVIEW_PARTICIPANT_REASSIGN_REQUIRED` | Cannot inactivate user while user is current participant on future operational interview |
+| `USER_INACTIVE_NOT_SELECTABLE` | Inactive internal user cannot be re-added as active participant |

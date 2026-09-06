@@ -1,5 +1,5 @@
 version: '1.3'
-baseline: Full Handover v1.17 / Design System v1.8 / Responsive Prototype v1.10
+baseline: Full Handover v1.18 / Design System v1.8 / Responsive Prototype v1.10
 rule: Critical production-intent controls require expected state/navigation/dialog semantics; generic toast-only fallback is insufficient.
 critical_controls:
 - control_id: APP-INBOX-BULK-MANUAL-STATUS

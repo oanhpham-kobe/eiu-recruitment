@@ -100,15 +100,17 @@ Khi tạo Application mới, hệ thống tạo Interview Session Vòng 1:
   - single assignment có thể nhập ngay;
   - bulk assignment để trống.
 
-## 7. Tạo vòng tiếp theo
+## 7. Tạo vòng tiếp theo (Owner Decision A)
 
 - `1 Application → N Interview Sessions`.
 - Vòng mới giữ nguyên identity của Application.
 - `round_no = max(round_no) + 1`.
 - Demo Topic **luôn để trống** ở vòng mới; HR tự điền.
-- Chỉ được tạo vòng mới nếu record có round_no lớn nhất đang Active.
-- Nếu round cuối đang Inactive → phải Reactivate hoặc Hard Delete hợp lệ trước; không tạo vòng mới.
-
+- **Điều kiện tạo vòng mới (Create-next-round gate):**
+  1. Record có `round_no` lớn nhất hiện có **bắt buộc đang Active** (`is_active=true`). Nếu round cuối đang Inactive → phải Reactivate hoặc Hard Delete hợp lệ trước; không tạo vòng mới.
+  2. Round active cuối cùng **chưa có kết quả `HIRED`** (`report_status_code <> 'HIRED'`). Kết quả `HIRED` là điểm kết thúc tuyển dụng cho Application này, không được tạo thêm vòng sau.
+  3. Trạng thái lịch `CANCELLED` (Đã hủy) **không chặn tạo vòng tiếp theo**; chỉ cần round active cuối cùng chưa `HIRED`.
+- Schedule Status không có lộ trình chuyển đổi bắt buộc; cho phép nhảy trực tiếp giữa các trạng thái hợp lệ. Mỗi Interview round có đúng một Schedule Status tại một thời điểm.
 ### Delete/Inactive round
 - Chỉ round có `round_no` lớn nhất hiện có mới được Delete/Inactive.
 - Không được Delete/Inactive vòng giữa khi còn vòng sau.

@@ -6,11 +6,16 @@ Required for Candidate Submit, Create Application, Create Next Round, Copy/Save 
 ## Optimistic locking
 Mutable entities use `version_no`; client sends expected version. Stale update fails unless the specific report merge algorithm safely merges disjoint patches.
 
-## Report concurrency
-Each Interviewer owns a distinct report. HR may edit that report with permission. Patch only changed fields. Disjoint field changes can merge. Same-field conflict: Interviewer ownership wins; HR stale write is rejected/reloaded. No stale whole-row overwrite.
-
-Decision fields form one logical block for source semantics; any final-field change updates `decision_updated_at/by`; qualitative edits do not. Timestamp + report UUID tie-break is sufficient Phase 1; revision sequence is optional P2 hardening.
-
+## Report concurrency & Field-Aware Merge
+Mỗi Interviewer sở hữu một report riêng. HR có thể sửa report theo quyền được cấp.
+- Request patch gửi kèm `expected_version_no` và `base_values` cho từng field được sửa.
+- Server lock row report và so sánh giá trị hiện tại trong DB với `base_values`:
+  - `current == base`: patch an toàn;
+  - `current != base`: conflict trên cùng field.
+- Với HR: conflict cùng field → từ chối với `STALE_VERSION` để client reload; các field disjoint được merge tự động.
+- Với Interviewer sửa report của chính mình: owner-wins cho eligible conflict cùng field; các field disjoint được merge.
+- Tuyệt đối không cho phép ghi đè toàn bộ row (whole-row overwrite) khi stale.
+- Decision fields form one logical block: chỉ khi một trong 3 final fields thực sự thay đổi thì mới cập nhật `decision_updated_at/by`.
 ## Mandatory schedule consistency
 Transaction alone under Read Committed is insufficient. Every mutation that can create/restore an operational interval must:
 1. identify Candidate, Room, current Interviewers;
@@ -26,6 +31,19 @@ Interval semantic: `[start_at,end_at)`. Do not use the legacy overloaded `effect
 - `resource_blocking` = `access_active` + schedule status not `CANCELLED` + both interval endpoints present.
 Every `resource_blocking` Interview participates in conflict checks, whether or not it is Current Round.
 
+
+## Confirmed Reschedule Concurrency (Owner Decision J)
+Khi một Interview đang ở trạng thái `CONFIRMED` cần đổi lịch/phòng/meeting link:
+- Thao tác diễn ra qua một backend transaction nguyên tử duy nhất (`reschedule_confirmed_interview`);
+- Kiểm tra quyền `interviews.manage`, optimistic version, idempotency;
+- Thực hiện khóa tài nguyên Candidate/Room/Interviewer và kiểm tra conflict theo framework chuẩn;
+- Cập nhật thời gian/phòng/link và đồng thời chuyển `schedule_status_code` thành `AWAITING` trong cùng một transaction;
+- Nếu có bất kỳ lỗi validation, conflict hoặc audit nào, toàn bộ transaction rollback: lịch cũ và trạng thái `CONFIRMED` ban đầu được giữ nguyên vẹn.
+
+## Deterministic Bulk Locking
+Tất cả các thao tác hàng loạt (bulk operations) tác động lên nhiều row bắt buộc phải:
+1. Sắp xếp danh sách target ID theo thứ tự tăng dần xác định (deterministic ascending order) trước khi acquire row locks để chống deadlock;
+2. Áp dụng giới hạn kích thước batch xác định (bounded batch size: tối đa 100 items/lần).
 ## Participant concurrency
 Add/remove/re-add/reorder lock the Interview. Reorder writes a complete ordered set; no duplicate current order. Re-add to an already scheduled Interview revalidates conflict.
 

@@ -1,4 +1,4 @@
-version: '1.17'
+version: '1.18'
 commands:
 - command: provision_candidate_identity
   actor: candidate_verified
@@ -75,15 +75,20 @@ commands:
   coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
   acceptance:
   - AC-UP-01
+  - AC-PRIV-STG-01
   audit: REQUIRED_WHERE_DEFINED
   idempotency: REQUIRED_FOR_MUTATION_RETRY_WHERE_APPLICABLE
   side_effects:
   - privacy_acknowledgement
+  - strong_current_privacy_verification
   - refresh_candidate_current_profile
   - enqueue_hr_notification_exact_submission
   - materialize_documents
   writes: []
-  guarantees: []
+  guarantees:
+  - reject_hr_only_fields
+  - canonical_candidate_fields_only
+  - privacy_notice_changed_rejection
 - command: update_candidate_submission
   actor: candidate_owner_NEW
   permission: candidate_self
@@ -94,6 +99,7 @@ commands:
   - AC-CAND-UPD-EMAIL-01
   - AC-CONC-DOC-01
   - AC-PRIV-EDIT-01
+  - AC-PRIV-STG-01
   - AC-NOTIFY-01
   - AC-DOC-TARGET-03
   - AC-DOC-TARGET-04
@@ -101,6 +107,7 @@ commands:
   idempotency: REQUIRED_FOR_MUTATION_RETRY_WHERE_APPLICABLE
   side_effects:
   - privacy_acknowledgement
+  - strong_current_privacy_verification
   - refresh_candidate_current_profile_if_latest
   - enqueue_hr_notification_exact_submission
   - materialize_staged_documents
@@ -110,6 +117,9 @@ commands:
   - save_time_current_target_recheck
   - max_five_current_files
   - current_cv_required
+  - preserve_hr_only_fields
+  - canonical_candidate_fields_only
+  - privacy_notice_changed_rejection
 - command: open_submission
   actor: hr
   permission: submissions.view
@@ -958,3 +968,113 @@ commands:
   guarantees:
   - ALL_OR_NOTHING
   - current_round_only
+- command: reschedule_confirmed_interview
+  actor: hr
+  permission: interviews.manage
+  contract_file: 37_BACKEND_COMMAND_CONTRACTS.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance:
+  - AC-RESCHED-01
+  audit: REQUIRED
+  idempotency: REQUIRED_FOR_MUTATION_RETRY_WHERE_APPLICABLE
+  side_effects:
+  - shared_candidate_room_interviewer_conflict_recheck
+  - update_schedule_and_reset_status_awaiting
+  writes:
+  - interviews.schedule_status_code
+  - interviews.start_at
+  - interviews.end_at
+  - interviews.interview_format_id
+  - interviews.room_id
+  - interviews.meeting_link
+  guarantees:
+  - confirmed_status_required
+  - atomic_rollback_on_conflict
+- command: correct_submission_candidate_fields_by_hr
+  actor: hr
+  permission: submissions.edit
+  contract_file: 37_BACKEND_COMMAND_CONTRACTS.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance:
+  - AC-CAND-CORR-01
+  audit: REQUIRED
+  idempotency: REQUIRED_FOR_MUTATION_RETRY_WHERE_APPLICABLE
+  side_effects:
+  - refresh_candidate_current_profile_if_latest
+  - audit_changed_field_names
+  writes:
+  - submissions.full_name
+  - submissions.phone
+  - submissions.date_of_birth
+  - submissions.gender_code
+  - submissions.current_address
+  - submissions.version_no
+  guarantees:
+  - submission_row_lock
+  - optimistic_version_check
+  - allowed_fields_only_full_name_phone_dob_gender_address
+  - audit_field_names_no_full_pii_dump
+- command: recover_candidate_email_identity
+  actor: root_or_delegated_hr
+  permission: candidates.identity_manage
+  contract_file: 37_BACKEND_COMMAND_CONTRACTS.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance:
+  - AC-CAND-REC-01
+  audit: REQUIRED
+  idempotency: REQUIRED_FOR_MUTATION_RETRY_WHERE_APPLICABLE
+  side_effects:
+  - update_auth_and_candidate_identity
+  - revoke_obsolete_sessions
+  writes:
+  - candidates.email
+  - candidates.auth_user_id
+  guarantees:
+  - root_or_explicit_identity_manage_permission
+  - unique_new_email
+  - historical_submission_email_snapshot_preserved
+error_codes:
+- UNAUTHENTICATED
+- FORBIDDEN
+- NOT_FOUND
+- INVALID_STATE
+- VALIDATION_ERROR
+- STALE_VERSION
+- FORM_SESSION_EXPIRED
+- UPLOAD_RESERVATION_EXPIRED
+- DUPLICATE_APPLICATION
+- APPLICATION_DURABLE_IDENTITY_IMMUTABLE
+- PRIVACY_NOTICE_UNAVAILABLE
+- PRIVACY_NOTICE_CHANGED
+- SCHEDULE_CONFLICT_CANDIDATE
+- SCHEDULE_CONFLICT_INTERVIEWER
+- SCHEDULE_CONFLICT_ROOM
+- LATEST_ROUND_REQUIRED
+- ROOT_ADMIN_PROTECTED
+- IDENTITY_REBIND_FORBIDDEN
+- USER_INACTIVE
+- UPLOAD_LIMIT_EXCEEDED
+- UNSUPPORTED_FILE_TYPE
+- MALWARE_SCAN_REQUIRED
+- IDEMPOTENCY_REPLAY
+- INVALID_PERMISSION_DEPENDENCY
+- INACTIVE_DOCUMENT_TYPE
+- INVALID_DOCUMENT_TYPE
+- INVALID_FILE_TYPE
+- FILE_SIZE_EXCEEDED
+- INVALID_ACTION
+- INVALID_CONTENT_SIGNATURE
+- INVALID_MIME_TYPE
+- INVALID_DOCUMENT_TARGET
+- UPLOAD_RESERVATION_NOT_CLEAN
+- MAX_FIVE_CURRENT_DOCUMENTS_EXCEEDED
+- REQUIRED_CV_DOCUMENT_MISSING
+- HISTORICAL_SUBMISSION_READ_ONLY
+- ALREADY_EXISTS_INACTIVE
+- INVALID_HIERARCHY
+- INTERNAL_ERROR
+- CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED
+- INACTIVE_QUALIFICATION_NOT_SELECTABLE
+- ACTIVE_APPLICATION_OWNER_REASSIGN_REQUIRED
+- FUTURE_INTERVIEW_PARTICIPANT_REASSIGN_REQUIRED
+- USER_INACTIVE_NOT_SELECTABLE

@@ -1,11 +1,11 @@
-# 70. Semantic Cross-layer Validation Gate — v1.17
+# 70. Semantic Cross-layer Validation Gate — v1.18
 
 **Status:** CURRENT / NORMATIVE
 
-The validator must fail on semantic drift, not only missing files or tokens. Current expected package versions are **Technical Architecture v1.17** and **Design System v1.8**.
+The validator must fail on semantic drift, not only missing files or tokens. Current expected package versions are **Technical Architecture v1.18** and **Design System v1.8**.
 
 ## Mandatory semantic checks
-1. **Source governance:** CURRENT entrypoints point to Alignment Resolution 93, Domain Glossary 73, Privacy Publication Runbook 78, Responsive Integration 81 and Pre-code Gate 94. HISTORICAL/SUPERSEDED modules are excluded from normative All-in-One.
+1. **Source governance:** CURRENT entrypoints point to Alignment Resolution 99, Domain Glossary 73, Privacy Publication Runbook 78, Responsive Integration 81 and Pre-code Gate 100. HISTORICAL/SUPERSEDED modules are excluded from normative All-in-One.
 2. **Acceptance traceability:** Acceptance IDs are unique; command acceptance references exist and behavior-specific commands carry required guarantee tags.
 3. **One protected mutable field → one command:** `interviews.report_status_code` has exactly one trusted writer (`change_report_status`); `update_hr_report_note` cannot write Report Status.
 4. **Outcome side effects:** every Application/current-round/outcome-changing command declares authoritative Submission recalculation where required.
@@ -23,7 +23,7 @@ The validator must fail on semantic drift, not only missing files or tokens. Cur
 16. **Email/malware/upload:** provider delivery is at-least-once; client retry prevents duplicate logical enqueue only; malware CLEAN and frozen Phase-1 whitelist/5 MB/max-five rules are mandatory.
 17. **Delete lifecycle:** unused hard-delete capabilities map to exact permissions or explicit MAINTENANCE_ONLY paths; empty auto Round 1 exception is consistent.
 18. **Current-source consolidation:** CURRENT/NORMATIVE modules state canonical behavior in place and do not rely on later versioned clarification blocks to override earlier text.
-19. **Version coherence:** schema/design/current status headers match Technical v1.17 / Design v1.8 / Responsive Prototype v1.10.
+19. **Version coherence:** schema/design/current status headers match Technical v1.18 / Design v1.8 / Responsive Prototype v1.10.
 20. **Batch selection entity coherence:** Application Inbox checkbox entity = Candidate; `bulk_set_latest_submission_manual_status` accepts Candidate IDs, resolves deterministic latest Submission under lock, revalidates expected latest IDs/versions, and is the only active batch writer for manual NEW/READ.
 21. **Candidate lifecycle separation:** Candidate Inactive never appears in the Submission status enum or writes `INACTIVE` to Submission; parent Candidate summary derives latest Submission state.
 22. **Phase-1 navigation:** rendered persona routes are a subset of the frozen Phase-1 navigation registry; `FUTURE_HIDDEN / NOT_RENDERED` routes are absent from ordinary UAT navigation.

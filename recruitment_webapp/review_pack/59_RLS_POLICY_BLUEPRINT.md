@@ -20,21 +20,29 @@ Candidate can access own Submission document metadata/path only through authoriz
 
 ## HR
 Permission helpers evaluate active `app_users`, role/permission, with Root implicit allow.
-- `submissions.view`: read only.
+- `submissions.view`: read Submission rows only.
 - `submissions.status`: authorizes status mutation including open NEW→READ.
+- `applications.view` / `applications.manage`: authorizes Application table SELECT (`Root OR applications.view OR applications.manage`). **Tuyệt đối không dùng `submissions.view` để cấp quyền SELECT bảng applications.**
+- `interviews.view` / `interviews.manage`: authorizes Interview table SELECT (`Root OR interviews.view OR interviews.manage`). **Tuyệt đối không dùng `submissions.view` để cấp quyền SELECT bảng interviews.**
 - other mutations require their granular code.
 - default HR receives all HR codes, but RLS/command still evaluates explicit effective permissions.
-
 ## Interviewer
-Contextual visibility requires all:
-`app_user.is_active`
-`application.is_active`
-`interview.is_active`
-`participant.is_current`
-`visible_to_interviewers=true`.
+### Historical READ (Owner Decision I)
+Interviewer có quyền **SELECT / READ các Interview round và report lịch sử mà họ đã trực tiếp tham gia**:
+- `app_user.is_active`
+- `application.is_active`
+- `interview.is_active`
+- `participant.is_current` trên chính Interview đó
+- `visible_to_interviewers=true`.
+Application có Current Round mới **không tước quyền đọc** các round trước mà interviewer đã tham gia. Không có quyền xem các vòng hoặc Candidate mà interviewer không tham gia.
 
-Interviewer report write is limited to the report associated with that current Participant and non-final Report Status. Interviewer may read shared report preview fields but **never** `hr_report_note`.
-
+### Report WRITE (Ghi / Sửa Report)
+Quyền ghi/sửa báo cáo yêu cầu:
+- Target Interview là **Current Round của Application**;
+- Caller sở hữu report gắn với current participant row của mình;
+- Target Interview đang `access_active` và visible;
+- `report_status_code` của **chính target Interview đó đang ở trạng thái non-final / writable** (không phải `HIRED` hay `REJECTED`).
+Interviewer may read shared report preview fields but **never** `hr_report_note`.
 ## Internal identity
 `users.directory_manage` can mutate business profile and unbound email typo only. Bound `auth_user_id/email/provider binding` cannot be changed by this permission. Root-only identity command executes through a protected RPC/recovery path.
 

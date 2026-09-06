@@ -69,7 +69,7 @@ These are review references, not brittle CSS device detections.
 
 ## Current owner-approved responsive UAT rules — v1.8
 
-The executable reference is Responsive Prototype **v1.10** bundled with Full Handover v1.17. These rules are normative for the next production implementation/UAT:
+The executable reference is Responsive Prototype **v1.10** bundled with Full Handover v1.18. These rules are normative for the next production implementation/UAT:
 
 - Representative QA widths: 360, 390, 430, 768, 1024 and desktop reference; constrained-height overlay checks are also required.
 - Mobile Candidate forms use a one-column layout; tablet/desktop may use the approved multi-column layout. Do not reduce operational text below the Design System minimum merely to fit a desktop composition.

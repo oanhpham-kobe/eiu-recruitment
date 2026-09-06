@@ -1,5 +1,7 @@
 # 98. Technical Pre-code / Implementation Authorization Gate — v1.17
 
+> **HISTORICAL / SUPERSEDED:** retained as v1.17 evidence only. Current authority is v1.18 alignment/gate in `source_registry.yaml`.
+
 **Status:** TECHNICAL SPECIFICATION FROZEN / READY TO IMPLEMENT  
 **Date:** 03/09/2026
 

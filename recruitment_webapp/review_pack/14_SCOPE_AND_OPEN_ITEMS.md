@@ -1,4 +1,4 @@
-# 14. Scope & Open Items — v1.17
+# 14. Scope & Open Items — v1.18
 
 ## Business Logic
 **v1.2 FROZEN.** Reopen only through Change Request or a proven contradiction.
@@ -7,7 +7,7 @@
 **v1.8 CURRENT.** Desktop foundation current; Desktop prototype must be resynced/UAT-approved. Detailed iPad/mobile design is not frozen. Candidate Portal mobile is a go-live requirement.
 
 ## Technical Architecture
-**v1.17 TECHNICAL SPECIFICATION FROZEN / READY TO IMPLEMENT.** Current technical source extends through docs 97–98 and uses `source_registry.yaml` for CURRENT/HISTORICAL governance. Technical Specification Freeze is semantic/source freeze; post-coding implementation evidence is a separate gate.
+**v1.18 TECHNICAL SPECIFICATION FROZEN / READY TO IMPLEMENT.** Current technical source extends through docs 99–100 and uses `source_registry.yaml` for CURRENT/HISTORICAL governance. Technical Specification Freeze is semantic/source freeze; post-coding implementation evidence is a separate gate.
 
 ## Owner decisions
 Closed:

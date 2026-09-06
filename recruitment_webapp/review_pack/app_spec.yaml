@@ -1,7 +1,7 @@
 product:
   name: App Tuyển dụng EIU
-  document_version: '1.17'
-  updated_at: '2026-09-03'
+  document_version: '1.18'
+  updated_at: '2026-09-06'
   business_logic_core:
     version: '1.2'
     status: FROZEN
@@ -9,7 +9,7 @@ product:
     version: '1.8'
     status: CURRENT_RESPONSIVE_UAT_PENDING
   technical_architecture:
-    version: '1.17'
+    version: '1.18'
     status: TECHNICAL_SPECIFICATION_FROZEN
   production_ready: false
 stack_target:
@@ -324,7 +324,7 @@ candidate_update:
   notification_quota_must_not_rollback_valid_save: true
 internal_user:
   hard_delete: MAINTENANCE_ONLY_UNBOUND_NON_HR_NON_ROOT_UNREFERENCED
-version: '1.17'
+version: '1.18'
 batch_operations:
   candidate_active: bulk_set_candidate_active / ALL_OR_NOTHING
   submission_manual_status: bulk_set_latest_submission_manual_status / Candidate selection / ALL_OR_NOTHING / deterministic latest Submission preview+version recheck
@@ -345,7 +345,7 @@ responsive_prototype:
   version: '1.10'
   status: READY_FOR_OWNER_VISUAL_UAT
   included_in_full_handover: true
-  authority: Design System v1.8 + Full Handover v1.17
+  authority: Design System v1.8 + Full Handover v1.18
   status_dropdown: ANCHOR_TO_TRIGGER_BOUNDS_NOT_POINTER
 candidate_form_session:
   business_validity: OPEN_AND_UNEXPIRED_AT_TRANSACTION_TIME

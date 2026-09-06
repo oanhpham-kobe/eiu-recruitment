@@ -38,7 +38,8 @@ Không commit secret vào repo. Deployment/API tokens phải nằm trong secure 
 - migration CI checks;
 - apply staging before production;
 - rollback/forward-fix runbook;
-- seed only master/test data phù hợp, không production PII.
+- seed only master/test data phù hợp, không production PII;
+- quy tắc expand/contract: thay đổi schema trong production phải đi theo hướng additive trước, cập nhật code tương thích, backfill/validate, và sau cùng mới contract/deprecate; áp dụng statement/lock timeout phù hợp; tuyệt đối không rewrite các migration đã được accepted trong lịch sử.
 
 ## 5. Preview branch risk guard
 
@@ -78,6 +79,16 @@ Alert tối thiểu:
 - no direct manual production DB edits ngoài emergency runbook;
 - post-deploy smoke tests.
 
+
+## Database-enabled Integration CI Gate
+Mỗi integration commit trên CI bắt buộc chạy qua job DB integration tự động:
+1. Checkout exact pushed integration SHA;
+2. Cài đặt Supabase CLI theo phiên bản pinned;
+3. Khởi động local Supabase;
+4. Chạy `supabase db reset` (replay sạch từ số 0);
+5. Kiểm tra schema, RPC smoke, RLS persona assertions (anon, Candidate, HR, Root);
+6. Test Candidate Submit/Update, quy trình document ADD/REPLACE/DELETE và outcome resolver;
+7. Dọn dẹp/tắt local Supabase.
 
 ## 9. Dependency pinning / Auth regression
 - Commit package lockfile.

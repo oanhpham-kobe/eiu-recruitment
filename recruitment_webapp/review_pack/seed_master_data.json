@@ -259,6 +259,11 @@
       "label_en": "Activate/inactivate candidates"
     },
     {
+      "code": "applications.view",
+      "label_vi": "Xem Application",
+      "label_en": "View applications"
+    },
+    {
       "code": "applications.manage",
       "label_vi": "Quản lý Application",
       "label_en": "Manage applications"
@@ -352,6 +357,11 @@
       "code": "emails.history_delete",
       "label_vi": "Xóa lịch sử email vận hành theo rule",
       "label_en": "Delete operational email history by rule"
+    },
+    {
+      "code": "candidates.identity_manage",
+      "label_vi": "Khôi phục email đăng nhập Candidate",
+      "label_en": "Recover candidate login email identity"
     }
   ],
   "cancellation_reason": [
@@ -399,6 +409,7 @@
     "submissions.edit",
     "submissions.status",
     "candidates.active_manage",
+    "applications.view",
     "applications.manage",
     "interviews.view",
     "interviews.manage",
@@ -451,7 +462,7 @@
       "submissions.view"
     ],
     "applications.manage": [
-      "submissions.view"
+      "applications.view"
     ],
     "interviews.manage": [
       "interviews.view"

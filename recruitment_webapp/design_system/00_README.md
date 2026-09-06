@@ -61,7 +61,7 @@ Design System hiện hành cho App Tuyển dụng EIU, cập nhật sau:
 - `PAGE_OVERRIDES_V1_8.md` — normative page-specific security/lifecycle/privacy rules.
 
 ## Status
-- **Business Logic:** Core v1.2 FROZEN; technical amendments are tracked in Full Handover v1.17 without reopening frozen HR workflow.
+- **Business Logic:** Core v1.2 FROZEN; technical amendments are tracked in Full Handover v1.18 without reopening frozen HR workflow.
 - **Design System:** v1.8 CURRENT.
 - **Responsive Prototype:** v1.10 cross-layer-aligned; Owner Visual UAT still required; NOT FROZEN.
 - **Responsive detailed design:** NOT FROZEN.
@@ -102,5 +102,5 @@ Design System hiện hành cho App Tuyển dụng EIU, cập nhật sau:
 
 
 ### v1.8 responsive/UAT additions
-- Responsive Prototype v1.10 is the executable reference bundled with Full Handover v1.17.
+- Responsive Prototype v1.10 is the executable reference bundled with Full Handover v1.18.
 - See `CHANGELOG_V1_8.md`, `RESPONSIVE.md`, `PATTERNS.md`, and `PAGE_OVERRIDES_V1_8.md`.

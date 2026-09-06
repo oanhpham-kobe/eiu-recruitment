@@ -30,10 +30,30 @@ One form submission snapshot:
 
 Invariant: `email_snapshot = Candidate.email` at creation/update of identity snapshot.
 
-Candidate writable DTO excludes all internal/system fields. HR uses a separate HR patch DTO.
+Candidate-owned mutable fields in Candidate Submit/Edit:
+- `full_name` (min 1, max 200, trimmed)
+- `phone` (max 32, normalized)
+- `date_of_birth` (1900-01-01 .. TODAY)
+- `gender_code` (`MALE` | `FEMALE`)
+- `current_address` (max 500)
+- Education child rows: `period_text` (<=100), `qualification_id` (active FK), `major` (<=255), `institution` (<=255), `sort_order` (1-based 1..n). Optional.
+- Candidate documents.
 
-Children: Education, Working Experiences, Activities, Documents, Privacy Acknowledgement.
+Verified email (`email_snapshot`) derives from Auth and is immutable for the Candidate.
 
+HR-only fields: `other_info`, `hr_note`, `submission_work_experiences`, `submission_activities`. Candidate Submit/Edit **tuyệt đối không nhận, không sửa, không xóa và không ghi đè** các field/bảng con này.
+
+Children: Education, Working Experiences (HR-only), Activities (HR-only), Documents, Privacy Acknowledgement.
+
+### Privacy Acknowledgement
+Physical identity: `(submission_id, notice_version)`.
+Physical columns:
+- `privacy_acknowledgement_id` (PK, UUID)
+- `submission_id` (FK to submissions)
+- `notice_version` (text)
+- `acknowledged_at` (timestamptz)
+- `source_code` (text, e.g. `'CANDIDATE_PORTAL'`)
+Không có các cột `candidate_id`, `submission_version_no`, hay `privacy_notice_version`.
 ## 3. Submission Documents
 ### Submission Document Logical Header
 Stable business identity for one document across immutable versions:
@@ -44,6 +64,11 @@ Stable business identity for one document across immutable versions:
 
 The logical header owns **parent Submission + document type**. Those semantic fields are immutable once created.
 
+**Non-unique document type invariant:** `submission_document_logicals(submission_id, document_type_id)` **KHÔNG PHẢI là unique key**. Một Submission có thể có nhiều logical document cùng `document_type_id` (ví dụ 2 file CERTIFICATE) miễn là tổng số file hiện hành thỏa mãn giới hạn `max 5 files`. Staged `ADD` luôn tạo một logical document header mới; staged `REPLACE` và `DELETE` bắt buộc trỏ tới một `logical_document_id` cụ thể đã tồn tại.
+
+Metadata creator / uploader tuân thủ XOR:
+- Logical header do Candidate tạo: `created_by_candidate_id = Candidate`, `created_by_app_user_id = NULL`.
+- Document version do Candidate upload: `uploaded_by_candidate_id = Candidate`, `uploaded_by_app_user_id = NULL`.
 ### Submission Document Version
 Immutable storage/version record:
 - `document_id`

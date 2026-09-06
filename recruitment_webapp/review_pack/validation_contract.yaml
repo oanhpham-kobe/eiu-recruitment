@@ -1,5 +1,5 @@
-version: '1.17'
-updated_at: '2026-09-03'
+version: '1.18'
+updated_at: '2026-09-06'
 text_policy:
   default: PLAIN_TEXT
   raw_html_input: FORBIDDEN
@@ -25,6 +25,11 @@ fields:
     required: true
     min_date: '1900-01-01'
     max_date: TODAY
+  gender:
+    required: true
+    allowed_values:
+      - MALE
+      - FEMALE
   major:
     max_length: 255
   institution:
@@ -129,6 +134,8 @@ privacy_notice:
   source: SERVER_PUBLISHED
   form_session_pinned: true
   arbitrary_client_version: REJECT
+  submit_update_requires_current_effective_version: true
+  changed_notice_error: PRIVACY_NOTICE_CHANGED
 submission_aggregate:
   document_only_save_bumps_version: true
 rules:
@@ -149,8 +156,8 @@ rules:
 - id: V19-CAND-EMAIL
   rule: Candidate verified email immutable
 current_baseline:
-  full_handover: '1.17'
-  technical_architecture: '1.17'
+  full_handover: '1.18'
+  technical_architecture: '1.18'
   design_system: '1.8'
   responsive_prototype: '1.10'
 candidate_form_session_lifecycle:
