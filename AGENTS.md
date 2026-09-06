@@ -171,14 +171,27 @@ Use:
 
 If tasks touch the same files, schema objects, migrations, or shared contract, serialize ownership or explicitly coordinate the merge boundary.
 
-## Autonomy & Parallel Coordination Authority
 
-For autonomous execution, scheduling, dual-lane eligibility, worker lifecycle, and integration flows, the single authoritative policies are:
-- `project_control/AUTONOMY_PARALLEL_GOVERNANCE.md` (scheduler, auto-advance, parallel gate, and lifecycle authority)
-- `project_control/AUTONOMY_RUN_STATE.yaml` (single live runtime state authority)
-- `project_control/TASK_REGISTRY.yaml` & `SLICE_REGISTRY.yaml` (task DAG structure and slice completion authority)
+## Execution mode
 
-All coordinators and agents must adhere to the ONE_FACT_ONE_AUTHORITY principle: derived or summary documents cannot override these canonical surfaces.
+`AUTONOMOUS` and `BOUNDED` are the only execution modes. Task type is
+orthogonal: FEATURE, BUGFIX, or HOTFIX does not create a third mode.
+
+- `AUTONOMOUS` uses the continuous lifecycle, including the OMP implementation
+  reviewer and targeted exact-SHA re-review after a bounded repair.
+- `BOUNDED` executes only the Planner-authorized work set, verifies, commits,
+  reports, and stops. It never schedules an internal implementation reviewer or
+  repair/re-review chain. Integration or CI occurs only when the bounded prompt
+  explicitly authorizes it; no next-frontier task is inferred or dispatched.
+
+The runtime `execution_mode` and the detailed lifecycle rules live only in:
+- `project_control/AUTONOMY_PARALLEL_GOVERNANCE.md`
+- `project_control/AUTONOMY_RUN_STATE.yaml`
+
+For scheduling, task-start, review, repair, integration, or CI decisions, read
+those two authorities before acting. `TASK_REGISTRY.yaml` and
+`SLICE_REGISTRY.yaml` remain the DAG/slice authority. Derived or summary
+documents cannot override these canonical surfaces.
 ---
 
 # 4. OMP-Native Project Layout
@@ -332,13 +345,19 @@ SKILL_USAGE:
 Do not copy skill contents into `project_control` or claim historical skill use without evidence. For an in-progress task released before this contract, record actual reads truthfully; load an unread required skill before remaining dependent work when possible, and let independent review determine any needed focused repair.
 ## 6.1 General implementation
 
-For a well-defined implementation task:
-
+In `AUTONOMOUS`:
 1. task Executor
 2. task specialist skills
 3. focused verification
 4. independent implementation Reviewer (`eiu-code-review` where applicable)
 5. `verification-before-completion`
+
+In `BOUNDED`, the explicit Planner work set controls completion: Executor,
+focused verification, commit, report, and stop. Never add an internal
+implementation Reviewer or repair/re-review continuation. Integration or CI
+requires explicit bounded-prompt authorization; a next-frontier task is never
+inferred or dispatched.
+
 ## 6.2 React / TypeScript UI
 
 For material `.ts` / `.tsx`, React components, hooks, forms, client state, or interactive UI:

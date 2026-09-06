@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,32 @@ DEPENDENCY_ENFORCED_STATUSES = {
     "IN_PROGRESS",
     "REVIEW",
     "DONE",
+}
+
+ALLOWED_EXECUTION_MODES = {
+    "AUTONOMOUS",
+    "BOUNDED",
+}
+
+REVIEWER_STATUSES = {
+    "REVIEWING",
+    "RE_REVIEWING",
+}
+
+REVIEW_SCOPES = {
+    "INITIAL",
+    "INCREMENTAL_REPAIR",
+}
+
+BOUNDED_REQUIRED_FALSE_PERMITS = {
+    "implementation_reviewer",
+    "automatic_repair_rereview",
+    "next_frontier_task",
+}
+
+BOUNDED_OPTIONAL_PERMITS = {
+    "integration",
+    "integration_ci",
 }
 
 
@@ -103,6 +130,17 @@ def require_list(
         return []
 
     return value
+
+
+def is_exact_sha(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and re.fullmatch(
+            r"[0-9a-f]{40}",
+            value,
+        )
+        is not None
+    )
 
 
 def main() -> int:
@@ -285,6 +323,133 @@ def main() -> int:
                     f"is not DONE"
                 )
 
+
+    # ---------------------------------------------------------
+    # Execution mode / bounded authorization
+    # ---------------------------------------------------------
+    execution_mode = run_state.get(
+        "execution_mode"
+    )
+
+    if execution_mode not in ALLOWED_EXECUTION_MODES:
+        errors.append(
+            "invalid execution_mode: "
+            f"{execution_mode!r}"
+        )
+
+    bounded_execution = run_state.get(
+        "bounded_execution"
+    )
+    bounded_task_ids: set[str] = set()
+
+    if execution_mode == "BOUNDED":
+        if not isinstance(
+            bounded_execution,
+            dict,
+        ):
+            errors.append(
+                "BOUNDED requires "
+                "bounded_execution mapping"
+            )
+            bounded_execution = {}
+
+        work_set_id = bounded_execution.get(
+            "authorized_work_set_id"
+        )
+
+        if (
+            not isinstance(work_set_id, str)
+            or not work_set_id.strip()
+        ):
+            errors.append(
+                "BOUNDED requires "
+                "authorized_work_set_id"
+            )
+
+        authorized_task_ids = require_list(
+            bounded_execution.get(
+                "authorized_task_ids",
+                [],
+            ),
+            "bounded_execution."
+            "authorized_task_ids",
+            errors,
+        )
+        bounded_task_ids = {
+            task_id
+            for task_id in authorized_task_ids
+            if isinstance(task_id, str)
+            and task_id.strip()
+        }
+
+        if not bounded_task_ids:
+            errors.append(
+                "BOUNDED requires at least one "
+                "authorized_task_id"
+            )
+
+        authorized_paths = require_list(
+            bounded_execution.get(
+                "authorized_paths",
+                [],
+            ),
+            "bounded_execution."
+            "authorized_paths",
+            errors,
+        )
+
+        if not authorized_paths or any(
+            not isinstance(path, str)
+            or not path.strip()
+            for path in authorized_paths
+        ):
+            errors.append(
+                "BOUNDED requires non-empty "
+                "authorized_paths"
+            )
+
+        permits = bounded_execution.get(
+            "permits",
+            {},
+        )
+
+        if not isinstance(permits, dict):
+            errors.append(
+                "bounded_execution.permits "
+                "must be a mapping"
+            )
+            permits = {}
+
+        for permit in BOUNDED_REQUIRED_FALSE_PERMITS:
+            if permits.get(permit) is not False:
+                errors.append(
+                    "BOUNDED requires "
+                    f"permits.{permit}=false"
+                )
+
+        for permit in BOUNDED_OPTIONAL_PERMITS:
+            if not isinstance(
+                permits.get(permit),
+                bool,
+            ):
+                errors.append(
+                    "BOUNDED requires boolean "
+                    f"permits.{permit}"
+                )
+
+        if (
+            permits.get("integration_ci") is True
+            and permits.get("integration") is not True
+        ):
+            errors.append(
+                "BOUNDED integration_ci requires "
+                "permits.integration=true"
+            )
+    elif bounded_execution is not None:
+        errors.append(
+            "AUTONOMOUS must not retain "
+            "bounded_execution"
+        )
     # ---------------------------------------------------------
     # Runtime policy activation
     # ---------------------------------------------------------
@@ -362,6 +527,19 @@ def main() -> int:
                 "max_active_implementation_tasks=1"
             )
 
+    if execution_mode == "BOUNDED":
+        if auto_advance != "DISABLED":
+            errors.append(
+                "BOUNDED requires "
+                "auto_advance=DISABLED"
+            )
+
+        if parallel_scheduler != "DISABLED":
+            errors.append(
+                "BOUNDED requires "
+                "parallel_scheduler=DISABLED"
+            )
+
     # ---------------------------------------------------------
     # Active workers / concurrency
     # ---------------------------------------------------------
@@ -376,6 +554,7 @@ def main() -> int:
     )
 
     executors: list[dict[str, Any]] = []
+    reviewers: list[dict[str, Any]] = []
 
     for worker in active_workers:
         if not isinstance(worker, dict):
@@ -391,19 +570,37 @@ def main() -> int:
                 "",
             )
         ).upper()
+        task_id = worker.get("task_id")
 
         if role == "EXECUTOR":
             executors.append(worker)
 
-            task_id = worker.get(
-                "task_id"
-            )
-
-            if task_id not in tasks:
+            if (
+                task_id not in tasks
+                and not (
+                    execution_mode == "BOUNDED"
+                    and task_id in bounded_task_ids
+                )
+            ):
                 errors.append(
                     "active executor references "
                     f"unknown task {task_id}"
                 )
+        elif role == "REVIEWER":
+            reviewers.append(worker)
+
+            if not is_exact_sha(
+                worker.get("exact_sha")
+            ):
+                errors.append(
+                    "active Reviewer requires "
+                    "an exact 40-character SHA"
+                )
+        else:
+            errors.append(
+                "active worker has invalid role: "
+                f"{role!r}"
+            )
 
     executor_task_ids = [
         str(worker.get("task_id"))
@@ -512,6 +709,164 @@ def main() -> int:
                 "writing Executor"
             )
 
+    active_task = run_state.get(
+        "active_task",
+        {},
+    )
+
+    if not isinstance(active_task, dict):
+        errors.append(
+            "active_task must be a mapping"
+        )
+        active_task = {}
+
+    active_task_id = active_task.get("id")
+    active_review = active_task.get("review")
+
+    if execution_mode == "BOUNDED":
+        if reviewers:
+            errors.append(
+                "BOUNDED must not schedule "
+                "an internal Reviewer"
+            )
+
+        if (
+            active_task_id is not None
+            and active_task_id not in bounded_task_ids
+        ):
+            errors.append(
+                "BOUNDED active_task is outside "
+                "authorized_task_ids"
+            )
+
+        for worker in executors:
+            if worker.get("task_id") not in bounded_task_ids:
+                errors.append(
+                    "BOUNDED Executor is outside "
+                    "authorized_task_ids"
+                )
+
+        if active_review is not None:
+            errors.append(
+                "BOUNDED must not retain "
+                "active_task.review"
+            )
+    else:
+        reviewer_status = str(
+            active_task.get(
+                "reviewer_status",
+                "",
+            )
+        ).upper()
+
+        if reviewers and not isinstance(
+            active_review,
+            dict,
+        ):
+            errors.append(
+                "active Reviewer requires "
+                "active_task.review"
+            )
+
+        if reviewer_status in REVIEWER_STATUSES:
+            if not isinstance(active_task_id, str):
+                errors.append(
+                    "active review requires "
+                    "active_task.id"
+                )
+
+            if not isinstance(active_review, dict):
+                errors.append(
+                    "active review requires "
+                    "active_task.review"
+                )
+
+        if active_review is not None:
+            if not isinstance(active_review, dict):
+                errors.append(
+                    "active_task.review "
+                    "must be a mapping"
+                )
+            else:
+                review_scope = active_review.get("scope")
+                review_sha = active_review.get("exact_sha")
+
+                if review_scope not in REVIEW_SCOPES:
+                    errors.append(
+                        "invalid active_task.review."
+                        f"scope: {review_scope!r}"
+                    )
+
+                if not is_exact_sha(review_sha):
+                    errors.append(
+                        "active_task.review requires "
+                        "an exact 40-character SHA"
+                    )
+
+                matching_reviewers = [
+                    worker
+                    for worker in reviewers
+                    if worker.get("task_id")
+                    == active_task_id
+                    and worker.get("exact_sha")
+                    == review_sha
+                ]
+
+                if len(matching_reviewers) != 1:
+                    errors.append(
+                        "active_task.review requires "
+                        "one matching active Reviewer"
+                    )
+
+                if review_scope == "INCREMENTAL_REPAIR":
+                    for field in (
+                        "prior_blocking_findings",
+                        "repair_delta_paths",
+                        "affected_invariants",
+                    ):
+                        values = require_list(
+                            active_review.get(
+                                field,
+                                [],
+                            ),
+                            "active_task.review."
+                            f"{field}",
+                            errors,
+                        )
+
+                        if not values:
+                            errors.append(
+                                "INCREMENTAL_REPAIR requires "
+                                f"{field}"
+                            )
+
+                reopened_areas = require_list(
+                    active_review.get(
+                        "reopened_areas",
+                        [],
+                    ),
+                    "active_task.review."
+                    "reopened_areas",
+                    errors,
+                )
+
+                if reopened_areas:
+                    reopening_evidence = require_list(
+                        active_review.get(
+                            "reopening_evidence",
+                            [],
+                        ),
+                        "active_task.review."
+                        "reopening_evidence",
+                        errors,
+                    )
+
+                    if not reopening_evidence:
+                        errors.append(
+                            "reopened review areas require "
+                            "reopening_evidence"
+                        )
+
     # ---------------------------------------------------------
     # Governance-review hold
     # ---------------------------------------------------------
@@ -526,16 +881,23 @@ def main() -> int:
         and consolidation.get("status")
         == "READY_FOR_OWNER_REVIEW"
     ):
-        if auto_advance != "PENDING_OWNER_REVIEW":
+        expected_activation = (
+            "DISABLED"
+            if execution_mode == "BOUNDED"
+            else "PENDING_OWNER_REVIEW"
+        )
+
+        if auto_advance != expected_activation:
             errors.append(
                 "READY_FOR_OWNER_REVIEW requires "
-                "auto_advance=PENDING_OWNER_REVIEW"
+                f"auto_advance={expected_activation}"
             )
 
-        if parallel_scheduler != "PENDING_OWNER_REVIEW":
+        if parallel_scheduler != expected_activation:
             errors.append(
                 "READY_FOR_OWNER_REVIEW requires "
-                "parallel_scheduler=PENDING_OWNER_REVIEW"
+                "parallel_scheduler="
+                f"{expected_activation}"
             )
 
         if max_active != 1:
@@ -765,6 +1127,10 @@ def main() -> int:
     print(
         f" - active Executors: "
         f"{len(executors)}"
+    )
+    print(
+        f" - execution_mode: "
+        f"{execution_mode}"
     )
 
     print(

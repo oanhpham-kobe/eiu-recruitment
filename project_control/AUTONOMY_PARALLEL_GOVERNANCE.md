@@ -1,6 +1,6 @@
 # EIU Recruitment — Continuous Autonomy & Parallel Execution Governance
-## Document Version: 2.0 (PROPOSED / INACTIVE / PENDING OWNER REVIEW)
-## Status: DRAFT_PENDING_OWNER_REVIEW (DO NOT ACTIVATE BEFORE OWNER SIGNOFF)
+## Document Version: 2.1
+## Status: MODED_EXECUTION_POLICY / AUTONOMY_ACTIVATION_PENDING_OWNER_REVIEW
 
 ---
 
@@ -33,79 +33,97 @@ Before creating any new control-plane or governance document:
 
 ---
 
-## 2. Activation Hold & Governance Overrides
+## 2. Execution Mode, Activation, and Current Hold
 
-Until explicit owner authorization activates this policy:
+`AUTONOMOUS` and `BOUNDED` are the only execution modes. Task type is
+independent of execution mode and never creates a third mode.
 
-```yaml
-governance_consolidation:
-  status: READY_FOR_OWNER_REVIEW
+`execution_mode` in `AUTONOMY_RUN_STATE.yaml` is the live operational selector:
 
-autonomy_policy_activation:
-  policy_path: project_control/AUTONOMY_PARALLEL_GOVERNANCE.md
-  auto_advance: PENDING_OWNER_REVIEW
-  parallel_scheduler: PENDING_OWNER_REVIEW
-  max_active_implementation_tasks: 1
+- `AUTONOMOUS` permits the continuous lifecycle in §3. It requires explicit
+  activation of auto-advance and retains all scheduler, lane, review,
+  serialized-integration, and exact-SHA CI safeguards.
+- `BOUNDED` permits only the explicit Planner-authorized work set recorded in
+  `bounded_execution`. It forces automatic continuation off. The Executor
+  verifies, commits, reports, and stops at the authorized boundary.
 
-slice_04_execution:
-  status: HELD_FOR_GOVERNANCE_REVIEW
-  rule: "Frontier includes TASK-S04-001 for planning visibility only. Execution, worktree creation, prompt authoring, and executor launch are explicitly HELD until owner reviews governance."
-```
+Mode changes require explicit Planner/Owner authorization and a corresponding
+runtime-state update. `AUTONOMOUS` may not be inferred from a task type,
+frontier visibility, a prior CI pass, or an Executor settlement.
 
-- **Activation Override:** This activation hold overrides any auto-advance or continuous execution instruction.
-- **Frontier Independence:** Frontier visibility of `TASK-S04-001` does **not** authorize starting it, creating worktrees, authoring prompts, or launching executors during this maintenance cycle.
+The current run is `BOUNDED`. Its existing S04 governance hold remains in
+force. The bounded governance task neither authorizes S04 nor changes
+autonomy activation.
 
 ---
 
-## 3. Auto-Advance Policy (Future Rule — Currently Inactive)
+## 3. Execution Lifecycles
 
-### 3.1 Auto-Advance Invariant
-When explicitly enabled by the owner:
+### 3.1 AUTONOMOUS
+
+When all activation, safety, and capacity gates permit it, the Coordinator
+continues without a Planner checkpoint at ordinary lifecycle boundaries:
+
 ```text
-IF:
-  run.status == ACTIVE
-  AND stop_gate == null
-  AND safe_frontier.eligible_tasks is non-empty
-  AND autonomy_policy_activation.auto_advance == ENABLED
-
-THEN:
-  Coordinator MUST advance to the earliest eligible task on the safe frontier.
+safe frontier / authorized task
+→ Executor
+→ focused verification
+→ OMP independent implementation review
+→ BLOCKING_REPAIR? bounded repair in the active task lane
+→ targeted exact-SHA re-review
+→ PASS
+→ serialized integration
+→ exact-SHA CI
+→ CI_VERIFIED
+→ next safe frontier
 ```
-- Computing, persisting, or reporting the frontier does **not** satisfy auto-advance. Auto-advance requires active progression through formal lifecycle stages.
 
-### 3.2 Observable Task Lifecycle Stages
-1. `FRONTIER_AVAILABLE`: Task dependencies are satisfied; task is recognized on the computed safe frontier.
-2. `TASK_MATERIALIZED`: Task contract derived from canonical sources; prompt authored.
-3. `PROMPT_REVIEWING`: Independent prompt review is running.
-4. `TASK_READY`: Prompt passed independent review with zero blockers.
-5. `TASK_STARTED`: Dedicated task branch and isolated worktree created.
-6. `EXECUTOR_RUNNING`: Writing executor is implementing approved scope.
-7. `IMPLEMENTATION_REVIEWING`: Pre-review gate passed; independent reviewer evaluating exact task SHA.
-8. `TASK_ACCEPTED`: Independent review passed; task commit verified.
-9. `TASK_INTEGRATED`: Task commit merged into authorized integration branch.
-10. `CI_VERIFIED`: Exact merge SHA pushed and verified on GitHub Actions CI.
+The first implementation review covers the full task delta, task acceptance
+criteria, relevant invariants, and directly affected dependency, security,
+privacy, and data-integrity surfaces.
 
-*Rule:* Never state "continuing autonomously" when only `FRONTIER_AVAILABLE` is true.
+After a repair, the fresh exact-SHA re-review covers:
+1. every prior unresolved `BLOCKING_REPAIR` finding;
+2. the repair delta;
+3. invariants and dependencies directly affected by the repair; and
+4. concrete regressions introduced by that repair.
 
-### 3.3 Informational Boundaries vs True Stop Conditions
-Once auto-advance is activated, normal lifecycle completions are **informational only** and do not pause execution:
-- Task completed or executor settled normally.
-- Prompt passed independent review.
-- Implementation passed independent review.
-- Integration merge completed.
-- Exact-SHA GitHub Actions CI passed.
-- Slice completed.
-- Safe frontier recomputed.
+Previously passed areas remain closed unless their code changed, a changed
+dependency materially affects them, a shared invariant crosses into them, or
+concrete regression evidence justifies reopening them. A new SHA requires a
+fresh verdict, not a full-scope reset.
 
-**True Stop Conditions Only:**
-The coordinator must STOP and seek owner instructions only when:
-1. A genuine owner/business/product/UX decision is required.
-2. Current authorization boundary is reached (e.g. review cap exhausted without scoped exception).
-3. A production, main-branch, or destructive external operation would be required.
-4. Safe dependency frontier is genuinely empty or blocked with no eligible tasks.
-5. A safety, security, privacy, or authorization invariant cannot be preserved.
-6. Canonical project sources materially conflict and cannot be safely reconciled under canonical precedence.
-7. Continuing requires architecture, data-model, or scope alterations outside current authority.
+AUTONOMOUS stops only for:
+1. `OWNER_DECISION_REQUIRED`;
+2. a business, architecture, or source-contract reopening;
+3. a security, safety, authorization, privacy, or data-integrity ambiguity
+   that current authority cannot resolve;
+4. a production, main-branch, destructive, or other authorization boundary;
+5. repair exhaustion;
+6. an unrecoverable infrastructure blocker; or
+7. no safe frontier.
+
+### 3.2 BOUNDED
+
+```text
+Planner-authorized work set
+→ Executor completes that work set
+→ focused verification
+→ commit
+→ report exact SHA and evidence
+→ HARD STOP
+```
+
+BOUNDED has no internal OMP implementation reviewer or repair/re-review chain.
+Integration or CI is allowed only when the bounded Planner prompt explicitly
+includes that action; a next-frontier task is never inferred or dispatched.
+The Executor may correct implementation-local verification failures caused by
+the authorized work and reports unrelated discoveries without adding them to
+the work set.
+
+`bounded_execution` records the finite work-set identity, authorized task
+identifiers where represented, authorized paths, and continuation permissions.
+This is the existing runtime-state authority, not a second registry.
 
 ---
 
@@ -149,6 +167,20 @@ worker_settled_history:
   operations.
 - Permanent task completion evidence belongs in
   `project_control/EVIDENCE_INDEX.yaml`.
+
+### Mode-specific reviewer bookkeeping
+
+In `AUTONOMOUS`, an active implementation review uses the existing
+`active_workers` record with `role: REVIEWER` and a 40-character exact SHA.
+The optional `active_task.review` record carries either `INITIAL` or
+`INCREMENTAL_REPAIR` scope. Incremental scope records unresolved blocking
+finding identifiers, repair-delta paths, affected invariants/dependencies, and
+any reopened area with its concrete reopening evidence.
+
+`BOUNDED` has neither an active `REVIEWER` worker nor `active_task.review`.
+Its external Planner/Reviewer inspection happens after the Executor's bounded
+commit and is not an internal scheduled lifecycle stage.
+
 
 ### Lane ownership invariant
 

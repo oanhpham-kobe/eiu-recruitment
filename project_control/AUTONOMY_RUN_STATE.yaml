@@ -1,14 +1,31 @@
 version: 2
 run_id: 20260905-01
-mode: LOCAL_AUTONOMOUS_CONTINUOUS
+execution_mode: BOUNDED
+bounded_execution:
+  authorized_work_set_id: GOVERNANCE-EXECUTION-MODE-CLEANUP
+  authorized_task_ids: [GOVERNANCE-EXECUTION-MODE-CLEANUP]
+  authorized_paths:
+    - AGENTS.md
+    - .omp/RULES.md
+    - REVIEW.md
+    - project_control/AUTONOMY_PARALLEL_GOVERNANCE.md
+    - project_control/AUTONOMY_RUN_STATE.yaml
+    - project_control/CURRENT_STATE.md
+    - project_control/validate_control_plane.py
+  permits:
+    implementation_reviewer: false
+    automatic_repair_rereview: false
+    integration: false
+    integration_ci: false
+    next_frontier_task: false
 status: ACTIVE
 
 governance_consolidation:
   status: READY_FOR_OWNER_REVIEW
 autonomy_policy_activation:
   policy_path: project_control/AUTONOMY_PARALLEL_GOVERNANCE.md
-  auto_advance: PENDING_OWNER_REVIEW
-  parallel_scheduler: PENDING_OWNER_REVIEW
+  auto_advance: DISABLED
+  parallel_scheduler: DISABLED
   max_active_implementation_tasks: 1
 
 slice_04_execution:
@@ -105,4 +122,4 @@ stop_state:
   reason: null
   observed_evidence:
     - "SLICE-03 is now complete (TASK-S03-001 through TASK-S03-006 ACCEPTED)."
-next_action: "STOP: Governance debt closure and consistency audit completed. Await owner review before activating auto-advance, dual-lane scheduling, or starting SLICE-04."
+next_action: "STOP: BOUNDED governance execution-mode cleanup must return its exact commit and validation evidence to the external Planner. S04 remains HELD_FOR_GOVERNANCE_REVIEW."
