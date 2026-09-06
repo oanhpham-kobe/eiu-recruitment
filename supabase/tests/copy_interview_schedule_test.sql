@@ -77,6 +77,7 @@ begin
   insert into public.submissions(candidate_id,full_name,date_of_birth,gender_code,current_address,phone,email_snapshot) values(candidate2_id,'T003 Same Empty','1990-01-01','MALE','Address','0900000002','t003_same_empty_'||s||'@example.com') returning public.submissions.submission_id into submission2_id;
   insert into public.applications(submission_id,unit_id,position_id,hr_owner_id) values(submission2_id,unit_id,position2_id,hr) returning public.applications.application_id into same_empty_app;
   insert into public.interviews(application_id,round_no) values(same_empty_app,1) returning public.interviews.interview_id into same_empty_r1;
+  assert private.is_structurally_empty_default_round(same_empty_r1),'same-application Round 1 starts structurally empty';
   select to_jsonb(i) into v_round1 from public.interviews i where i.interview_id=same_empty_r1;
   select version_no into v from public.interviews where interview_id=same_empty_r1;
   r:=public.copy_interview_schedule(same_empty_r1,same_empty_app,v,(select version_no from public.applications where application_id=same_empty_app),same_empty_r1,v,'2035-01-04 09:00+07','2035-01-04 10:00+07',format_id,room_id,null,'same empty logistics',array[i2,i1],gen_random_uuid());
@@ -84,8 +85,8 @@ begin
   assert (r->>'success')::boolean and (select round_no from public.interviews where interview_id=same_empty_r2)=2,'structurally empty same-application Round 1 allocates Round 2';
   select to_jsonb(i) into v_round1_after from public.interviews i where i.interview_id=same_empty_r1;
   assert v_round1_after=v_round1,'same-application Round 1 fields remain unchanged';
-  assert (select copied_from_interview_id=same_empty_r1 and demo_topic is null and start_at='2035-01-04 09:00+07'::timestamptz and interview_note='same empty logistics' from public.interviews where interview_id=same_empty_r2),'same-application Round 2 records provenance and copied logistics';
-  assert (select array_agg(snapshot_name order by participant_order) from public.interview_participants where interview_id=same_empty_r2)=array['T003 Interviewer 2','T003 Interviewer 1'],'same-application Round 2 preserves selected snapshot order';
+  assert (select i.start_at='2035-01-04 09:00+07'::timestamptz and i.end_at='2035-01-04 10:00+07'::timestamptz and i.interview_format_id=test.format_id and i.room_id=test.room_id and i.meeting_link is null and i.interview_note='same empty logistics' and i.copied_from_interview_id=test.same_empty_r1 and i.demo_topic is null from public.interviews i where i.interview_id=test.same_empty_r2),'same-application Round 2 preserves normalized schedule, provenance, note, and blank demo topic';
+  assert (select jsonb_agg(jsonb_build_object('participant_id',ip.app_user_id,'full_name',ip.snapshot_name,'job_title',ip.snapshot_job_title,'email',ip.snapshot_email,'display_order',ip.participant_order) order by ip.participant_order) from public.interview_participants ip where ip.interview_id=test.same_empty_r2)=jsonb_build_array(jsonb_build_object('participant_id',test.i2,'full_name','T003 Interviewer 2','job_title','Professor','email','t003_i2_'||test.s||'@eiu.edu.vn','display_order',1),jsonb_build_object('participant_id',test.i1,'full_name','T003 Interviewer 1','job_title','Lecturer','email','t003_i1_'||test.s||'@eiu.edu.vn','display_order',2)),'same-application Round 2 preserves every selected participant snapshot field and order';
 
   -- Same-Application Copy always allocates the next legal round, even when Round 1 is empty.
   select version_no into v from public.interviews where interview_id=source_id;
