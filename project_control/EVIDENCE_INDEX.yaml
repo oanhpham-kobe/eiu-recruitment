@@ -8,8 +8,24 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: SLICE_04_IN_PROGRESS_TASK_S04_002_ACCEPTED
-  note: "All tasks through TASK-S04-002 are independently reviewed, serially integrated, and verified on exact-SHA GitHub Actions CI."
+  status: SLICE_04_IN_PROGRESS_TASK_S04_003_ACCEPTED
+  note: "All tasks through TASK-S04-003 are independently reviewed, serially integrated, and verified on exact-SHA GitHub Actions CI."
+
+  COPY-INTERVIEW-SCHEDULE-001:
+    task: TASK-S04-003
+    operation: DEDICATED_COPY_INTERVIEW_SCHEDULE_TRUSTED_COMMAND
+    status: VERIFIED
+    prompt_sha256: "fc47d6570e12bb372c04008837f0b49d6b4fd2b6e4444481b38762d85fe8c2f3"
+    implementation_sha: "919e4a428dcd2d76730947ca1c4c174441bdfb63"
+    migration: "supabase/migrations/20260906080000_copy_interview_schedule.sql"
+    test_suite: "supabase/tests/copy_interview_schedule_test.sql"
+    local_reset: PASS
+    focused_test: PASS
+    S04_001_regression: PASS
+    S04_002_regression: PASS
+    implementation_review: "PASS (agent://TaskS04003FinalExactReview; blockers: NONE)"
+    integration_commit: "f46ac9fbcc4356df4855aa715dcc56359ffe30c8"
+    github_ci: "PASS (Integration CI run 34036486527; fast verification + database integration)"
 
   SOURCE-PARITY-001:
     gate: SOURCE_PARITY_GATE

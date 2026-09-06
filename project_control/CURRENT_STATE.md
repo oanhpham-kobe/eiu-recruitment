@@ -33,7 +33,7 @@ Last Completed Slice:
 `SLICE-04 (in progress)`
 
 Last Completed Task:
-`TASK-S04-002 — DONE / ACCEPTED`
+`TASK-S04-003 — DONE / ACCEPTED`
 
 Next Eligible Slice:
 `SLICE-04`
@@ -45,7 +45,7 @@ Execution Mode:
 `AUTONOMOUS`
 
 Current Active Implementation Task:
-`TASK-S04-003 — dedicated copy interview schedule command`
+`None — post-CI continuation gate`
 
 Auto-Advance:
 `ENABLED`
@@ -57,11 +57,11 @@ Maximum Active Implementation Tasks:
 `2`
 
 Current Integration Checkpoint:
-`d2db7030fb3d19f563eb56365bb63f57f43fa4fd`
+`f46ac9fbcc4356df4855aa715dcc56359ffe30c8`
 
 Integration CI:
-`34030685386 — PASS`
+`34036486527 — PASS`
 
 Next Action:
 
-`TASK-S04-003 executes in Lane A; evaluate only source-backed independent Lane B work.`
+`TASK-S04-004 is materialized from canonical Interview UI sources and awaits independent prompt review before dispatch.`

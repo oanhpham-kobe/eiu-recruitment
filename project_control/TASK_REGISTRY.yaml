@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-04
-current_task: TASK-S04-002
+current_task: TASK-S04-003
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -981,11 +981,32 @@ tasks:
   TASK-S04-003:
     title: "Dedicated copy interview schedule trusted command"
     slice: SLICE-04
-    status: IN_PROGRESS
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-S04-002
     prompt: project_control/prompts/SLICE-04_TASK-003_v1.md
     prompt_sha256: fc47d6570e12bb372c04008837f0b49d6b4fd2b6e4444481b38762d85fe8c2f3
-    prompt_review_status: "PASS (agent://TaskS04003PromptReReview; blockers: NONE)"
-    notes: "Released after targeted independent prompt re-review. Executor owns the dedicated copy command and focused regression test only."
+    implementation_sha: "919e4a428dcd2d76730947ca1c4c174441bdfb63"
+    review_status: "PASS (agent://TaskS04003FinalExactReview; blockers: NONE)"
+    github_ci: "VERIFIED (run 34036486527; integration commit f46ac9fbcc4356df4855aa715dcc56359ffe30c8; PASS)"
+    notes: "Copy command and focused regression suite passed local replay. Initial review and targeted re-reviews repaired canonical inactive-participant error, empty same-application fidelity coverage, incoming provenance and used-target preservation, then nullable historical snapshot fidelity. Exact integration CI passed."
+    acceptance:
+      - "COPY-INTERVIEW-SCHEDULE-001: VERIFIED"
+      - "prompt_reviewed: PASS"
+      - "supabase db reset --local: PASS"
+      - "copy_interview_schedule_test.sql: PASS"
+      - "implementation_reviewed: PASS (independent reviewer)"
+      - "github_ci: VERIFIED"
+
+  TASK-S04-004:
+    title: "HR Interview scheduling UI over accepted trusted commands"
+    slice: SLICE-04
+    status: PLANNED
+    lane: LANE_A
+    depends_on:
+      - TASK-S04-003
+    prompt: project_control/prompts/SLICE-04_TASK-004_v1.md
+    prompt_sha256: 67a4e356d63343a93dbeba1394bca351795da22da51408eeb549b32a257a9c16
+    prompt_review_status: PENDING
+    notes: "Post-CI continuation materialization. Dispatch is gated on independent prompt review and must reuse accepted Slice-04 trusted commands without changing SQL contracts."
