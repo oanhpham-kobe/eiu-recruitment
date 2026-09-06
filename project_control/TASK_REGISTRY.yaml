@@ -1014,7 +1014,7 @@ tasks:
   TASK-S04-005:
     title: "Application reactivation and participant command contract repair"
     slice: SLICE-04
-    status: READY
+    status: IN_PROGRESS
     lane: LANE_A
     depends_on:
       - TASK-S04-003

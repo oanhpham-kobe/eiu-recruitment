@@ -38,7 +38,15 @@ authorization:
       merge_pr: false
 
 
-active_workers: []
+active_workers:
+  - task_id: TASK-S04-005
+    lane: LANE_A
+    role: EXECUTOR
+    agent_id: agent://TASK-S04-005-executor
+    worktree: D:/orca/recruitment/TASK-S04-005-command-repair
+    branch: oanhpham-kobe/TASK-S04-005-command-repair
+    started_at: "2026-09-06T14:00:00Z"
+    status: IN_PROGRESS
 
 worker_settled_history:
   - task_id: TASK-S03-006
@@ -131,8 +139,7 @@ historical_mcp_governance_maintenance:
   ci_run_id: "33943629020"
   ci_result: PASS
 safe_frontier:
-  eligible_tasks:
-    - TASK-S04-005
+  eligible_tasks: []
   skipped_due_to_dependency:
     - "TASK-S04-004: blocked on TASK-S04-005 accepted command prerequisites"
   execution_hold: null
@@ -142,5 +149,5 @@ stop_state:
   observed_evidence:
     - "TASK-S04-003 ACCEPTED: exact integration CI 34036486527 PASS."
     - "TASK-S04-004 prompt review BLOCKING_REPAIR: missing reactivate_application and noncanonical participant RPC surface."
-    - "TASK-S04-005 repaired prompt 2f0559a0652f0a8304f885e2b0e9e006de4573d91523707fad8475157ca99ed2 independently re-reviewed PASS."
-next_action: "Dispatch TASK-S04-005 in Lane A using the accepted repaired prompt."
+    - "TASK-S04-005 executor dispatched in Lane A at control SHA 91314ebc0da6e635b041d3e1df01325fe918f7aa."
+next_action: "Await TASK-S04-005 executor settlement; then perform focused verification, exact-SHA implementation review, repair/re-review as needed, serialized integration, and exact-SHA CI."
