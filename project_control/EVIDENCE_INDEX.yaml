@@ -1,12 +1,12 @@
 version: 1
 source_baseline:
-  full_handover: '1.17'
-  sha256: '0b39c3615dd5b34e998527a1d273e0b846458c7bd4170be46c9bb670bfcb3498'
+  full_handover: '1.18'
+  sha256: '8874551cb5a7f78ac28f64a94c1820dc7d2c3a62f85cfb93b2bad70b611438a0'
 precode_evidence:
-  package_validator: {status: PASS, result: '511/511'}
+  package_validator: {status: PASS, result: '515/515'}
   design_validator: {status: PASS, result: '73/73'}
   responsive_browser_qa: {status: PASS, result: '108/108'}
-  manifest_verification: {status: PASS, result: '557 checks / 0 failures'}
+  manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
   status: SLICE_03_ACCEPTED
   note: "All tasks through SLICE-03 (TASK-S00-001 through TASK-S03-006) are completed, independently reviewed, accepted, merged into the integration branch, and verified on exact-SHA GitHub Actions CI; historical pre-merge child status tags reflect intermediate review states."
@@ -778,3 +778,86 @@ implementation_evidence:
     diff_check: "PASS (git diff --check is clean)"
     repair_evidence: "PASS (Continuous Autonomy Repair Round 5: 1. Added explicit observable assertions in application-inbox-bulk-ui.test.ts verifying window.getComputedStyle(toolbar).flexWrap === 'wrap', window.getComputedStyle(actionsContainer).flexWrap === 'wrap', and vertical coordinate wrapping of toolbar items where actionsBox.y > countBox.y under 768px tablet viewport; 2. Aligned browser_qa and executor_pre_review_ui_test_gate evidence records in EVIDENCE_INDEX.yaml and TASK_REGISTRY.yaml to precisely reflect verified responsive flex-wrap styles, vertical wrapping geometry, scroll container width fitting, touch targets >= 44x44px, and execution without claiming unexercised geometry)"
     independent_review: "PASS (REVIEW #6 on exact SHA fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221; verified all-or-nothing candidate lifecycle, accurate audit previous_is_active diffs, row-bound optimistic tokens, accessible confirmation modals, and responsive layout assertions; no blockers)"
+  PRE-S04-HOTFIX-001:
+    operation: PRE_S04_CONTRACT_REPAIRS_AND_V1_18_ALIGNMENT
+    base_sha: "aca5141eae75258f5f5864646322410468ec7db8"
+    v1_18_package_sha: "8874551cb5a7f78ac28f64a94c1820dc7d2c3a62f85cfb93b2bad70b611438a0"
+    source_commit_sha: "763120c6f2cb638a28392f821752d2becfaf1d17"
+    implementation_commit_sha: "2326ff5d35b0e65856628639d2d0fab976f5c204"
+    forward_migration: "supabase/migrations/20260906005000_pre_s04_contract_repairs.sql"
+    clean_migration_replay: "PASS (npx supabase db reset replayed all 15 migrations cleanly from zero on unlinked disposable runtime)"
+    rls_adversarial_tests: "PASS (submissions.view denied select on applications and interviews; applications.view, applications.manage, interviews.view, Root Admin granted appropriately)"
+    candidate_submit_update_invocation: "PASS (canonical signatures, 1-based education sort_order, non-unique document logicals, physical privacy acknowledgement)"
+    hr_only_data_preservation: "PASS (candidate edit preserves other_info, hr_note, submission_work_experiences, submission_activities untouched)"
+    canonical_education_regression: "PASS (period_text, qualification_id, major, institution, sort_order persisted correctly)"
+    candidate_validation: "PASS (bounds: name <=200, phone <=32, DOB 1900-01-01..today, gender MALE/FEMALE, address <=500)"
+    passive_detail_no_mutation: "PASS (get_submission_detail is pure read leaving status NEW; explicit open_submission executes NEW->READ)"
+    hr_correction_audit: "PASS (correct_submission_candidate_fields_by_hr succeeds and audits changed_fields metadata; audit rollback verified)"
+    privacy_strong_current_regression: "PASS (stale notice version rejected with PRIVACY_NOTICE_CHANGED)"
+    current_round_authoritative_outcome: "PASS (all 4 regression cases verified: R1 REJECTED + R2 FOLLOW_UP => IN_PROGRESS; R1 HIRED + R2 FOLLOW_UP => IN_PROGRESS; R1 FOLLOW_UP + R2 REJECTED => REJECTED; R1 REJECTED [inactive] + R2 HIRED [active] => HIRED)"
+    candidate_reactivation_outcome_resolver: "PASS (reuses private.application_effective_outcome)"
+    prototype_regressions: "PASS (date-sort sorts 31/08 before 01/08; candidateStatusLabel maps DONE and CLOSED to Hoan thanh)"
+    web_verification: "PASS (lint: 0 errors; typecheck: 0 errors; build: production compile success; test: 255/255 PASS)"
+    secret_scan: "PASS (0 hardcoded credentials or secrets)"
+    diff_check: "PASS (git diff --check is clean)"
+    governance_hardening:
+      agents_decision_boundary: "PASS (compact Planner / Executor / Owner decision boundary added to Section 3)"
+      review_finding_disposition: "PASS (7-disposition lifecycle contract added to Section 2)"
+      open_gaps_normalization: "PASS (mandatory entry shape + active deferred items with triggers/exit conditions)"
+      control_plane_validator: "PASS (validate_control_plane.py: 0 errors)"
+      scheduler_governance_reopened: NO
+    candidate_email_recovery: "IMPLEMENTATION_DEFERRED_SAFE_BOUNDARY (no Supabase Admin Auth service-role client exists in repository; direct SQL mutation of auth.users from browser-callable code and browser exposure of service-role keys are strictly forbidden by project security rules)"
+    SKILL_USAGE:
+      supabase:
+        provider: "skills/supabase"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "forward migration DDL, RLS policies, and disposable database replay"
+      supabase-postgres-best-practices:
+        provider: "skills/supabase-postgres-best-practices"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "RLS policies, function ACL security definer revokes, and deterministic index design"
+      security-review:
+        provider: "skills/security-review"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "server-side authorization, secret scan, and candidate email recovery boundary inspection"
+      tdd:
+        provider: "skills/engineering/tdd"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "database integration assertions in pre_s04_contract_repairs_test.sql and unit test suites"
+      react-patterns:
+        provider: "skills/react-patterns"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "CandidateForm and EducationSection controlled inputs and state composition"
+      accessibility:
+        provider: "skills/accessibility"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "WAI-ARIA tabs and field validation error announcements in candidate portal"
+      react-testing:
+        provider: "skills/react-testing"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "candidate-submission and submission-status test suites"
+    GRAPH_USAGE:
+      route: DIRECT_SOURCE_LSP_ONLY
+      graph_used: NO
+      reason: "Exact defective files and symbols identified up-front; single serialized repair lane; migrations and tests authoritative."

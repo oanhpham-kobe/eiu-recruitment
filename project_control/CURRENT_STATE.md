@@ -15,16 +15,16 @@
 > Scheduler/lifecycle authority:
 > `project_control/AUTONOMY_PARALLEL_GOVERNANCE.md`
 
-Source Baseline: `Full Handover v1.17`
+Source Baseline: `Full Handover v1.18`
 
 Source SHA256:
-`0b39c3615dd5b34e998527a1d273e0b846458c7bd4170be46c9bb670bfcb3498`
+`8874551cb5a7f78ac28f64a94c1820dc7d2c3a62f85cfb93b2bad70b611438a0`
 
 Business Logic Core:
 `v1.2 FROZEN`
 
 Technical Architecture:
-`v1.17 FROZEN`
+`v1.18 FROZEN`
 
 Design System:
 `v1.8 CURRENT / REVIEWED`
