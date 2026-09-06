@@ -105,15 +105,18 @@ historical_mcp_governance_maintenance:
   mcp_runtime_diagnostic: "CONFIGURED YES; DISCOVERED/CALLABLE/USED NO; supabase-dev startup HTTP 401 (redacted); direct fallback retained"
 
 blocked_tasks: []
-
 safe_frontier:
-  eligible_tasks: []
+  eligible_tasks:
+    - TASK-S04-002
   skipped_due_to_dependency: []
   execution_hold: null
 stop_state:
   stop_gate: null
   reason: null
   observed_evidence:
-    - "SLICE-03 is now complete (TASK-S03-001 through TASK-S03-006 ACCEPTED)."
+    - "SLICE-03 is now complete (TASK-S00-001 through TASK-S03-006 ACCEPTED)."
     - "TASK-S04-001 ACCEPTED: migration replay PASS, S04-001 test suite PASS, implementation review PASS, GitHub CI run 34024171092 PASS."
-next_action: "POST-CI CONTINUATION GATE: resolve/materialize next source-backed SLICE-04 frontier, run Parallel Eligibility Gate when applicable, dispatch safe task(s), and continue AUTONOMOUS execution without an ordinary Planner checkpoint."
+    - "Governance repair faf1716 INTEGRATED and verified on Integration CI run 34027335569."
+    - "AUTONOMOUS restored in 007a278 and verified on Integration CI run 34027524518."
+    - "POST-CI CONTINUATION GATE executed: TASK-S04-002 materialized from canonical Review Pack specifications."
+next_action: "Dispatch TASK-S04-002 to Lane A. Evaluate whether independent parallel work exists for Lane B."

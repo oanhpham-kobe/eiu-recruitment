@@ -958,3 +958,23 @@ tasks:
     review_status: "PASS (agent://TASK-S04-001-impl-reviewer; blockers: NONE)"
     github_ci: "VERIFIED (run 34024171092; commit 834b2cbd70915e9558a1242ad7fb775f5455b91f; PASS)"
     notes: "Executor settled; migration replay PASS; S04-001 test suite PASS; independent review PASS (P3 INFO only); integration branch fast-forwarded; GitHub Actions CI run 34024171092 PASS (fast verification + database integration)."
+
+  TASK-S04-002:
+    title: "Interview Report schema, lifecycle commands, participant mutations, schedule lifecycle commands, document storage, and derived views"
+    slice: SLICE-04
+    status: READY
+    lane: LANE_A
+    depends_on:
+      - TASK-S04-001
+    worktree: D:/orca/recruitment/TASK-S04-002-interview-lifecycle
+    branch: oanhpham-kobe/TASK-S04-002-interview-lifecycle
+    prompt: project_control/prompts/SLICE-04_TASK-002_v1.md
+    prompt_sha256: 03c177f320415fb675065eaeb008b68c0f174b355d46354f6fb03c87cd48ebf8
+    notes: "Materialized under POST-CI CONTINUATION GATE from canonical Review Pack 05, 06, 08, 37, 39, 40, 48, and database_schema.sql. Implements interview_reports, interview_documents, participant/schedule/report lifecycle RPCs, decision metadata trigger, and derived views."
+    acceptance:
+      - "INTERVIEW-LIFECYCLE-001: VERIFIED"
+      - "prompt_reviewed: PASS"
+      - "supabase db reset --local: PASS"
+      - "interview_lifecycle_test.sql: PASS"
+      - "implementation_reviewed: PASS (independent reviewer)"
+      - "github_ci: VERIFIED"
