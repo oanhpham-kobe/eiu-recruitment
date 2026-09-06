@@ -32,6 +32,7 @@ declare
   v_conflicts_res jsonb;
   v_count integer;
   v_version bigint;
+  v_versions bigint[];
   v_err_thrown boolean;
 begin
   raise notice '=== Running TASK-S04-001 Test Suite ===';
@@ -163,25 +164,25 @@ begin
   -- 4. Test Participant Management RPCs (add, reorder, remove)
   -- ---------------------------------------------------------------------------
   -- 4.1 Inactive participant should be rejected
-  v_rpc_res := public.add_interview_participant(v_int1_id, v_inactive_user_id, 1, gen_random_uuid());
+  v_rpc_res := public.add_interview_participant(v_int1_id, v_inactive_user_id, gen_random_uuid());
   assert (v_rpc_res ->> 'success')::boolean = false, 'add_interview_participant must reject inactive user';
   assert (v_rpc_res ->> 'error_code') = 'USER_INACTIVE_NOT_SELECTABLE', 'expected USER_INACTIVE_NOT_SELECTABLE';
 
   -- 4.2 Add interviewer 1
-  v_rpc_res := public.add_interview_participant(v_int1_id, v_interviewer1_id, 1, gen_random_uuid());
+  v_rpc_res := public.add_interview_participant(v_int1_id, v_interviewer1_id, gen_random_uuid());
   assert (v_rpc_res ->> 'success')::boolean = true, 'add interviewer 1 should succeed';
   v_part1_id := (v_rpc_res -> 'data' ->> 'interview_participant_id')::uuid;
   assert (v_rpc_res -> 'data' ->> 'participant_order')::integer = 1, 'order should be 1';
   assert (v_rpc_res -> 'data' ->> 'snapshot_name') = 'Prof Alpha', 'snapshot_name should match user';
 
   -- 4.3 Add interviewer 2
-  v_rpc_res := public.add_interview_participant(v_int1_id, v_interviewer2_id, 2, gen_random_uuid());
+  v_rpc_res := public.add_interview_participant(v_int1_id, v_interviewer2_id, gen_random_uuid());
   assert (v_rpc_res ->> 'success')::boolean = true, 'add interviewer 2 should succeed';
   v_part2_id := (v_rpc_res -> 'data' ->> 'interview_participant_id')::uuid;
   assert (v_rpc_res -> 'data' ->> 'participant_order')::integer = 2, 'order should be 2';
 
   -- 4.4 Duplicate active participant should be rejected
-  v_rpc_res := public.add_interview_participant(v_int1_id, v_interviewer1_id, 3, gen_random_uuid());
+  v_rpc_res := public.add_interview_participant(v_int1_id, v_interviewer1_id, gen_random_uuid());
   assert (v_rpc_res ->> 'success')::boolean = false, 'duplicate participant should be rejected';
   assert (v_rpc_res ->> 'error_code') = 'DUPLICATE_PARTICIPANT', 'expected DUPLICATE_PARTICIPANT';
 
@@ -189,7 +190,11 @@ begin
   assert private.all_current_participants_selectable(v_int1_id) = true, 'all current participants should be selectable';
 
   -- 4.6 Reorder participants
-  v_rpc_res := public.reorder_interview_participants(v_int1_id, array[v_part2_id, v_part1_id], 3, gen_random_uuid());
+  select array_agg(ip.version_no order by array_position(array[v_part2_id,v_part1_id],ip.interview_participant_id))
+  into v_versions
+  from public.interview_participants ip
+  where ip.interview_participant_id = any(array[v_part2_id,v_part1_id]);
+  v_rpc_res := public.reorder_interview_participants(v_int1_id, array[v_part2_id, v_part1_id], v_versions);
   assert (v_rpc_res ->> 'success')::boolean = true, 'reorder should succeed';
 
   select participant_order into v_count from public.interview_participants where interview_participant_id = v_part2_id;
@@ -202,7 +207,7 @@ begin
   select version_no into v_version
   from public.interview_participants
   where interview_participant_id = v_part2_id;
-  v_rpc_res := public.remove_interview_participant(v_part2_id, v_version, gen_random_uuid());
+  v_rpc_res := public.remove_interview_participant(v_part2_id, v_version);
   assert (v_rpc_res ->> 'success')::boolean = true, 'remove participant should succeed';
 
   -- Verify remaining participant compacted to order 1
@@ -212,7 +217,7 @@ begin
   select version_no into v_version
   from public.interviews
   where interview_id = v_int1_id;
-  v_rpc_res := public.add_interview_participant(v_int1_id, v_interviewer2_id, v_version, gen_random_uuid());
+  v_rpc_res := public.add_interview_participant(v_int1_id, v_interviewer2_id, gen_random_uuid());
   assert (v_rpc_res ->> 'success')::boolean = true, 're-adding participant 2 should succeed';
   v_part2_id := (v_rpc_res -> 'data' ->> 'interview_participant_id')::uuid;
 

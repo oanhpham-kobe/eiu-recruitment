@@ -30,7 +30,7 @@ begin
   insert into public.document_types(code,name_vi,scope_code,is_active) values('T002_D_'||s,'T002 Interview Document','INTERVIEW',true) returning public.document_types.document_type_id into doc_type;
   insert into public.app_users(auth_user_id,full_name,email,is_active) values(hr_auth,'T002 HR','t002_hr_'||s||'@eiu.edu.vn',true) returning public.app_users.app_user_id into hr;
   insert into public.app_user_permissions(app_user_id,permission_code) values
-    (hr,'interviews.view'),(hr,'interviews.manage'),(hr,'interviews.status'),(hr,'interviews.documents'),
+    (hr,'interviews.view'),(hr,'interviews.manage'),(hr,'interviews.participants'),(hr,'interviews.status'),(hr,'interviews.documents'),
     (hr,'reports.view'),(hr,'reports.edit_interviewer'),(hr,'reports.manage_status') on conflict do nothing;
   insert into public.app_users(auth_user_id,full_name,email,job_title,is_active) values(i1_auth,'T002 Interviewer One','t002_i1_'||s||'@eiu.edu.vn','Lecturer',true) returning public.app_users.app_user_id into i1;
   insert into public.app_users(auth_user_id,full_name,email,job_title,is_active) values(i2_auth,'T002 Interviewer Two','t002_i2_'||s||'@eiu.edu.vn','Professor',true) returning public.app_users.app_user_id into i2;
