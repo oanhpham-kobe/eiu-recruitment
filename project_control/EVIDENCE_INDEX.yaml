@@ -8,8 +8,8 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: SLICE_04_IN_PROGRESS_TASK_S04_001_ACCEPTED
-  note: "All tasks through SLICE-03 (TASK-S00-001 through TASK-S03-006) are completed, independently reviewed, accepted, merged into the integration branch, and verified on exact-SHA GitHub Actions CI; historical pre-merge child status tags reflect intermediate review states."
+  status: SLICE_04_IN_PROGRESS_TASK_S04_002_ACCEPTED
+  note: "All tasks through TASK-S04-002 are independently reviewed, serially integrated, and verified on exact-SHA GitHub Actions CI."
 
   SOURCE-PARITY-001:
     gate: SOURCE_PARITY_GATE
@@ -939,3 +939,39 @@ implementation_evidence:
       route: DIRECT_SOURCE_LSP_ONLY
       graph_used: NO
       reason: "Foundational DB schema migration directly derived from review pack specifications; no cross-module dependency tracing needed."
+
+  INTERVIEW-LIFECYCLE-001:
+    task: TASK-S04-002
+    operation: INTERVIEW_REPORT_PARTICIPANT_SCHEDULE_DOCUMENT_LIFECYCLE
+    status: VERIFIED
+    migration: "supabase/migrations/20260906070000_interview_lifecycle_commands.sql"
+    test_suite: "supabase/tests/interview_lifecycle_test.sql"
+    implementation_sha: "52f35eeb10b20f83bb65ebd214f89a835ad0cb31"
+    integration_sha: "d2db7030fb3d19f563eb56365bb63f57f43fa4fd"
+    local_clean_migration_replay: PASS
+    database_regressions:
+      - "TASK-S04-001 Test Suite PASSED"
+      - "TASK-S04-002 Interview Lifecycle Test Suite PASSED"
+    implementation_review: "PASS (agent://TaskS04002FinalReview; blockers: NONE)"
+    github_ci: "PASS (Integration CI run 34030685386; fast verification + database integration)"
+    review_repairs:
+      - "private SECURITY DEFINER helper ACLs restricted to postgres/service_role"
+      - "participant removal archives active reports and preserves idempotency"
+      - "Application -> Interview -> Submission lock order for report status"
+      - "bulk schedule locks share canonical 64-bit advisory keys"
+      - "finalization replay bound to reservation fingerprint and result"
+      - "email history RLS maps parent authorization by email_type"
+    SKILL_USAGE:
+      supabase:
+        provider: "skill://supabase"
+        applied: YES
+      supabase-postgres-best-practices:
+        provider: "skill://supabase-postgres-best-practices"
+        applied: YES
+      security-review:
+        provider: "skill://security-review"
+        applied: YES
+    GRAPH_USAGE:
+      route: DIRECT_SOURCE_LSP_ONLY
+      graph_used: NO
+      reason: "Single migration/test task with authoritative ordered SQL and canonical review sources."

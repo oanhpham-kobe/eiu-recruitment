@@ -1,6 +1,6 @@
 version: 1
-current_slice: SLICE-03
-current_task: TASK-S03-006
+current_slice: SLICE-04
+current_task: TASK-S04-002
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -960,15 +960,16 @@ tasks:
   TASK-S04-002:
     title: "Interview Report schema, lifecycle commands, participant mutations, schedule lifecycle commands, document storage, and derived views"
     slice: SLICE-04
-    status: IN_PROGRESS
+    status: DONE
     lane: LANE_A
-    depends_on:
-      - TASK-S04-001
     worktree: D:/orca/recruitment/TASK-S04-002-interview-lifecycle
     branch: oanhpham-kobe/TASK-S04-002-interview-lifecycle
     prompt: project_control/prompts/SLICE-04_TASK-002_v1.md
     prompt_sha256: 03c177f320415fb675065eaeb008b68c0f174b355d46354f6fb03c87cd48ebf8
-    notes: "Materialized under POST-CI CONTINUATION GATE from canonical Review Pack 05, 06, 08, 37, 39, 40, 48, and database_schema.sql. Implements interview_reports, interview_documents, participant/schedule/report lifecycle RPCs, decision metadata trigger, and derived views."
+    implementation_sha: "52f35eeb10b20f83bb65ebd214f89a835ad0cb31"
+    review_status: "PASS (agent://TaskS04002FinalReview; blockers: NONE)"
+    github_ci: "VERIFIED (run 34030685386; integration commit d2db7030fb3d19f563eb56365bb63f57f43fa4fd; PASS)"
+    notes: "Interview lifecycle migration and regression suite passed local replay. Initial review and two targeted re-reviews repaired private helper ACLs, report archival and idempotency, parent lock order, deterministic bulk locks, reservation-bound upload replay, and email-history email_type contextual RLS. Exact integration CI passed."
     acceptance:
       - "INTERVIEW-LIFECYCLE-001: VERIFIED"
       - "prompt_reviewed: PASS"
@@ -976,3 +977,14 @@ tasks:
       - "interview_lifecycle_test.sql: PASS"
       - "implementation_reviewed: PASS (independent reviewer)"
       - "github_ci: VERIFIED"
+
+  TASK-S04-003:
+    title: "Dedicated copy interview schedule trusted command"
+    slice: SLICE-04
+    status: PLANNED
+    lane: LANE_A
+    depends_on:
+      - TASK-S04-002
+    prompt: project_control/prompts/SLICE-04_TASK-003_v1.md
+    prompt_sha256: d7d5ef59dbe05664c28a36f62b6f602855dcd85fb14b79beef9ddb553f289584
+    notes: "Materialized by the TASK-S04-002 POST-CI CONTINUATION GATE from canonical Copy-command sources. Requires independent prompt review before executor dispatch."
