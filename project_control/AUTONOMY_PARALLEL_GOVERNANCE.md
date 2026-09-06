@@ -1,6 +1,6 @@
 # EIU Recruitment — Continuous Autonomy & Parallel Execution Governance
-## Document Version: 2.1
-## Status: MODED_EXECUTION_POLICY / AUTONOMY_ACTIVATION_PENDING_OWNER_REVIEW
+## Document Version: 2.2
+## Status: MODED_EXECUTION_POLICY
 
 ---
 
@@ -33,10 +33,15 @@ Before creating any new control-plane or governance document:
 
 ---
 
-## 2. Execution Mode, Activation, and Current Hold
+## 2. Execution Mode and Runtime Authority
 
 `AUTONOMOUS` and `BOUNDED` are the only execution modes. Task type is
 independent of execution mode and never creates a third mode.
+
+The current live execution mode, activation state, worker state, safe frontier,
+stop gate, and every other current-run fact are read exclusively from
+`project_control/AUTONOMY_RUN_STATE.yaml`. This policy defines semantics and
+must not embed a competing current-run snapshot.
 
 `execution_mode` in `AUTONOMY_RUN_STATE.yaml` is the live operational selector:
 
@@ -50,10 +55,6 @@ independent of execution mode and never creates a third mode.
 Mode changes require explicit Planner/Owner authorization and a corresponding
 runtime-state update. `AUTONOMOUS` may not be inferred from a task type,
 frontier visibility, a prior CI pass, or an Executor settlement.
-
-The current run is `BOUNDED`. Its existing S04 governance hold remains in
-force. The bounded governance task neither authorizes S04 nor changes
-autonomy activation.
 
 ---
 
@@ -75,23 +76,143 @@ safe frontier / authorized task
 → serialized integration
 → exact-SHA CI
 → CI_VERIFIED
+→ POST-CI CONTINUATION GATE
 → next safe frontier
 ```
 
+#### Task lifecycle completion is not AUTONOMOUS run completion
+
+`CI_VERIFIED` means the task completed its normal successful lifecycle: its
+lane may be released and truthful task acceptance/evidence may be persisted.
+It does **not** mean the AUTONOMOUS run or Coordinator turn is complete, a
+Planner checkpoint is required, a task summary terminates execution, or a
+task-scoped todo list can terminate execution.
+
+When `execution_mode == AUTONOMOUS`, `auto_advance == ENABLED`, and no genuine
+canonical stop condition exists, the Coordinator MUST enter the outer
+continuation cycle.
+
+#### POST-CI CONTINUATION GATE
+
+For every successful AUTONOMOUS task lifecycle, before voluntarily yielding:
+
+```text
+TASK CI_VERIFIED
+→ release completed lane
+→ persist truthful task/evidence state
+→ open or append a CONTINUATION phase
+→ recompute DAG and slice state
+→ inspect active workers, lane capacity, and current integration HEAD
+→ inspect OPEN_GAPS, current incomplete slice, and next incomplete slice
+→ inspect canonical source for remaining source-backed work
+→ materialize next task(s) when canonical source is sufficient
+→ recompute safe frontier
+→ apply dependency, security, database, and shared-contract constraints
+→ run Parallel Eligibility Gate when a second candidate is relevant
+→ dispatch next safe task(s)
+→ continue AUTONOMOUS
+```
+
+The only alternative is to establish and persist a genuine canonical stop
+condition.
+
+#### Todo and report semantics
+
+A finite task-scoped todo list is subordinate to the AUTONOMOUS run loop. If
+`execution_mode == AUTONOMOUS`, `auto_advance == ENABLED`, and no canonical
+`stop_gate` has been established:
+
+```text
+TASK_TODO_EMPTY
+→ OPEN / APPEND CONTINUATION TODO
+→ RESOLVE NEXT FRONTIER
+```
+
+It MUST NOT transition to a final summary and top-level return. The
+Coordinator may create a new continuation phase rather than keeping one
+unbounded todo list.
+
+Task completion reports are informational. In active AUTONOMOUS execution,
+ordinary reporting of exact SHAs, verification, review, integration, CI, lane
+release, or the next frontier is not a stop event: `REPORT != STOP`.
+
+#### FRONTIER RESOLUTION and true no-safe-frontier
+
+`safe_frontier.eligible_tasks == []` alone is not `NO_SAFE_FRONTIER`. Before
+classifying a true no-safe-frontier condition, the Coordinator MUST:
+
+1. recompute `TASK_REGISTRY` dependencies;
+2. inspect active workers;
+3. inspect tasks in review, integration, or CI lifecycle;
+4. inspect the current incomplete `SLICE_REGISTRY` entry;
+5. inspect the next incomplete `SLICE_REGISTRY` entry;
+6. inspect canonical source for remaining source-backed work;
+7. determine whether work exists but remains unmaterialized;
+8. materialize that work when canonical source authority is sufficient;
+9. recompute dependencies and the safe frontier;
+10. inspect `OPEN_GAPS`;
+11. inspect Owner-decision requirements and infrastructure blockers; and
+12. inspect security, privacy, and data-integrity blockers.
+
+Source-backed work that can be materialized MUST be materialized and the
+frontier recomputed. An incomplete dependency is a truthful dependency block,
+not a terminal no-safe-frontier decision; other safe work may continue.
+`NO_SAFE_FRONTIER` is valid only when all authorized/source-backed work is
+genuinely exhausted and no active, pending-review, pending-integration, or
+pending-CI lifecycle remains.
+
+Therefore:
+
+```text
+TEMPORARILY_EMPTY_MATERIALIZED_FRONTIER
+!=
+PROVEN_NO_SAFE_FRONTIER
+```
+
+#### Outer loop and yield rule
+
+Conceptually, while AUTONOMOUS is active:
+
+```text
+resolve current integration truth
+resolve/materialize frontier
+
+if genuine canonical stop condition:
+    persist stop reason and evidence
+    yield
+
+dispatch safe work subject to scheduler capacity
+→ Executor
+→ focused verification
+→ independent implementation review
+→ blocking repair and targeted exact-SHA re-review when required
+→ PASS
+→ serialized integration
+→ exact-SHA CI
+→ CI_VERIFIED
+release lane only at CI_VERIFIED
+execute POST-CI CONTINUATION GATE
+continue
+```
+
+The Coordinator MUST NOT voluntarily top-level return solely because an
+Executor settled, review passed, a task became accepted or integrated,
+`CI_VERIFIED` occurred, a task todo became empty, a task summary was emitted,
+or the materialized frontier is temporarily empty before FRONTIER RESOLUTION.
+
+A top-level yield is valid only after a genuine canonical stop condition is
+persisted, or while an external operation is genuinely awaiting completion and
+the runtime cannot continue synchronously. In the latter case, persist a
+truthful waiting state where applicable; do not misclassify it as completion.
+
 The first implementation review covers the full task delta, task acceptance
 criteria, relevant invariants, and directly affected dependency, security,
-privacy, and data-integrity surfaces.
-
-After a repair, the fresh exact-SHA re-review covers:
-1. every prior unresolved `BLOCKING_REPAIR` finding;
-2. the repair delta;
-3. invariants and dependencies directly affected by the repair; and
-4. concrete regressions introduced by that repair.
-
-Previously passed areas remain closed unless their code changed, a changed
-dependency materially affects them, a shared invariant crosses into them, or
-concrete regression evidence justifies reopening them. A new SHA requires a
-fresh verdict, not a full-scope reset.
+privacy, and data-integrity surfaces. After a repair, the fresh exact-SHA
+re-review covers every unresolved `BLOCKING_REPAIR` finding, the repair delta,
+directly affected invariants/dependencies, and concrete repair regressions.
+Previously passed areas remain closed unless changed code, a materially changed
+dependency, a crossed shared invariant, or concrete regression evidence
+justifies reopening them.
 
 AUTONOMOUS stops only for:
 1. `OWNER_DECISION_REQUIRED`;
@@ -101,7 +222,7 @@ AUTONOMOUS stops only for:
 4. a production, main-branch, destructive, or other authorization boundary;
 5. repair exhaustion;
 6. an unrecoverable infrastructure blocker; or
-7. no safe frontier.
+7. proven true `NO_SAFE_FRONTIER` after FRONTIER RESOLUTION.
 
 ### 3.2 BOUNDED
 
