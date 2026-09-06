@@ -800,6 +800,9 @@ implementation_evidence:
     web_verification: "PASS (lint: 0 errors; typecheck: 0 errors; build: production compile success; test: 255/255 PASS)"
     secret_scan: "PASS (0 hardcoded credentials or secrets)"
     diff_check: "PASS (git diff --check is clean)"
+    exact_integration_sha: "afe2baade0ed1a04f62b34597a68784f8854199d"
+    ci_run: "34005045327"
+    ci_result: "PASS"
     governance_hardening:
       agents_decision_boundary: "PASS (compact Planner / Executor / Owner decision boundary added to Section 3)"
       review_finding_disposition: "PASS (7-disposition lifecycle contract added to Section 2)"

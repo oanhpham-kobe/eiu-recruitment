@@ -23,8 +23,8 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "2e786e194afefdf5b2b7dc6548c6438c6574f552"
-  last_verified_application_ci_run: "33970358657"
+  last_verified_application_checkpoint: "afe2baade0ed1a04f62b34597a68784f8854199d"
+  last_verified_application_ci_run: "34005045327"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -72,8 +72,8 @@ last_accepted_task:
     - "github_ci: VERIFIED (Integration CI exact SHA 2e786e194afefdf5b2b7dc6548c6438c6574f552; run 33970358657)"
 github_ci:
   workflow: "Integration CI"
-  commit_sha: "2e786e194afefdf5b2b7dc6548c6438c6574f552"
-  run_id: "33970358657"
+  commit_sha: "afe2baade0ed1a04f62b34597a68784f8854199d"
+  run_id: "34005045327"
   result: PASS
   checks:
     audit_dependencies: PASS
