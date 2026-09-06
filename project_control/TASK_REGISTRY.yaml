@@ -950,8 +950,6 @@ tasks:
     slice: SLICE-04
     status: DONE
     lane: LANE_A
-    worktree: D:/orca/recruitment/TASK-S04-001-interview-schema
-    branch: oanhpham-kobe/TASK-S04-001-interview-schema
     prompt: project_control/prompts/SLICE-04_TASK-001_v1.md
     prompt_sha256: a0fea0d1ddbd2aa0f29dd22f0473d6211e264c965e81127b88ff3ba831a4a712
     implementation_sha: "8c1913b7253e1601a40d60842535b44d258bb436"
@@ -962,7 +960,7 @@ tasks:
   TASK-S04-002:
     title: "Interview Report schema, lifecycle commands, participant mutations, schedule lifecycle commands, document storage, and derived views"
     slice: SLICE-04
-    status: READY
+    status: IN_PROGRESS
     lane: LANE_A
     depends_on:
       - TASK-S04-001

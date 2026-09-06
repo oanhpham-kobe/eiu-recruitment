@@ -37,7 +37,15 @@ authorization:
       create_pr: false
       merge_pr: false
 
-active_workers: []
+active_workers:
+  - task_id: TASK-S04-002
+    lane: LANE_A
+    role: EXECUTOR
+    agent_id: agent://TASK-S04-002-executor
+    worktree: D:/orca/recruitment/TASK-S04-002-interview-lifecycle
+    branch: oanhpham-kobe/TASK-S04-002-interview-lifecycle
+    started_at: "2026-09-06T10:40:00Z"
+    status: IN_PROGRESS
 
 worker_settled_history:
   - task_id: TASK-S03-006
@@ -103,11 +111,8 @@ historical_mcp_governance_maintenance:
   ci_run_id: "33943629020"
   ci_result: PASS
   mcp_runtime_diagnostic: "CONFIGURED YES; DISCOVERED/CALLABLE/USED NO; supabase-dev startup HTTP 401 (redacted); direct fallback retained"
-
-blocked_tasks: []
 safe_frontier:
-  eligible_tasks:
-    - TASK-S04-002
+  eligible_tasks: []
   skipped_due_to_dependency: []
   execution_hold: null
 stop_state:
