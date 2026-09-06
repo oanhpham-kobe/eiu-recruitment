@@ -23,8 +23,8 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "8c1913b7253e1601a40d60842535b44d258bb436"
-  last_verified_application_ci_run: "PENDING"
+  last_verified_application_checkpoint: "834b2cbd70915e9558a1242ad7fb775f5455b91f"
+  last_verified_application_ci_run: "34024171092"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -75,7 +75,7 @@ last_accepted_task:
     - "pre_s04_contract_repairs_test.sql: ALL PRE-S04 DATABASE INTEGRATION ASSERTIONS PASSED"
     - "interview_round_and_conflict_locking_test.sql: TASK-S04-001 Test Suite PASSED"
     - "implementation_reviewed: PASS (independent reviewer agent://TASK-S04-001-impl-reviewer; blockers: NONE)"
-    - "github_ci: PENDING (integration branch pushed to 8c1913b7253e1601a40d60842535b44d258bb436)"
+    - "github_ci: VERIFIED (Integration CI run 34024171092; commit 834b2cbd70915e9558a1242ad7fb775f5455b91f; PASS — fast verification + database integration)"
 previous_accepted_tasks:
   TASK-S03-006:
     commit: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"
@@ -87,8 +87,9 @@ previous_accepted_tasks:
       - "github_ci: VERIFIED (Integration CI exact SHA 2e786e194afefdf5b2b7dc6548c6438c6574f552; run 33970358657)"
 github_ci:
   workflow: "Integration CI"
-  commit_sha: "63bdb55227e360d40f59da3297812d57f5a9a6ef"
-  run_id: "34016943317"
+  commit_sha: "834b2cbd70915e9558a1242ad7fb775f5455b91f"
+  integration_head_at_task_implementation: "8c1913b7253e1601a40d60842535b44d258bb436"
+  run_id: "34024171092"
   result: PASS
   checks:
     audit_dependencies: PASS
@@ -96,6 +97,9 @@ github_ci:
     typecheck: PASS
     build: PASS
     test: PASS
+    start_supabase: PASS
+    replay_migrations: PASS
+    pre_s04_database_regression_suite: PASS
 governance_hotfix:
   commit: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
   ci_run_id: "33936480169"
@@ -119,4 +123,5 @@ stop_state:
   reason: null
   observed_evidence:
     - "SLICE-03 is now complete (TASK-S03-001 through TASK-S03-006 ACCEPTED)."
-next_action: "Monitor GitHub Actions CI for integration branch commit 8c1913b7253e1601a40d60842535b44d258bb436; update registry on PASS; compute next safe-frontier task."
+    - "TASK-S04-001 ACCEPTED: migration replay PASS, S04-001 test suite PASS, implementation review PASS, GitHub CI run 34024171092 PASS."
+next_action: "Compute next SLICE-04 safe-frontier task (TASK-S04-002 or other eligible SLICE-04 tasks pending DAG check)."

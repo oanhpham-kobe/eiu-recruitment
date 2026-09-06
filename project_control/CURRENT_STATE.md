@@ -45,7 +45,7 @@ Current Active Task:
 `NONE (awaiting GitHub Actions CI on TASK-S04-001)`
 
 Execution Status:
-`CI_PENDING`
+`TASK_S04_001_ACCEPTED`
 
 Auto-Advance:
 `ENABLED`
@@ -64,4 +64,4 @@ GitHub Actions Run:
 
 Next Action:
 
-`Monitor GitHub Actions CI for commit 8c1913b7253e1601a40d60842535b44d258bb436; on PASS, update registry and compute next SLICE-04 safe-frontier task.`
+`Compute next SLICE-04 safe-frontier task and dispatch TASK-S04-002 or next eligible task.`

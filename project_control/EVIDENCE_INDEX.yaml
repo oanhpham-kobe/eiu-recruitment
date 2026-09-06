@@ -8,7 +8,7 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: SLICE_03_ACCEPTED_TASK_S04_001_PENDING_CI
+  status: SLICE_04_IN_PROGRESS_TASK_S04_001_ACCEPTED
   note: "All tasks through SLICE-03 (TASK-S00-001 through TASK-S03-006) are completed, independently reviewed, accepted, merged into the integration branch, and verified on exact-SHA GitHub Actions CI; historical pre-merge child status tags reflect intermediate review states."
 
   SOURCE-PARITY-001:
@@ -871,7 +871,7 @@ implementation_evidence:
   INTERVIEW-SCHEMA-001:
     task: TASK-S04-001
     operation: INTERVIEW_ROUND_SCHEDULE_SCHEMA_AND_CONFLICT_LOCKING
-    status: PENDING_CI
+    status: VERIFIED
     migration: "supabase/migrations/20260906060000_interview_schema_and_conflict_locking.sql"
     test_suite: "supabase/tests/interview_round_and_conflict_locking_test.sql"
     implementation_sha: "8c1913b7253e1601a40d60842535b44d258bb436"
