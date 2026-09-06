@@ -69,6 +69,16 @@ export type RecordUploadCompletedData = {
   malware_scan_status: "PENDING";
 };
 
+export type AuthorizeCandidateUploadScanInput = {
+  candidateFormSessionId: string;
+  uploadReservationId: string;
+};
+
+export type AuthorizeCandidateUploadScanData = {
+  candidate_form_session_id: string;
+  upload_reservation_id: string;
+};
+
 export type StageCandidateDocumentChangeInput = {
   candidateFormSessionId: string;
   actionCode: "ADD" | "REPLACE" | "DELETE";
@@ -85,6 +95,16 @@ export type StagedDocumentChangeData = {
   upload_reservation_id: string | null;
   target_logical_document_id: string | null;
   status_code: "PENDING";
+};
+export type CancelCandidateDocumentChangeInput = {
+  candidateFormSessionId: string;
+  changeId: string;
+};
+
+export type CancelCandidateDocumentChangeData = {
+  candidate_form_session_id: string;
+  candidate_form_document_change_id: string;
+  status_code: "CANCELLED";
 };
 
 export type ValidateAndScanUploadInput = {
@@ -435,6 +455,89 @@ export function createSignedUploadUrlForReservationCommand(
 }
 
 // -----------------------------------------------------------------------------
+// 3. Authorize Candidate Upload Scan Command
+// -----------------------------------------------------------------------------
+
+export function createAuthorizeCandidateUploadScanCommand(
+  supabase: SupabaseClient,
+): TrustedCommandDefinition<
+  AuthorizeCandidateUploadScanInput,
+  string | undefined,
+  AuthorizeCandidateUploadScanInput,
+  AuthorizeCandidateUploadScanData
+> {
+  return {
+    name: "authorize_candidate_upload_scan",
+    extractTarget(input) {
+      return input.candidateFormSessionId;
+    },
+    authorize(actor) {
+      const isCandidate =
+        actor.roles.includes("CANDIDATE") ||
+        actor.permissions.includes("candidate.self");
+      return isCandidate
+        ? { authorized: true }
+        : {
+            authorized: false,
+            code: CommandErrorCode.FORBIDDEN,
+            reason: "Candidate authorization required",
+          };
+    },
+    validate(input) {
+      if (
+        !UUID_REGEX.test(input.candidateFormSessionId) ||
+        !UUID_REGEX.test(input.uploadReservationId)
+      ) {
+        return {
+          success: false,
+          error: "candidateFormSessionId and uploadReservationId must be UUIDs",
+        };
+      }
+      return { success: true, data: input };
+    },
+    async execute(_actor, validated) {
+      const { data, error } = await supabase.rpc(
+        "authorize_candidate_upload_scan",
+        {
+          p_candidate_form_session_id: validated.candidateFormSessionId,
+          p_upload_reservation_id: validated.uploadReservationId,
+        },
+      );
+
+      if (error) {
+        throw new CommandExecutionError(
+          CommandErrorCode.INTERNAL_ERROR,
+          error.message,
+          error,
+        );
+      }
+
+      const result = data as {
+        success: boolean;
+        error_code?: string;
+        message?: string;
+        data?: AuthorizeCandidateUploadScanData;
+      };
+      if (!result.success || !result.data) {
+        const rawCode = result.error_code ? String(result.error_code) : "";
+        const code =
+          CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
+          CommandErrorCode.INTERNAL_ERROR;
+        return {
+          success: false,
+          error: {
+            code,
+            message:
+              result.message || "Upload reservation authorization failed",
+          },
+        };
+      }
+      return { success: true, data: result.data };
+    },
+  };
+}
+
+// -----------------------------------------------------------------------------
 // 3. Record Candidate Upload Completed Command
 // -----------------------------------------------------------------------------
 
@@ -696,6 +799,93 @@ export function createStageCandidateDocumentChangeCommand(
 }
 
 // -----------------------------------------------------------------------------
+// 5. Cancel Candidate Document Change Command
+// -----------------------------------------------------------------------------
+
+export function createCancelCandidateDocumentChangeCommand(
+  supabase: SupabaseClient,
+): TrustedCommandDefinition<
+  CancelCandidateDocumentChangeInput,
+  string | undefined,
+  CancelCandidateDocumentChangeInput,
+  CancelCandidateDocumentChangeData
+> {
+  return {
+    name: "cancel_candidate_form_document_change",
+    extractTarget(input) {
+      return input.candidateFormSessionId;
+    },
+    authorize(actor) {
+      const isCandidate =
+        actor.roles.includes("CANDIDATE") ||
+        actor.permissions.includes("candidate.self");
+      return isCandidate
+        ? { authorized: true }
+        : {
+            authorized: false,
+            code: CommandErrorCode.FORBIDDEN,
+            reason: "Candidate authorization required",
+          };
+    },
+    validate(input) {
+      if (
+        !UUID_REGEX.test(input.candidateFormSessionId) ||
+        !UUID_REGEX.test(input.changeId)
+      ) {
+        return {
+          success: false,
+          error: "candidateFormSessionId and changeId must be UUIDs",
+        };
+      }
+      return { success: true, data: input };
+    },
+    async execute(_actor, validated) {
+      const { data, error } = await supabase.rpc(
+        "cancel_candidate_form_document_change",
+        {
+          p_session_id: validated.candidateFormSessionId,
+          p_change_id: validated.changeId,
+        },
+      );
+
+      if (error) {
+        throw new CommandExecutionError(
+          CommandErrorCode.INTERNAL_ERROR,
+          error.message,
+          error,
+        );
+      }
+
+      const result = data as {
+        success: boolean;
+        error_code?: string;
+        message?: string;
+        data?: CancelCandidateDocumentChangeData;
+      };
+      if (!result.success || !result.data) {
+        const rawCode = result.error_code ? String(result.error_code) : "";
+        const code =
+          CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
+          CommandErrorCode.INTERNAL_ERROR;
+        return {
+          success: false,
+          error: {
+            code,
+            message: result.message || "Failed to cancel document change",
+          },
+        };
+      }
+
+      return { success: true, data: result.data };
+    },
+  };
+}
+
+// -----------------------------------------------------------------------------
+// 6. Worker-Only Validate & Scan Command (Service Role Client)
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
 // 5. Worker-Only Validate & Scan Command (Service Role Client)
 // -----------------------------------------------------------------------------
 
@@ -850,6 +1040,17 @@ export async function createSignedUploadUrlForReservation(
   return runner(createSignedUploadUrlForReservationCommand(supabase), input);
 }
 
+export async function authorizeCandidateUploadScan(
+  input: AuthorizeCandidateUploadScanInput,
+  deps: StorageReservationCommandDeps = {},
+): Promise<CommandResult<AuthorizeCandidateUploadScanData>> {
+  const supabase = deps.client ?? (await createServerClient());
+  const resolveActor =
+    deps.resolveActor ?? (() => defaultResolveActor(supabase));
+  const runner = createCommandRunner({ resolveActor });
+  return runner(createAuthorizeCandidateUploadScanCommand(supabase), input);
+}
+
 export async function recordCandidateUploadCompleted(
   input: RecordUploadCompletedInput,
   deps: StorageReservationCommandDeps = {},
@@ -870,6 +1071,16 @@ export async function stageCandidateDocumentChange(
     deps.resolveActor ?? (() => defaultResolveActor(supabase));
   const runner = createCommandRunner({ resolveActor });
   return runner(createStageCandidateDocumentChangeCommand(supabase), input);
+}
+export async function cancelCandidateDocumentChange(
+  input: CancelCandidateDocumentChangeInput,
+  deps: StorageReservationCommandDeps = {},
+): Promise<CommandResult<CancelCandidateDocumentChangeData>> {
+  const supabase = deps.client ?? (await createServerClient());
+  const resolveActor =
+    deps.resolveActor ?? (() => defaultResolveActor(supabase));
+  const runner = createCommandRunner({ resolveActor });
+  return runner(createCancelCandidateDocumentChangeCommand(supabase), input);
 }
 
 export async function validateAndScanUploadReservation(

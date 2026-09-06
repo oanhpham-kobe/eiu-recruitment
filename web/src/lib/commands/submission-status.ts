@@ -68,7 +68,7 @@ export type CorrectSubmissionCandidateFieldsInput = {
   dateOfBirth?: string | null;
   gender?: "MALE" | "FEMALE" | null;
   currentAddress?: string | null;
-  expectedVersion?: number | null;
+  expectedVersion: number;
   reason?: string | null;
 };
 
@@ -783,20 +783,14 @@ export function createCorrectSubmissionCandidateFieldsCommand(
       }
 
       if (
-        rawInput.expectedVersion !== undefined &&
-        rawInput.expectedVersion !== null
+        typeof rawInput.expectedVersion !== "number" ||
+        rawInput.expectedVersion <= 0
       ) {
-        if (
-          typeof rawInput.expectedVersion !== "number" ||
-          rawInput.expectedVersion <= 0
-        ) {
-          return {
-            success: false,
-            error: "Expected version must be a positive number",
-          };
-        }
+        return {
+          success: false,
+          error: "Expected version is required and must be a positive number",
+        };
       }
-
       return { success: true, data: rawInput };
     },
 
@@ -812,7 +806,7 @@ export function createCorrectSubmissionCandidateFieldsCommand(
             ? validated.gender.toUpperCase().trim()
             : null,
           p_current_address: validated.currentAddress?.trim() || null,
-          p_expected_version: validated.expectedVersion ?? null,
+          p_expected_version: validated.expectedVersion,
           p_reason: validated.reason?.trim() || null,
         },
       );

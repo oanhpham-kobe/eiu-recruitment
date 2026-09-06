@@ -1,7 +1,6 @@
 "use client";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DocumentUploader,
   type StagedDocumentItem,
@@ -13,15 +12,21 @@ import {
 import { useAutosave } from "@/hooks/useAutosave";
 import type { EducationItem } from "@/lib/commands/candidate-submission";
 
+type CandidatePrivacyNotice = {
+  version: string;
+  contentVi: string;
+  contentEn: string | null;
+};
 export interface CandidateFormData {
   fullName: string;
   phone: string;
   dateOfBirth: string;
-  gender: "MALE" | "FEMALE";
+  gender: "MALE" | "FEMALE" | "";
   address: string;
   education: EducationItem[];
   attachedDocs: StagedDocumentItem[];
   privacyAcknowledged: boolean;
+  acknowledgedPrivacyVersion: string | null;
 }
 
 interface CandidateFormProps {
@@ -29,14 +34,17 @@ interface CandidateFormProps {
   mode: "NEW_SUBMISSION" | "EDIT_SUBMISSION";
   verifiedEmail: string;
   pinnedPrivacyVersion: string;
+  expiresAt: string;
+  privacyNotice: CandidatePrivacyNotice;
   privacyAlreadyAcknowledged?: boolean;
   initialData?: Partial<CandidateFormData>;
   documentTypes: Array<{ id: string; code: string; name: string }>;
   qualificationLevels?: QualificationLevelOption[];
-  supabaseClient?: SupabaseClient;
-  onSubmit: (
-    data: CandidateFormData,
-  ) => Promise<{ success: boolean; error?: string }>;
+  onSubmit: (data: CandidateFormData) => Promise<{
+    success: boolean;
+    error?: string;
+    privacyNotice?: CandidatePrivacyNotice;
+  }>;
   onCancel: () => Promise<void>;
 }
 
@@ -45,37 +53,61 @@ export function CandidateForm({
   mode,
   verifiedEmail,
   pinnedPrivacyVersion,
+  expiresAt,
+  privacyNotice,
   privacyAlreadyAcknowledged = false,
   initialData,
   documentTypes,
   qualificationLevels = [],
-  supabaseClient,
   onSubmit,
   onCancel,
 }: CandidateFormProps) {
+  const privacyNoticeVersion = privacyNotice.version || pinnedPrivacyVersion;
   const [formData, setFormData] = useState<CandidateFormData>({
     fullName: initialData?.fullName ?? "",
     phone: initialData?.phone ?? "",
     dateOfBirth: initialData?.dateOfBirth ?? "",
-    gender: initialData?.gender === "FEMALE" ? "FEMALE" : "MALE",
+    gender: initialData?.gender ?? "MALE",
     address: initialData?.address ?? "",
     education: initialData?.education ?? [],
     attachedDocs: initialData?.attachedDocs ?? [],
     privacyAcknowledged: Boolean(privacyAlreadyAcknowledged),
+    acknowledgedPrivacyVersion: privacyAlreadyAcknowledged
+      ? privacyNoticeVersion
+      : null,
   });
+
+  useEffect(() => {
+    setFormData((prev) =>
+      prev.acknowledgedPrivacyVersion === privacyNoticeVersion
+        ? prev
+        : {
+            ...prev,
+            privacyAcknowledged: false,
+            acknowledgedPrivacyVersion: null,
+          },
+    );
+  }, [privacyNoticeVersion]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // Autosave hook
   const { statusMessage, clearDraft } = useAutosave({
     sessionId,
+    expiresAt,
     data: formData,
     onRestore: (restored) => {
+      const acknowledgementMatchesNotice =
+        restored.privacyAcknowledged &&
+        restored.acknowledgedPrivacyVersion === privacyNoticeVersion;
       setFormData((prev) => ({
         ...prev,
         ...restored,
+        privacyAcknowledged: acknowledgementMatchesNotice,
+        acknowledgedPrivacyVersion: acknowledgementMatchesNotice
+          ? privacyNoticeVersion
+          : null,
       }));
     },
   });
@@ -146,13 +178,31 @@ export function CandidateForm({
       errs.attachedDocs = "Bắt buộc phải đính kèm tệp CV / CV is required";
     }
 
-    if (!formData.privacyAcknowledged) {
+    if (
+      !formData.privacyAcknowledged ||
+      formData.acknowledgedPrivacyVersion !== privacyNoticeVersion
+    ) {
       errs.privacyAcknowledged =
         "Bạn phải đồng ý với Thông báo quyền riêng tư / You must agree to the Privacy Notice";
     }
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
+  };
+
+  const handlePrivacyAcknowledgementChange = (acknowledged: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      privacyAcknowledged: acknowledged,
+      acknowledgedPrivacyVersion: acknowledged ? privacyNoticeVersion : null,
+    }));
+    if (errors.privacyAcknowledged) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.privacyAcknowledged;
+        return next;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,6 +219,13 @@ export function CandidateForm({
       if (result.success) {
         clearDraft();
       } else {
+        if (result.privacyNotice) {
+          setFormData((prev) => ({
+            ...prev,
+            privacyAcknowledged: false,
+            acknowledgedPrivacyVersion: null,
+          }));
+        }
         setServerError(
           result.error || "Gửi hồ sơ thất bại / Submission failed",
         );
@@ -375,7 +432,6 @@ export function CandidateForm({
         attachedDocs={formData.attachedDocs}
         documentTypes={documentTypes}
         onDocsChange={(docs) => handleFieldChange("attachedDocs", docs)}
-        supabaseClient={supabaseClient}
         disabled={submitting}
       />
       {errors.attachedDocs && (
@@ -397,8 +453,8 @@ export function CandidateForm({
             type="checkbox"
             className="privacy-checkbox"
             checked={formData.privacyAcknowledged}
-            onChange={(e) =>
-              handleFieldChange("privacyAcknowledged", e.target.checked)
+            onChange={(event) =>
+              handlePrivacyAcknowledgementChange(event.target.checked)
             }
             aria-required="true"
             aria-invalid={Boolean(errors.privacyAcknowledged)}
@@ -411,11 +467,18 @@ export function CandidateForm({
             Tôi xác nhận đã đọc, hiểu rõ và đồng ý với{" "}
             <strong>
               Thông báo về quyền riêng tư của EIU (Phiên bản{" "}
-              {pinnedPrivacyVersion})
+              {privacyNoticeVersion})
             </strong>
             . Dữ liệu của tôi sẽ được lưu trữ và xử lý bảo mật phục vụ công tác
             tuyển dụng.
           </label>
+          <details>
+            <summary>Đọc toàn văn / Read the full Privacy Notice</summary>
+            <div id="privacy-notice-content" className="privacy-notice-content">
+              <p>{privacyNotice.contentVi}</p>
+              {privacyNotice.contentEn && <p>{privacyNotice.contentEn}</p>}
+            </div>
+          </details>
         </div>
         {errors.privacyAcknowledged && (
           <span id="privacy-error" className="field-error field-error-block">

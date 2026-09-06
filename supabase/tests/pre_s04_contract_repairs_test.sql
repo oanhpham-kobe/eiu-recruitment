@@ -307,6 +307,21 @@ begin
     'VALIDATED', 'CLEAN', v_auth_id, gen_random_uuid(), clock_timestamp() + interval '4 hours'
   );
 
+  -- Authorize the caller-owned reservation before any privileged scan reads it.
+  update public.upload_reservations
+  set status_code = 'RESERVED', malware_scan_status = 'PENDING'
+  where upload_reservation_id = v_res1;
+
+
+  perform set_config('request.jwt.claim.sub', v_auth_id::text, true);
+  v_result := public.authorize_candidate_upload_scan(v_session_id, v_res1);
+  assert (v_result->>'success')::boolean = true,
+    'Candidate-owned OPEN session must authorize its RESERVED reservation before scanning';
+
+  update public.upload_reservations
+  set status_code = 'VALIDATED', malware_scan_status = 'CLEAN'
+  where upload_reservation_id = v_res1;
+
   insert into public.candidate_form_document_changes (
     candidate_form_session_id, upload_reservation_id, action_code, intended_document_type_id, status_code
   ) values (v_session_id, v_res1, 'ADD', v_doc_type_cv, 'PENDING');

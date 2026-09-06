@@ -761,6 +761,7 @@ set search_path = ''
 as $$
 declare
   v_has_view boolean;
+  v_has_application_view boolean;
   v_sub record;
   v_source_name text := null;
   v_updated_by_name text := null;
@@ -772,6 +773,9 @@ declare
 begin
   -- 1. Authorization check: submissions.view only
   v_has_view := private.has_permission('submissions.view') or private.is_root_admin();
+  v_has_application_view := private.has_permission('applications.view')
+    or private.has_permission('applications.manage')
+    or private.is_root_admin();
   if not v_has_view then
     return jsonb_build_object(
       'success', false,
@@ -886,29 +890,32 @@ begin
   where l.submission_id = p_submission_id;
 
   -- 9. Assigned Applications
-  select coalesce(jsonb_agg(
-    jsonb_build_object(
-      'application_id', app.application_id,
-      'unit_id', app.unit_id,
-      'unit_name_vi', u.name_vi,
-      'department_team_id', app.department_team_id,
-      'team_name_vi', t.name_vi,
-      'position_id', app.position_id,
-      'position_name_vi', pos.name_vi,
-      'hr_owner_id', app.hr_owner_id,
-      'hr_owner_name', hr.full_name,
-      'is_active', app.is_active,
-      'created_at', app.created_at
-    ) order by app.created_at desc
-  ), '[]'::jsonb)
-  into v_applications
-  from public.applications app
-  left join public.organizational_units u on u.unit_id = app.unit_id
-  left join public.department_teams t on t.department_team_id = app.department_team_id
-  left join public.positions pos on pos.position_id = app.position_id
-  left join public.app_users hr on hr.app_user_id = app.hr_owner_id
-  where app.submission_id = p_submission_id;
-
+  if v_has_application_view then
+    select coalesce(jsonb_agg(
+      jsonb_build_object(
+        'application_id', app.application_id,
+        'unit_id', app.unit_id,
+        'unit_name_vi', u.name_vi,
+        'department_team_id', app.department_team_id,
+        'team_name_vi', t.name_vi,
+        'position_id', app.position_id,
+        'position_name_vi', pos.name_vi,
+        'hr_owner_id', app.hr_owner_id,
+        'hr_owner_name', hr.full_name,
+        'is_active', app.is_active,
+        'created_at', app.created_at
+      ) order by app.created_at desc
+    ), '[]'::jsonb)
+    into v_applications
+    from public.applications app
+    left join public.organizational_units u on u.unit_id = app.unit_id
+    left join public.department_teams t on t.department_team_id = app.department_team_id
+    left join public.positions pos on pos.position_id = app.position_id
+    left join public.app_users hr on hr.app_user_id = app.hr_owner_id
+    where app.submission_id = p_submission_id;
+  else
+    v_applications := '[]'::jsonb;
+  end if;
   return jsonb_build_object(
     'success', true,
     'data', jsonb_build_object(
@@ -986,6 +993,12 @@ declare
   v_idx integer;
   v_sort integer;
   v_qual_id uuid;
+  v_current_notice_content_vi text;
+  v_current_notice_content_en text;
+  v_actor_scope text;
+  v_fingerprint text;
+  v_existing_result jsonb;
+  v_result jsonb;
 begin
   -- 1. Canonical Authentication & Active Verification
   v_auth_uid := auth.uid();
@@ -1021,6 +1034,40 @@ begin
   if not found then
     return jsonb_build_object('success', false, 'error_code', 'NOT_FOUND', 'message', 'Candidate form session not found or access denied');
   end if;
+  if p_idempotency_key is null then
+    return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Idempotency key is required');
+  end if;
+
+  v_actor_scope := 'candidate:' || v_cand.candidate_id::text;
+  v_fingerprint := encode(
+    extensions.digest(
+      convert_to(jsonb_build_object(
+        'command', 'submit_candidate_submission',
+        'candidate_form_session_id', p_candidate_form_session_id,
+        'full_name', p_full_name,
+        'phone', p_phone,
+        'date_of_birth', p_date_of_birth,
+        'gender', p_gender,
+        'address', p_address,
+        'education', p_education,
+        'privacy_notice_version', p_privacy_notice_version
+      )::text, 'UTF8'),
+      'sha256'
+    ),
+    'hex'
+  );
+  perform pg_advisory_xact_lock(hashtextextended(v_actor_scope || ':submit_candidate_submission:' || p_idempotency_key::text, 0));
+  select result_payload into v_existing_result
+  from public.idempotency_records
+  where actor_scope = v_actor_scope
+    and command_type = 'submit_candidate_submission'
+    and idempotency_key = p_idempotency_key;
+  if found then
+    if v_existing_result ->> 'request_fingerprint' <> v_fingerprint then
+      return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Idempotency key has already been used for a different request');
+    end if;
+    return v_existing_result -> 'result';
+  end if;
 
   if v_session.status_code <> 'OPEN' then
     return jsonb_build_object('success', false, 'error_code', 'INVALID_STATE', 'message', 'Candidate form session is not open');
@@ -1040,15 +1087,33 @@ begin
   end if;
 
   -- Strong-current check: re-verify notice is currently effective and published
-  select notice_version into v_current_notice_version
+  select notice_version, content_vi, content_en
+  into v_current_notice_version, v_current_notice_content_vi, v_current_notice_content_en
   from public.privacy_notice_versions
   where is_current = true
     and effective_from <= clock_timestamp()
   order by effective_from desc
   limit 1;
 
-  if v_current_notice_version is null or v_current_notice_version <> p_privacy_notice_version then
-    return jsonb_build_object('success', false, 'error_code', 'PRIVACY_NOTICE_CHANGED', 'message', 'Privacy notice has been updated; please review and acknowledge the current version');
+  if v_current_notice_version is null then
+    return jsonb_build_object('success', false, 'error_code', 'PRIVACY_NOTICE_UNAVAILABLE', 'message', 'Current privacy notice is unavailable');
+  end if;
+
+  if v_current_notice_version <> p_privacy_notice_version then
+    update public.candidate_form_sessions
+    set presented_privacy_notice_version = v_current_notice_version,
+        updated_at = clock_timestamp()
+    where candidate_form_session_id = p_candidate_form_session_id;
+    return jsonb_build_object(
+      'success', false,
+      'error_code', 'PRIVACY_NOTICE_CHANGED',
+      'message', 'Privacy notice has been updated; review and acknowledge the current version',
+      'data', jsonb_build_object(
+        'privacy_notice_version', v_current_notice_version,
+        'content_vi', v_current_notice_content_vi,
+        'content_en', v_current_notice_content_en
+      )
+    );
   end if;
 
   -- 5. Field Validations (Canonical Validation Contract)
@@ -1080,6 +1145,26 @@ begin
     if jsonb_array_length(p_education) > 20 then
       return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Education cannot exceed 20 items');
     end if;
+  end if;
+  -- Pre-validate every education qualification before any parent or child mutation.
+  if p_education is not null and jsonb_typeof(p_education) = 'array' then
+    for v_item in select * from jsonb_array_elements(p_education) loop
+      if v_item->>'qualification_id' is not null and btrim(v_item->>'qualification_id') <> '' then
+        begin
+          v_qual_id := (v_item->>'qualification_id')::uuid;
+        exception when others then
+          return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Invalid qualification_id format');
+        end;
+        if not exists (
+          select 1
+          from public.qualification_levels
+          where qualification_id = v_qual_id
+            and is_active = true
+        ) then
+          return jsonb_build_object('success', false, 'error_code', 'INACTIVE_QUALIFICATION_NOT_SELECTABLE', 'message', 'Selected qualification level is inactive');
+        end if;
+      end if;
+    end loop;
   end if;
 
   -- 6. Document Plan Pre-Materialization Validation
@@ -1309,18 +1394,35 @@ begin
       'submission_id', v_submission_id,
       'candidate_id', v_cand.candidate_id,
       'status_code', 'NEW',
-      'full_name', p_full_name,
-      'version_no', 1
+      'version_no', 1,
+      'changed_fields', jsonb_build_array('full_name', 'phone', 'date_of_birth', 'gender_code', 'current_address', 'education', 'documents', 'privacy_notice')
     ),
     'RPC',
     'SUCCESS'
   );
-  return jsonb_build_object(
+  v_result := jsonb_build_object(
     'success', true,
     'submission_id', v_submission_id,
     'status_code', 'NEW',
     'version_no', 1
   );
+  insert into public.idempotency_records (
+    actor_scope,
+    command_type,
+    idempotency_key,
+    result_entity_type,
+    result_entity_id,
+    result_payload
+  ) values (
+    v_actor_scope,
+    'submit_candidate_submission',
+    p_idempotency_key,
+    'SUBMISSION',
+    v_submission_id,
+    jsonb_build_object('request_fingerprint', v_fingerprint, 'result', v_result)
+  )
+  on conflict (actor_scope, command_type, idempotency_key) do nothing;
+  return v_result;
 end;
 $$;
 
@@ -1358,6 +1460,12 @@ declare
   v_current_notice_version text;
   v_sort integer;
   v_qual_id uuid;
+  v_current_notice_content_vi text;
+  v_current_notice_content_en text;
+  v_actor_scope text;
+  v_fingerprint text;
+  v_existing_result jsonb;
+  v_result jsonb;
 begin
   -- 1. Authentication & Active Verification
   v_auth_uid := auth.uid();
@@ -1392,6 +1500,40 @@ begin
 
   if not found then
     return jsonb_build_object('success', false, 'error_code', 'NOT_FOUND', 'message', 'Candidate form session not found or access denied');
+  end if;
+  if p_idempotency_key is null then
+    return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Idempotency key is required');
+  end if;
+
+  v_actor_scope := 'candidate:' || v_cand.candidate_id::text;
+  v_fingerprint := encode(
+    extensions.digest(
+      convert_to(jsonb_build_object(
+        'command', 'update_candidate_submission',
+        'candidate_form_session_id', p_candidate_form_session_id,
+        'full_name', p_full_name,
+        'phone', p_phone,
+        'date_of_birth', p_date_of_birth,
+        'gender', p_gender,
+        'address', p_address,
+        'education', p_education,
+        'privacy_notice_version', p_privacy_notice_version
+      )::text, 'UTF8'),
+      'sha256'
+    ),
+    'hex'
+  );
+  perform pg_advisory_xact_lock(hashtextextended(v_actor_scope || ':update_candidate_submission:' || p_idempotency_key::text, 0));
+  select result_payload into v_existing_result
+  from public.idempotency_records
+  where actor_scope = v_actor_scope
+    and command_type = 'update_candidate_submission'
+    and idempotency_key = p_idempotency_key;
+  if found then
+    if v_existing_result ->> 'request_fingerprint' <> v_fingerprint then
+      return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Idempotency key has already been used for a different request');
+    end if;
+    return v_existing_result -> 'result';
   end if;
 
   if v_session.status_code <> 'OPEN' then
@@ -1430,15 +1572,33 @@ begin
     return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Acknowledged privacy notice version must match server-pinned notice version');
   end if;
 
-  select notice_version into v_current_notice_version
+  select notice_version, content_vi, content_en
+  into v_current_notice_version, v_current_notice_content_vi, v_current_notice_content_en
   from public.privacy_notice_versions
   where is_current = true
     and effective_from <= clock_timestamp()
   order by effective_from desc
   limit 1;
 
-  if v_current_notice_version is null or v_current_notice_version <> p_privacy_notice_version then
-    return jsonb_build_object('success', false, 'error_code', 'PRIVACY_NOTICE_CHANGED', 'message', 'Privacy notice has been updated; please review and acknowledge the current version');
+  if v_current_notice_version is null then
+    return jsonb_build_object('success', false, 'error_code', 'PRIVACY_NOTICE_UNAVAILABLE', 'message', 'Current privacy notice is unavailable');
+  end if;
+
+  if v_current_notice_version <> p_privacy_notice_version then
+    update public.candidate_form_sessions
+    set presented_privacy_notice_version = v_current_notice_version,
+        updated_at = clock_timestamp()
+    where candidate_form_session_id = p_candidate_form_session_id;
+    return jsonb_build_object(
+      'success', false,
+      'error_code', 'PRIVACY_NOTICE_CHANGED',
+      'message', 'Privacy notice has been updated; review and acknowledge the current version',
+      'data', jsonb_build_object(
+        'privacy_notice_version', v_current_notice_version,
+        'content_vi', v_current_notice_content_vi,
+        'content_en', v_current_notice_content_en
+      )
+    );
   end if;
 
   -- 6. Field Validations (Canonical Validation Contract)
@@ -1469,6 +1629,26 @@ begin
     if jsonb_array_length(p_education) > 20 then
       return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Education cannot exceed 20 items');
     end if;
+  end if;
+  -- Pre-validate every education qualification before any parent or child mutation.
+  if p_education is not null and jsonb_typeof(p_education) = 'array' then
+    for v_item in select * from jsonb_array_elements(p_education) loop
+      if v_item->>'qualification_id' is not null and btrim(v_item->>'qualification_id') <> '' then
+        begin
+          v_qual_id := (v_item->>'qualification_id')::uuid;
+        exception when others then
+          return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Invalid qualification_id format');
+        end;
+        if not exists (
+          select 1
+          from public.qualification_levels
+          where qualification_id = v_qual_id
+            and is_active = true
+        ) then
+          return jsonb_build_object('success', false, 'error_code', 'INACTIVE_QUALIFICATION_NOT_SELECTABLE', 'message', 'Selected qualification level is inactive');
+        end if;
+      end if;
+    end loop;
   end if;
 
   -- 7. Document Plan Pre-Materialization Validation
@@ -1552,7 +1732,7 @@ begin
       and status_code = 'PENDING'
     for update
   loop
-    if v_chg.operation_code = 'ADD' then
+    if v_chg.action_code = 'ADD' then
       select * into v_res from public.upload_reservations where upload_reservation_id = v_chg.upload_reservation_id for update;
 
       insert into public.submission_document_logicals (
@@ -1717,18 +1897,35 @@ begin
       'submission_id', v_sub.submission_id,
       'candidate_id', v_cand.candidate_id,
       'status_code', v_sub.status_code,
-      'full_name', p_full_name,
-      'version_no', v_sub.version_no
+      'version_no', v_sub.version_no,
+      'changed_fields', jsonb_build_array('full_name', 'phone', 'date_of_birth', 'gender_code', 'current_address', 'education', 'documents', 'privacy_notice')
     ),
     'RPC',
     'SUCCESS'
   );
-  return jsonb_build_object(
+  v_result := jsonb_build_object(
     'success', true,
     'submission_id', v_sub.submission_id,
     'status_code', v_sub.status_code,
     'version_no', v_sub.version_no
   );
+  insert into public.idempotency_records (
+    actor_scope,
+    command_type,
+    idempotency_key,
+    result_entity_type,
+    result_entity_id,
+    result_payload
+  ) values (
+    v_actor_scope,
+    'update_candidate_submission',
+    p_idempotency_key,
+    'SUBMISSION',
+    v_sub.submission_id,
+    jsonb_build_object('request_fingerprint', v_fingerprint, 'result', v_result)
+  )
+  on conflict (actor_scope, command_type, idempotency_key) do nothing;
+  return v_result;
 end;
 $$;
 
@@ -1780,6 +1977,9 @@ begin
     or not (private.has_permission('submissions.edit') or private.is_root_admin()) then
     return jsonb_build_object('success', false, 'error_code', 'FORBIDDEN', 'message', 'Permission submissions.edit required');
   end if;
+  if p_expected_version is null or p_expected_version <= 0 then
+    return jsonb_build_object('success', false, 'error_code', 'VALIDATION_ERROR', 'message', 'Expected version is required and must be positive');
+  end if;
 
   -- 2. Validate at least one field provided
   if p_full_name is null and p_phone is null and p_date_of_birth is null and p_gender is null and p_current_address is null then
@@ -1796,8 +1996,8 @@ begin
     return jsonb_build_object('success', false, 'error_code', 'NOT_FOUND', 'message', 'Submission not found');
   end if;
 
-  -- 4. Optimistic expected_version check
-  if p_expected_version is not null and v_sub.version_no <> p_expected_version then
+  -- 4. Optimistic expected_version check is mandatory after the row lock.
+  if v_sub.version_no <> p_expected_version then
     return jsonb_build_object('success', false, 'error_code', 'STALE_VERSION', 'message', 'Submission version mismatch; reload required');
   end if;
 
