@@ -49,7 +49,7 @@ begin
   insert into public.applications(submission_id,unit_id,position_id,hr_owner_id) values(submission2_id,unit_id,position_id,hr) returning public.applications.application_id into target_app;
   insert into public.interviews(application_id,round_no,start_at,end_at,interview_format_id,room_id,interview_note) values(source_app,1,'2035-01-01 09:00+07','2035-01-01 10:00+07',format_id,room_id,'source logistics') returning public.interviews.interview_id into source_id;
   insert into public.interview_participants(interview_id,app_user_id,participant_order,snapshot_name,snapshot_job_title,snapshot_email) values
-    (source_id,i2,1,'Historic Two','Historic Professor','historic2_'||s||'@eiu.edu.vn'),
+    (source_id,i2,1,'Historic Two',null,'historic2_'||s||'@eiu.edu.vn'),
     (source_id,i1,2,'Historic One','Historic Lecturer','historic1_'||s||'@eiu.edu.vn');
   insert into public.interviews(application_id,round_no) values(target_app,1) returning public.interviews.interview_id into target_r1;
   same_app:=source_app;
@@ -64,6 +64,7 @@ begin
   assert copied_id=target_r1 and (select copied_from_interview_id from public.interviews where interview_id=copied_id)=source_id,'empty target Round 1 is filled with provenance';
   assert (select demo_topic is null and interview_note='copied logistics' and start_at='2035-01-02 09:00+07'::timestamptz from public.interviews where interview_id=copied_id),'logistics copied and demo topic blank';
   assert (select array_agg(snapshot_name order by participant_order) from public.interview_participants where interview_id=copied_id)=array['Historic Two','Historic One'],'participant snapshots and order copied';
+  assert (select snapshot_job_title is null from public.interview_participants where interview_id=copied_id and app_user_id=i2),'null source job-title snapshot is preserved instead of directory fallback';
   r:=public.copy_interview_schedule(source_id,target_app,v,target_app_v,target_r1,target_r1_v,'2035-01-02 09:00+07','2035-01-02 10:00+07',format_id,room_id,null,'copied logistics',array[i2,i1],replay_key);
   assert (r->'data'->>'interview_id')::uuid=copied_id and (select count(*) from public.interviews where application_id=target_app)=1,'same idempotency replay returns persisted result';
   raised:=false; begin

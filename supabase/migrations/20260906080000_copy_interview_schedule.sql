@@ -218,13 +218,14 @@ begin
     interview_id,app_user_id,participant_order,snapshot_name,snapshot_job_title,snapshot_email
   )
   select v_target.interview_id, x.app_user_id, x.ord::integer,
-         coalesce(source_snapshot.snapshot_name, u.full_name),
-         coalesce(source_snapshot.snapshot_job_title, u.job_title),
-         coalesce(source_snapshot.snapshot_email, u.email)
+         case when source_snapshot.source_participant_id is not null then source_snapshot.snapshot_name else u.full_name end,
+         case when source_snapshot.source_participant_id is not null then source_snapshot.snapshot_job_title else u.job_title end,
+         case when source_snapshot.source_participant_id is not null then source_snapshot.snapshot_email else u.email end
   from unnest(v_participant_ids) with ordinality x(app_user_id,ord)
   join public.app_users u on u.app_user_id=x.app_user_id and u.is_active
   left join lateral (
-    select ip.snapshot_name,ip.snapshot_job_title,ip.snapshot_email
+    select ip.interview_participant_id as source_participant_id,
+           ip.snapshot_name,ip.snapshot_job_title,ip.snapshot_email
     from public.interview_participants ip
     where ip.interview_id=v_source.interview_id and ip.app_user_id=x.app_user_id and ip.is_current
   ) source_snapshot on true;
