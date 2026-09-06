@@ -235,9 +235,20 @@ drop policy if exists email_history_select on public.email_history;
 create policy email_history_select on public.email_history
   for select to authenticated
   using (
-    private.has_permission('emails.history_view')
-    or private.is_root_admin()
+    private.is_root_admin()
+    or (
+      private.has_permission('emails.history_view')
+      and (
+        (email_history.interview_id is not null and (private.has_permission('interviews.view') or private.has_permission('interviews.manage') or private.has_permission('reports.view')))
+        or (email_history.application_id is not null and (private.has_permission('applications.view') or private.has_permission('applications.manage')))
+        or (email_history.submission_id is not null and private.has_permission('submissions.view'))
+      )
+    )
   );
+
+alter table public.upload_reservations
+  add column if not exists finalize_request_fingerprint text,
+  add column if not exists finalize_result jsonb;
 
 create or replace view private.interview_final_decision_source
 with (security_invoker = true)
@@ -748,14 +759,18 @@ $$;
 
 create or replace function public.change_report_status(p_interview_id uuid,p_report_status_code text,p_expected_version bigint)
 returns jsonb language plpgsql security definer set search_path = '' as $$
-declare v_actor uuid:=private.interview_command_actor('reports.manage_status'); v_i public.interviews%rowtype; v_app public.applications%rowtype;
+declare v_actor uuid:=private.interview_command_actor('reports.manage_status'); v_i public.interviews%rowtype; v_app public.applications%rowtype; v_application_id uuid;
 begin
   if v_actor is null or (not private.is_root_admin() and not private.has_permission('reports.view')) then return jsonb_build_object('success',false,'error_code',case when auth.uid() is null then 'UNAUTHENTICATED' else 'FORBIDDEN' end); end if;
   if p_report_status_code not in ('INTERVIEW_SCHEDULING','AWAITING_INTERVIEW','WAITING_FOR_REPORT','REPORT_SUBMITTED','FOLLOW_UP','ON_HOLD','HIRED','REJECTED') then return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR'); end if;
-  select * into v_i from public.interviews where interview_id=p_interview_id for update; if not found then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
-  if v_i.version_no<>p_expected_version then return jsonb_build_object('success',false,'error_code','STALE_VERSION'); end if;
-  select * into v_app from public.applications where application_id=v_i.application_id for update;
+  select application_id into v_application_id from public.interviews where interview_id=p_interview_id;
+  if not found then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
+  select * into v_app from public.applications where application_id=v_application_id for update;
   if not found or not v_app.is_active then return jsonb_build_object('success',false,'error_code','APPLICATION_INACTIVE'); end if;
+  select * into v_i from public.interviews where interview_id=p_interview_id for update;
+  if not found then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
+  if v_i.application_id<>v_app.application_id then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
+  if v_i.version_no<>p_expected_version then return jsonb_build_object('success',false,'error_code','STALE_VERSION'); end if;
   if not exists(select 1 from private.application_current_interview where application_id=v_i.application_id and interview_id=v_i.interview_id) then return jsonb_build_object('success',false,'error_code','LATEST_ROUND_REQUIRED'); end if;
   perform 1 from public.submissions where submission_id=v_app.submission_id for update;
   update public.interviews set report_status_code=p_report_status_code,updated_by=v_actor where interview_id=p_interview_id;
@@ -806,21 +821,23 @@ $$;
 
 create or replace function public.finalize_interview_upload(p_reservation_id uuid,p_logical_document_id_or_null uuid,p_storage_bucket text,p_storage_path text,p_original_filename text,p_mime_type text,p_file_size_bytes bigint,p_checksum_sha256 text,p_expected_logical_version_or_null integer)
 returns jsonb language plpgsql security definer set search_path = '' as $$
-declare v_actor uuid:=private.interview_command_actor('interviews.documents'); v_res public.upload_reservations%rowtype; v_i public.interviews%rowtype; v_logical public.interview_document_logicals%rowtype; v_document uuid; v_count integer; v_version integer; v_old public.interview_documents%rowtype;
+declare v_actor uuid:=private.interview_command_actor('interviews.documents'); v_res public.upload_reservations%rowtype; v_i public.interviews%rowtype; v_logical public.interview_document_logicals%rowtype; v_document uuid; v_count integer; v_version integer; v_old public.interview_documents%rowtype; v_fingerprint text; v_result jsonb;
 begin
   if v_actor is null or (not private.is_root_admin() and not private.has_permission('interviews.manage')) then return jsonb_build_object('success',false,'error_code',case when auth.uid() is null then 'UNAUTHENTICATED' else 'FORBIDDEN' end); end if;
   select * into v_res from public.upload_reservations where upload_reservation_id=p_reservation_id for update; if not found then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
+  v_fingerprint := encode(extensions.digest(jsonb_build_object(
+    'logical_document_id', p_logical_document_id_or_null,
+    'storage_bucket', p_storage_bucket,
+    'storage_path', p_storage_path,
+    'original_filename', p_original_filename,
+    'mime_type', p_mime_type,
+    'file_size_bytes', p_file_size_bytes,
+    'checksum_sha256', p_checksum_sha256,
+    'expected_logical_version', p_expected_logical_version_or_null
+  )::text, 'sha256'), 'hex');
   if v_res.status_code = 'FINALIZED' then
-    select d.interview_document_id, d.logical_document_id, d.version_no into v_document, v_logical.logical_document_id, v_version
-    from public.interview_documents d
-    where d.storage_bucket=p_storage_bucket
-      and d.storage_path=p_storage_path
-      and d.original_filename=p_original_filename
-      and d.mime_type=p_mime_type
-      and d.file_size_bytes=p_file_size_bytes
-      and d.checksum_sha256 is not distinct from p_checksum_sha256;
-    if found then
-      return jsonb_build_object('success',true,'data',jsonb_build_object('interview_document_id',v_document,'logical_document_id',v_logical.logical_document_id,'version_no',v_version));
+    if v_res.finalize_request_fingerprint = v_fingerprint and v_res.finalize_result is not null then
+      return v_res.finalize_result;
     end if;
     return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR');
   end if;
@@ -849,9 +866,10 @@ begin
   end if;
   insert into public.interview_documents(logical_document_id,storage_bucket,storage_path,original_filename,mime_type,file_size_bytes,checksum_sha256,version_no,is_current,uploaded_by)
   values(v_logical.logical_document_id,p_storage_bucket,p_storage_path,p_original_filename,v_res.detected_mime_type,v_res.actual_size_bytes,v_res.checksum_sha256,v_version,true,v_actor) returning interview_document_id into v_document;
-  update public.upload_reservations set status_code='FINALIZED' where upload_reservation_id=p_reservation_id;
+  v_result := jsonb_build_object('success',true,'data',jsonb_build_object('interview_document_id',v_document,'logical_document_id',v_logical.logical_document_id,'version_no',v_version));
+  update public.upload_reservations set status_code='FINALIZED', finalize_request_fingerprint=v_fingerprint, finalize_result=v_result where upload_reservation_id=p_reservation_id;
   perform private.audit_interview_command('FINALIZE_INTERVIEW_UPLOAD','INTERVIEW_DOCUMENT',v_document,v_actor,p_reservation_id,jsonb_build_object('interview_id',v_i.interview_id));
-  return jsonb_build_object('success',true,'data',jsonb_build_object('interview_document_id',v_document,'logical_document_id',v_logical.logical_document_id,'version_no',v_version));
+  return v_result;
 end;
 $$;
 
@@ -900,7 +918,7 @@ begin
         and s.candidate_id is not null
       order by s.candidate_id
     loop
-      perform pg_advisory_xact_lock(hashtext('candidate:' || v_lock_id::text));
+      perform pg_advisory_xact_lock(hashtextextended('candidate:' || v_lock_id::text, 0));
     end loop;
     for v_lock_id in
       select distinct i.room_id
@@ -910,7 +928,7 @@ begin
         and i.room_id is not null
       order by i.room_id
     loop
-      perform pg_advisory_xact_lock(hashtext('room:' || v_lock_id::text));
+      perform pg_advisory_xact_lock(hashtextextended('room:' || v_lock_id::text, 0));
     end loop;
     for v_lock_id in
       select distinct ip.app_user_id
@@ -921,7 +939,7 @@ begin
         and ip.is_current and ip.app_user_id is not null
       order by ip.app_user_id
     loop
-      perform pg_advisory_xact_lock(hashtext('interviewer:' || v_lock_id::text));
+      perform pg_advisory_xact_lock(hashtextextended('interviewer:' || v_lock_id::text, 0));
     end loop;
   end if;
   for v_id in select x from unnest(p_interview_ids) x order by x loop

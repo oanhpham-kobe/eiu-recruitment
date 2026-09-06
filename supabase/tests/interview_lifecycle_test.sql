@@ -14,7 +14,7 @@ declare
   cand uuid; sub_id uuid; app_id uuid; interview_id uuid;
   cand2 uuid; sub2 uuid; app2 uuid; conflict_interview uuid;
   p1 uuid; p2 uuid; p3 uuid; old_p2 uuid;
-  report1 uuid; report2 uuid; logical_id uuid; reservation_id uuid;
+  report1 uuid; report2 uuid; logical_id uuid; reservation_id uuid; email_history_id uuid;
   empty_rep uuid; empty_int uuid; res_id_empty uuid; bulk_int1 uuid;
   v2 bigint;
   r jsonb; n integer; v bigint; versions bigint[]; ts timestamptz; err boolean;
@@ -192,10 +192,16 @@ begin
   update public.upload_reservations set status_code='VALIDATED',malware_scan_status='CLEAN',detected_mime_type='application/pdf',actual_size_bytes=100,checksum_sha256='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' where upload_reservation_id=reservation_id;
   r:=public.finalize_interview_upload(reservation_id,null,'interview-private','t002/'||s||'/six.pdf','six.pdf','application/pdf',100,'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',null);
   assert (r->>'error_code')='UPLOAD_LIMIT_EXCEEDED','sixth current file is rejected';
+  insert into public.email_history(interview_id,application_id,submission_id,email_type,recipients,subject,sent_by)
+  values(interview_id,app_id,sub_id,'INTERVIEW_INVITATION','[]'::jsonb,'T002 Interview',hr)
+  returning public.email_history.email_history_id into email_history_id;
+  insert into public.app_user_permissions(app_user_id,permission_code)
+  values(hr,'emails.history_view'),(outsider,'emails.history_view') on conflict do nothing;
   err:=false; begin insert into public.interview_documents(logical_document_id,storage_bucket,storage_path,original_filename,mime_type,file_size_bytes,version_no,is_current,uploaded_by) values(logical_id,'interview-private','t002/'||s||'/duplicate.pdf','duplicate.pdf','application/pdf',100,2,true,hr); exception when unique_violation then err:=true; end; assert err,'one current version per logical document';
   -- 16/17. Comprehensive RLS visibility boundaries.
   -- Positive test: HR with permissions sees everything under authenticated role.
   perform set_config('request.jwt.claims',jsonb_build_object('sub',hr_auth::text)::text,true); execute 'set local role authenticated';
+  select count(*) into n from public.email_history eh where eh.email_history_id=test.email_history_id; assert n=1,'HR can select email history in its interview context';
   select count(*) into n from public.interview_document_logicals where logical_document_id=logical_id; assert n=1,'HR can select logical document';
   select count(*) into n from public.interview_documents where logical_document_id=logical_id; assert n=1,'HR can select interview document';
   select count(*) into n from public.interview_reports where interview_report_id=report1; assert n=1,'HR can select interview report'; execute 'reset role';
@@ -208,6 +214,7 @@ begin
 
   -- Negative test: non-participant outsider denied on all three.
   perform set_config('request.jwt.claims',jsonb_build_object('sub',outsider_auth::text)::text,true); execute 'set local role authenticated';
+  select count(*) into n from public.email_history eh where eh.email_history_id=test.email_history_id; assert n=0,'cross-context email history is denied even with history permission';
   select count(*) into n from public.interview_document_logicals where logical_document_id=logical_id; assert n=0,'outsider denied on logical document';
   select count(*) into n from public.interview_reports where interview_report_id=report1; assert n=0,'non-participant cannot select report';
   select count(*) into n from public.interview_documents where logical_document_id=logical_id; assert n=0,'non-participant cannot select document'; execute 'reset role';
