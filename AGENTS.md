@@ -737,13 +737,12 @@ Do not force deduplication when two pieces of code only look syntactically simil
 
 # 9. OMP Advisor and Independent Review
 
-OMP already provides reviewer infrastructure. Do not add the sample repository's Claude-specific `post_implementation_reviewer`.
+The internal OMP review workflow in this section applies only to
+`AUTONOMOUS`.
 
-## Advisor
+## AUTONOMOUS Advisor
 
-`.omp/WATCHDOG.md` supplies reviewer priorities without bloating the primary executor context.
-
-Recommended use:
+`AUTONOMOUS` may use `.omp/WATCHDOG.md` for advisor priorities:
 
 - enable advisor for high-risk auth/RLS/concurrency/migration/privacy work;
 - keep advisor investigative/read-only by default;
@@ -751,17 +750,17 @@ Recommended use:
 
 Advisor output is advice, not source authority.
 
-## OMP `/review`
+## AUTONOMOUS OMP `/review`
 
-Use OMP's independent review for:
+In `AUTONOMOUS`, use OMP's independent review for:
 
 - large/high-risk diffs;
 - pre-merge security/data changes;
 - final review after a major implementation slice.
 
-It supplements, not replaces, the independent implementation review.
+It supplements, not replaces, the AUTONOMOUS independent implementation review.
 
-Suggested review stack for high-risk changes:
+Suggested AUTONOMOUS review stack for high-risk changes:
 
 ```text
 independent implementation Reviewer (`eiu-code-review` where applicable)
@@ -770,7 +769,14 @@ independent implementation Reviewer (`eiu-code-review` where applicable)
 -> verification-before-completion
 ```
 
-Do not run multiple heavyweight reviewers for trivial changes.
+Do not run multiple heavyweight reviewers for trivial AUTONOMOUS changes.
+
+## BOUNDED
+
+Do not schedule an internal implementation Reviewer, OMP independent `/review`,
+or post-commit repair/re-review stage. External Planner/Reviewer inspection
+occurs after the bounded commit and is outside the internal OMP lifecycle.
+After authorized work, focused verification, commit, and report: STOP.
 
 ---
 

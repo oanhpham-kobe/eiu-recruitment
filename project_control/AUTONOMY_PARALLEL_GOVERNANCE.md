@@ -524,16 +524,28 @@ Lane B: Task B  ->  Branch B  ->  Worktree B  ->  Executor B
 - No cross-worktree writes: Executor A never writes in Worktree B; Executor B never writes in Worktree A.
 - No shared commits or co-mingled task branches.
 - No cross-task repair hiding: Defects in Task A must be repaired solely on Branch A and amended into Task A's commit.
-- Each task maintains its own independent prompt, branch, worktree, implementation commit, pre-review gate, evidence entry, and independent review.
+- An `AUTONOMOUS` task maintains its independent prompt, branch, worktree,
+  implementation commit, pre-review gate, evidence entry, and internal
+  exact-SHA review. A `BOUNDED` task maintains its authorized work set, branch,
+  worktree, implementation commit, focused verification, and report without an
+  internally scheduled OMP Reviewer. External Planner/Reviewer inspection of a
+  bounded committed SHA is outside this worker lifecycle.
 
 ---
 
 ## 9. Serial Integration & Exact-SHA Reconciliation Policy
 
-While implementation and review may run concurrently across lanes, **integration into the integration branch MUST remain strictly serialized** under a single coordinator writer:
+Integration into the integration branch remains strictly serialized under a
+single coordinator writer.
+
+### AUTONOMOUS integration
 
 ```text
-Task A passes Review
+Executor
+  ↓
+focused verification
+  ↓
+internal OMP implementation review PASS
   ↓
 Integrate Task A into integration branch
   ↓
@@ -544,15 +556,37 @@ Verify exact-SHA GitHub Actions CI passes
 Before integrating Task B:
   Compare Task B to NEW integration HEAD without mutating Task B.
   ↓
-Case 1: If reviewed Task B SHA and content remain unchanged and fully compatible:
+Case 1: unchanged compatible reviewed Task B:
   Integrate Task B -> Push -> Verify exact-SHA CI.
-Case 2: If ANY change, rebase, cherry-pick, conflict repair, or reconciliation is required:
-  Do NOT resolve substantive logic on integration branch!
-  Reconcile inside Worktree B -> Amend Task B commit -> Rerun affected tests ->
-  Obtain fresh independent review on exact amended SHA -> Integrate only after PASS.
+Case 2: changed/rebased/cherry-picked/conflicted Task B:
+  Reconcile inside Worktree B -> focused affected verification -> new exact SHA
+  -> targeted fresh internal exact-SHA review -> PASS -> integrate.
 ```
 
-*Rule:* Never inherit review approval across a changed commit SHA.
+### BOUNDED integration
+
+A bounded implementation task does not enter integration automatically. If a
+later bounded prompt explicitly authorizes integration, its prerequisite is
+external Planner/Reviewer acceptance of the exact committed SHA unless that
+prompt explicitly defines another permitted condition. No internal OMP
+Reviewer is inserted merely because integration is considered.
+
+If an explicitly authorized bounded reconciliation changes the SHA:
+
+```text
+reconcile inside authorized bounded scope
+→ focused verification
+→ commit new exact SHA
+→ report
+→ HARD STOP
+```
+
+The external Planner/Reviewer then inspects that new SHA and may issue a new
+bounded prompt. BOUNDED never performs reconcile → internal OMP review → PASS
+→ continued integration.
+
+*Rule:* Never inherit an AUTONOMOUS internal-review approval across a changed
+commit SHA.
 
 ---
 
@@ -565,12 +599,16 @@ Case 2: If ANY change, rebase, cherry-pick, conflict repair, or reconciliation i
 
 ## 11. UI Pre-Review & Behavioral Verification Policy
 
-Before releasing an independent reviewer for material interactive UI work:
+In `AUTONOMOUS`, before releasing an independent reviewer for material
+interactive UI work:
 - The executor must execute and persist a pre-review acceptance gate covering the applicable Design System v1.8 checklist, accessibility standards, and behavioral tests.
 - **Verification Rule:** `SOURCE_PRESENCE != INTERACTION_PROOF`. Asserting that a handler function, state setter, ref, or DOM attribute exists in source code does **not** prove interaction.
 - Rendered behavior claims (e.g. focus transitions, dialog traps, dropdown dismissals, reactive selection updates) require executed rendered assertions in a real browser engine (Playwright / Chromium).
 - Static source assertions are permitted only for true static invariants (e.g. token definitions, CSS custom properties).
 - Browser QA must be executed against runnable targets when authorized; otherwise, limitations must be recorded truthfully.
+
+In `BOUNDED`, those applicable behavioral checks remain focused verification
+inside the authorized work set; they do not release an internal reviewer.
 
 ---
 
