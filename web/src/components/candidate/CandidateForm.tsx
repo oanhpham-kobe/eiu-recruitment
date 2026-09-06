@@ -6,7 +6,10 @@ import {
   DocumentUploader,
   type StagedDocumentItem,
 } from "@/components/candidate/DocumentUploader";
-import { EducationSection } from "@/components/candidate/EducationSection";
+import {
+  EducationSection,
+  type QualificationLevelOption,
+} from "@/components/candidate/EducationSection";
 import { useAutosave } from "@/hooks/useAutosave";
 import type { EducationItem } from "@/lib/commands/candidate-submission";
 
@@ -14,9 +17,8 @@ export interface CandidateFormData {
   fullName: string;
   phone: string;
   dateOfBirth: string;
-  gender: string;
+  gender: "MALE" | "FEMALE";
   address: string;
-  candidateNotes?: string | null;
   education: EducationItem[];
   attachedDocs: StagedDocumentItem[];
   privacyAcknowledged: boolean;
@@ -27,8 +29,10 @@ interface CandidateFormProps {
   mode: "NEW_SUBMISSION" | "EDIT_SUBMISSION";
   verifiedEmail: string;
   pinnedPrivacyVersion: string;
+  privacyAlreadyAcknowledged?: boolean;
   initialData?: Partial<CandidateFormData>;
   documentTypes: Array<{ id: string; code: string; name: string }>;
+  qualificationLevels?: QualificationLevelOption[];
   supabaseClient?: SupabaseClient;
   onSubmit: (
     data: CandidateFormData,
@@ -41,8 +45,10 @@ export function CandidateForm({
   mode,
   verifiedEmail,
   pinnedPrivacyVersion,
+  privacyAlreadyAcknowledged = false,
   initialData,
   documentTypes,
+  qualificationLevels = [],
   supabaseClient,
   onSubmit,
   onCancel,
@@ -51,12 +57,11 @@ export function CandidateForm({
     fullName: initialData?.fullName ?? "",
     phone: initialData?.phone ?? "",
     dateOfBirth: initialData?.dateOfBirth ?? "",
-    gender: initialData?.gender ?? "MALE",
+    gender: initialData?.gender === "FEMALE" ? "FEMALE" : "MALE",
     address: initialData?.address ?? "",
-    candidateNotes: initialData?.candidateNotes ?? null,
     education: initialData?.education ?? [],
     attachedDocs: initialData?.attachedDocs ?? [],
-    privacyAcknowledged: mode === "EDIT_SUBMISSION",
+    privacyAcknowledged: Boolean(privacyAlreadyAcknowledged),
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -68,7 +73,6 @@ export function CandidateForm({
     sessionId,
     data: formData,
     onRestore: (restored) => {
-      // Merge restored draft with verified email
       setFormData((prev) => ({
         ...prev,
         ...restored,
@@ -84,7 +88,6 @@ export function CandidateForm({
       ...prev,
       [field]: value,
     }));
-    // Clear error for field
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -97,24 +100,43 @@ export function CandidateForm({
   const validateForm = (): boolean => {
     const errs: Record<string, string> = {};
 
-    if (!formData.fullName.trim()) {
+    const name = formData.fullName?.trim();
+    if (!name) {
       errs.fullName = "Họ và tên là bắt buộc / Full name is required";
+    } else if (name.length > 200) {
+      errs.fullName = "Họ và tên không được vượt quá 200 ký tự / Max 200 chars";
     }
 
-    if (!formData.phone.trim()) {
+    const phone = formData.phone?.trim();
+    if (!phone) {
       errs.phone = "Số điện thoại là bắt buộc / Phone number is required";
+    } else if (phone.length > 32) {
+      errs.phone = "Số điện thoại không được vượt quá 32 ký tự / Max 32 chars";
     }
 
-    if (!formData.dateOfBirth) {
+    const dob = formData.dateOfBirth?.trim();
+    if (!dob) {
       errs.dateOfBirth = "Ngày sinh là bắt buộc / Date of birth is required";
+    } else if (dob < "1900-01-01") {
+      errs.dateOfBirth = "Ngày sinh phải từ 01/01/1900 / Min 1900-01-01";
+    } else {
+      const today = new Date().toISOString().split("T")[0];
+      if (dob > today) {
+        errs.dateOfBirth =
+          "Ngày sinh không được ở tương lai / Cannot be future";
+      }
     }
 
-    if (!formData.gender) {
-      errs.gender = "Giới tính là bắt buộc / Gender is required";
+    if (!formData.gender || !["MALE", "FEMALE"].includes(formData.gender)) {
+      errs.gender =
+        "Giới tính phải là Nam hoặc Nữ / Gender must be MALE or FEMALE";
     }
 
-    if (!formData.address.trim()) {
+    const address = formData.address?.trim();
+    if (!address) {
       errs.address = "Địa chỉ là bắt buộc / Address is required";
+    } else if (address.length > 500) {
+      errs.address = "Địa chỉ không được vượt quá 500 ký tự / Max 500 chars";
     }
 
     const hasCv = formData.attachedDocs.some(
@@ -167,20 +189,12 @@ export function CandidateForm({
     await onCancel();
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
   return (
     <form className="candidate-form" onSubmit={handleSubmit} noValidate>
       {serverError && (
-        <div
-          role="alert"
-          style={{
-            backgroundColor: "var(--status-danger-bg, #f8e5e0)",
-            color: "var(--status-danger-text, #b44425)",
-            padding: "12px 16px",
-            borderRadius: "6px",
-            fontSize: "15px",
-            fontWeight: 500,
-          }}
-        >
+        <div role="alert" className="form-server-error">
           {serverError}
         </div>
       )}
@@ -208,6 +222,7 @@ export function CandidateForm({
               aria-invalid={Boolean(errors.fullName)}
               aria-describedby={errors.fullName ? "fullName-error" : undefined}
               placeholder="Nguyễn Văn A"
+              maxLength={200}
               disabled={submitting}
             />
             {errors.fullName && (
@@ -233,6 +248,7 @@ export function CandidateForm({
               aria-invalid={Boolean(errors.phone)}
               aria-describedby={errors.phone ? "phone-error" : undefined}
               placeholder="0901234567"
+              maxLength={32}
               disabled={submitting}
             />
             {errors.phone && (
@@ -255,6 +271,8 @@ export function CandidateForm({
               value={formData.dateOfBirth}
               onChange={(e) => handleFieldChange("dateOfBirth", e.target.value)}
               required
+              min="1900-01-01"
+              max={today}
               aria-invalid={Boolean(errors.dateOfBirth)}
               aria-describedby={
                 errors.dateOfBirth ? "dateOfBirth-error" : undefined
@@ -278,7 +296,9 @@ export function CandidateForm({
               name="gender"
               className="form-select"
               value={formData.gender}
-              onChange={(e) => handleFieldChange("gender", e.target.value)}
+              onChange={(e) =>
+                handleFieldChange("gender", e.target.value as "MALE" | "FEMALE")
+              }
               aria-required="true"
               aria-invalid={Boolean(errors.gender)}
               aria-describedby={errors.gender ? "gender-error" : undefined}
@@ -286,7 +306,6 @@ export function CandidateForm({
             >
               <option value="MALE">Nam / Male</option>
               <option value="FEMALE">Nữ / Female</option>
-              <option value="OTHER">Khác / Other</option>
             </select>
             {errors.gender && (
               <span id="gender-error" className="field-error">
@@ -330,6 +349,7 @@ export function CandidateForm({
               aria-invalid={Boolean(errors.address)}
               aria-describedby={errors.address ? "address-error" : undefined}
               placeholder="Thủ Dầu Một, Bình Dương"
+              maxLength={500}
               disabled={submitting}
             />
             {errors.address && (
@@ -345,6 +365,7 @@ export function CandidateForm({
       <EducationSection
         items={formData.education}
         onChange={(education) => handleFieldChange("education", education)}
+        qualificationLevels={qualificationLevels}
         disabled={submitting}
       />
 
@@ -358,7 +379,7 @@ export function CandidateForm({
         disabled={submitting}
       />
       {errors.attachedDocs && (
-        <span className="field-error" style={{ marginTop: "-16px" }}>
+        <span className="field-error field-error-spacing">
           {errors.attachedDocs}
         </span>
       )}
@@ -397,11 +418,7 @@ export function CandidateForm({
           </label>
         </div>
         {errors.privacyAcknowledged && (
-          <span
-            id="privacy-error"
-            className="field-error"
-            style={{ marginTop: "8px", display: "block" }}
-          >
+          <span id="privacy-error" className="field-error field-error-block">
             {errors.privacyAcknowledged}
           </span>
         )}

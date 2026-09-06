@@ -59,3 +59,30 @@ jobs:
 
       - name: Test
         run: npm run test
+
+  db-integration:
+    name: Database integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Replay migrations from zero
+        run: supabase db reset
+
+      - name: Execute PRE-S04 Database Integration & Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop

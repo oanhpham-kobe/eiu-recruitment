@@ -18,46 +18,21 @@ const UUID_REGEX =
 // -----------------------------------------------------------------------------
 
 export type EducationItem = {
-  institutionName: string;
-  degreeName: string;
+  periodText?: string | null;
+  qualificationId?: string | null;
   major?: string | null;
-  startYear: number;
-  endYear?: number | null;
-  gpa?: string | null;
-  sortOrder?: number;
-};
-
-export type WorkExperienceItem = {
-  companyName: string;
-  positionTitle: string;
-  startDate?: string | null;
-  endDate?: string | null;
-  isCurrent?: boolean;
-  description?: string | null;
-  sortOrder?: number;
-};
-
-export type ActivityItem = {
-  activityName: string;
-  roleTitle?: string | null;
-  organizationName?: string | null;
-  startDate?: string | null;
-  endDate?: string | null;
-  description?: string | null;
+  institution?: string | null;
   sortOrder?: number;
 };
 
 export type SubmitCandidateSubmissionInput = {
   candidateFormSessionId: string;
   fullName: string;
-  phone?: string | null;
-  dateOfBirth?: string | null;
-  gender?: "MALE" | "FEMALE" | "OTHER" | string | null;
-  address?: string | null;
-  candidateNotes?: string | null;
+  phone: string;
+  dateOfBirth: string;
+  gender: "MALE" | "FEMALE" | string;
+  address: string;
   education?: EducationItem[];
-  workExperiences?: WorkExperienceItem[];
-  activities?: ActivityItem[];
   privacyNoticeVersion: string;
   idempotencyKey?: string;
 };
@@ -66,7 +41,7 @@ export type SubmitCandidateSubmissionData = {
   submission_id: string;
   status_code: "NEW";
   version_no: number;
-  submitted_at: string;
+  submitted_at?: string;
 };
 
 export type UpdateCandidateSubmissionInput = SubmitCandidateSubmissionInput;
@@ -75,12 +50,13 @@ export type UpdateCandidateSubmissionData = {
   submission_id: string;
   status_code: "NEW";
   version_no: number;
-  updated_at: string;
+  updated_at?: string;
 };
 
 export type CandidateSubmissionCommandDeps = {
+  supabase?: SupabaseClient;
   client?: SupabaseClient;
-  resolveActor?: () => Promise<VerifiedActor | null>;
+  resolveActor?: (client?: SupabaseClient) => Promise<VerifiedActor | null>;
 };
 
 // -----------------------------------------------------------------------------
@@ -93,10 +69,9 @@ async function defaultResolveActor(
   const supabase = client ?? (await createServerClient());
   const {
     data: { user },
-    error,
   } = await supabase.auth.getUser();
 
-  if (error || !user || !user.email) {
+  if (!user?.email) {
     return null;
   }
 
@@ -106,20 +81,16 @@ async function defaultResolveActor(
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
-  if (!candidate || typeof candidate !== "object") {
+  if (!candidate) {
     return null;
   }
-
-  const isActive = Boolean(
-    "is_active" in candidate && candidate.is_active === true,
-  );
 
   return {
     authUserId: user.id,
     email: user.email,
-    isActive,
-    roles: ["CANDIDATE"],
-    permissions: ["candidate.self"],
+    isActive: candidate.is_active,
+    roles: ["candidate"],
+    permissions: ["candidate_self"],
   };
 }
 
@@ -139,29 +110,81 @@ function validateSubmissionPayload(input: SubmitCandidateSubmissionInput): {
   }
 
   const name = input.fullName?.trim();
-  if (!name || name.length > 120) {
+  if (!name || name.length > 200) {
     return {
       valid: false,
-      error: "Full name is required and must not exceed 120 characters",
+      error: "Full name is required and must not exceed 200 characters",
     };
   }
 
-  if (input.phone && input.phone.trim().length > 30) {
+  const phone = input.phone?.trim();
+  if (!phone || phone.length > 32) {
     return {
       valid: false,
-      error: "Phone number must not exceed 30 characters",
+      error: "Phone number is required and must not exceed 32 characters",
     };
   }
 
-  if (
-    input.gender &&
-    !["MALE", "FEMALE", "OTHER"].includes(input.gender.toUpperCase())
-  ) {
-    return { valid: false, error: "Gender must be MALE, FEMALE, or OTHER" };
+  if (!input.dateOfBirth?.trim()) {
+    return { valid: false, error: "Date of birth is required" };
   }
 
-  if (input.address && input.address.trim().length > 255) {
-    return { valid: false, error: "Address must not exceed 255 characters" };
+  const dob = input.dateOfBirth.trim();
+  if (dob < "1900-01-01") {
+    return {
+      valid: false,
+      error: "Date of birth must be on or after 1900-01-01",
+    };
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  if (dob > today) {
+    return { valid: false, error: "Date of birth cannot be in the future" };
+  }
+
+  const gender = input.gender?.toUpperCase()?.trim();
+  if (!gender || !["MALE", "FEMALE"].includes(gender)) {
+    return { valid: false, error: "Gender must be MALE or FEMALE" };
+  }
+
+  const address = input.address?.trim();
+  if (!address || address.length > 500) {
+    return {
+      valid: false,
+      error: "Address is required and must not exceed 500 characters",
+    };
+  }
+
+  if (input.education) {
+    if (!Array.isArray(input.education)) {
+      return { valid: false, error: "Education must be an array" };
+    }
+    if (input.education.length > 20) {
+      return { valid: false, error: "Education cannot exceed 20 rows" };
+    }
+    for (const edu of input.education) {
+      if (edu.qualificationId && !UUID_REGEX.test(edu.qualificationId)) {
+        return { valid: false, error: "Invalid qualificationId UUID" };
+      }
+      if (edu.periodText && edu.periodText.trim().length > 100) {
+        return {
+          valid: false,
+          error: "Education period text must not exceed 100 characters",
+        };
+      }
+      if (edu.major && edu.major.trim().length > 255) {
+        return {
+          valid: false,
+          error: "Education major must not exceed 255 characters",
+        };
+      }
+      if (edu.institution && edu.institution.trim().length > 255) {
+        return {
+          valid: false,
+          error: "Education institution must not exceed 255 characters",
+        };
+      }
+    }
   }
 
   if (!input.privacyNoticeVersion?.trim()) {
@@ -180,36 +203,14 @@ function validateSubmissionPayload(input: SubmitCandidateSubmissionInput): {
 
 function formatChildArrays(input: SubmitCandidateSubmissionInput) {
   const education = (input.education ?? []).map((e, idx) => ({
-    institution_name: e.institutionName.trim(),
-    degree_name: e.degreeName.trim(),
+    period_text: e.periodText?.trim() || null,
+    qualification_id: e.qualificationId?.trim() || null,
     major: e.major?.trim() || null,
-    start_year: e.startYear,
-    end_year: e.endYear ?? null,
-    gpa: e.gpa?.trim() || null,
-    sort_order: e.sortOrder ?? idx,
+    institution: e.institution?.trim() || null,
+    sort_order: e.sortOrder ?? idx + 1,
   }));
 
-  const workExperiences = (input.workExperiences ?? []).map((w, idx) => ({
-    company_name: w.companyName.trim(),
-    position_title: w.positionTitle.trim(),
-    start_date: w.startDate ?? null,
-    end_date: w.endDate ?? null,
-    is_current: Boolean(w.isCurrent),
-    description: w.description?.trim() || null,
-    sort_order: w.sortOrder ?? idx,
-  }));
-
-  const activities = (input.activities ?? []).map((a, idx) => ({
-    activity_name: a.activityName.trim(),
-    role_title: a.roleTitle?.trim() || null,
-    organization_name: a.organizationName?.trim() || null,
-    start_date: a.startDate ?? null,
-    end_date: a.endDate ?? null,
-    description: a.description?.trim() || null,
-    sort_order: a.sortOrder ?? idx,
-  }));
-
-  return { education, workExperiences, activities };
+  return { education };
 }
 
 // -----------------------------------------------------------------------------
@@ -220,20 +221,22 @@ export function createSubmitCandidateSubmissionCommand(
   supabase: SupabaseClient,
 ): TrustedCommandDefinition<
   SubmitCandidateSubmissionInput,
-  string | undefined,
+  string,
   SubmitCandidateSubmissionInput,
   SubmitCandidateSubmissionData
 > {
   return {
     name: "submit_candidate_submission",
-    extractTarget(input) {
-      return input.candidateFormSessionId;
+
+    extractTarget(rawInput) {
+      return rawInput.candidateFormSessionId;
     },
+
     authorize(actor) {
       const isCandidate =
-        actor.roles.includes("CANDIDATE") ||
-        actor.permissions.includes("candidate.self");
-
+        actor.roles.some((r) => r.toLowerCase() === "candidate") ||
+        actor.permissions.includes("candidate.self") ||
+        actor.permissions.includes("candidate_self");
       if (!isCandidate) {
         return {
           authorized: false,
@@ -241,33 +244,30 @@ export function createSubmitCandidateSubmissionCommand(
           reason: "Candidate authorization required",
         };
       }
-
       return { authorized: true };
     },
-    validate(input) {
-      const result = validateSubmissionPayload(input);
+
+    validate(rawInput) {
+      const result = validateSubmissionPayload(rawInput);
       if (!result.valid) {
-        return { success: false, error: result.error ?? "Validation failed" };
+        return { success: false, error: result.error ?? "Validation error" };
       }
-      return { success: true, data: input };
+      return { success: true, data: rawInput };
     },
+
     async execute(_actor, validated) {
-      const { education, workExperiences, activities } =
-        formatChildArrays(validated);
+      const { education } = formatChildArrays(validated);
 
       const { data, error } = await supabase.rpc(
         "submit_candidate_submission",
         {
           p_candidate_form_session_id: validated.candidateFormSessionId,
           p_full_name: validated.fullName.trim(),
-          p_phone: validated.phone?.trim() || null,
-          p_date_of_birth: validated.dateOfBirth || null,
-          p_gender: validated.gender ? validated.gender.toUpperCase() : null,
-          p_address: validated.address?.trim() || null,
-          p_candidate_notes: validated.candidateNotes?.trim() || null,
+          p_phone: validated.phone.trim(),
+          p_date_of_birth: validated.dateOfBirth.trim(),
+          p_gender: validated.gender.toUpperCase().trim(),
+          p_address: validated.address.trim(),
           p_education: education,
-          p_work_experiences: workExperiences,
-          p_activities: activities,
           p_privacy_notice_version: validated.privacyNoticeVersion.trim(),
           p_idempotency_key: validated.idempotencyKey ?? crypto.randomUUID(),
         },
@@ -288,9 +288,12 @@ export function createSubmitCandidateSubmissionCommand(
         error_code?: string;
         message?: string;
         data?: SubmitCandidateSubmissionData;
+        submission_id?: string;
+        status_code?: "NEW";
+        version_no?: number;
       };
 
-      if (!result.success || !result.data) {
+      if (!result.success) {
         const rawCode = result.error_code ? String(result.error_code) : "";
         const code =
           CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
@@ -304,9 +307,15 @@ export function createSubmitCandidateSubmissionCommand(
         };
       }
 
+      const returnData: SubmitCandidateSubmissionData = result.data ?? {
+        submission_id: result.submission_id ?? "",
+        status_code: result.status_code ?? "NEW",
+        version_no: result.version_no ?? 1,
+      };
+
       return {
         success: true,
-        data: result.data,
+        data: returnData,
       };
     },
   };
@@ -320,20 +329,22 @@ export function createUpdateCandidateSubmissionCommand(
   supabase: SupabaseClient,
 ): TrustedCommandDefinition<
   UpdateCandidateSubmissionInput,
-  string | undefined,
+  string,
   UpdateCandidateSubmissionInput,
   UpdateCandidateSubmissionData
 > {
   return {
     name: "update_candidate_submission",
-    extractTarget(input) {
-      return input.candidateFormSessionId;
+
+    extractTarget(rawInput) {
+      return rawInput.candidateFormSessionId;
     },
+
     authorize(actor) {
       const isCandidate =
-        actor.roles.includes("CANDIDATE") ||
-        actor.permissions.includes("candidate.self");
-
+        actor.roles.some((r) => r.toLowerCase() === "candidate") ||
+        actor.permissions.includes("candidate.self") ||
+        actor.permissions.includes("candidate_self");
       if (!isCandidate) {
         return {
           authorized: false,
@@ -341,33 +352,30 @@ export function createUpdateCandidateSubmissionCommand(
           reason: "Candidate authorization required",
         };
       }
-
       return { authorized: true };
     },
-    validate(input) {
-      const result = validateSubmissionPayload(input);
+
+    validate(rawInput) {
+      const result = validateSubmissionPayload(rawInput);
       if (!result.valid) {
-        return { success: false, error: result.error ?? "Validation failed" };
+        return { success: false, error: result.error ?? "Validation error" };
       }
-      return { success: true, data: input };
+      return { success: true, data: rawInput };
     },
+
     async execute(_actor, validated) {
-      const { education, workExperiences, activities } =
-        formatChildArrays(validated);
+      const { education } = formatChildArrays(validated);
 
       const { data, error } = await supabase.rpc(
         "update_candidate_submission",
         {
           p_candidate_form_session_id: validated.candidateFormSessionId,
           p_full_name: validated.fullName.trim(),
-          p_phone: validated.phone?.trim() || null,
-          p_date_of_birth: validated.dateOfBirth || null,
-          p_gender: validated.gender ? validated.gender.toUpperCase() : null,
-          p_address: validated.address?.trim() || null,
-          p_candidate_notes: validated.candidateNotes?.trim() || null,
+          p_phone: validated.phone.trim(),
+          p_date_of_birth: validated.dateOfBirth.trim(),
+          p_gender: validated.gender.toUpperCase().trim(),
+          p_address: validated.address.trim(),
           p_education: education,
-          p_work_experiences: workExperiences,
-          p_activities: activities,
           p_privacy_notice_version: validated.privacyNoticeVersion.trim(),
           p_idempotency_key: validated.idempotencyKey ?? crypto.randomUUID(),
         },
@@ -388,9 +396,12 @@ export function createUpdateCandidateSubmissionCommand(
         error_code?: string;
         message?: string;
         data?: UpdateCandidateSubmissionData;
+        submission_id?: string;
+        status_code?: "NEW";
+        version_no?: number;
       };
 
-      if (!result.success || !result.data) {
+      if (!result.success) {
         const rawCode = result.error_code ? String(result.error_code) : "";
         const code =
           CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
@@ -404,9 +415,15 @@ export function createUpdateCandidateSubmissionCommand(
         };
       }
 
+      const returnData: UpdateCandidateSubmissionData = result.data ?? {
+        submission_id: result.submission_id ?? "",
+        status_code: result.status_code ?? "NEW",
+        version_no: result.version_no ?? 1,
+      };
+
       return {
         success: true,
-        data: result.data,
+        data: returnData,
       };
     },
   };
@@ -420,7 +437,7 @@ export async function submitCandidateSubmission(
   input: SubmitCandidateSubmissionInput,
   deps: CandidateSubmissionCommandDeps = {},
 ): Promise<CommandResult<SubmitCandidateSubmissionData>> {
-  const supabase = deps.client ?? (await createServerClient());
+  const supabase = deps.supabase ?? deps.client ?? (await createServerClient());
   const resolveActor =
     deps.resolveActor ?? (() => defaultResolveActor(supabase));
   const runner = createCommandRunner({ resolveActor });
@@ -431,7 +448,7 @@ export async function updateCandidateSubmission(
   input: UpdateCandidateSubmissionInput,
   deps: CandidateSubmissionCommandDeps = {},
 ): Promise<CommandResult<UpdateCandidateSubmissionData>> {
-  const supabase = deps.client ?? (await createServerClient());
+  const supabase = deps.supabase ?? deps.client ?? (await createServerClient());
   const resolveActor =
     deps.resolveActor ?? (() => defaultResolveActor(supabase));
   const runner = createCommandRunner({ resolveActor });

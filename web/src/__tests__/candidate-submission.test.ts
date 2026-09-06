@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  type SubmitCandidateSubmissionInput,
   submitCandidateSubmission,
   updateCandidateSubmission,
 } from "@/lib/commands/candidate-submission";
@@ -86,45 +87,20 @@ function createMockSupabase(options: {
   } as unknown as SupabaseClient;
 }
 
-const samplePayload = {
+const samplePayload: SubmitCandidateSubmissionInput = {
   candidateFormSessionId: "11111111-1111-1111-1111-111111111111",
   fullName: "Nguyen Van A",
   phone: "0901234567",
   dateOfBirth: "1995-05-15",
   gender: "MALE",
   address: "123 Binh Duong Blvd, Thu Dau Mot",
-  candidateNotes: "Applying for Senior Lecturer position",
   education: [
     {
-      institutionName: "Eastern International University",
-      degreeName: "Bachelor of Science",
+      institution: "Eastern International University",
       major: "Computer Science",
-      startYear: 2013,
-      endYear: 2017,
-      gpa: "3.6",
-      sortOrder: 0,
-    },
-  ],
-  workExperiences: [
-    {
-      companyName: "EIU Software Center",
-      positionTitle: "Software Engineer",
-      startDate: "2017-07-01",
-      endDate: null,
-      isCurrent: true,
-      description: "Full-stack development",
-      sortOrder: 0,
-    },
-  ],
-  activities: [
-    {
-      activityName: "Open Source Club",
-      roleTitle: "Club Lead",
-      organizationName: "EIU Youth Union",
-      startDate: "2015-09-01",
-      endDate: "2017-06-01",
-      description: "Mentoring students",
-      sortOrder: 0,
+      periodText: "2013 - 2017",
+      qualificationId: "22222222-2222-2222-2222-222222222222",
+      sortOrder: 1,
     },
   ],
   privacyNoticeVersion: "2026.1",

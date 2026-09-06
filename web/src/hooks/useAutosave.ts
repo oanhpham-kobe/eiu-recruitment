@@ -4,8 +4,15 @@ import { useEffect, useRef, useState } from "react";
 
 export type AutosaveStatus = "IDLE" | "SAVING" | "SAVED" | "RESTORED";
 
+export type DraftEnvelope<T> = {
+  sessionId: string;
+  expiresAt: string;
+  data: T;
+};
+
 interface UseAutosaveOptions<T> {
   sessionId: string;
+  expiresAt?: string;
   data: T;
   debounceMs?: number;
   onRestore?: (restoredData: T) => void;
@@ -13,6 +20,7 @@ interface UseAutosaveOptions<T> {
 
 export function useAutosave<T>({
   sessionId,
+  expiresAt,
   data,
   debounceMs = 800,
   onRestore,
@@ -24,24 +32,33 @@ export function useAutosave<T>({
   const onRestoreRef = useRef(onRestore);
   onRestoreRef.current = onRestore;
 
-  // Restore draft on mount
+  // Restore draft on mount from sessionStorage
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === "undefined" || !sessionId) {
       return;
     }
     try {
-      const saved = localStorage.getItem(storageKey);
+      const saved = sessionStorage.getItem(storageKey);
       if (saved) {
-        const parsed = JSON.parse(saved) as T;
-        onRestoreRef.current?.(parsed);
-        setStatus("RESTORED");
+        const parsed = JSON.parse(saved) as DraftEnvelope<T>;
+        const expiryTime = parsed.expiresAt
+          ? new Date(parsed.expiresAt).getTime()
+          : Infinity;
+        const isFuture = expiryTime > Date.now();
+
+        if (parsed.sessionId === sessionId && isFuture && parsed.data) {
+          onRestoreRef.current?.(parsed.data);
+          setStatus("RESTORED");
+        } else {
+          sessionStorage.removeItem(storageKey);
+        }
       }
     } catch {
-      // Ignore localStorage parse errors
+      // Ignore sessionStorage parse errors
     }
-  }, [storageKey]);
+  }, [sessionId, storageKey]);
 
-  // Debounced save on data change
+  // Debounced save to sessionStorage on data change
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -55,7 +72,14 @@ export function useAutosave<T>({
     setStatus("SAVING");
     const timer = setTimeout(() => {
       try {
-        localStorage.setItem(storageKey, JSON.stringify(data));
+        const effectiveExpiry =
+          expiresAt || new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+        const envelope: DraftEnvelope<T> = {
+          sessionId,
+          expiresAt: effectiveExpiry,
+          data,
+        };
+        sessionStorage.setItem(storageKey, JSON.stringify(envelope));
         setStatus("SAVED");
         setLastSavedAt(new Date());
       } catch {
@@ -64,12 +88,12 @@ export function useAutosave<T>({
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [data, sessionId, debounceMs, storageKey]);
+  }, [data, sessionId, expiresAt, debounceMs, storageKey]);
 
   const clearDraft = () => {
     if (typeof window !== "undefined") {
       try {
-        localStorage.removeItem(storageKey);
+        sessionStorage.removeItem(storageKey);
         setStatus("IDLE");
         setLastSavedAt(null);
       } catch {

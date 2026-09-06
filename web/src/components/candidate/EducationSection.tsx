@@ -2,39 +2,48 @@
 
 import type { EducationItem } from "@/lib/commands/candidate-submission";
 
+export interface QualificationLevelOption {
+  id: string;
+  code?: string;
+  name: string;
+}
+
 interface EducationSectionProps {
   items: EducationItem[];
   onChange: (items: EducationItem[]) => void;
+  qualificationLevels?: QualificationLevelOption[];
   disabled?: boolean;
 }
 
 export function EducationSection({
   items,
   onChange,
+  qualificationLevels = [],
   disabled = false,
 }: EducationSectionProps) {
   const handleAdd = () => {
+    if (items.length >= 20) return;
     const newItem: EducationItem = {
-      institutionName: "",
-      degreeName: "",
+      periodText: "",
+      qualificationId: "",
       major: "",
-      startYear: new Date().getFullYear() - 4,
-      endYear: new Date().getFullYear(),
-      gpa: "",
-      sortOrder: items.length,
+      institution: "",
+      sortOrder: items.length + 1,
     };
     onChange([...items, newItem]);
   };
 
   const handleRemove = (index: number) => {
-    const updated = items.filter((_, idx) => idx !== index);
+    const updated = items
+      .filter((_, idx) => idx !== index)
+      .map((item, idx) => ({ ...item, sortOrder: idx + 1 }));
     onChange(updated);
   };
 
   const handleFieldChange = (
     index: number,
     field: keyof EducationItem,
-    value: string | number,
+    value: string | number | null,
   ) => {
     const updated = [...items];
     updated[index] = {
@@ -47,7 +56,7 @@ export function EducationSection({
   return (
     <fieldset className="form-fieldset">
       <legend className="form-legend">
-        Quá trình học tập / Education History (Không bắt buộc / Optional)
+        B. Quá trình học tập / Education History (Không bắt buộc / Optional)
       </legend>
 
       {items.length === 0 ? (
@@ -56,16 +65,12 @@ export function EducationSection({
         </p>
       ) : (
         items.map((item, index) => (
-          <div
-            key={`edu-row-${item.sortOrder}-${item.startYear}-${item.institutionName}`}
-            className="education-item"
-          >
+          <div key={`edu-row-${item.sortOrder}`} className="education-item">
             <div className="education-header">
               <span className="education-title">Học vấn #{index + 1}</span>
               <button
                 type="button"
-                className="btn btn-danger"
-                style={{ minHeight: "36px", padding: "4px 12px" }}
+                className="btn btn-danger btn-sm"
                 onClick={() => handleRemove(index)}
                 disabled={disabled}
                 aria-label={`Xóa mục học vấn ${index + 1}`}
@@ -75,110 +80,90 @@ export function EducationSection({
             </div>
 
             <div className="form-grid">
+              {/* Period text */}
               <div className="form-group">
-                <label className="form-label" htmlFor={`edu-inst-${index}`}>
-                  Trường đào tạo / Institution
+                <label className="form-label" htmlFor={`edu-period-${index}`}>
+                  Thời gian / Period (VD: 2018 - 2022)
                 </label>
                 <input
-                  id={`edu-inst-${index}`}
+                  id={`edu-period-${index}`}
+                  name={`education[${index}].periodText`}
                   type="text"
                   className="form-input"
-                  value={item.institutionName}
+                  value={item.periodText ?? ""}
                   onChange={(e) =>
-                    handleFieldChange(index, "institutionName", e.target.value)
+                    handleFieldChange(index, "periodText", e.target.value)
                   }
+                  placeholder="2018 - 2022"
+                  maxLength={100}
                   disabled={disabled}
-                  placeholder="Đại học Quốc tế Miền Đông"
                 />
               </div>
 
+              {/* Qualification Level */}
               <div className="form-group">
-                <label className="form-label" htmlFor={`edu-degree-${index}`}>
-                  Bằng cấp - Học vị / Degree
+                <label className="form-label" htmlFor={`edu-qual-${index}`}>
+                  Trình độ đào tạo / Qualification
                 </label>
-                <input
-                  id={`edu-degree-${index}`}
-                  type="text"
-                  className="form-input"
-                  value={item.degreeName}
+                <select
+                  id={`edu-qual-${index}`}
+                  name={`education[${index}].qualificationId`}
+                  className="form-select"
+                  value={item.qualificationId ?? ""}
                   onChange={(e) =>
-                    handleFieldChange(index, "degreeName", e.target.value)
+                    handleFieldChange(
+                      index,
+                      "qualificationId",
+                      e.target.value || null,
+                    )
                   }
                   disabled={disabled}
-                  placeholder="Cử nhân / Kỹ sư / Thạc sĩ"
-                />
+                >
+                  <option value="">-- Chọn trình độ / Select level --</option>
+                  {qualificationLevels.map((lvl) => (
+                    <option key={lvl.id} value={lvl.id}>
+                      {lvl.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
+              {/* Major */}
               <div className="form-group">
                 <label className="form-label" htmlFor={`edu-major-${index}`}>
                   Chuyên ngành / Major
                 </label>
                 <input
                   id={`edu-major-${index}`}
+                  name={`education[${index}].major`}
                   type="text"
                   className="form-input"
                   value={item.major ?? ""}
                   onChange={(e) =>
                     handleFieldChange(index, "major", e.target.value)
                   }
+                  placeholder="Khoa học máy tính / Computer Science"
+                  maxLength={255}
                   disabled={disabled}
-                  placeholder="Công nghệ thông tin"
                 />
               </div>
 
+              {/* Institution */}
               <div className="form-group">
-                <label className="form-label" htmlFor={`edu-gpa-${index}`}>
-                  Điểm trung bình / GPA
+                <label className="form-label" htmlFor={`edu-inst-${index}`}>
+                  Trường đào tạo / Institution
                 </label>
                 <input
-                  id={`edu-gpa-${index}`}
+                  id={`edu-inst-${index}`}
+                  name={`education[${index}].institution`}
                   type="text"
                   className="form-input"
-                  value={item.gpa ?? ""}
+                  value={item.institution ?? ""}
                   onChange={(e) =>
-                    handleFieldChange(index, "gpa", e.target.value)
+                    handleFieldChange(index, "institution", e.target.value)
                   }
-                  disabled={disabled}
-                  placeholder="3.5 / 4.0"
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor={`edu-start-${index}`}>
-                  Năm bắt đầu / Start Year
-                </label>
-                <input
-                  id={`edu-start-${index}`}
-                  type="number"
-                  className="form-input"
-                  value={item.startYear || ""}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      index,
-                      "startYear",
-                      Number.parseInt(e.target.value, 10) || 0,
-                    )
-                  }
-                  disabled={disabled}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor={`edu-end-${index}`}>
-                  Năm tốt nghiệp / End Year
-                </label>
-                <input
-                  id={`edu-end-${index}`}
-                  type="number"
-                  className="form-input"
-                  value={item.endYear || ""}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      index,
-                      "endYear",
-                      Number.parseInt(e.target.value, 10) || 0,
-                    )
-                  }
+                  placeholder="Đại học Quốc tế Miền Đông / EIU"
+                  maxLength={255}
                   disabled={disabled}
                 />
               </div>
@@ -191,8 +176,8 @@ export function EducationSection({
         type="button"
         className="btn btn-secondary"
         onClick={handleAdd}
-        disabled={disabled}
-        style={{ marginTop: "8px" }}
+        disabled={disabled || items.length >= 20}
+        style={{ marginTop: "12px" }}
       >
         + Thêm quá trình học tập / Add Education
       </button>

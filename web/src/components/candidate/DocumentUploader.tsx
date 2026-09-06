@@ -3,13 +3,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useState } from "react";
 import {
+  completeAndStageUploadAction,
+  reserveUploadAction,
+} from "@/app/candidate/candidate-actions";
+import {
   APPROVED_FILE_EXTENSIONS,
   CANDIDATE_QUARANTINE_BUCKET,
   CANDIDATE_QUARANTINE_FILE_SIZE_LIMIT,
   extractExtension,
   isApprovedExtension,
 } from "@/lib/storage/buckets";
-
 export type StagedDocumentItem = {
   changeId?: string;
   reservationId: string;
@@ -31,15 +34,19 @@ interface DocumentUploaderProps {
   attachedDocs: StagedDocumentItem[];
   documentTypes: Array<{ id: string; code: string; name: string }>;
   onDocsChange: (docs: StagedDocumentItem[]) => void;
+  onUploadFile?: (
+    file: File,
+    docType: { id: string; code: string; name: string },
+  ) => Promise<StagedDocumentItem>;
   supabaseClient?: SupabaseClient;
   disabled?: boolean;
 }
-
 export function DocumentUploader({
   sessionId,
   attachedDocs,
   documentTypes,
   onDocsChange,
+  onUploadFile,
   supabaseClient,
   disabled = false,
 }: DocumentUploaderProps) {
@@ -99,25 +106,60 @@ export function DocumentUploader({
     setUploading(true);
 
     try {
-      // In web app, reservation, upload, and completion execute through Supabase / server actions
-      // For simulated / client component context:
-      const reservationId = crypto.randomUUID();
-      const tempPath = `temp/${sessionId}/${reservationId}/${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      if (onUploadFile) {
+        const staged = await onUploadFile(file, docType);
+        onDocsChange([...attachedDocs, staged]);
+        e.target.value = "";
+        return;
+      }
 
+      // Authoritative reservation flow:
+      // 1. Reserve upload reservation on server
+      const reserveRes = await reserveUploadAction({
+        sessionId,
+        intendedDocumentTypeId: docType.id,
+        filename: file.name,
+        declaredMimeType: file.type || undefined,
+        expectedMaxSize: file.size,
+      });
+
+      if (!reserveRes.success || !reserveRes.data) {
+        throw new Error(
+          reserveRes.error || "Không thể tạo reservation tải tệp",
+        );
+      }
+
+      const reservation = reserveRes.data;
+
+      // 2. Upload file to quarantine storage path with upsert = false
       if (supabaseClient) {
-        // Direct storage upload to private quarantine bucket
         const { error: storageError } = await supabaseClient.storage
-          .from(CANDIDATE_QUARANTINE_BUCKET)
-          .upload(tempPath, file, { upsert: false });
+          .from(reservation.tempBucket || CANDIDATE_QUARANTINE_BUCKET)
+          .upload(reservation.tempPath, file, { upsert: false });
 
         if (storageError) {
           throw new Error(`Upload failed: ${storageError.message}`);
         }
       }
 
+      // 3. Record completion, validate/scan, and stage document change
+      const stageRes = await completeAndStageUploadAction({
+        sessionId,
+        reservationId: reservation.reservationId,
+        intendedDocumentTypeId: docType.id,
+        actualSize: file.size,
+        mimeType: file.type || "application/pdf",
+      });
+
+      if (!stageRes.success || !stageRes.data) {
+        throw new Error(
+          stageRes.error || "Không thể hoàn tất kiểm tra và stage tệp",
+        );
+      }
+
       const newDoc: StagedDocumentItem = {
-        changeId: crypto.randomUUID(),
-        reservationId,
+        changeId: stageRes.data.changeId,
+        reservationId: reservation.reservationId,
         documentTypeCode: docType.code,
         documentTypeName: docType.name,
         filename: file.name,

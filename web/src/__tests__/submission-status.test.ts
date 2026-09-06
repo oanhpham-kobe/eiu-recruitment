@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  correctSubmissionCandidateFieldsByHr,
   openSubmission,
   recalculateSubmissionStatus,
   setSubmissionManualStatus,
@@ -26,6 +27,14 @@ const fullHrActor: VerifiedActor = {
   isActive: true,
   roles: ["HR"],
   permissions: ["submissions.view", "submissions.status"],
+};
+
+const editHrActor: VerifiedActor = {
+  authUserId: "u0000000-0000-0000-0000-000000000002",
+  email: "hr-edit@eiu.edu.vn",
+  isActive: true,
+  roles: ["HR"],
+  permissions: ["submissions.view", "submissions.status", "submissions.edit"],
 };
 
 const unauthorizedActor: VerifiedActor = {
@@ -420,4 +429,78 @@ test("15. recalculateSubmissionStatus RPC command invocation", async () => {
   if (result.success) {
     assert.equal(result.data.status_code, "PROCESSED");
   }
+});
+
+test("16. correctSubmissionCandidateFieldsByHr: rejects caller without submissions.edit with FORBIDDEN", async () => {
+  const mockSupabase = createMockSupabase({});
+  const unauthorizedActor: VerifiedActor = {
+    authUserId: "a0000000-0000-0000-0000-000000000099",
+    email: "viewonly@eiu.edu.vn",
+    isActive: true,
+    roles: ["HR"],
+    permissions: ["submissions.view"], // lacks submissions.edit
+  };
+
+  const result = await correctSubmissionCandidateFieldsByHr(
+    {
+      submissionId: sampleSubmissionId,
+      fullName: "Corrected Name",
+    },
+    { client: mockSupabase, resolveActor: async () => unauthorizedActor },
+  );
+
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.equal(result.error.code, CommandErrorCode.FORBIDDEN);
+  }
+});
+
+test("17. correctSubmissionCandidateFieldsByHr: validates at least one field provided and invokes RPC", async () => {
+  const emptyFieldsResult = await correctSubmissionCandidateFieldsByHr(
+    {
+      submissionId: sampleSubmissionId,
+    },
+    { client: createMockSupabase({}), resolveActor: async () => editHrActor },
+  );
+
+  assert.equal(emptyFieldsResult.success, false);
+  if (!emptyFieldsResult.success) {
+    assert.equal(
+      emptyFieldsResult.error.code,
+      CommandErrorCode.VALIDATION_ERROR,
+    );
+  }
+
+  let rpcCalledWith: unknown = null;
+  const mockSupabase = createMockSupabase({
+    rpcHandlers: {
+      correct_submission_candidate_fields_by_hr: (args) => {
+        rpcCalledWith = args;
+        return {
+          success: true,
+          submission_id: sampleSubmissionId,
+          version_no: 2,
+          changed_fields: ["full_name", "phone"],
+        };
+      },
+    },
+  });
+
+  const result = await correctSubmissionCandidateFieldsByHr(
+    {
+      submissionId: sampleSubmissionId,
+      fullName: "Nguyen Van A Corrected",
+      phone: "0909999999",
+      reason: "Correcting typo reported by candidate",
+    },
+    { client: mockSupabase, resolveActor: async () => editHrActor },
+  );
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.data.submission_id, sampleSubmissionId);
+    assert.equal(result.data.version_no, 2);
+    assert.deepEqual(result.data.changed_fields, ["full_name", "phone"]);
+  }
+  assert.ok(rpcCalledWith);
 });

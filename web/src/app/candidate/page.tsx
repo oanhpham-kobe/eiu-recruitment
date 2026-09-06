@@ -1,50 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  cancelFormSessionAction,
+  loadCandidatePortalData,
+  startFormSessionAction,
+  submitCandidateSubmissionAction,
+  updateCandidateSubmissionAction,
+} from "@/app/candidate/candidate-actions";
 import {
   CandidateForm,
   type CandidateFormData,
 } from "@/components/candidate/CandidateForm";
+import type { QualificationLevelOption } from "@/components/candidate/EducationSection";
 import {
   type CandidateSubmissionSummary,
   SubmissionsList,
 } from "@/components/candidate/SubmissionsList";
 import "@/styles/candidate-portal.css";
 
-const MOCK_DOCUMENT_TYPES = [
-  {
-    id: "dt-cv-0001-0000-000000000001",
-    code: "CV_RESUME",
-    name: "CV / Sơ yếu lý lịch",
-  },
-  {
-    id: "dt-deg-0002-0000-000000000002",
-    code: "DEGREE",
-    name: "Bằng tốt nghiệp",
-  },
-  {
-    id: "dt-tra-0003-0000-000000000003",
-    code: "TRANSCRIPT",
-    name: "Bảng điểm",
-  },
-  {
-    id: "dt-cer-0004-0000-000000000004",
-    code: "CERTIFICATE",
-    name: "Chứng chỉ",
-  },
-  { id: "dt-oth-0005-0000-000000000005", code: "OTHER", name: "Tài liệu khác" },
-];
-
 export default function CandidatePortalPage() {
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
     "NEW_APPLICATION" | "MY_APPLICATIONS"
   >("NEW_APPLICATION");
   const [formMode, setFormMode] = useState<
     "NEW_SUBMISSION" | "EDIT_SUBMISSION"
   >("NEW_SUBMISSION");
-  const [sessionId, setSessionId] = useState<string>("mock-session-001");
-  const [pinnedPrivacyVersion] = useState<string>("2026.1");
-  const [verifiedEmail] = useState<string>("candidate@example.com");
+  const [sessionId, setSessionId] = useState<string>("");
+  const [pinnedPrivacyVersion, setPinnedPrivacyVersion] = useState<string>("");
+  const [privacyAlreadyAcknowledged, setPrivacyAlreadyAcknowledged] =
+    useState<boolean>(false);
+  const [verifiedEmail, setVerifiedEmail] = useState<string>("");
+  const [documentTypes, setDocumentTypes] = useState<
+    Array<{ id: string; code: string; name: string }>
+  >([]);
+  const [qualificationLevels, setQualificationLevels] = useState<
+    QualificationLevelOption[]
+  >([]);
   const [submissions, setSubmissions] = useState<CandidateSubmissionSummary[]>(
     [],
   );
@@ -56,57 +49,129 @@ export default function CandidatePortalPage() {
     message: string;
   } | null>(null);
 
-  useEffect(() => {
-    // Check if candidate has existing submissions
-    if (
-      submissions.length > 0 &&
-      activeTab === "NEW_APPLICATION" &&
-      formMode === "NEW_SUBMISSION"
-    ) {
-      // Keep active tab as user preference
+  // Initialize or reload real candidate portal data
+  const loadPortalData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await loadCandidatePortalData();
+      if (res.success) {
+        setVerifiedEmail(res.data.verifiedEmail);
+        setDocumentTypes(res.data.documentTypes);
+        setQualificationLevels(res.data.qualificationLevels);
+        setSubmissions(res.data.submissions);
+
+        // If submissions exist and currently on initial load, show MY_APPLICATIONS tab
+        if (res.data.submissions.length > 0) {
+          setActiveTab("MY_APPLICATIONS");
+        } else {
+          // No submissions: open a real new form session
+          const sessionRes = await startFormSessionAction("NEW_SUBMISSION");
+          if (sessionRes.success && sessionRes.data) {
+            setSessionId(sessionRes.data.candidate_form_session_id);
+            setPinnedPrivacyVersion(
+              sessionRes.data.presented_privacy_notice_version ||
+                res.data.pinnedPrivacyVersion,
+            );
+          }
+        }
+      } else {
+        setNotification({
+          type: "error",
+          message: res.error,
+        });
+      }
+    } catch (err) {
+      setNotification({
+        type: "error",
+        message: err instanceof Error ? err.message : "Lỗi kết nối",
+      });
+    } finally {
+      setLoading(false);
     }
-  }, [submissions.length, activeTab, formMode]);
+  }, []);
+
+  useEffect(() => {
+    loadPortalData();
+  }, [loadPortalData]);
+
+  // Start a new form session when switching to NEW_APPLICATION
+  const handleStartNewApplication = async () => {
+    setLoading(true);
+    try {
+      const sessionRes = await startFormSessionAction("NEW_SUBMISSION");
+      if (sessionRes.success && sessionRes.data) {
+        setSessionId(sessionRes.data.candidate_form_session_id);
+        setPinnedPrivacyVersion(
+          sessionRes.data.presented_privacy_notice_version,
+        );
+        setPrivacyAlreadyAcknowledged(false);
+        setFormMode("NEW_SUBMISSION");
+        setEditInitialData(undefined);
+        setActiveTab("NEW_APPLICATION");
+      } else {
+        setNotification({
+          type: "error",
+          message: sessionRes.error || "Không thể bắt đầu phiên đăng ký",
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFormSubmit = async (
-    _data: CandidateFormData,
+    data: CandidateFormData,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       if (formMode === "NEW_SUBMISSION") {
-        const newSub: CandidateSubmissionSummary = {
-          submissionId: crypto.randomUUID(),
-          submittedAt: new Date().toISOString(),
-          statusCode: "NEW",
-          versionNo: 1,
-        };
-        setSubmissions((prev) => [newSub, ...prev]);
+        const res = await submitCandidateSubmissionAction({
+          candidateFormSessionId: sessionId,
+          fullName: data.fullName,
+          phone: data.phone,
+          dateOfBirth: data.dateOfBirth,
+          gender: data.gender,
+          address: data.address,
+          education: data.education,
+          privacyNoticeVersion: pinnedPrivacyVersion,
+        });
+
+        if (!res.success) {
+          return { success: false, error: res.error };
+        }
+
         setNotification({
           type: "success",
           message:
             "Nộp hồ sơ thành công! / Application submitted successfully.",
         });
-        setActiveTab("MY_APPLICATIONS");
       } else {
-        // Edit mode: update existing submission
-        setSubmissions((prev) =>
-          prev.map((sub, idx) =>
-            idx === 0
-              ? {
-                  ...sub,
-                  versionNo: sub.versionNo + 1,
-                  submittedAt: new Date().toISOString(),
-                }
-              : sub,
-          ),
-        );
+        const res = await updateCandidateSubmissionAction({
+          candidateFormSessionId: sessionId,
+          fullName: data.fullName,
+          phone: data.phone,
+          dateOfBirth: data.dateOfBirth,
+          gender: data.gender,
+          address: data.address,
+          education: data.education,
+          privacyNoticeVersion: pinnedPrivacyVersion,
+        });
+
+        if (!res.success) {
+          return { success: false, error: res.error };
+        }
+
         setNotification({
           type: "success",
           message:
             "Cập nhật hồ sơ thành công! / Application updated successfully.",
         });
-        setActiveTab("MY_APPLICATIONS");
-        setFormMode("NEW_SUBMISSION");
-        setEditInitialData(undefined);
       }
+
+      // Refresh persisted state from database
+      await loadPortalData();
+      setActiveTab("MY_APPLICATIONS");
+      setFormMode("NEW_SUBMISSION");
+      setEditInitialData(undefined);
       return { success: true };
     } catch (err) {
       return {
@@ -117,6 +182,9 @@ export default function CandidatePortalPage() {
   };
 
   const handleFormCancel = async (): Promise<void> => {
+    if (sessionId) {
+      await cancelFormSessionAction(sessionId);
+    }
     setFormMode("NEW_SUBMISSION");
     setEditInitialData(undefined);
     if (submissions.length > 0) {
@@ -124,19 +192,32 @@ export default function CandidatePortalPage() {
     }
   };
 
-  const handleEditSubmission = (submissionId: string) => {
+  const handleEditSubmission = async (submissionId: string) => {
     const sub = submissions.find((s) => s.submissionId === submissionId);
     if (sub && sub.statusCode === "NEW") {
-      setFormMode("EDIT_SUBMISSION");
-      setSessionId(crypto.randomUUID());
-      setEditInitialData({
-        fullName: "Nguyễn Văn A",
-        phone: "0901234567",
-        dateOfBirth: "1995-05-15",
-        gender: "MALE",
-        address: "Thủ Dầu Một, Bình Dương",
-      });
-      setActiveTab("NEW_APPLICATION");
+      setLoading(true);
+      try {
+        const sessionRes = await startFormSessionAction(
+          "EDIT_SUBMISSION",
+          submissionId,
+        );
+        if (sessionRes.success && sessionRes.data) {
+          setSessionId(sessionRes.data.candidate_form_session_id);
+          setPinnedPrivacyVersion(
+            sessionRes.data.presented_privacy_notice_version,
+          );
+          setPrivacyAlreadyAcknowledged(true);
+          setFormMode("EDIT_SUBMISSION");
+          setActiveTab("NEW_APPLICATION");
+        } else {
+          setNotification({
+            type: "error",
+            message: sessionRes.error || "Không thể mở phiên chỉnh sửa hồ sơ",
+          });
+        }
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -146,125 +227,115 @@ export default function CandidatePortalPage() {
         {/* Header */}
         <header className="portal-header">
           <div className="portal-brand">
-            <span className="portal-logo-text">EIU</span>
-            <div>
-              <h1 style={{ fontSize: "18px", margin: 0, fontWeight: 700 }}>
-                Cổng Tuyển Dụng Ứng Viên / Candidate Portal
-              </h1>
-              <span className="portal-sub">Đại học Quốc tế Miền Đông</span>
-            </div>
+            <h1 className="portal-title">Cổng ứng viên / Candidate Portal</h1>
+            <p className="portal-subtitle">
+              Trường Đại học Quốc tế Miền Đông — Tuyển dụng / EIU Recruitment
+            </p>
           </div>
 
           <div className="portal-user-meta">
-            <span className="portal-email-badge">{verifiedEmail}</span>
-            <a
-              href="/auth/signout"
-              className="btn btn-secondary"
-              style={{
-                minHeight: "36px",
-                padding: "4px 12px",
-                fontSize: "14px",
-              }}
-            >
-              Đăng xuất / Sign out
-            </a>
+            <span className="user-email-label">Ứng viên / Candidate:</span>
+            <span className="user-email-value">{verifiedEmail || "..."}</span>
           </div>
         </header>
 
-        {/* Notification Banner */}
+        {/* Global Notification Banner */}
         {notification && (
           <div
-            role="status"
-            style={{
-              padding: "12px 16px",
-              borderRadius: "6px",
-              marginBottom: "20px",
-              backgroundColor:
-                notification.type === "success"
-                  ? "var(--status-success-bg, #eaf3e6)"
-                  : "var(--status-danger-bg, #f8e5e0)",
-              color:
-                notification.type === "success"
-                  ? "var(--status-success-text, #3b6a2a)"
-                  : "var(--status-danger-text, #b44425)",
-              fontWeight: 600,
-            }}
+            role="alert"
+            className={`portal-alert portal-alert-${notification.type}`}
+            aria-live="polite"
           >
-            {notification.message}
+            <span>{notification.message}</span>
+            <button
+              type="button"
+              className="alert-dismiss-btn"
+              onClick={() => setNotification(null)}
+              aria-label="Đóng thông báo / Dismiss notification"
+            >
+              ✕
+            </button>
           </div>
         )}
 
-        {/* Tab switcher when candidate has submissions or is in edit mode */}
-        {(submissions.length > 0 || formMode === "EDIT_SUBMISSION") && (
-          <nav className="portal-tabs" aria-label="Điều hướng cổng ứng viên">
-            <button
-              type="button"
-              className="portal-tab-btn"
-              role="tab"
-              aria-selected={activeTab === "NEW_APPLICATION"}
-              onClick={() => {
-                setActiveTab("NEW_APPLICATION");
-                if (formMode === "EDIT_SUBMISSION") {
-                  setFormMode("NEW_SUBMISSION");
-                  setEditInitialData(undefined);
-                }
-              }}
-            >
-              {formMode === "EDIT_SUBMISSION"
-                ? "Chỉnh sửa hồ sơ / Edit Application"
-                : "Đăng ký mới / New Application"}
-            </button>
-            <button
-              type="button"
-              className="portal-tab-btn"
-              role="tab"
-              aria-selected={activeTab === "MY_APPLICATIONS"}
-              onClick={() => setActiveTab("MY_APPLICATIONS")}
-            >
-              Phiếu của tôi / My Applications ({submissions.length})
-            </button>
-          </nav>
-        )}
+        {/* Navigation Tabs */}
+        <div
+          className="portal-tabs"
+          role="tablist"
+          aria-label="Cổng ứng viên điều hướng"
+        >
+          <button
+            type="button"
+            role="tab"
+            id="tab-my-apps"
+            aria-selected={activeTab === "MY_APPLICATIONS"}
+            aria-controls="panel-my-apps"
+            className={`portal-tab ${activeTab === "MY_APPLICATIONS" ? "active" : ""}`}
+            onClick={() => setActiveTab("MY_APPLICATIONS")}
+          >
+            Phiếu của tôi / My Applications ({submissions.length})
+          </button>
 
-        {/* Tab Content */}
-        {activeTab === "NEW_APPLICATION" ? (
-          <section aria-labelledby="form-title">
-            <h2
-              id="form-title"
-              style={{
-                fontSize: "20px",
-                fontWeight: 700,
-                marginBottom: "20px",
-              }}
-            >
-              {formMode === "EDIT_SUBMISSION"
-                ? "Chỉnh sửa hồ sơ ứng tuyển / Edit Application"
-                : "Phiếu đăng ký ứng tuyển / Recruitment Application Form"}
-            </h2>
+          <button
+            type="button"
+            role="tab"
+            id="tab-new-app"
+            aria-selected={activeTab === "NEW_APPLICATION"}
+            aria-controls="panel-new-app"
+            className={`portal-tab ${activeTab === "NEW_APPLICATION" ? "active" : ""}`}
+            onClick={handleStartNewApplication}
+          >
+            {formMode === "EDIT_SUBMISSION"
+              ? "Chỉnh sửa phiếu / Edit Application"
+              : "Đăng ký mới / New Application"}
+          </button>
+        </div>
+
+        {/* Panel 1: My Submissions */}
+        <div
+          role="tabpanel"
+          id="panel-my-apps"
+          hidden={activeTab !== "MY_APPLICATIONS"}
+        >
+          {loading ? (
+            <div className="portal-loading-indicator">
+              Đang tải... / Loading...
+            </div>
+          ) : (
+            <SubmissionsList
+              submissions={submissions}
+              onEditSubmission={handleEditSubmission}
+              onNewApplication={handleStartNewApplication}
+            />
+          )}
+        </div>
+
+        {/* Panel 2: Registration / Edit Form */}
+        <div
+          role="tabpanel"
+          id="panel-new-app"
+          aria-labelledby="tab-new-app"
+          hidden={activeTab !== "NEW_APPLICATION"}
+        >
+          {loading ? (
+            <div className="portal-loading-indicator">
+              Đang khởi tạo form... / Loading form...
+            </div>
+          ) : (
             <CandidateForm
               sessionId={sessionId}
               mode={formMode}
               verifiedEmail={verifiedEmail}
               pinnedPrivacyVersion={pinnedPrivacyVersion}
+              privacyAlreadyAcknowledged={privacyAlreadyAcknowledged}
               initialData={editInitialData}
-              documentTypes={MOCK_DOCUMENT_TYPES}
+              documentTypes={documentTypes}
+              qualificationLevels={qualificationLevels}
               onSubmit={handleFormSubmit}
               onCancel={handleFormCancel}
             />
-          </section>
-        ) : (
-          <section aria-labelledby="submissions-title">
-            <SubmissionsList
-              submissions={submissions}
-              onEditSubmission={handleEditSubmission}
-              onNewApplication={() => {
-                setFormMode("NEW_SUBMISSION");
-                setEditInitialData(undefined);
-                setActiveTab("NEW_APPLICATION");
-              }}
-            />
-          </section>
-        )}
+          )}
+        </div>
       </main>
     </div>
   );

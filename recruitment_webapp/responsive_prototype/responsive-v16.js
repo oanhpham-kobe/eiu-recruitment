@@ -395,7 +395,8 @@ function statusTriggerKeyV16(entity,id,group){
 statusBadgeV11=function(s,group='general',entity=null,id=null){
   const clickable=!!entity&&canEditStatus();
   const key=clickable?statusTriggerKeyV16(entity,id,null):'';
-  return `<${clickable?'button':'span'} class="status status-${group} ${statusClass(s)} ${clickable?'status-clickable':''}" ${clickable?`data-status-key="${key}" onclick="openStatusMenu('${entity}','${id}',event)" aria-label="${tx('Đổi trạng thái','Change status')}" aria-haspopup="menu" aria-expanded="false"`:''}>${statusText(s)}</${clickable?'button':'span'}>`;
+  const label = group === 'candidate' && typeof candidateStatusLabel === 'function' ? candidateStatusLabel(s) : statusText(s);
+  return `<${clickable?'button':'span'} class="status status-${group} ${statusClass(s)} ${clickable?'status-clickable':''}" ${clickable?`data-status-key="${key}" onclick="openStatusMenu('${entity}','${id}',event)" aria-label="${tx('Đổi trạng thái','Change status')}" aria-haspopup="menu" aria-expanded="false"`:''}>${label}</${clickable?'button':'span'}>`;
 };
 toolbarStatus=function(group,entity){
   const key=statusTriggerKeyV16(entity,'',group);

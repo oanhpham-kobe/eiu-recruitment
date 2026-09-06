@@ -432,3 +432,69 @@
   color: var(--status-success-text, #3b6a2a);
   width: var(--badge-width-submission, 112px);
 }
+
+/* Server Error & Alert Styles */
+.form-server-error {
+  background-color: var(--status-danger-bg, #f8e5e0);
+  color: var(--status-danger-text, #b44425);
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.field-error-spacing {
+  margin-top: -16px;
+  display: block;
+}
+
+.field-error-block {
+  margin-top: 8px;
+  display: block;
+}
+
+.portal-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.portal-alert-success {
+  background-color: var(--status-success-bg, #eaf3e6);
+  color: var(--status-success-text, #3b6a2a);
+  border: 1px solid #cde4c4;
+}
+
+.portal-alert-error {
+  background-color: var(--status-danger-bg, #f8e5e0);
+  color: var(--status-danger-text, #b44425);
+  border: 1px solid #f0ccc3;
+}
+
+.alert-dismiss-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: inherit;
+  padding: 0 4px;
+}
+
+.portal-loading-indicator {
+  padding: 40px;
+  text-align: center;
+  color: var(--ink-600, #68686b);
+  font-size: 16px;
+}
+
+.btn-sm {
+  min-height: 36px;
+  padding: 4px 12px;
+  font-size: 14px;
+}

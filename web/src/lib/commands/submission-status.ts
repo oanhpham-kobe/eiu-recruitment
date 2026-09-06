@@ -60,6 +60,23 @@ export type RecalculateSubmissionStatusData = {
   status_code: string;
   previous_status_code: string;
 };
+
+export type CorrectSubmissionCandidateFieldsInput = {
+  submissionId: string;
+  fullName?: string | null;
+  phone?: string | null;
+  dateOfBirth?: string | null;
+  gender?: "MALE" | "FEMALE" | null;
+  currentAddress?: string | null;
+  expectedVersion?: number | null;
+  reason?: string | null;
+};
+
+export type CorrectSubmissionCandidateFieldsData = {
+  submission_id: string;
+  version_no: number;
+  changed_fields: string[];
+};
 export type BulkLatestSubmissionStatusItemInput = {
   candidateId: string;
   expectedLatestSubmissionId: string;
@@ -657,4 +674,202 @@ export async function recalculateSubmissionStatus(
     deps.resolveActor ?? (() => defaultResolveActor(supabase));
   const runner = createCommandRunner({ resolveActor });
   return runner(createRecalculateSubmissionStatusCommand(supabase), input);
+}
+
+export function createCorrectSubmissionCandidateFieldsCommand(
+  supabase: SupabaseClient,
+): TrustedCommandDefinition<
+  CorrectSubmissionCandidateFieldsInput,
+  string,
+  CorrectSubmissionCandidateFieldsInput,
+  CorrectSubmissionCandidateFieldsData
+> {
+  return {
+    name: "correct_submission_candidate_fields_by_hr",
+
+    extractTarget(rawInput) {
+      return rawInput.submissionId;
+    },
+
+    async authorize(actor) {
+      const hasEdit = actor.permissions.includes("submissions.edit");
+      const isRoot =
+        actor.roles.includes("root_admin") || actor.roles.includes("root");
+      if (!hasEdit && !isRoot) {
+        return {
+          authorized: false,
+          code: CommandErrorCode.FORBIDDEN,
+          reason: "Permission submissions.edit required",
+        };
+      }
+      return { authorized: true };
+    },
+
+    validate(rawInput) {
+      if (!rawInput.submissionId || !UUID_REGEX.test(rawInput.submissionId)) {
+        return { success: false, error: "Invalid submissionId UUID" };
+      }
+
+      const hasAnyField =
+        (rawInput.fullName !== undefined && rawInput.fullName !== null) ||
+        (rawInput.phone !== undefined && rawInput.phone !== null) ||
+        (rawInput.dateOfBirth !== undefined && rawInput.dateOfBirth !== null) ||
+        (rawInput.gender !== undefined && rawInput.gender !== null) ||
+        (rawInput.currentAddress !== undefined &&
+          rawInput.currentAddress !== null);
+
+      if (!hasAnyField) {
+        return {
+          success: false,
+          error: "At least one candidate field must be provided for correction",
+        };
+      }
+
+      if (rawInput.fullName !== undefined && rawInput.fullName !== null) {
+        const name = rawInput.fullName.trim();
+        if (!name || name.length > 200) {
+          return {
+            success: false,
+            error:
+              "Full name must not be empty and must not exceed 200 characters",
+          };
+        }
+      }
+
+      if (rawInput.phone !== undefined && rawInput.phone !== null) {
+        const phone = rawInput.phone.trim();
+        if (!phone || phone.length > 32) {
+          return {
+            success: false,
+            error:
+              "Phone number must not be empty and must not exceed 32 characters",
+          };
+        }
+      }
+
+      if (rawInput.dateOfBirth !== undefined && rawInput.dateOfBirth !== null) {
+        const dob = rawInput.dateOfBirth.trim();
+        const today = new Date().toISOString().split("T")[0];
+        if (dob < "1900-01-01" || dob > today) {
+          return {
+            success: false,
+            error: "Date of birth must be between 1900-01-01 and today",
+          };
+        }
+      }
+
+      if (rawInput.gender !== undefined && rawInput.gender !== null) {
+        const gender = rawInput.gender.toUpperCase().trim();
+        if (!["MALE", "FEMALE"].includes(gender)) {
+          return {
+            success: false,
+            error: "Gender must be MALE or FEMALE",
+          };
+        }
+      }
+
+      if (
+        rawInput.currentAddress !== undefined &&
+        rawInput.currentAddress !== null
+      ) {
+        const address = rawInput.currentAddress.trim();
+        if (!address || address.length > 500) {
+          return {
+            success: false,
+            error:
+              "Address must not be empty and must not exceed 500 characters",
+          };
+        }
+      }
+
+      if (
+        rawInput.expectedVersion !== undefined &&
+        rawInput.expectedVersion !== null
+      ) {
+        if (
+          typeof rawInput.expectedVersion !== "number" ||
+          rawInput.expectedVersion <= 0
+        ) {
+          return {
+            success: false,
+            error: "Expected version must be a positive number",
+          };
+        }
+      }
+
+      return { success: true, data: rawInput };
+    },
+
+    async execute(_actor, validated) {
+      const { data, error } = await supabase.rpc(
+        "correct_submission_candidate_fields_by_hr",
+        {
+          p_submission_id: validated.submissionId,
+          p_full_name: validated.fullName?.trim() || null,
+          p_phone: validated.phone?.trim() || null,
+          p_date_of_birth: validated.dateOfBirth?.trim() || null,
+          p_gender: validated.gender
+            ? validated.gender.toUpperCase().trim()
+            : null,
+          p_current_address: validated.currentAddress?.trim() || null,
+          p_expected_version: validated.expectedVersion ?? null,
+          p_reason: validated.reason?.trim() || null,
+        },
+      );
+
+      if (error) {
+        return {
+          success: false,
+          error: {
+            code: CommandErrorCode.INTERNAL_ERROR,
+            message: error.message,
+          },
+        };
+      }
+
+      const result = data as {
+        success: boolean;
+        error_code?: string;
+        message?: string;
+        submission_id?: string;
+        version_no?: number;
+        changed_fields?: string[];
+      };
+
+      if (!result.success) {
+        const rawCode = result.error_code ? String(result.error_code) : "";
+        const code =
+          CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
+          CommandErrorCode.INTERNAL_ERROR;
+        return {
+          success: false,
+          error: {
+            code,
+            message:
+              result.message || "Failed to correct submission candidate fields",
+          },
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          submission_id: result.submission_id ?? "",
+          version_no: result.version_no ?? 1,
+          changed_fields: result.changed_fields || [],
+        },
+      };
+    },
+  };
+}
+
+export async function correctSubmissionCandidateFieldsByHr(
+  input: CorrectSubmissionCandidateFieldsInput,
+  deps: SubmissionStatusCommandDeps = {},
+): Promise<CommandResult<CorrectSubmissionCandidateFieldsData>> {
+  const supabase = deps.client ?? (await createServerClient());
+  const resolveActor =
+    deps.resolveActor ?? (() => defaultResolveActor(supabase));
+  const runner = createCommandRunner({ resolveActor });
+  return runner(createCorrectSubmissionCandidateFieldsCommand(supabase), input);
 }

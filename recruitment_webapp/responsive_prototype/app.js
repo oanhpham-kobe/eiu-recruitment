@@ -61,9 +61,44 @@ const candidate = id => state.candidates.find(x=>x.id===id);
 const appById = id => state.applications.find(x=>x.id===id);
 const roundById = id => state.applications.flatMap(a=>a.rounds.map(r=>({...r,application:a}))).find(x=>x.id===id);
 const currentRound = a => [...a.rounds].filter(r=>r.active).sort((x,y)=>y.no-x.no)[0];
+const parsePrototypeDateTime = value => {
+  if (!value) return Number.NEGATIVE_INFINITY;
+  const match = value.match(
+    /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/,
+  );
+  if (!match) return Number.NEGATIVE_INFINITY;
+  const [, dd, mm, yyyy, hh, min] = match;
+  return Date.UTC(
+    Number(yyyy),
+    Number(mm) - 1,
+    Number(dd),
+    Number(hh),
+    Number(min),
+  );
+};
+
+const candidateStatusLabel = status =>
+  ({
+    NEW: "Mới",
+    READ: "Đang xử lý",
+    PROCESSED: "Đang xử lý",
+    DONE: "Hoàn thành",
+    CLOSED: "Hoàn thành",
+  })[status] || status;
+
 const reportCurrentSource = rid => {
   const rs=state.reports[rid]||{}; const arr=Object.entries(rs).filter(([_,r])=>r.conclusion||r.job||r.time);
-  arr.sort((a,b)=>(b[1].decisionUpdatedAt||b[1].updatedAt||'').localeCompare(a[1].decisionUpdatedAt||a[1].updatedAt||'')); return arr[0];
+  arr.sort((a, b) => {
+    const bt = parsePrototypeDateTime(
+      b[1].decisionUpdatedAt || b[1].updatedAt || "",
+    );
+    const at = parsePrototypeDateTime(
+      a[1].decisionUpdatedAt || a[1].updatedAt || "",
+    );
+    if (bt !== at) return bt - at;
+    return String(b[0]).localeCompare(String(a[0]));
+  });
+  return arr[0];
 };
 
 function setRole(role){state.role=role; state.page = role==='candidate'?'candidate-applications':role==='interviewer'?'interviewer-report':'applications'; state.drawer=null; state.modal=null; render();}
