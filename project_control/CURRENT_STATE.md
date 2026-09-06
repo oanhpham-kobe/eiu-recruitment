@@ -42,16 +42,16 @@ Next Eligible Task:
 `TASK-S04-001`
 
 Execution Mode:
-`BOUNDED`
+`AUTONOMOUS`
 
 Execution Status:
-`BOUNDED_GOVERNANCE_INTEGRATION`
+`AUTONOMOUS_ACTIVATION_PENDING`
 
 Auto-Advance:
-`DISABLED`
+`PENDING_OWNER_REVIEW`
 
 Parallel Scheduler:
-`DISABLED`
+`PENDING_OWNER_REVIEW`
 
 Maximum Active Implementation Tasks:
 `1`
@@ -64,4 +64,4 @@ GitHub Actions Run:
 
 Next Action:
 
-`Accepted governance source → serialized fast-forward integration → exact-SHA CI → external Planner runtime checkpoint → HARD STOP. AUTONOMOUS activation remains unauthorized and SLICE-04 remains held.`
+`Exact-SHA verify this AUTONOMOUS preparation checkpoint, then HARD STOP for external Planner authorization before enabling auto-advance, enabling parallel scheduling, releasing S04, or dispatching frontier work.`
