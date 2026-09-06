@@ -357,11 +357,16 @@ export async function loadCandidateEditDataAction(
     };
   }
 
-  const { data: acknowledgement } = await supabase
+  const { data: acknowledgement, error: acknowledgementError } = await supabase
     .from("privacy_acknowledgements")
     .select("notice_version")
     .eq("submission_id", submission.submission_id)
-    .eq("notice_version", pinnedPrivacyVersion);
+    .eq("notice_version", pinnedPrivacyVersion)
+    .maybeSingle();
+
+  if (acknowledgementError) {
+    return { success: false, error: acknowledgementError.message };
+  }
 
   return {
     success: true,
