@@ -45,7 +45,7 @@ Execution Mode:
 `BOUNDED`
 
 Execution Status:
-`BOUNDED_GOVERNANCE_CLEANUP`
+`BOUNDED_GOVERNANCE_INTEGRATION`
 
 Auto-Advance:
 `DISABLED`
@@ -64,4 +64,4 @@ GitHub Actions Run:
 
 Next Action:
 
-`STOP and return the bounded governance exact SHA and validation evidence to the external Planner. AUTONOMOUS activation and SLICE-04 remain held.`
+`Accepted governance source → serialized fast-forward integration → exact-SHA CI → external Planner runtime checkpoint → HARD STOP. AUTONOMOUS activation remains unauthorized and SLICE-04 remains held.`
