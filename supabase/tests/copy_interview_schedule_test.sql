@@ -14,7 +14,10 @@ declare
   unit_id uuid; group_id uuid; position_id uuid; position2_id uuid; position3_id uuid; room_id uuid; room2_id uuid; format_id uuid; doc_type uuid;
   candidate_id uuid; candidate2_id uuid; submission_id uuid; submission2_id uuid;
   source_app uuid; target_app uuid; same_app uuid; source_id uuid; target_r1 uuid; same_r1 uuid;
-  v bigint; target_app_v bigint; target_r1_v bigint; r jsonb; copied_id uuid; before_count integer; before_note text;
+  same_empty_app uuid; same_empty_r1 uuid; same_empty_r2 uuid;
+  incoming_app uuid; incoming_r1 uuid; incoming_child_app uuid; incoming_child uuid;
+  v bigint; target_app_v bigint; target_r1_v bigint; r jsonb; copied_id uuid; before_note text;
+  v_round1 jsonb; v_artifact jsonb; v_round1_after jsonb; v_artifact_after jsonb;
   conflict_app uuid; conflict_r1 uuid; inactive_app uuid; inactive_r1 uuid;
   usage_app uuid; usage_r1 uuid; usage_r2 uuid; usage_kind text;
   replay_key uuid := gen_random_uuid(); raised boolean;
@@ -68,6 +71,22 @@ begin
   exception when check_violation then raised:=true; end;
   assert raised,'different idempotency replay fails closed';
 
+  -- A structurally empty source/target Round 1 is still never filled for a
+  -- same-Application copy: the command allocates Round 2 and applies the draft.
+  insert into public.candidates(auth_user_id,email,is_active) values(gen_random_uuid(),'t003_same_empty_'||s||'@example.com',true) returning public.candidates.candidate_id into candidate2_id;
+  insert into public.submissions(candidate_id,full_name,date_of_birth,gender_code,current_address,phone,email_snapshot) values(candidate2_id,'T003 Same Empty','1990-01-01','MALE','Address','0900000002','t003_same_empty_'||s||'@example.com') returning public.submissions.submission_id into submission2_id;
+  insert into public.applications(submission_id,unit_id,position_id,hr_owner_id) values(submission2_id,unit_id,position2_id,hr) returning public.applications.application_id into same_empty_app;
+  insert into public.interviews(application_id,round_no) values(same_empty_app,1) returning public.interviews.interview_id into same_empty_r1;
+  select to_jsonb(i) into v_round1 from public.interviews i where i.interview_id=same_empty_r1;
+  select version_no into v from public.interviews where interview_id=same_empty_r1;
+  r:=public.copy_interview_schedule(same_empty_r1,same_empty_app,v,(select version_no from public.applications where application_id=same_empty_app),same_empty_r1,v,'2035-01-04 09:00+07','2035-01-04 10:00+07',format_id,room_id,null,'same empty logistics',array[i2,i1],gen_random_uuid());
+  same_empty_r2:=(r->'data'->>'interview_id')::uuid;
+  assert (r->>'success')::boolean and (select round_no from public.interviews where interview_id=same_empty_r2)=2,'structurally empty same-application Round 1 allocates Round 2';
+  select to_jsonb(i) into v_round1_after from public.interviews i where i.interview_id=same_empty_r1;
+  assert v_round1_after=v_round1,'same-application Round 1 fields remain unchanged';
+  assert (select copied_from_interview_id=same_empty_r1 and demo_topic is null and start_at='2035-01-04 09:00+07'::timestamptz and interview_note='same empty logistics' from public.interviews where interview_id=same_empty_r2),'same-application Round 2 records provenance and copied logistics';
+  assert (select array_agg(snapshot_name order by participant_order) from public.interview_participants where interview_id=same_empty_r2)=array['T003 Interviewer 2','T003 Interviewer 1'],'same-application Round 2 preserves selected snapshot order';
+
   -- Same-Application Copy always allocates the next legal round, even when Round 1 is empty.
   select version_no into v from public.interviews where interview_id=source_id;
   r:=public.copy_interview_schedule(source_id,same_app,v,(select version_no from public.applications where application_id=same_app),same_r1,(select version_no from public.interviews where interview_id=same_r1),'2035-01-03 09:00+07','2035-01-03 10:00+07',format_id,room_id,null,'same app',array[i1],gen_random_uuid());
@@ -86,13 +105,49 @@ begin
     elsif usage_kind='OUTBOX' then insert into public.email_outbox(interview_id,email_type,recipients,subject,body_html,idempotency_key,actor_scope) values(usage_r1,'TEST','[]','subject','body',gen_random_uuid(),'test:'||s);
     elsif usage_kind='HISTORY' then insert into public.email_history(interview_id,email_type,recipients,subject) values(usage_r1,'TEST','[]','subject');
     else update public.interviews set copied_from_interview_id=source_id where interview_id=usage_r1; end if;
-    before_note:=(select interview_note from public.interviews where interview_id=usage_r1);
+    select to_jsonb(i) into v_round1 from public.interviews i where i.interview_id=usage_r1;
+    select jsonb_build_object(
+      'participants',coalesce((select jsonb_agg(to_jsonb(ip) order by ip.interview_participant_id) from public.interview_participants ip where ip.interview_id=usage_r1),'[]'::jsonb),
+      'reports',coalesce((select jsonb_agg(to_jsonb(ir) order by ir.interview_report_id) from public.interview_reports ir join public.interview_participants ip on ip.interview_participant_id=ir.interview_participant_id where ip.interview_id=usage_r1),'[]'::jsonb),
+      'documents',coalesce((select jsonb_agg(to_jsonb(dl) order by dl.logical_document_id) from public.interview_document_logicals dl where dl.interview_id=usage_r1),'[]'::jsonb),
+      'outbox',coalesce((select jsonb_agg(to_jsonb(eo) order by eo.email_outbox_id) from public.email_outbox eo where eo.interview_id=usage_r1),'[]'::jsonb),
+      'history',coalesce((select jsonb_agg(to_jsonb(eh) order by eh.email_history_id) from public.email_history eh where eh.interview_id=usage_r1),'[]'::jsonb),
+      'reverse_copies',coalesce((select jsonb_agg(to_jsonb(child) order by child.interview_id) from public.interviews child where child.copied_from_interview_id=usage_r1),'[]'::jsonb)
+    ) into v_artifact;
     select version_no into v from public.interviews where interview_id=source_id;
     r:=public.copy_interview_schedule(source_id,usage_app,v,(select version_no from public.applications where application_id=usage_app),usage_r1,(select version_no from public.interviews where interview_id=usage_r1),'2035-02-01 09:00+07'::timestamptz + array_position(array['PARTICIPANT','REPORT','DOCUMENT','OUTBOX','HISTORY','PROVENANCE'],usage_kind)*interval '2 hours','2035-02-01 10:00+07'::timestamptz + array_position(array['PARTICIPANT','REPORT','DOCUMENT','OUTBOX','HISTORY','PROVENANCE'],usage_kind)*interval '2 hours',format_id,room_id,null,'new',array[]::uuid[],gen_random_uuid());
     usage_r2:=(r->'data'->>'interview_id')::uuid;
     assert (r->>'success')::boolean and usage_r2<>usage_r1 and (select round_no from public.interviews where interview_id=usage_r2)=2,'used Round 1 exclusion allocates Round 2: '||usage_kind;
-    assert (select interview_note is not distinct from before_note from public.interviews where interview_id=usage_r1),'used Round 1 remains unchanged: '||usage_kind;
+    select to_jsonb(i) into v_round1_after from public.interviews i where i.interview_id=usage_r1;
+    select jsonb_build_object(
+      'participants',coalesce((select jsonb_agg(to_jsonb(ip) order by ip.interview_participant_id) from public.interview_participants ip where ip.interview_id=usage_r1),'[]'::jsonb),
+      'reports',coalesce((select jsonb_agg(to_jsonb(ir) order by ir.interview_report_id) from public.interview_reports ir join public.interview_participants ip on ip.interview_participant_id=ir.interview_participant_id where ip.interview_id=usage_r1),'[]'::jsonb),
+      'documents',coalesce((select jsonb_agg(to_jsonb(dl) order by dl.logical_document_id) from public.interview_document_logicals dl where dl.interview_id=usage_r1),'[]'::jsonb),
+      'outbox',coalesce((select jsonb_agg(to_jsonb(eo) order by eo.email_outbox_id) from public.email_outbox eo where eo.interview_id=usage_r1),'[]'::jsonb),
+      'history',coalesce((select jsonb_agg(to_jsonb(eh) order by eh.email_history_id) from public.email_history eh where eh.interview_id=usage_r1),'[]'::jsonb),
+      'reverse_copies',coalesce((select jsonb_agg(to_jsonb(child) order by child.interview_id) from public.interviews child where child.copied_from_interview_id=usage_r1),'[]'::jsonb)
+    ) into v_artifact_after;
+    assert v_round1_after=v_round1 and v_artifact_after=v_artifact,'used Round 1 and usage artifact remain unchanged: '||usage_kind;
   end loop;
+  -- Incoming/reverse provenance is independently business-used: Copy must not
+  -- overwrite the referenced Round 1 or disturb the reverse reference.
+  insert into public.candidates(auth_user_id,email,is_active) values(gen_random_uuid(),'t003_incoming_'||s||'@example.com',true) returning public.candidates.candidate_id into candidate2_id;
+  insert into public.submissions(candidate_id,full_name,date_of_birth,gender_code,current_address,phone,email_snapshot) values(candidate2_id,'T003 Incoming','1990-01-01','MALE','Address','0900000005','t003_incoming_'||s||'@example.com') returning public.submissions.submission_id into submission2_id;
+  insert into public.applications(submission_id,unit_id,position_id,hr_owner_id) values(submission2_id,unit_id,position2_id,hr) returning public.applications.application_id into incoming_app;
+  insert into public.interviews(application_id,round_no) values(incoming_app,1) returning public.interviews.interview_id into incoming_r1;
+  insert into public.candidates(auth_user_id,email,is_active) values(gen_random_uuid(),'t003_reverse_'||s||'@example.com',true) returning public.candidates.candidate_id into candidate2_id;
+  insert into public.submissions(candidate_id,full_name,date_of_birth,gender_code,current_address,phone,email_snapshot) values(candidate2_id,'T003 Reverse','1990-01-01','MALE','Address','0900000006','t003_reverse_'||s||'@example.com') returning public.submissions.submission_id into submission2_id;
+  insert into public.applications(submission_id,unit_id,position_id,hr_owner_id) values(submission2_id,unit_id,position3_id,hr) returning public.applications.application_id into incoming_child_app;
+  insert into public.interviews(application_id,round_no,copied_from_interview_id) values(incoming_child_app,1,incoming_r1) returning public.interviews.interview_id into incoming_child;
+  select to_jsonb(i) into v_round1 from public.interviews i where i.interview_id=incoming_r1;
+  select to_jsonb(i) into v_artifact from public.interviews i where i.interview_id=incoming_child;
+  select version_no into v from public.interviews where interview_id=source_id;
+  r:=public.copy_interview_schedule(source_id,incoming_app,v,(select version_no from public.applications where application_id=incoming_app),incoming_r1,(select version_no from public.interviews where interview_id=incoming_r1),'2035-02-20 09:00+07','2035-02-20 10:00+07',format_id,room_id,null,'incoming provenance',array[]::uuid[],gen_random_uuid());
+  usage_r2:=(r->'data'->>'interview_id')::uuid;
+  assert (r->>'success')::boolean and usage_r2<>incoming_r1 and (select round_no from public.interviews where interview_id=usage_r2)=2,'incoming provenance allocates next legal round';
+  select to_jsonb(i) into v_round1_after from public.interviews i where i.interview_id=incoming_r1;
+  select to_jsonb(i) into v_artifact_after from public.interviews i where i.interview_id=incoming_child;
+  assert v_round1_after=v_round1 and v_artifact_after=v_artifact,'incoming provenance Round 1 and reverse reference remain unchanged';
 
   -- Version mismatches, including a later competing round, fail before mutation.
   select version_no into v from public.interviews where interview_id=source_id;
@@ -120,7 +175,7 @@ begin
   insert into public.applications(submission_id,unit_id,position_id,hr_owner_id) values(submission2_id,unit_id,position2_id,hr) returning public.applications.application_id into inactive_app;
   insert into public.interviews(application_id,round_no) values(inactive_app,1) returning public.interviews.interview_id into inactive_r1;
   r:=public.copy_interview_schedule(source_id,inactive_app,v,(select version_no from public.applications where application_id=inactive_app),inactive_r1,(select version_no from public.interviews where interview_id=inactive_r1),'2035-04-01 09:00+07','2035-04-01 10:00+07',format_id,room_id,null,'inactive participant',array[inactive],gen_random_uuid());
-  assert r->>'error_code'='USER_INACTIVE_NOT_SELECTABLE' and private.is_structurally_empty_default_round(inactive_r1),'inactive participant rolls back target';
+  assert r->>'error_code'='CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED' and private.is_structurally_empty_default_round(inactive_r1),'inactive participant rolls back target with canonical error';
   update public.applications set is_active=false where application_id=inactive_app;
   r:=public.copy_interview_schedule(source_id,inactive_app,v,(select version_no from public.applications where application_id=inactive_app),inactive_r1,(select version_no from public.interviews where interview_id=inactive_r1),'2035-04-01 09:00+07','2035-04-01 10:00+07',format_id,room_id,null,'inactive target',array[]::uuid[],gen_random_uuid());
   assert r->>'error_code'='APPLICATION_INACTIVE','inactive target application rejected';

@@ -173,7 +173,7 @@ begin
   -- Validate all failure paths before creating or changing target state.
   if exists(select 1 from unnest(v_participant_ids) id
             where not exists(select 1 from public.app_users u where u.app_user_id=id and u.is_active)) then
-    return jsonb_build_object('success', false, 'error_code', 'USER_INACTIVE_NOT_SELECTABLE');
+    return jsonb_build_object('success', false, 'error_code', 'CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED');
   end if;
   if p_start_at is not null then
     select s.candidate_id into v_candidate_id
