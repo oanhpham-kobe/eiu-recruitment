@@ -45,7 +45,7 @@ Execution Mode:
 `AUTONOMOUS`
 
 Current Active Implementation Task:
-`None — post-CI frontier resolution required`
+`TASK-S04-003 — dedicated copy interview schedule command`
 
 Auto-Advance:
 `ENABLED`
@@ -64,4 +64,4 @@ Integration CI:
 
 Next Action:
 
-`Obtain independent prompt review for TASK-S04-003; on PASS recompute frontier and dispatch the safe lane.`
+`TASK-S04-003 executes in Lane A; evaluate only source-backed independent Lane B work.`

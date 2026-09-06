@@ -981,10 +981,11 @@ tasks:
   TASK-S04-003:
     title: "Dedicated copy interview schedule trusted command"
     slice: SLICE-04
-    status: PLANNED
+    status: IN_PROGRESS
     lane: LANE_A
     depends_on:
       - TASK-S04-002
     prompt: project_control/prompts/SLICE-04_TASK-003_v1.md
-    prompt_sha256: d7d5ef59dbe05664c28a36f62b6f602855dcd85fb14b79beef9ddb553f289584
-    notes: "Materialized by the TASK-S04-002 POST-CI CONTINUATION GATE from canonical Copy-command sources. Requires independent prompt review before executor dispatch."
+    prompt_sha256: fc47d6570e12bb372c04008837f0b49d6b4fd2b6e4444481b38762d85fe8c2f3
+    prompt_review_status: "PASS (agent://TaskS04003PromptReReview; blockers: NONE)"
+    notes: "Released after targeted independent prompt re-review. Executor owns the dedicated copy command and focused regression test only."

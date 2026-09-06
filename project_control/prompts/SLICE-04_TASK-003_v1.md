@@ -35,35 +35,55 @@ Load and apply: `supabase`, `supabase-postgres-best-practices`, `security-review
 
 Create one new idempotent migration after `20260906070000_interview_lifecycle_commands.sql` and one focused SQL integration test.
 
-Implement exactly one authenticated public trusted command, `public.copy_interview_schedule`, with a stable explicit signature covering:
+Implement exactly one authenticated public trusted command:
 
-- source interview identity and expected version;
-- target application identity and expected target/latest-round version where applicable;
-- copied schedule/logistics draft, participant selection, and idempotency key.
+```sql
+public.copy_interview_schedule(
+  p_source_interview_id uuid,
+  p_target_application_id uuid,
+  p_expected_source_version bigint,
+  p_expected_target_application_version bigint,
+  p_expected_target_round_id uuid,
+  p_expected_target_round_version bigint,
+  p_start_at timestamptz,
+  p_end_at timestamptz,
+  p_interview_format_id uuid,
+  p_room_id uuid,
+  p_meeting_link text,
+  p_interview_note text,
+  p_participant_app_user_ids uuid[],
+  p_idempotency_key uuid
+)
+```
+
+The caller MUST provide the current target Application and current target/latest Round identity/version observed before Save Copy. The command locks and compares source, target Application, and target Round versions; each mismatch returns `STALE_VERSION`. Never infer these values, accept a null target round, or act on a later round allocated after the caller's read.
 
 The command MUST:
 
-1. Authenticate and authorize server-side with `interviews.manage` plus required view permission or root; direct table DML remains unavailable.
+1. Authenticate and authorize server-side. Root is allowed; every non-root caller MUST independently hold both `interviews.manage` and `interviews.view`. Do not pass those permissions as the two alternatives of `private.interview_command_actor`; direct table DML remains unavailable. Test manage-only and view-only denial separately.
 2. Treat browser Copy as draft-only; only this command creates/mutates target state.
-3. Lock target Application, then relevant target/latest Interview rows, then Submission; re-read and validate after locks.
-4. Select the target round atomically: populate an eligible default target round only when clean; otherwise create the next legal round without overwriting a business-used target round. Record `copied_from_interview_id` provenance.
-5. Validate target application active/current lifecycle conditions and all selected participants are active and selectable. Preserve snapshots and deterministic participant ordering.
-6. Normalize format/room/meeting-link under the existing shared format helper. For an operational interval, use the existing deterministic Candidate → Room → Interviewer resource lock and conflict engine; re-check conflicts before commit.
-7. Use command idempotency keyed to the authenticated actor and a fingerprint of all mutation-relevant input. Same key/same request returns the persisted result; same key/different request fails closed.
-8. Audit the copy command. Any validation/conflict/audit failure rolls back all target round, participant, and schedule changes.
-9. Reuse existing canonical helpers/types/functions. Do not add duplicate lock engines, generic copy commands, browser-side multi-write orchestration, or compatibility aliases.
+3. Lock target Application, then source/target Interview rows in deterministic identity order, then affected Submission rows; re-read and validate after locks.
+4. Replace `private.is_structurally_empty_default_round(uuid)` with the current canonical `database_schema.sql` definition in this migration. `copy_interview_schedule` MUST call that exact predicate and MUST NOT use `private.is_interview_clean()`. It rejects every business-use/provenance condition, including participant/report, document, email outbox/history, copied-from, and reverse-copy references.
+5. Select the target round atomically: for the **same Application**, always create the next legal round under normal allocation; for a **different Application**, fill its exact default Round 1 only if the canonical structural-empty predicate returns true, otherwise create the next legal round. Never overwrite a business-used target round. Record `copied_from_interview_id` provenance.
+6. Validate target application active/current lifecycle conditions and all selected participants are active and selectable. Preserve snapshots and deterministic participant ordering.
+7. Normalize format/room/meeting-link under the existing shared format helper. Copy only `start_at`, `end_at`, format, room/link, and `interview_note`; `demo_topic` MUST be NULL/blank on every copied target round. For an operational interval, use the existing deterministic Candidate → Room → Interviewer resource lock and conflict engine; re-check conflicts before commit.
+8. Use command idempotency keyed to the authenticated actor and a fingerprint of every mutation-relevant argument. Same key/same request returns the persisted result; same key/different request fails closed.
+9. Recalculate affected Submission status when current-round semantics change, audit the copy command, and rollback all target round, participant, and schedule changes on validation, conflict, or audit failure.
+10. Reuse existing canonical helpers/types/functions. Do not add duplicate lock engines, generic copy commands, browser-side multi-write orchestration, or compatibility aliases.
 
 ## 4. Tests
 
 Add consumer-observable SQL integration coverage for:
 
-- authorized success into an unused/default target round;
-- used target Round 1 creates the next legal round and leaves Round 1 unchanged;
-- provenance, copied snapshots/order, and copied logistics;
+- authorized cross-Application success into an unused/default target Round 1;
+- same-Application Copy always allocates the next legal round, even if Round 1 is structurally empty;
+- used/default target Round 1 and every structural-empty exclusion (participant/report, document, email outbox/history, provenance) allocate the next legal round and leave existing data unchanged;
+- provenance, copied snapshots/order, copied logistics, and blank `demo_topic` for both filled-default and newly-created target rounds;
+- stale source, target Application, and target Round versions reject with `STALE_VERSION`, including competing round allocation/Copy;
 - candidate, room, and interviewer conflicts reject atomically;
 - inactive participant and inactive target application reject;
 - idempotent replay and mismatched replay reject;
-- unauthorized/unauthenticated callers and direct-DML denial;
+- unauthenticated, view-only, manage-only, and direct-DML callers are denied;
 - no partial target mutation on every failure path.
 
 ## 5. Verification
