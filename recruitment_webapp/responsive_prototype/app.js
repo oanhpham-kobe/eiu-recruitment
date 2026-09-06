@@ -77,14 +77,17 @@ const parsePrototypeDateTime = value => {
   );
 };
 
-const candidateStatusLabel = status =>
-  ({
-    NEW: "Mới",
-    READ: "Đang xử lý",
-    PROCESSED: "Đang xử lý",
-    DONE: "Hoàn thành",
-    CLOSED: "Hoàn thành",
-  })[status] || status;
+const candidateStatusLabel = status => {
+  const labels = {
+    NEW: ["Mới", "New"],
+    READ: ["Đang xử lý", "Processing"],
+    PROCESSED: ["Đang xử lý", "Processing"],
+    DONE: ["Hoàn thành", "Completed"],
+    CLOSED: ["Hoàn thành", "Completed"],
+  };
+  const label = labels[status];
+  return label ? tx(label[0], label[1]) : status;
+};
 
 const reportCurrentSource = rid => {
   const rs=state.reports[rid]||{}; const arr=Object.entries(rs).filter(([_,r])=>r.conclusion||r.job||r.time);

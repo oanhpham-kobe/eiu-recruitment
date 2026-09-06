@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   cancelFormSessionAction,
+  loadCandidateEditDataAction,
+  loadCandidateFormPrivacyNoticeAction,
   loadCandidatePortalData,
+  refreshCandidatePrivacyNoticeAction,
+  resumeFormSessionAction,
+  resumeFormSessionByIdAction,
   startFormSessionAction,
   submitCandidateSubmissionAction,
   updateCandidateSubmissionAction,
@@ -19,6 +24,25 @@ import {
 } from "@/components/candidate/SubmissionsList";
 import "@/styles/candidate-portal.css";
 
+type PrivacyNotice = {
+  version: string;
+  contentVi: string;
+  contentEn: string | null;
+};
+
+type SessionData = {
+  candidate_form_session_id: string;
+  mode_code: string;
+  target_submission_id?: string | null;
+  base_submission_version_no?: number | null;
+  presented_privacy_notice_version: string;
+  status_code: string;
+  expires_at: string;
+};
+
+const SESSION_STORAGE_KEY = "eiu_candidate_form_session_id";
+const MUTATION_STORAGE_KEY = "eiu_candidate_form_mutation_key";
+
 export default function CandidatePortalPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
@@ -28,9 +52,17 @@ export default function CandidatePortalPage() {
     "NEW_SUBMISSION" | "EDIT_SUBMISSION"
   >("NEW_SUBMISSION");
   const [sessionId, setSessionId] = useState<string>("");
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<string>("");
   const [pinnedPrivacyVersion, setPinnedPrivacyVersion] = useState<string>("");
+  const [privacyNotice, setPrivacyNotice] = useState<PrivacyNotice>({
+    version: "",
+    contentVi: "",
+    contentEn: null,
+  });
   const [privacyAlreadyAcknowledged, setPrivacyAlreadyAcknowledged] =
     useState<boolean>(false);
+  const [mutationIdempotencyKey, setMutationIdempotencyKey] =
+    useState<string>("");
   const [verifiedEmail, setVerifiedEmail] = useState<string>("");
   const [documentTypes, setDocumentTypes] = useState<
     Array<{ id: string; code: string; name: string }>
@@ -49,36 +81,117 @@ export default function CandidatePortalPage() {
     message: string;
   } | null>(null);
 
-  // Initialize or reload real candidate portal data
+  const rememberSession = useCallback((id: string): string => {
+    if (typeof window === "undefined") return crypto.randomUUID();
+    const previousId = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+    const previousKey = window.sessionStorage.getItem(MUTATION_STORAGE_KEY);
+    const key =
+      previousId === id && previousKey ? previousKey : crypto.randomUUID();
+    window.sessionStorage.setItem(SESSION_STORAGE_KEY, id);
+    window.sessionStorage.setItem(MUTATION_STORAGE_KEY, key);
+    setMutationIdempotencyKey(key);
+    return key;
+  }, []);
+
+  const forgetSession = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      window.sessionStorage.removeItem(MUTATION_STORAGE_KEY);
+    }
+    setMutationIdempotencyKey("");
+  }, []);
+
+  const applySession = useCallback(
+    (data: SessionData) => {
+      const mode =
+        data.mode_code === "EDIT_SUBMISSION"
+          ? "EDIT_SUBMISSION"
+          : "NEW_SUBMISSION";
+      setSessionId(data.candidate_form_session_id);
+      setSessionExpiresAt(data.expires_at);
+      setPinnedPrivacyVersion(data.presented_privacy_notice_version);
+      setFormMode(mode);
+      rememberSession(data.candidate_form_session_id);
+    },
+    [rememberSession],
+  );
+
   const loadPortalData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await loadCandidatePortalData();
-      if (res.success) {
-        setVerifiedEmail(res.data.verifiedEmail);
-        setDocumentTypes(res.data.documentTypes);
-        setQualificationLevels(res.data.qualificationLevels);
-        setSubmissions(res.data.submissions);
+      if (!res.success) {
+        setNotification({ type: "error", message: res.error });
+        return;
+      }
 
-        // If submissions exist and currently on initial load, show MY_APPLICATIONS tab
-        if (res.data.submissions.length > 0) {
-          setActiveTab("MY_APPLICATIONS");
-        } else {
-          // No submissions: open a real new form session
-          const sessionRes = await startFormSessionAction("NEW_SUBMISSION");
-          if (sessionRes.success && sessionRes.data) {
-            setSessionId(sessionRes.data.candidate_form_session_id);
-            setPinnedPrivacyVersion(
-              sessionRes.data.presented_privacy_notice_version ||
-                res.data.pinnedPrivacyVersion,
-            );
+      setVerifiedEmail(res.data.verifiedEmail);
+      setDocumentTypes(res.data.documentTypes);
+      setQualificationLevels(res.data.qualificationLevels);
+      setSubmissions(res.data.submissions);
+      setPrivacyNotice(res.data.privacyNotice);
+
+      let resumed = false;
+      const storedSessionId =
+        typeof window === "undefined"
+          ? null
+          : window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+
+      if (storedSessionId) {
+        const resumedRes = await resumeFormSessionByIdAction(storedSessionId);
+        if (resumedRes.success && resumedRes.data) {
+          applySession(resumedRes.data as SessionData);
+          if (resumedRes.data.mode_code === "EDIT_SUBMISSION") {
+            const editRes = await loadCandidateEditDataAction(storedSessionId);
+            if (editRes.success && editRes.data) {
+              setEditInitialData({
+                ...editRes.data.initialData,
+                attachedDocs: editRes.data.initialData.documents,
+              });
+              setPrivacyAlreadyAcknowledged(
+                editRes.data.privacyAlreadyAcknowledged,
+              );
+              setPrivacyNotice(editRes.data.privacyNotice);
+              resumed = true;
+            } else {
+              forgetSession();
+            }
+          } else {
+            const noticeRes =
+              await loadCandidateFormPrivacyNoticeAction(storedSessionId);
+            if (noticeRes.success && noticeRes.data) {
+              setPrivacyNotice(noticeRes.data);
+            }
+            setPrivacyAlreadyAcknowledged(false);
+            setEditInitialData(undefined);
+            resumed = true;
           }
+          if (resumed) setActiveTab("NEW_APPLICATION");
+        } else {
+          forgetSession();
         }
-      } else {
-        setNotification({
-          type: "error",
-          message: res.error,
-        });
+      }
+
+      if (!resumed && res.data.submissions.length === 0) {
+        const existing = await resumeFormSessionAction("NEW_SUBMISSION");
+        const sessionRes = existing.success
+          ? existing
+          : await startFormSessionAction("NEW_SUBMISSION");
+        if (sessionRes.success && sessionRes.data) {
+          applySession(sessionRes.data as SessionData);
+          setPrivacyAlreadyAcknowledged(false);
+          setEditInitialData(undefined);
+          setActiveTab("NEW_APPLICATION");
+        } else {
+          setNotification({
+            type: "error",
+            message: sessionRes.error || "Không thể bắt đầu phiên đăng ký",
+          });
+        }
+      } else if (!resumed) {
+        setActiveTab("MY_APPLICATIONS");
+        setFormMode("NEW_SUBMISSION");
+        setEditInitialData(undefined);
       }
     } catch (err) {
       setNotification({
@@ -88,22 +201,32 @@ export default function CandidatePortalPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applySession, forgetSession]);
 
   useEffect(() => {
-    loadPortalData();
+    void loadPortalData();
   }, [loadPortalData]);
 
-  // Start a new form session when switching to NEW_APPLICATION
   const handleStartNewApplication = async () => {
     setLoading(true);
     try {
-      const sessionRes = await startFormSessionAction("NEW_SUBMISSION");
+      if (sessionId && formMode === "EDIT_SUBMISSION") {
+        await cancelFormSessionAction(sessionId);
+        forgetSession();
+      }
+
+      const existing = await resumeFormSessionAction("NEW_SUBMISSION");
+      const sessionRes = existing.success
+        ? existing
+        : await startFormSessionAction("NEW_SUBMISSION");
       if (sessionRes.success && sessionRes.data) {
-        setSessionId(sessionRes.data.candidate_form_session_id);
-        setPinnedPrivacyVersion(
-          sessionRes.data.presented_privacy_notice_version,
+        applySession(sessionRes.data as SessionData);
+        const noticeRes = await loadCandidateFormPrivacyNoticeAction(
+          sessionRes.data.candidate_form_session_id,
         );
+        if (noticeRes.success && noticeRes.data) {
+          setPrivacyNotice(noticeRes.data);
+        }
         setPrivacyAlreadyAcknowledged(false);
         setFormMode("NEW_SUBMISSION");
         setEditInitialData(undefined);
@@ -121,53 +244,76 @@ export default function CandidatePortalPage() {
 
   const handleFormSubmit = async (
     data: CandidateFormData,
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    privacyNotice?: PrivacyNotice;
+  }> => {
+    const idempotencyKey =
+      mutationIdempotencyKey ||
+      (typeof window === "undefined"
+        ? crypto.randomUUID()
+        : crypto.randomUUID());
+    if (!mutationIdempotencyKey) {
+      setMutationIdempotencyKey(idempotencyKey);
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(MUTATION_STORAGE_KEY, idempotencyKey);
+      }
+    }
+
     try {
-      if (formMode === "NEW_SUBMISSION") {
-        const res = await submitCandidateSubmissionAction({
-          candidateFormSessionId: sessionId,
-          fullName: data.fullName,
-          phone: data.phone,
-          dateOfBirth: data.dateOfBirth,
-          gender: data.gender,
-          address: data.address,
-          education: data.education,
-          privacyNoticeVersion: pinnedPrivacyVersion,
-        });
+      const input = {
+        candidateFormSessionId: sessionId,
+        fullName: data.fullName,
+        phone: data.phone,
+        dateOfBirth: data.dateOfBirth,
+        gender: data.gender,
+        address: data.address,
+        education: data.education,
+        privacyNoticeVersion: pinnedPrivacyVersion,
+        idempotencyKey,
+      };
+      const res =
+        formMode === "NEW_SUBMISSION"
+          ? await submitCandidateSubmissionAction(input)
+          : await updateCandidateSubmissionAction(input);
 
-        if (!res.success) {
-          return { success: false, error: res.error };
+      if (!res.success) {
+        if (res.privacyNotice) {
+          setPinnedPrivacyVersion(res.privacyNotice.version);
+          setPrivacyNotice(res.privacyNotice);
+          setPrivacyAlreadyAcknowledged(false);
+        } else if (res.code === "PRIVACY_NOTICE_CHANGED") {
+          const refreshRes =
+            await refreshCandidatePrivacyNoticeAction(sessionId);
+          if (refreshRes.success && refreshRes.data) {
+            setPinnedPrivacyVersion(refreshRes.data.pinnedPrivacyVersion);
+            setSessionExpiresAt(refreshRes.data.expiresAt);
+            setPrivacyNotice(refreshRes.data.privacyNotice);
+            setPrivacyAlreadyAcknowledged(false);
+            return {
+              success: false,
+              error:
+                "Privacy notice updated. Review and acknowledge the current version before retrying.",
+              privacyNotice: refreshRes.data.privacyNotice,
+            };
+          }
         }
-
-        setNotification({
-          type: "success",
-          message:
-            "Nộp hồ sơ thành công! / Application submitted successfully.",
-        });
-      } else {
-        const res = await updateCandidateSubmissionAction({
-          candidateFormSessionId: sessionId,
-          fullName: data.fullName,
-          phone: data.phone,
-          dateOfBirth: data.dateOfBirth,
-          gender: data.gender,
-          address: data.address,
-          education: data.education,
-          privacyNoticeVersion: pinnedPrivacyVersion,
-        });
-
-        if (!res.success) {
-          return { success: false, error: res.error };
-        }
-
-        setNotification({
-          type: "success",
-          message:
-            "Cập nhật hồ sơ thành công! / Application updated successfully.",
-        });
+        return {
+          success: false,
+          error: res.error,
+          privacyNotice: res.privacyNotice,
+        };
       }
 
-      // Refresh persisted state from database
+      setNotification({
+        type: "success",
+        message:
+          formMode === "NEW_SUBMISSION"
+            ? "Nộp hồ sơ thành công! / Application submitted successfully."
+            : "Cập nhật hồ sơ thành công! / Application updated successfully.",
+      });
+      forgetSession();
       await loadPortalData();
       setActiveTab("MY_APPLICATIONS");
       setFormMode("NEW_SUBMISSION");
@@ -182,49 +328,66 @@ export default function CandidatePortalPage() {
   };
 
   const handleFormCancel = async (): Promise<void> => {
-    if (sessionId) {
-      await cancelFormSessionAction(sessionId);
-    }
+    if (sessionId) await cancelFormSessionAction(sessionId);
+    forgetSession();
+    setSessionId("");
+    setSessionExpiresAt("");
     setFormMode("NEW_SUBMISSION");
     setEditInitialData(undefined);
-    if (submissions.length > 0) {
-      setActiveTab("MY_APPLICATIONS");
-    }
+    setPrivacyAlreadyAcknowledged(false);
+    if (submissions.length > 0) setActiveTab("MY_APPLICATIONS");
   };
 
   const handleEditSubmission = async (submissionId: string) => {
     const sub = submissions.find((s) => s.submissionId === submissionId);
-    if (sub && sub.statusCode === "NEW") {
-      setLoading(true);
-      try {
-        const sessionRes = await startFormSessionAction(
-          "EDIT_SUBMISSION",
-          submissionId,
-        );
-        if (sessionRes.success && sessionRes.data) {
-          setSessionId(sessionRes.data.candidate_form_session_id);
-          setPinnedPrivacyVersion(
-            sessionRes.data.presented_privacy_notice_version,
-          );
-          setPrivacyAlreadyAcknowledged(true);
-          setFormMode("EDIT_SUBMISSION");
-          setActiveTab("NEW_APPLICATION");
-        } else {
-          setNotification({
-            type: "error",
-            message: sessionRes.error || "Không thể mở phiên chỉnh sửa hồ sơ",
-          });
-        }
-      } finally {
-        setLoading(false);
+    if (sub?.statusCode !== "NEW") return;
+
+    setLoading(true);
+    try {
+      if (sessionId) {
+        await cancelFormSessionAction(sessionId);
+        forgetSession();
       }
+      const sessionRes = await startFormSessionAction(
+        "EDIT_SUBMISSION",
+        submissionId,
+      );
+      if (!sessionRes.success || !sessionRes.data) {
+        setNotification({
+          type: "error",
+          message: sessionRes.error || "Không thể mở phiên chỉnh sửa hồ sơ",
+        });
+        return;
+      }
+
+      applySession(sessionRes.data as SessionData);
+      const editRes = await loadCandidateEditDataAction(
+        sessionRes.data.candidate_form_session_id,
+      );
+      if (!editRes.success) {
+        await cancelFormSessionAction(
+          sessionRes.data.candidate_form_session_id,
+        );
+        forgetSession();
+        setNotification({ type: "error", message: editRes.error });
+        return;
+      }
+
+      setEditInitialData({
+        ...editRes.data.initialData,
+        attachedDocs: editRes.data.initialData.documents,
+      });
+      setPrivacyAlreadyAcknowledged(editRes.data.privacyAlreadyAcknowledged);
+      setPrivacyNotice(editRes.data.privacyNotice);
+      setActiveTab("NEW_APPLICATION");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="portal-wrapper">
       <main className="portal-container" id="main-content">
-        {/* Header */}
         <header className="portal-header">
           <div className="portal-brand">
             <h1 className="portal-title">Cổng ứng viên / Candidate Portal</h1>
@@ -232,14 +395,12 @@ export default function CandidatePortalPage() {
               Trường Đại học Quốc tế Miền Đông — Tuyển dụng / EIU Recruitment
             </p>
           </div>
-
           <div className="portal-user-meta">
             <span className="user-email-label">Ứng viên / Candidate:</span>
             <span className="user-email-value">{verifiedEmail || "..."}</span>
           </div>
         </header>
 
-        {/* Global Notification Banner */}
         {notification && (
           <div
             role="alert"
@@ -258,7 +419,6 @@ export default function CandidatePortalPage() {
           </div>
         )}
 
-        {/* Navigation Tabs */}
         <div
           className="portal-tabs"
           role="tablist"
@@ -275,7 +435,6 @@ export default function CandidatePortalPage() {
           >
             Phiếu của tôi / My Applications ({submissions.length})
           </button>
-
           <button
             type="button"
             role="tab"
@@ -283,7 +442,7 @@ export default function CandidatePortalPage() {
             aria-selected={activeTab === "NEW_APPLICATION"}
             aria-controls="panel-new-app"
             className={`portal-tab ${activeTab === "NEW_APPLICATION" ? "active" : ""}`}
-            onClick={handleStartNewApplication}
+            onClick={() => void handleStartNewApplication()}
           >
             {formMode === "EDIT_SUBMISSION"
               ? "Chỉnh sửa phiếu / Edit Application"
@@ -291,7 +450,6 @@ export default function CandidatePortalPage() {
           </button>
         </div>
 
-        {/* Panel 1: My Submissions */}
         <div
           role="tabpanel"
           id="panel-my-apps"
@@ -310,7 +468,6 @@ export default function CandidatePortalPage() {
           )}
         </div>
 
-        {/* Panel 2: Registration / Edit Form */}
         <div
           role="tabpanel"
           id="panel-new-app"
@@ -321,12 +478,15 @@ export default function CandidatePortalPage() {
             <div className="portal-loading-indicator">
               Đang khởi tạo form... / Loading form...
             </div>
-          ) : (
+          ) : sessionId ? (
             <CandidateForm
+              key={`${sessionId}:${formMode}`}
               sessionId={sessionId}
               mode={formMode}
               verifiedEmail={verifiedEmail}
               pinnedPrivacyVersion={pinnedPrivacyVersion}
+              expiresAt={sessionExpiresAt}
+              privacyNotice={privacyNotice}
               privacyAlreadyAcknowledged={privacyAlreadyAcknowledged}
               initialData={editInitialData}
               documentTypes={documentTypes}
@@ -334,6 +494,10 @@ export default function CandidatePortalPage() {
               onSubmit={handleFormSubmit}
               onCancel={handleFormCancel}
             />
+          ) : (
+            <div role="alert" className="form-server-error">
+              Không có phiên form hợp lệ / No valid form session.
+            </div>
           )}
         </div>
       </main>

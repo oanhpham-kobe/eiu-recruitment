@@ -445,6 +445,7 @@ test("16. correctSubmissionCandidateFieldsByHr: rejects caller without submissio
     {
       submissionId: sampleSubmissionId,
       fullName: "Corrected Name",
+      expectedVersion: 1,
     },
     { client: mockSupabase, resolveActor: async () => unauthorizedActor },
   );
@@ -459,6 +460,7 @@ test("17. correctSubmissionCandidateFieldsByHr: validates at least one field pro
   const emptyFieldsResult = await correctSubmissionCandidateFieldsByHr(
     {
       submissionId: sampleSubmissionId,
+      expectedVersion: 1,
     },
     { client: createMockSupabase({}), resolveActor: async () => editHrActor },
   );
@@ -491,6 +493,7 @@ test("17. correctSubmissionCandidateFieldsByHr: validates at least one field pro
       submissionId: sampleSubmissionId,
       fullName: "Nguyen Van A Corrected",
       phone: "0909999999",
+      expectedVersion: 1,
       reason: "Correcting typo reported by candidate",
     },
     { client: mockSupabase, resolveActor: async () => editHrActor },

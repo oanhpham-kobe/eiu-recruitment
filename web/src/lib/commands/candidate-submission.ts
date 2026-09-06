@@ -303,6 +303,7 @@ export function createSubmitCandidateSubmissionCommand(
           error: {
             code,
             message: result.message || "Failed to submit candidate submission",
+            details: result.data,
           },
         };
       }
@@ -411,6 +412,7 @@ export function createUpdateCandidateSubmissionCommand(
           error: {
             code,
             message: result.message || "Failed to update candidate submission",
+            details: result.data,
           },
         };
       }

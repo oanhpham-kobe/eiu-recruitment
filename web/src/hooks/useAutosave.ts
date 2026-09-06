@@ -12,7 +12,7 @@ export type DraftEnvelope<T> = {
 
 interface UseAutosaveOptions<T> {
   sessionId: string;
-  expiresAt?: string;
+  expiresAt: string;
   data: T;
   debounceMs?: number;
   onRestore?: (restoredData: T) => void;
@@ -72,11 +72,9 @@ export function useAutosave<T>({
     setStatus("SAVING");
     const timer = setTimeout(() => {
       try {
-        const effectiveExpiry =
-          expiresAt || new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
         const envelope: DraftEnvelope<T> = {
           sessionId,
-          expiresAt: effectiveExpiry,
+          expiresAt,
           data,
         };
         sessionStorage.setItem(storageKey, JSON.stringify(envelope));

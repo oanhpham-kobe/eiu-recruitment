@@ -1,6 +1,5 @@
 "use client";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { useState } from "react";
 import {
   DocumentUploader,
@@ -13,11 +12,16 @@ import {
 import { useAutosave } from "@/hooks/useAutosave";
 import type { EducationItem } from "@/lib/commands/candidate-submission";
 
+type CandidatePrivacyNotice = {
+  version: string;
+  contentVi: string;
+  contentEn: string | null;
+};
 export interface CandidateFormData {
   fullName: string;
   phone: string;
   dateOfBirth: string;
-  gender: "MALE" | "FEMALE";
+  gender: "MALE" | "FEMALE" | "";
   address: string;
   education: EducationItem[];
   attachedDocs: StagedDocumentItem[];
@@ -29,14 +33,17 @@ interface CandidateFormProps {
   mode: "NEW_SUBMISSION" | "EDIT_SUBMISSION";
   verifiedEmail: string;
   pinnedPrivacyVersion: string;
+  expiresAt: string;
+  privacyNotice: CandidatePrivacyNotice;
   privacyAlreadyAcknowledged?: boolean;
   initialData?: Partial<CandidateFormData>;
   documentTypes: Array<{ id: string; code: string; name: string }>;
   qualificationLevels?: QualificationLevelOption[];
-  supabaseClient?: SupabaseClient;
-  onSubmit: (
-    data: CandidateFormData,
-  ) => Promise<{ success: boolean; error?: string }>;
+  onSubmit: (data: CandidateFormData) => Promise<{
+    success: boolean;
+    error?: string;
+    privacyNotice?: CandidatePrivacyNotice;
+  }>;
   onCancel: () => Promise<void>;
 }
 
@@ -45,11 +52,12 @@ export function CandidateForm({
   mode,
   verifiedEmail,
   pinnedPrivacyVersion,
+  expiresAt,
+  privacyNotice,
   privacyAlreadyAcknowledged = false,
   initialData,
   documentTypes,
   qualificationLevels = [],
-  supabaseClient,
   onSubmit,
   onCancel,
 }: CandidateFormProps) {
@@ -57,7 +65,7 @@ export function CandidateForm({
     fullName: initialData?.fullName ?? "",
     phone: initialData?.phone ?? "",
     dateOfBirth: initialData?.dateOfBirth ?? "",
-    gender: initialData?.gender === "FEMALE" ? "FEMALE" : "MALE",
+    gender: initialData?.gender ?? "MALE",
     address: initialData?.address ?? "",
     education: initialData?.education ?? [],
     attachedDocs: initialData?.attachedDocs ?? [],
@@ -68,9 +76,9 @@ export function CandidateForm({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // Autosave hook
   const { statusMessage, clearDraft } = useAutosave({
     sessionId,
+    expiresAt,
     data: formData,
     onRestore: (restored) => {
       setFormData((prev) => ({
@@ -169,6 +177,12 @@ export function CandidateForm({
       if (result.success) {
         clearDraft();
       } else {
+        if (result.privacyNotice) {
+          setFormData((prev) => ({
+            ...prev,
+            privacyAcknowledged: false,
+          }));
+        }
         setServerError(
           result.error || "Gửi hồ sơ thất bại / Submission failed",
         );
@@ -375,7 +389,6 @@ export function CandidateForm({
         attachedDocs={formData.attachedDocs}
         documentTypes={documentTypes}
         onDocsChange={(docs) => handleFieldChange("attachedDocs", docs)}
-        supabaseClient={supabaseClient}
         disabled={submitting}
       />
       {errors.attachedDocs && (
@@ -411,11 +424,18 @@ export function CandidateForm({
             Tôi xác nhận đã đọc, hiểu rõ và đồng ý với{" "}
             <strong>
               Thông báo về quyền riêng tư của EIU (Phiên bản{" "}
-              {pinnedPrivacyVersion})
+              {privacyNotice.version || pinnedPrivacyVersion})
             </strong>
             . Dữ liệu của tôi sẽ được lưu trữ và xử lý bảo mật phục vụ công tác
             tuyển dụng.
           </label>
+          <details>
+            <summary>Đọc toàn văn / Read the full Privacy Notice</summary>
+            <div id="privacy-notice-content" className="privacy-notice-content">
+              <p>{privacyNotice.contentVi}</p>
+              {privacyNotice.contentEn && <p>{privacyNotice.contentEn}</p>}
+            </div>
+          </details>
         </div>
         {errors.privacyAcknowledged && (
           <span id="privacy-error" className="field-error field-error-block">

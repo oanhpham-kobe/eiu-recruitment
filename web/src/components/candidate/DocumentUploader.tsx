@@ -1,10 +1,11 @@
 "use client";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { useState } from "react";
 import {
+  cancelDocumentChangeAction,
   completeAndStageUploadAction,
   reserveUploadAction,
+  stageCandidateDocumentDeleteAction,
 } from "@/app/candidate/candidate-actions";
 import {
   APPROVED_FILE_EXTENSIONS,
@@ -13,6 +14,7 @@ import {
   extractExtension,
   isApprovedExtension,
 } from "@/lib/storage/buckets";
+import { createBrowserClient } from "@/lib/supabase/client";
 export type StagedDocumentItem = {
   changeId?: string;
   reservationId: string;
@@ -26,6 +28,9 @@ export type StagedDocumentItem = {
   documentTypeName: string;
   filename: string;
   fileSizeBytes: number;
+  logicalDocumentId?: string;
+  documentTypeId?: string;
+  persisted?: boolean;
   isCv: boolean;
 };
 
@@ -38,7 +43,6 @@ interface DocumentUploaderProps {
     file: File,
     docType: { id: string; code: string; name: string },
   ) => Promise<StagedDocumentItem>;
-  supabaseClient?: SupabaseClient;
   disabled?: boolean;
 }
 export function DocumentUploader({
@@ -47,7 +51,6 @@ export function DocumentUploader({
   documentTypes,
   onDocsChange,
   onUploadFile,
-  supabaseClient,
   disabled = false,
 }: DocumentUploaderProps) {
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -131,15 +134,20 @@ export function DocumentUploader({
 
       const reservation = reserveRes.data;
 
-      // 2. Upload file to quarantine storage path with upsert = false
-      if (supabaseClient) {
-        const { error: storageError } = await supabaseClient.storage
-          .from(reservation.tempBucket || CANDIDATE_QUARANTINE_BUCKET)
-          .upload(reservation.tempPath, file, { upsert: false });
+      // 2. Upload the bytes through the one-use signed token. There is no
+      // successful completion path when the browser upload is skipped.
+      if (!reservation.tempPath || !reservation.token) {
+        throw new Error("Signed upload token is unavailable");
+      }
+      const { error: storageError } = await createBrowserClient()
+        .storage.from(reservation.tempBucket || CANDIDATE_QUARANTINE_BUCKET)
+        .uploadToSignedUrl(reservation.tempPath, reservation.token, file, {
+          contentType: file.type || undefined,
+          upsert: false,
+        });
 
-        if (storageError) {
-          throw new Error(`Upload failed: ${storageError.message}`);
-        }
+      if (storageError) {
+        throw new Error(`Upload failed: ${storageError.message}`);
       }
 
       // 3. Record completion, validate/scan, and stage document change
@@ -160,6 +168,7 @@ export function DocumentUploader({
       const newDoc: StagedDocumentItem = {
         changeId: stageRes.data.changeId,
         reservationId: reservation.reservationId,
+        documentTypeId: docType.id,
         documentTypeCode: docType.code,
         documentTypeName: docType.name,
         filename: file.name,
@@ -178,9 +187,45 @@ export function DocumentUploader({
     }
   };
 
-  const handleRemove = (index: number) => {
-    const updated = attachedDocs.filter((_, idx) => idx !== index);
-    onDocsChange(updated);
+  const handleRemove = async (index: number) => {
+    const doc = attachedDocs[index];
+    if (!doc) return;
+
+    setUploadError(null);
+    setUploading(true);
+    try {
+      if (doc.changeId && !doc.persisted) {
+        const result = await cancelDocumentChangeAction(
+          sessionId,
+          doc.changeId,
+        );
+        if (!result.success) {
+          throw new Error(result.error || "Could not cancel staged document");
+        }
+      } else if (doc.persisted) {
+        if (!doc.logicalDocumentId || !doc.documentTypeId) {
+          throw new Error("Persisted document identity is unavailable");
+        }
+        const result = await stageCandidateDocumentDeleteAction({
+          sessionId,
+          intendedDocumentTypeId: doc.documentTypeId,
+          targetLogicalDocumentId: doc.logicalDocumentId,
+        });
+        if (!result.success) {
+          throw new Error(result.error || "Could not stage document removal");
+        }
+      }
+
+      onDocsChange(attachedDocs.filter((_, idx) => idx !== index));
+    } catch (err) {
+      setUploadError(
+        err instanceof Error
+          ? err.message
+          : "Could not remove document / Không thể gỡ tài liệu",
+      );
+    } finally {
+      setUploading(false);
+    }
   };
 
   const formatSize = (bytes: number): string => {
@@ -282,7 +327,15 @@ export function DocumentUploader({
       {/* Attached Files List */}
       <div className="uploader-box">
         {attachedDocs.map((doc, idx) => (
-          <div key={doc.reservationId} className="upload-card attached">
+          <div
+            key={
+              doc.logicalDocumentId ||
+              doc.changeId ||
+              doc.reservationId ||
+              `${doc.filename}-${idx}`
+            }
+            className="upload-card attached"
+          >
             <div className="upload-meta">
               <div>
                 <strong>{doc.documentTypeName}</strong>: {doc.filename} (
@@ -306,8 +359,8 @@ export function DocumentUploader({
                 type="button"
                 className="btn btn-danger"
                 style={{ minHeight: "36px", padding: "4px 12px" }}
-                onClick={() => handleRemove(idx)}
-                disabled={disabled}
+                onClick={() => void handleRemove(idx)}
+                disabled={disabled || uploading}
                 aria-label={`Xóa tệp ${doc.filename}`}
               >
                 Gỡ bỏ / Remove
