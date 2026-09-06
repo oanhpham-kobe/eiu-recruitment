@@ -8,7 +8,7 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: SLICE_03_ACCEPTED
+  status: SLICE_03_ACCEPTED_TASK_S04_001_PENDING_CI
   note: "All tasks through SLICE-03 (TASK-S00-001 through TASK-S03-006) are completed, independently reviewed, accepted, merged into the integration branch, and verified on exact-SHA GitHub Actions CI; historical pre-merge child status tags reflect intermediate review states."
 
   SOURCE-PARITY-001:
@@ -867,3 +867,75 @@ implementation_evidence:
       route: DIRECT_SOURCE_LSP_ONLY
       graph_used: NO
       reason: "Exact defective files and symbols identified up-front; single serialized repair lane; migrations and tests authoritative."
+
+  INTERVIEW-SCHEMA-001:
+    task: TASK-S04-001
+    operation: INTERVIEW_ROUND_SCHEDULE_SCHEMA_AND_CONFLICT_LOCKING
+    status: PENDING_CI
+    migration: "supabase/migrations/20260906060000_interview_schema_and_conflict_locking.sql"
+    test_suite: "supabase/tests/interview_round_and_conflict_locking_test.sql"
+    implementation_sha: "8c1913b7253e1601a40d60842535b44d258bb436"
+    tables_altered:
+      - "public.interviews (cancellation_reason_id, rejection_reason_id, visible_to_interviewers, interview_note, updated_by, copied_from_interview_id, interview_time_range_ck, interviews_application_idx, interviews_time_idx, interviews_room_time_idx)"
+    tables_created:
+      - "public.interview_participants"
+    views_created:
+      - "private.access_active_interviews (security_invoker=true)"
+      - "private.resource_blocking_interviews (security_invoker=true)"
+      - "private.application_current_interview (security_invoker=true)"
+    functions_created:
+      - "private.can_view_visible_interview(uuid) (SECURITY DEFINER, set search_path='')"
+      - "private.all_current_participants_selectable(uuid)"
+      - "private.is_interview_clean(uuid)"
+      - "private.lock_interview_resources(uuid, uuid, uuid[]) (deterministic sorted advisory locks)"
+      - "private.check_interview_conflicts(uuid, uuid, uuid, uuid[], timestamptz, timestamptz)"
+      - "public.create_next_interview_round(uuid, text) (SECURITY DEFINER, set search_path='')"
+      - "public.check_interview_schedule_conflicts(uuid, timestamptz, timestamptz, uuid, uuid[])"
+      - "public.add_interview_participant(uuid, uuid, bigint, uuid) (SECURITY DEFINER, set search_path='')"
+      - "public.remove_interview_participant(uuid, bigint, uuid) (SECURITY DEFINER, set search_path='')"
+      - "public.reorder_interview_participants(uuid, uuid[], bigint, uuid) (SECURITY DEFINER, set search_path='')"
+    rls_enabled:
+      - "public.interview_participants"
+      - "public.interviews (policy updated)"
+    local_clean_migration_replay: "PASS (supabase db reset --local on TASK-S04-001 worktree stack)"
+    pre_s04_regression_suite: "ALL PRE-S04 DATABASE INTEGRATION ASSERTIONS PASSED"
+    s04_001_test_suite: "TASK-S04-001 Test Suite PASSED (8 categories: column/constraint, participants, inactive rejection, conflict detection, adjacent interval, cancelled/inactive exclusion, RLS, round creation)"
+    rls_privilege_check: "PASS (anon cannot execute private helper; authenticated can execute private helper and create_next_interview_round; RLS enabled on interview_participants)"
+    git_diff_check: "PASS (no whitespace errors)"
+    implementation_review: "PASS (agent://TASK-S04-001-impl-reviewer; 1 P3 INFO finding: brief condensed submissions.view but implementation correctly follows 59_RLS_POLICY_BLUEPRINT.md with interviews.manage)"
+    integration_branch_head: "8c1913b7253e1601a40d60842535b44d258bb436"
+    integration_branch_push: "PASS (pushed autonomy/continuous-integration-20260905-01 to origin)"
+    github_ci: "PENDING"
+    SKILL_USAGE:
+      supabase:
+        provider: "skills/supabase"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "RLS policies, RPC grant separation, and helper views with security_invoker=true"
+      supabase-postgres-best-practices:
+        provider: "skills/supabase-postgres-best-practices"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "SECURITY DEFINER with set search_path='', deterministic advisory lock ordering, optimistic versioning, partial indexes"
+      security-review:
+        provider: "skills/security-review"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "interviews.view/manage/status/participants permissions, interviewer visibility isolation, participant lifecycle invariants"
+      tdd:
+        provider: "skills/engineering/tdd"
+        availability: AVAILABLE
+        loaded: YES
+        applied: YES
+        applied_to:
+          - "risk-based SQL integration test suite covering round creation, conflict locking, participant uniqueness, inactive user rejection, interval boundary, and RLS"
+    GRAPH_USAGE:
+      route: DIRECT_SOURCE_LSP_ONLY
+      graph_used: NO
+      reason: "Foundational DB schema migration directly derived from review pack specifications; no cross-module dependency tracing needed."

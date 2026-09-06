@@ -30,10 +30,10 @@ Design System:
 `v1.8 CURRENT / REVIEWED`
 
 Last Completed Slice:
-`SLICE-03`
+`SLICE-04 (in progress)`
 
 Last Completed Task:
-`TASK-S03-006`
+`TASK-S04-001`
 
 Next Eligible Slice:
 `SLICE-04`
@@ -41,14 +41,11 @@ Next Eligible Slice:
 SLICE-04:
 `RELEASED / AUTONOMOUS`
 
-Next Eligible Task:
-`TASK-S04-001`
-
-Execution Mode:
-`AUTONOMOUS`
+Current Active Task:
+`NONE (awaiting GitHub Actions CI on TASK-S04-001)`
 
 Execution Status:
-`AUTONOMOUS_ACTIVE`
+`CI_PENDING`
 
 Auto-Advance:
 `ENABLED`
@@ -67,4 +64,4 @@ GitHub Actions Run:
 
 Next Action:
 
-`After exact-SHA verification of this activation checkpoint, continue AUTONOMOUS execution from the safe frontier with up to two implementation lanes subject to the Parallel Eligibility Gate.`
+`Monitor GitHub Actions CI for commit 8c1913b7253e1601a40d60842535b44d258bb436; on PASS, update registry and compute next SLICE-04 safe-frontier task.`
