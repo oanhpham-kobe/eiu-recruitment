@@ -15,6 +15,7 @@ import {
   startCandidateFormSession,
 } from "@/lib/commands/form-session";
 import {
+  authorizeCandidateUploadScan,
   cancelCandidateDocumentChange,
   createSignedUploadUrlForReservation,
   recordCandidateUploadCompleted,
@@ -57,6 +58,8 @@ export type CandidateEditData = {
   };
   privacyAlreadyAcknowledged: boolean;
   privacyNotice: CandidatePrivacyNotice;
+  pinnedPrivacyVersion: string;
+  expiresAt: string;
 };
 
 export type CandidatePortalInitData = {
@@ -233,7 +236,9 @@ export async function loadCandidateEditDataAction(
   const supabase = await createServerClient();
   const { data: session, error: sessionError } = await supabase
     .from("candidate_form_sessions")
-    .select("target_submission_id, presented_privacy_notice_version")
+    .select(
+      "target_submission_id, presented_privacy_notice_version, expires_at",
+    )
     .eq("candidate_form_session_id", sessionId)
     .eq("status_code", "OPEN")
     .gt("expires_at", new Date().toISOString())
@@ -294,6 +299,7 @@ export async function loadCandidateEditDataAction(
     (docTypeRows || []).map((row) => [
       row.document_type_id,
       {
+        id: row.document_type_id,
         code: row.code,
         name: row.name_en ? `${row.name_vi} / ${row.name_en}` : row.name_vi,
       },
@@ -314,6 +320,7 @@ export async function loadCandidateEditDataAction(
         {
           reservationId: "",
           logicalDocumentId: row.logical_document_id,
+          documentTypeId: docType.id,
           persisted: true,
           documentTypeCode: docType.code,
           documentTypeName: docType.name,
@@ -325,21 +332,36 @@ export async function loadCandidateEditDataAction(
     },
   );
 
-  const { data: notice } = await supabase
+  let pinnedPrivacyVersion = session.presented_privacy_notice_version;
+  let expiresAt = session.expires_at;
+  let { data: notice } = await supabase
     .from("privacy_notice_versions")
     .select("notice_version, content_vi, content_en")
-    .eq("notice_version", session.presented_privacy_notice_version)
+    .eq("notice_version", pinnedPrivacyVersion)
     .maybeSingle();
+
   if (!notice?.notice_version || typeof notice.content_vi !== "string") {
-    return { success: false, error: "Pinned privacy notice is unavailable" };
+    const refresh = await refreshCandidateFormPrivacyNotice(
+      { sessionId },
+      { client: supabase },
+    );
+    if (!refresh.success) {
+      return { success: false, error: refresh.error.message };
+    }
+    pinnedPrivacyVersion = refresh.data.presented_privacy_notice_version;
+    expiresAt = refresh.data.expires_at;
+    notice = {
+      notice_version: refresh.data.privacy_notice.notice_version,
+      content_vi: refresh.data.privacy_notice.content_vi,
+      content_en: refresh.data.privacy_notice.content_en,
+    };
   }
 
   const { data: acknowledgement } = await supabase
     .from("privacy_acknowledgements")
     .select("notice_version")
     .eq("submission_id", submission.submission_id)
-    .eq("notice_version", session.presented_privacy_notice_version)
-    .maybeSingle();
+    .eq("notice_version", pinnedPrivacyVersion);
 
   return {
     success: true,
@@ -363,6 +385,8 @@ export async function loadCandidateEditDataAction(
         documents,
       },
       privacyAlreadyAcknowledged: Boolean(acknowledgement),
+      pinnedPrivacyVersion,
+      expiresAt,
       privacyNotice: {
         version: notice.notice_version,
         contentVi: notice.content_vi,
@@ -602,6 +626,21 @@ export async function completeAndStageUploadAction(input: {
   mimeType?: string;
 }) {
   const supabase = await createServerClient();
+  const authorization = await authorizeCandidateUploadScan(
+    {
+      candidateFormSessionId: input.sessionId,
+      uploadReservationId: input.reservationId,
+    },
+    { client: supabase },
+  );
+  if (!authorization.success) {
+    return {
+      success: false,
+      error: authorization.error.message,
+      code: authorization.error.code,
+    };
+  }
+
   const inspected = await inspectAndScanUploadReservation(input.reservationId);
   if (!inspected.success) {
     return {

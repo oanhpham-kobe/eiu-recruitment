@@ -69,6 +69,16 @@ export type RecordUploadCompletedData = {
   malware_scan_status: "PENDING";
 };
 
+export type AuthorizeCandidateUploadScanInput = {
+  candidateFormSessionId: string;
+  uploadReservationId: string;
+};
+
+export type AuthorizeCandidateUploadScanData = {
+  candidate_form_session_id: string;
+  upload_reservation_id: string;
+};
+
 export type StageCandidateDocumentChangeInput = {
   candidateFormSessionId: string;
   actionCode: "ADD" | "REPLACE" | "DELETE";
@@ -440,6 +450,89 @@ export function createSignedUploadUrlForReservationCommand(
         expiresAt: res.expires_at,
         signedUploadExpiresAt: res.signed_upload_expires_at,
       };
+    },
+  };
+}
+
+// -----------------------------------------------------------------------------
+// 3. Authorize Candidate Upload Scan Command
+// -----------------------------------------------------------------------------
+
+export function createAuthorizeCandidateUploadScanCommand(
+  supabase: SupabaseClient,
+): TrustedCommandDefinition<
+  AuthorizeCandidateUploadScanInput,
+  string | undefined,
+  AuthorizeCandidateUploadScanInput,
+  AuthorizeCandidateUploadScanData
+> {
+  return {
+    name: "authorize_candidate_upload_scan",
+    extractTarget(input) {
+      return input.candidateFormSessionId;
+    },
+    authorize(actor) {
+      const isCandidate =
+        actor.roles.includes("CANDIDATE") ||
+        actor.permissions.includes("candidate.self");
+      return isCandidate
+        ? { authorized: true }
+        : {
+            authorized: false,
+            code: CommandErrorCode.FORBIDDEN,
+            reason: "Candidate authorization required",
+          };
+    },
+    validate(input) {
+      if (
+        !UUID_REGEX.test(input.candidateFormSessionId) ||
+        !UUID_REGEX.test(input.uploadReservationId)
+      ) {
+        return {
+          success: false,
+          error: "candidateFormSessionId and uploadReservationId must be UUIDs",
+        };
+      }
+      return { success: true, data: input };
+    },
+    async execute(_actor, validated) {
+      const { data, error } = await supabase.rpc(
+        "authorize_candidate_upload_scan",
+        {
+          p_candidate_form_session_id: validated.candidateFormSessionId,
+          p_upload_reservation_id: validated.uploadReservationId,
+        },
+      );
+
+      if (error) {
+        throw new CommandExecutionError(
+          CommandErrorCode.INTERNAL_ERROR,
+          error.message,
+          error,
+        );
+      }
+
+      const result = data as {
+        success: boolean;
+        error_code?: string;
+        message?: string;
+        data?: AuthorizeCandidateUploadScanData;
+      };
+      if (!result.success || !result.data) {
+        const rawCode = result.error_code ? String(result.error_code) : "";
+        const code =
+          CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
+          CommandErrorCode.INTERNAL_ERROR;
+        return {
+          success: false,
+          error: {
+            code,
+            message:
+              result.message || "Upload reservation authorization failed",
+          },
+        };
+      }
+      return { success: true, data: result.data };
     },
   };
 }
@@ -945,6 +1038,17 @@ export async function createSignedUploadUrlForReservation(
     deps.resolveActor ?? (() => defaultResolveActor(supabase));
   const runner = createCommandRunner({ resolveActor });
   return runner(createSignedUploadUrlForReservationCommand(supabase), input);
+}
+
+export async function authorizeCandidateUploadScan(
+  input: AuthorizeCandidateUploadScanInput,
+  deps: StorageReservationCommandDeps = {},
+): Promise<CommandResult<AuthorizeCandidateUploadScanData>> {
+  const supabase = deps.client ?? (await createServerClient());
+  const resolveActor =
+    deps.resolveActor ?? (() => defaultResolveActor(supabase));
+  const runner = createCommandRunner({ resolveActor });
+  return runner(createAuthorizeCandidateUploadScanCommand(supabase), input);
 }
 
 export async function recordCandidateUploadCompleted(

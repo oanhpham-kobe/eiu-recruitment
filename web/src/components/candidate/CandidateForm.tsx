@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DocumentUploader,
   type StagedDocumentItem,
@@ -26,6 +26,7 @@ export interface CandidateFormData {
   education: EducationItem[];
   attachedDocs: StagedDocumentItem[];
   privacyAcknowledged: boolean;
+  acknowledgedPrivacyVersion: string | null;
 }
 
 interface CandidateFormProps {
@@ -61,6 +62,7 @@ export function CandidateForm({
   onSubmit,
   onCancel,
 }: CandidateFormProps) {
+  const privacyNoticeVersion = privacyNotice.version || pinnedPrivacyVersion;
   const [formData, setFormData] = useState<CandidateFormData>({
     fullName: initialData?.fullName ?? "",
     phone: initialData?.phone ?? "",
@@ -70,7 +72,22 @@ export function CandidateForm({
     education: initialData?.education ?? [],
     attachedDocs: initialData?.attachedDocs ?? [],
     privacyAcknowledged: Boolean(privacyAlreadyAcknowledged),
+    acknowledgedPrivacyVersion: privacyAlreadyAcknowledged
+      ? privacyNoticeVersion
+      : null,
   });
+
+  useEffect(() => {
+    setFormData((prev) =>
+      prev.acknowledgedPrivacyVersion === privacyNoticeVersion
+        ? prev
+        : {
+            ...prev,
+            privacyAcknowledged: false,
+            acknowledgedPrivacyVersion: null,
+          },
+    );
+  }, [privacyNoticeVersion]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -81,9 +98,16 @@ export function CandidateForm({
     expiresAt,
     data: formData,
     onRestore: (restored) => {
+      const acknowledgementMatchesNotice =
+        restored.privacyAcknowledged &&
+        restored.acknowledgedPrivacyVersion === privacyNoticeVersion;
       setFormData((prev) => ({
         ...prev,
         ...restored,
+        privacyAcknowledged: acknowledgementMatchesNotice,
+        acknowledgedPrivacyVersion: acknowledgementMatchesNotice
+          ? privacyNoticeVersion
+          : null,
       }));
     },
   });
@@ -154,13 +178,31 @@ export function CandidateForm({
       errs.attachedDocs = "Bắt buộc phải đính kèm tệp CV / CV is required";
     }
 
-    if (!formData.privacyAcknowledged) {
+    if (
+      !formData.privacyAcknowledged ||
+      formData.acknowledgedPrivacyVersion !== privacyNoticeVersion
+    ) {
       errs.privacyAcknowledged =
         "Bạn phải đồng ý với Thông báo quyền riêng tư / You must agree to the Privacy Notice";
     }
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
+  };
+
+  const handlePrivacyAcknowledgementChange = (acknowledged: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      privacyAcknowledged: acknowledged,
+      acknowledgedPrivacyVersion: acknowledged ? privacyNoticeVersion : null,
+    }));
+    if (errors.privacyAcknowledged) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.privacyAcknowledged;
+        return next;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,6 +223,7 @@ export function CandidateForm({
           setFormData((prev) => ({
             ...prev,
             privacyAcknowledged: false,
+            acknowledgedPrivacyVersion: null,
           }));
         }
         setServerError(
@@ -410,8 +453,8 @@ export function CandidateForm({
             type="checkbox"
             className="privacy-checkbox"
             checked={formData.privacyAcknowledged}
-            onChange={(e) =>
-              handleFieldChange("privacyAcknowledged", e.target.checked)
+            onChange={(event) =>
+              handlePrivacyAcknowledgementChange(event.target.checked)
             }
             aria-required="true"
             aria-invalid={Boolean(errors.privacyAcknowledged)}
@@ -424,7 +467,7 @@ export function CandidateForm({
             Tôi xác nhận đã đọc, hiểu rõ và đồng ý với{" "}
             <strong>
               Thông báo về quyền riêng tư của EIU (Phiên bản{" "}
-              {privacyNotice.version || pinnedPrivacyVersion})
+              {privacyNoticeVersion})
             </strong>
             . Dữ liệu của tôi sẽ được lưu trữ và xử lý bảo mật phục vụ công tác
             tuyển dụng.

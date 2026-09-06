@@ -93,8 +93,15 @@ export default function CandidatePortalPage() {
     return key;
   }, []);
 
-  const forgetSession = useCallback(() => {
+  const forgetSession = useCallback((id?: string) => {
     if (typeof window !== "undefined") {
+      const sessionIdToForget =
+        id ?? window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (sessionIdToForget) {
+        window.sessionStorage.removeItem(
+          `eiu_candidate_form_draft_${sessionIdToForget}`,
+        );
+      }
       window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
       window.sessionStorage.removeItem(MUTATION_STORAGE_KEY);
     }
@@ -151,10 +158,12 @@ export default function CandidatePortalPage() {
               setPrivacyAlreadyAcknowledged(
                 editRes.data.privacyAlreadyAcknowledged,
               );
+              setPinnedPrivacyVersion(editRes.data.pinnedPrivacyVersion);
+              setSessionExpiresAt(editRes.data.expiresAt);
               setPrivacyNotice(editRes.data.privacyNotice);
               resumed = true;
             } else {
-              forgetSession();
+              forgetSession(storedSessionId);
             }
           } else {
             const noticeRes =
@@ -168,7 +177,7 @@ export default function CandidatePortalPage() {
           }
           if (resumed) setActiveTab("NEW_APPLICATION");
         } else {
-          forgetSession();
+          forgetSession(storedSessionId);
         }
       }
 
@@ -212,7 +221,7 @@ export default function CandidatePortalPage() {
     try {
       if (sessionId && formMode === "EDIT_SUBMISSION") {
         await cancelFormSessionAction(sessionId);
-        forgetSession();
+        forgetSession(sessionId);
       }
 
       const existing = await resumeFormSessionAction("NEW_SUBMISSION");
@@ -313,7 +322,7 @@ export default function CandidatePortalPage() {
             ? "Nộp hồ sơ thành công! / Application submitted successfully."
             : "Cập nhật hồ sơ thành công! / Application updated successfully.",
       });
-      forgetSession();
+      forgetSession(sessionId);
       await loadPortalData();
       setActiveTab("MY_APPLICATIONS");
       setFormMode("NEW_SUBMISSION");
@@ -329,7 +338,7 @@ export default function CandidatePortalPage() {
 
   const handleFormCancel = async (): Promise<void> => {
     if (sessionId) await cancelFormSessionAction(sessionId);
-    forgetSession();
+    forgetSession(sessionId);
     setSessionId("");
     setSessionExpiresAt("");
     setFormMode("NEW_SUBMISSION");
@@ -346,7 +355,7 @@ export default function CandidatePortalPage() {
     try {
       if (sessionId) {
         await cancelFormSessionAction(sessionId);
-        forgetSession();
+        forgetSession(sessionId);
       }
       const sessionRes = await startFormSessionAction(
         "EDIT_SUBMISSION",
@@ -368,7 +377,7 @@ export default function CandidatePortalPage() {
         await cancelFormSessionAction(
           sessionRes.data.candidate_form_session_id,
         );
-        forgetSession();
+        forgetSession(sessionRes.data.candidate_form_session_id);
         setNotification({ type: "error", message: editRes.error });
         return;
       }
@@ -378,6 +387,8 @@ export default function CandidatePortalPage() {
         attachedDocs: editRes.data.initialData.documents,
       });
       setPrivacyAlreadyAcknowledged(editRes.data.privacyAlreadyAcknowledged);
+      setPinnedPrivacyVersion(editRes.data.pinnedPrivacyVersion);
+      setSessionExpiresAt(editRes.data.expiresAt);
       setPrivacyNotice(editRes.data.privacyNotice);
       setActiveTab("NEW_APPLICATION");
     } finally {

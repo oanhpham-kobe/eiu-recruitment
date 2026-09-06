@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  authorizeCandidateUploadScan,
   claimDueStorageCleanupJobs,
   completeStorageCleanupJob,
   createSignedUploadUrlForReservation,
@@ -173,6 +174,64 @@ test("1. UNAUTHENTICATED call rejection", async () => {
   if (!result.success) {
     assert.equal(result.error.code, CommandErrorCode.UNAUTHENTICATED);
   }
+});
+
+test("1b. upload scan authorization rejects unauthenticated callers before RPC", async () => {
+  let rpcCalls = 0;
+  const mockSupabase = createMockSupabase({
+    rpcHandlers: {
+      authorize_candidate_upload_scan: () => {
+        rpcCalls += 1;
+        return { success: true, data: {} };
+      },
+    },
+  });
+
+  const result = await authorizeCandidateUploadScan(
+    {
+      candidateFormSessionId: "11111111-1111-1111-1111-111111111111",
+      uploadReservationId: "22222222-2222-2222-2222-222222222222",
+    },
+    { client: mockSupabase, resolveActor: async () => null },
+  );
+
+  assert.equal(result.success, false);
+  assert.equal(rpcCalls, 0);
+  if (!result.success) {
+    assert.equal(result.error.code, CommandErrorCode.UNAUTHENTICATED);
+  }
+});
+
+test("1c. upload scan authorization binds the exact session and reservation", async () => {
+  let rpcArgs: unknown;
+  const mockSupabase = createMockSupabase({
+    rpcHandlers: {
+      authorize_candidate_upload_scan: (args) => {
+        rpcArgs = args;
+        return {
+          success: true,
+          data: {
+            candidate_form_session_id: "11111111-1111-1111-1111-111111111111",
+            upload_reservation_id: "22222222-2222-2222-2222-222222222222",
+          },
+        };
+      },
+    },
+  });
+
+  const result = await authorizeCandidateUploadScan(
+    {
+      candidateFormSessionId: "11111111-1111-1111-1111-111111111111",
+      uploadReservationId: "22222222-2222-2222-2222-222222222222",
+    },
+    { client: mockSupabase, resolveActor: async () => activeCandidateActor },
+  );
+
+  assert.equal(result.success, true);
+  assert.deepEqual(rpcArgs, {
+    p_candidate_form_session_id: "11111111-1111-1111-1111-111111111111",
+    p_upload_reservation_id: "22222222-2222-2222-2222-222222222222",
+  });
 });
 
 test("2. USER_INACTIVE candidate rejection", async () => {
