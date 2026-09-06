@@ -17,7 +17,7 @@ declare
   unit_id uuid; group_id uuid; pos1 uuid; pos2 uuid; pos3 uuid; pos4 uuid; room1 uuid; room2 uuid; format_id uuid;
   candidate_id uuid; candidate2_id uuid; submission_id uuid; submission2_id uuid;
   app_id uuid; app2_id uuid; interview_id uuid; conflict_id uuid; participant_id uuid;
-  r jsonb; v bigint; audit_count integer; function_count integer;
+  r jsonb; v bigint; audit_count integer; function_count integer; v_idempotency_key uuid; v_legacy_result jsonb;
 begin
   raise notice '=== Running TASK-S04-005 command repair regression ===';
 
@@ -31,6 +31,11 @@ begin
   assert function_count=1 and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='readd_interview_participant' and oidvectortypes(p.proargtypes)='uuid, text, uuid'), 'readd has exactly uuid,text,uuid';
   select count(*) into function_count from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='reorder_interview_participants';
   assert function_count=1 and exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='reorder_interview_participants' and oidvectortypes(p.proargtypes)='uuid, uuid[], bigint[]'), 'reorder has exactly uuid,uuid[],bigint[]';
+  assert exists(
+    select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public' and p.proname='reorder_interview_participants'
+      and p.proargnames=array['p_interview_id','p_ordered_participant_ids','p_expected_versions']
+  ), 'reorder retains PostgREST-visible named parameters';
 
   insert into public.organizational_units(code,name_vi) values ('T005_U_'||s,'T005 Unit') returning public.organizational_units.unit_id into unit_id;
   insert into public.position_groups(code,name_vi) values ('T005_G_'||s,'T005 Group') returning position_group_id into group_id;
@@ -117,6 +122,17 @@ begin
   perform set_config('request.jwt.claims',jsonb_build_object('sub',root_auth::text)::text,true); r:=public.reactivate_application(app_id,v); assert (r->>'success')::boolean,'root restores test application';
   perform set_config('request.jwt.claims',jsonb_build_object('sub',participant_auth::text)::text,true);
   r:=public.add_interview_participant(interview_id,participant_user,gen_random_uuid()); assert (r->>'success')::boolean,'participants plus view succeeds without interviews.manage';
+  -- A record created by the predecessor v2 command namespace remains replayable
+  -- after the frozen-signature cutover.
+  v_idempotency_key:=gen_random_uuid();
+  v_legacy_result:=jsonb_build_object('success',true,'data',jsonb_build_object('replayed','predecessor_v2'));
+  perform private.record_idempotency(
+    'app_user:'||participant_user::text, 'add_interview_participant_v2', v_idempotency_key,
+    encode(extensions.digest(jsonb_build_object('interview_id',interview_id,'app_user_id',view_user)::text,'sha256'),'hex'),
+    v_legacy_result, 'INTERVIEW_PARTICIPANT', participant_id
+  );
+  r:=public.add_interview_participant(interview_id,view_user,v_idempotency_key);
+  assert r=v_legacy_result,'predecessor v2 idempotency record replays after cutover';
   perform set_config('request.jwt.claims',jsonb_build_object('sub',participant_only_auth::text)::text,true);
   r:=public.add_interview_participant(interview_id,participant_only_user,gen_random_uuid()); assert r->>'error_code'='FORBIDDEN','participants-only denied';
   perform set_config('request.jwt.claims',jsonb_build_object('sub',view_auth::text)::text,true);
