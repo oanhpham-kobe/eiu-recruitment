@@ -4,16 +4,16 @@ execution_mode: AUTONOMOUS
 status: ACTIVE
 
 governance_consolidation:
-  status: READY_FOR_OWNER_REVIEW
+  status: ACTIVATED
 autonomy_policy_activation:
   policy_path: project_control/AUTONOMY_PARALLEL_GOVERNANCE.md
-  auto_advance: PENDING_OWNER_REVIEW
-  parallel_scheduler: PENDING_OWNER_REVIEW
-  max_active_implementation_tasks: 1
+  auto_advance: ENABLED
+  parallel_scheduler: ENABLED
+  max_active_implementation_tasks: 2
 
 slice_04_execution:
-  status: HELD_FOR_GOVERNANCE_REVIEW
-  rule: "Frontier includes TASK-S04-001 for planning visibility only. Execution, worktree creation, prompt authoring, and executor launch are explicitly HELD until owner reviews governance."
+  status: RELEASED_FOR_AUTONOMOUS_EXECUTION
+  rule: "SLICE-04 execution is Owner-authorized under active AUTONOMOUS governance. Safe-frontier tasks may be dispatched subject to DAG, capacity, parallel eligibility, security, review, serialized integration, and exact-SHA CI gates."
 
 canonical_baseline:
   branch: main
@@ -99,10 +99,10 @@ safe_frontier:
   eligible_tasks:
     - TASK-S04-001
   skipped_due_to_dependency: []
-  execution_hold: "TASK-S04-001 is eligible on the dependency DAG but HELD pending owner review of governance maintenance."
+  execution_hold: null
 stop_state:
   stop_gate: null
   reason: null
   observed_evidence:
     - "SLICE-03 is now complete (TASK-S03-001 through TASK-S03-006 ACCEPTED)."
-next_action: "AUTONOMOUS execution mode is selected, but auto-advance and parallel scheduling remain PENDING_OWNER_REVIEW and S04 remains HELD_FOR_GOVERNANCE_REVIEW. After exact-SHA integration CI, HARD STOP for external Planner activation authorization."
+next_action: "After this activation checkpoint becomes exact-SHA CI_VERIFIED, enter continuous AUTONOMOUS scheduling, recompute the safe frontier, materialize only source-backed next tasks when necessary, dispatch up to two independent tasks, and continue through review, repair, serialized integration, CI_VERIFIED, and the next safe frontier until a genuine stop condition occurs."
