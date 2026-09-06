@@ -133,13 +133,14 @@ historical_mcp_governance_maintenance:
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S04-004: awaiting independent prompt review"
+    - "TASK-S04-004: blocked on TASK-S04-005 accepted command prerequisites"
+    - "TASK-S04-005: awaiting independent prompt review"
   execution_hold: null
 stop_state:
   stop_gate: null
   reason: null
   observed_evidence:
     - "TASK-S04-003 ACCEPTED: exact integration CI 34036486527 PASS."
-    - "TASK-S04-003 implementation SHA 919e4a428dcd2d76730947ca1c4c174441bdfb63 independently re-reviewed PASS."
-    - "TASK-S04-004 materialized from current canonical Interview UI and command-contract sources; awaiting independent prompt review."
-next_action: "Independently review TASK-S04-004 prompt 67a4e356d63343a93dbeba1394bca351795da22da51408eeb549b32a257a9c16, then recompute and dispatch the safe frontier if PASS."
+    - "TASK-S04-004 prompt review BLOCKING_REPAIR: missing reactivate_application and noncanonical participant RPC surface."
+    - "TASK-S04-005 materialized from canonical reactivation/participant contracts; awaiting independent prompt review."
+next_action: "Independently review TASK-S04-005 prompt f4d7db6f5b5197b5bfad1310d1ddad53f4afeb1bbd0754676ab2344ee749c765, then recompute and dispatch the safe frontier if PASS."

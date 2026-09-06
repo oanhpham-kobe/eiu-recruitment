@@ -64,4 +64,4 @@ Integration CI:
 
 Next Action:
 
-`TASK-S04-004 is materialized from canonical Interview UI sources and awaits independent prompt review before dispatch.`
+`TASK-S04-004 UI dispatch is blocked on source-backed command prerequisites; TASK-S04-005 repair is materialized and awaits independent prompt review.`

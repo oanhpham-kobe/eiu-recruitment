@@ -1002,11 +1002,23 @@ tasks:
   TASK-S04-004:
     title: "HR Interview scheduling UI over accepted trusted commands"
     slice: SLICE-04
+    status: BLOCKED
+    lane: LANE_A
+    depends_on:
+      - TASK-S04-005
+    prompt: project_control/prompts/SLICE-04_TASK-004_v1.md
+    prompt_sha256: 67a4e356d63343a93dbeba1394bca351795da22da51408eeb549b32a257a9c16
+    prompt_review_status: "BLOCKING_REPAIR (agent://TaskS04004PromptReview)"
+    notes: "Prompt review proved missing reactivate_application and noncanonical/ambiguous participant RPC contracts. UI dispatch is blocked until TASK-S04-005 is accepted."
+
+  TASK-S04-005:
+    title: "Application reactivation and participant command contract repair"
+    slice: SLICE-04
     status: PLANNED
     lane: LANE_A
     depends_on:
       - TASK-S04-003
-    prompt: project_control/prompts/SLICE-04_TASK-004_v1.md
-    prompt_sha256: 67a4e356d63343a93dbeba1394bca351795da22da51408eeb549b32a257a9c16
+    prompt: project_control/prompts/SLICE-04_TASK-005_v1.md
+    prompt_sha256: f4d7db6f5b5197b5bfad1310d1ddad53f4afeb1bbd0754676ab2344ee749c765
     prompt_review_status: PENDING
-    notes: "Post-CI continuation materialization. Dispatch is gated on independent prompt review and must reuse accepted Slice-04 trusted commands without changing SQL contracts."
+    notes: "Source-backed prerequisite materialized from blocking independent UI prompt review. UI task remains blocked until this SQL repair passes full lifecycle."
