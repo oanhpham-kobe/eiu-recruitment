@@ -207,6 +207,38 @@ create policy interview_documents_select on public.interview_documents
     or private.can_view_interview_document_logical(interview_documents.logical_document_id)
   );
 
+-- -----------------------------------------------------------------------------
+-- Email History table
+-- -----------------------------------------------------------------------------
+create table if not exists public.email_history (
+  email_history_id uuid primary key default gen_random_uuid(),
+  email_outbox_id uuid references public.email_outbox(email_outbox_id) on delete set null,
+  interview_id uuid references public.interviews(interview_id) on delete restrict,
+  application_id uuid references public.applications(application_id) on delete restrict,
+  submission_id uuid references public.submissions(submission_id) on delete restrict,
+  email_type text not null,
+  environment_code text not null default 'PRODUCTION' check (environment_code in ('PRODUCTION','TEST')),
+  recipients jsonb not null,
+  subject text,
+  template_version text,
+  sent_by uuid references public.app_users(app_user_id) on delete restrict,
+  sent_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+alter table public.email_history enable row level security;
+revoke all on public.email_history from public, anon;
+grant select on public.email_history to authenticated;
+grant all on public.email_history to postgres, service_role;
+
+drop policy if exists email_history_select on public.email_history;
+create policy email_history_select on public.email_history
+  for select to authenticated
+  using (
+    private.has_permission('emails.history_view')
+    or private.is_root_admin()
+  );
+
 create or replace view private.interview_final_decision_source
 with (security_invoker = true)
 as
@@ -325,6 +357,13 @@ begin
 end;
 $$;
 
+revoke all on function private.interview_command_actor(text, text) from public, anon, authenticated;
+grant execute on function private.interview_command_actor(text, text) to postgres, service_role;
+revoke all on function private.interview_resource_error(public.interviews, timestamptz, timestamptz, uuid, uuid[]) from public, anon, authenticated;
+grant execute on function private.interview_resource_error(public.interviews, timestamptz, timestamptz, uuid, uuid[]) to postgres, service_role;
+revoke all on function private.audit_interview_command(text, text, uuid, uuid, uuid, jsonb) from public, anon, authenticated;
+grant execute on function private.audit_interview_command(text, text, uuid, uuid, uuid, jsonb) to postgres, service_role;
+
 -- -----------------------------------------------------------------------------
 -- 4. Participant lifecycle
 -- -----------------------------------------------------------------------------
@@ -379,7 +418,13 @@ begin
 end;
 $$;
 
-create or replace function public.remove_interview_participant(p_interview_participant_id uuid, p_expected_version bigint)
+drop function if exists public.remove_interview_participant(uuid, bigint, uuid);
+drop function if exists public.remove_interview_participant(uuid, bigint);
+create or replace function public.remove_interview_participant(
+  p_interview_participant_id uuid,
+  p_expected_version bigint,
+  p_idempotency_key uuid
+)
 returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
@@ -388,8 +433,14 @@ declare
   v_part public.interview_participants%rowtype;
   v_interview public.interviews%rowtype;
   v_has_report boolean;
+  v_idemp_result jsonb;
+  v_result jsonb;
 begin
   if v_actor is null then return jsonb_build_object('success',false,'error_code',case when auth.uid() is null then 'UNAUTHENTICATED' else 'FORBIDDEN' end); end if;
+  if p_idempotency_key is not null then
+    v_idemp_result := private.check_idempotency('app_user:' || v_actor::text, 'remove_interview_participant_v2', p_idempotency_key, p_interview_participant_id::text || ':' || p_expected_version::text);
+    if v_idemp_result is not null then return v_idemp_result; end if;
+  end if;
   select ip.* into v_part from public.interview_participants ip where ip.interview_participant_id=p_interview_participant_id;
   if not found then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
   select * into v_interview from public.interviews where interview_id=v_part.interview_id for update;
@@ -398,31 +449,33 @@ begin
   if not v_part.is_current then return jsonb_build_object('success',false,'error_code','ALREADY_REMOVED'); end if;
   select exists(select 1 from public.interview_reports where interview_participant_id=v_part.interview_participant_id) into v_has_report;
   update public.interview_participants set is_current=false, removed_at=clock_timestamp() where interview_participant_id=v_part.interview_participant_id;
+  update public.interview_reports set is_active=false, is_archived=true, updated_by=v_actor where interview_participant_id=v_part.interview_participant_id and is_active=true and is_archived=false;
   update public.interview_participants set participant_order=participant_order+1000000 where interview_id=v_part.interview_id and is_current;
   with ordered as (select interview_participant_id,row_number() over(order by participant_order)::integer as n from public.interview_participants where interview_id=v_part.interview_id and is_current)
   update public.interview_participants ip set participant_order=o.n from ordered o where ip.interview_participant_id=o.interview_participant_id;
   update public.interviews set updated_by=v_actor where interview_id=v_part.interview_id;
   perform private.audit_interview_command('REMOVE_INTERVIEW_PARTICIPANT','INTERVIEW_PARTICIPANT',v_part.interview_participant_id,v_actor,null,jsonb_build_object('report_exists',v_has_report));
-  return jsonb_build_object('success',true,'data',jsonb_build_object('interview_participant_id',v_part.interview_participant_id,'removed',true,'report_exists',v_has_report));
+  v_result := jsonb_build_object('success',true,'data',jsonb_build_object('interview_participant_id',v_part.interview_participant_id,'removed',true,'report_exists',v_has_report));
+  if p_idempotency_key is not null then
+    perform private.record_idempotency('app_user:' || v_actor::text, 'remove_interview_participant_v2', p_idempotency_key, p_interview_participant_id::text || ':' || p_expected_version::text, v_result, 'INTERVIEW_PARTICIPANT', v_part.interview_participant_id);
+  end if;
+  return v_result;
 end;
 $$;
-drop function if exists public.remove_interview_participant(uuid, bigint, uuid);
--- Preserve the prior three-argument API for existing callers, but remove its
--- default third argument so the canonical two-argument command is unambiguous.
+
 create or replace function public.remove_interview_participant(
   p_interview_participant_id uuid,
-  p_expected_version bigint,
-  p_idempotency_key uuid
+  p_expected_version bigint
 )
 returns jsonb
 language sql security definer set search_path = ''
 as $$
-  select public.remove_interview_participant(p_interview_participant_id, p_expected_version);
+  select public.remove_interview_participant(p_interview_participant_id, p_expected_version, null);
 $$;
+revoke all on function public.remove_interview_participant(uuid, bigint) from public, anon;
+grant execute on function public.remove_interview_participant(uuid, bigint) to authenticated;
 revoke all on function public.remove_interview_participant(uuid, bigint, uuid) from public, anon;
 grant execute on function public.remove_interview_participant(uuid, bigint, uuid) to authenticated;
-
-
 
 create or replace function public.readd_interview_participant(p_interview_participant_id uuid, p_restore_mode text, p_idempotency_key uuid default null)
 returns jsonb
@@ -617,6 +670,7 @@ begin
   select exists(select 1 from public.interview_participants where interview_id=p_interview_id)
       or exists(select 1 from public.interview_document_logicals where interview_id=p_interview_id)
       or exists(select 1 from public.email_outbox where interview_id=p_interview_id)
+      or exists(select 1 from public.email_history where interview_id=p_interview_id)
       or exists(select 1 from public.interviews where copied_from_interview_id=p_interview_id)
       or v_i.copied_from_interview_id is not null
       or v_i.start_at is not null or v_i.end_at is not null or nullif(btrim(coalesce(v_i.demo_topic,'')),'') is not null
@@ -640,7 +694,8 @@ begin
   return jsonb_build_object('success',true,'data',jsonb_build_object('interview_id',p_interview_id,'action','INACTIVATED'));
 end;
 $$;
-
+revoke all on function private.delete_or_inactivate_interview_core(uuid, bigint, uuid) from public, anon, authenticated;
+grant execute on function private.delete_or_inactivate_interview_core(uuid, bigint, uuid) to postgres, service_role;
 create or replace function public.delete_or_inactivate_interview(p_interview_id uuid,p_expected_version bigint)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare v_actor uuid:=private.interview_command_actor('interviews.manage');
@@ -693,16 +748,18 @@ $$;
 
 create or replace function public.change_report_status(p_interview_id uuid,p_report_status_code text,p_expected_version bigint)
 returns jsonb language plpgsql security definer set search_path = '' as $$
-declare v_actor uuid:=private.interview_command_actor('reports.manage_status'); v_i public.interviews%rowtype; v_submission uuid;
+declare v_actor uuid:=private.interview_command_actor('reports.manage_status'); v_i public.interviews%rowtype; v_app public.applications%rowtype;
 begin
   if v_actor is null or (not private.is_root_admin() and not private.has_permission('reports.view')) then return jsonb_build_object('success',false,'error_code',case when auth.uid() is null then 'UNAUTHENTICATED' else 'FORBIDDEN' end); end if;
   if p_report_status_code not in ('INTERVIEW_SCHEDULING','AWAITING_INTERVIEW','WAITING_FOR_REPORT','REPORT_SUBMITTED','FOLLOW_UP','ON_HOLD','HIRED','REJECTED') then return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR'); end if;
   select * into v_i from public.interviews where interview_id=p_interview_id for update; if not found then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
-  if not exists(select 1 from private.application_current_interview where application_id=v_i.application_id and interview_id=v_i.interview_id) then return jsonb_build_object('success',false,'error_code','LATEST_ROUND_REQUIRED'); end if;
   if v_i.version_no<>p_expected_version then return jsonb_build_object('success',false,'error_code','STALE_VERSION'); end if;
-  select a.submission_id into v_submission from public.applications a where a.application_id=v_i.application_id; perform 1 from public.submissions where submission_id=v_submission for update;
+  select * into v_app from public.applications where application_id=v_i.application_id for update;
+  if not found or not v_app.is_active then return jsonb_build_object('success',false,'error_code','APPLICATION_INACTIVE'); end if;
+  if not exists(select 1 from private.application_current_interview where application_id=v_i.application_id and interview_id=v_i.interview_id) then return jsonb_build_object('success',false,'error_code','LATEST_ROUND_REQUIRED'); end if;
+  perform 1 from public.submissions where submission_id=v_app.submission_id for update;
   update public.interviews set report_status_code=p_report_status_code,updated_by=v_actor where interview_id=p_interview_id;
-  perform public.recalculate_submission_status(v_submission); perform private.audit_interview_command('CHANGE_REPORT_STATUS','INTERVIEW',p_interview_id,v_actor,null,jsonb_build_object('report_status_code',p_report_status_code));
+  perform public.recalculate_submission_status(v_app.submission_id); perform private.audit_interview_command('CHANGE_REPORT_STATUS','INTERVIEW',p_interview_id,v_actor,null,jsonb_build_object('report_status_code',p_report_status_code));
   return jsonb_build_object('success',true,'data',jsonb_build_object('interview_id',p_interview_id,'report_status_code',p_report_status_code));
 end;
 $$;
@@ -753,8 +810,30 @@ declare v_actor uuid:=private.interview_command_actor('interviews.documents'); v
 begin
   if v_actor is null or (not private.is_root_admin() and not private.has_permission('interviews.manage')) then return jsonb_build_object('success',false,'error_code',case when auth.uid() is null then 'UNAUTHENTICATED' else 'FORBIDDEN' end); end if;
   select * into v_res from public.upload_reservations where upload_reservation_id=p_reservation_id for update; if not found then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
+  if v_res.status_code = 'FINALIZED' then
+    select d.interview_document_id, d.logical_document_id, d.version_no into v_document, v_logical.logical_document_id, v_version
+    from public.interview_documents d
+    where d.storage_bucket=p_storage_bucket
+      and d.storage_path=p_storage_path
+      and d.original_filename=p_original_filename
+      and d.mime_type=p_mime_type
+      and d.file_size_bytes=p_file_size_bytes
+      and d.checksum_sha256 is not distinct from p_checksum_sha256;
+    if found then
+      return jsonb_build_object('success',true,'data',jsonb_build_object('interview_document_id',v_document,'logical_document_id',v_logical.logical_document_id,'version_no',v_version));
+    end if;
+    return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR');
+  end if;
   if v_res.interview_id is null or v_res.status_code not in ('VALIDATED','UPLOADED') or v_res.malware_scan_status<>'CLEAN' then return jsonb_build_object('success',false,'error_code','MALWARE_SCAN_REQUIRED'); end if;
   if v_res.expires_at<=clock_timestamp() then return jsonb_build_object('success',false,'error_code','UPLOAD_RESERVATION_EXPIRED'); end if;
+  if v_res.actual_size_bytes is null
+     or v_res.checksum_sha256 is null
+     or v_res.detected_mime_type is null
+     or v_res.actual_size_bytes <> p_file_size_bytes
+     or lower(v_res.checksum_sha256) <> lower(coalesce(p_checksum_sha256, ''))
+     or v_res.detected_mime_type <> p_mime_type then
+    return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR');
+  end if;
   select * into v_i from public.interviews where interview_id=v_res.interview_id for update;
   if p_original_filename is null or char_length(p_original_filename)>255 or p_file_size_bytes is null or p_file_size_bytes<=0 or p_file_size_bytes>5242880 or p_mime_type not in ('application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','image/png','image/jpeg') or (p_checksum_sha256 is not null and p_checksum_sha256 !~ '^[0-9A-Fa-f]{64}$') then return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR'); end if;
   if p_logical_document_id_or_null is null then
@@ -769,7 +848,7 @@ begin
     insert into public.storage_cleanup_queue(source_type,source_parent_id,bucket_name,object_path,reason_code,status_code) values('INTERVIEW_UPLOAD',v_i.interview_id,v_old.storage_bucket,v_old.storage_path,'DOCUMENT_REPLACED','PENDING') on conflict(bucket_name,object_path) do nothing;
   end if;
   insert into public.interview_documents(logical_document_id,storage_bucket,storage_path,original_filename,mime_type,file_size_bytes,checksum_sha256,version_no,is_current,uploaded_by)
-  values(v_logical.logical_document_id,p_storage_bucket,p_storage_path,p_original_filename,p_mime_type,p_file_size_bytes,p_checksum_sha256,v_version,true,v_actor) returning interview_document_id into v_document;
+  values(v_logical.logical_document_id,p_storage_bucket,p_storage_path,p_original_filename,v_res.detected_mime_type,v_res.actual_size_bytes,v_res.checksum_sha256,v_version,true,v_actor) returning interview_document_id into v_document;
   update public.upload_reservations set status_code='FINALIZED' where upload_reservation_id=p_reservation_id;
   perform private.audit_interview_command('FINALIZE_INTERVIEW_UPLOAD','INTERVIEW_DOCUMENT',v_document,v_actor,p_reservation_id,jsonb_build_object('interview_id',v_i.interview_id));
   return jsonb_build_object('success',true,'data',jsonb_build_object('interview_document_id',v_document,'logical_document_id',v_logical.logical_document_id,'version_no',v_version));
@@ -796,15 +875,64 @@ $$;
 
 create or replace function public.bulk_change_interview_schedule_status(p_interview_ids uuid[],p_target_status text,p_expected_versions bigint[])
 returns jsonb language plpgsql security definer set search_path = '' as $$
-declare v_actor uuid:=private.interview_command_actor('interviews.status'); v_id uuid; v_i public.interviews%rowtype; v_version bigint; v_ids uuid[]; v_error text;
+declare
+  v_actor uuid:=private.interview_command_actor('interviews.status');
+  v_id uuid;
+  v_i public.interviews%rowtype;
+  v_version bigint;
+  v_cand uuid;
+  v_lock_id uuid;
+  v_ids uuid[];
+  v_conflict text;
 begin
   if v_actor is null or (not private.is_root_admin() and not private.has_permission('interviews.view')) then return jsonb_build_object('success',false,'error_code',case when auth.uid() is null then 'UNAUTHENTICATED' else 'FORBIDDEN' end); end if;
   if p_target_status not in ('AVAILABLE','SCHEDULED','AWAITING','CONFIRMED','CANCELLED') or cardinality(p_interview_ids) is null or cardinality(p_interview_ids)>100 or cardinality(p_interview_ids)<>cardinality(p_expected_versions) or (select count(distinct x) from unnest(p_interview_ids) x)<>cardinality(p_interview_ids) then return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR'); end if;
   perform 1 from public.interviews where interview_id=any(p_interview_ids) order by interview_id for update;
   if (select count(*) from public.interviews where interview_id=any(p_interview_ids))<>cardinality(p_interview_ids) then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
+  if p_target_status<>'CANCELLED' then
+    for v_lock_id in
+      select distinct s.candidate_id
+      from public.interviews i
+      join public.applications a on a.application_id=i.application_id
+      join public.submissions s on s.submission_id=a.submission_id
+      where i.interview_id=any(p_interview_ids)
+        and i.is_active and i.start_at is not null and i.end_at is not null
+        and s.candidate_id is not null
+      order by s.candidate_id
+    loop
+      perform pg_advisory_xact_lock(hashtext('candidate:' || v_lock_id::text));
+    end loop;
+    for v_lock_id in
+      select distinct i.room_id
+      from public.interviews i
+      where i.interview_id=any(p_interview_ids)
+        and i.is_active and i.start_at is not null and i.end_at is not null
+        and i.room_id is not null
+      order by i.room_id
+    loop
+      perform pg_advisory_xact_lock(hashtext('room:' || v_lock_id::text));
+    end loop;
+    for v_lock_id in
+      select distinct ip.app_user_id
+      from public.interview_participants ip
+      join public.interviews i on i.interview_id=ip.interview_id
+      where i.interview_id=any(p_interview_ids)
+        and i.is_active and i.start_at is not null and i.end_at is not null
+        and ip.is_current and ip.app_user_id is not null
+      order by ip.app_user_id
+    loop
+      perform pg_advisory_xact_lock(hashtext('interviewer:' || v_lock_id::text));
+    end loop;
+  end if;
   for v_id in select x from unnest(p_interview_ids) x order by x loop
     select * into v_i from public.interviews where interview_id=v_id; select p_expected_versions[array_position(p_interview_ids,v_id)] into v_version; if v_i.version_no<>v_version then return jsonb_build_object('success',false,'error_code','STALE_VERSION'); end if;
-    if p_target_status<>'CANCELLED' and v_i.is_active and v_i.start_at is not null and v_i.end_at is not null then select coalesce(array_agg(app_user_id order by app_user_id),array[]::uuid[]) into v_ids from public.interview_participants where interview_id=v_id and is_current; v_error:=private.interview_resource_error(v_i,v_i.start_at,v_i.end_at,v_i.room_id,v_ids); if v_error is not null then return jsonb_build_object('success',false,'error_code',v_error); end if; end if;
+    if p_target_status<>'CANCELLED' and v_i.is_active and v_i.start_at is not null and v_i.end_at is not null then
+      if not private.all_current_participants_selectable(v_id) then return jsonb_build_object('success',false,'error_code','CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED'); end if;
+      select s.candidate_id into v_cand from public.applications a join public.submissions s on s.submission_id=a.submission_id where a.application_id=v_i.application_id;
+      select coalesce(array_agg(app_user_id order by app_user_id),array[]::uuid[]) into v_ids from public.interview_participants where interview_id=v_id and is_current;
+      select c.conflict_type into v_conflict from private.check_interview_conflicts(v_id, v_cand, v_i.room_id, v_ids, v_i.start_at, v_i.end_at) c order by case c.conflict_type when 'CANDIDATE' then 1 when 'ROOM' then 2 else 3 end limit 1;
+      if v_conflict is not null then return jsonb_build_object('success',false,'error_code','SCHEDULE_CONFLICT_' || v_conflict); end if;
+    end if;
   end loop;
   update public.interviews set schedule_status_code=p_target_status,updated_by=v_actor where interview_id=any(p_interview_ids);
   for v_id in select x from unnest(p_interview_ids) x order by x loop perform private.audit_interview_command('BULK_CHANGE_INTERVIEW_SCHEDULE_STATUS','INTERVIEW',v_id,v_actor,null,jsonb_build_object('schedule_status_code',p_target_status)); end loop;
