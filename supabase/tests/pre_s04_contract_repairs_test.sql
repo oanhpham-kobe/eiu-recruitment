@@ -165,14 +165,14 @@ begin
   insert into public.interviews (
     interview_id, application_id, round_no, schedule_status_code, report_status_code, is_active
   ) values (
-    v_int1_id, v_app_id, 1, 'SCHEDULED', 'FOLLOW_UP', true
+    v_int1_id, v_app_id, 1, 'AVAILABLE', 'FOLLOW_UP', true
   );
 
   v_int2_id := gen_random_uuid();
   insert into public.interviews (
     interview_id, application_id, round_no, schedule_status_code, report_status_code, is_active
   ) values (
-    v_int2_id, v_app_id, 2, 'SCHEDULED', 'FOLLOW_UP', true
+    v_int2_id, v_app_id, 2, 'AVAILABLE', 'FOLLOW_UP', true
   );
 
   raise notice 'Fixtures created successfully';
