@@ -196,7 +196,7 @@ begin
   values(interview_id,app_id,sub_id,'INTERVIEW_INVITATION','[]'::jsonb,'T002 Interview',hr)
   returning public.email_history.email_history_id into email_history_id;
   insert into public.app_user_permissions(app_user_id,permission_code)
-  values(hr,'emails.history_view'),(outsider,'emails.history_view') on conflict do nothing;
+  values(hr,'emails.history_view'),(outsider,'emails.history_view'),(outsider,'applications.view') on conflict do nothing;
   err:=false; begin insert into public.interview_documents(logical_document_id,storage_bucket,storage_path,original_filename,mime_type,file_size_bytes,version_no,is_current,uploaded_by) values(logical_id,'interview-private','t002/'||s||'/duplicate.pdf','duplicate.pdf','application/pdf',100,2,true,hr); exception when unique_violation then err:=true; end; assert err,'one current version per logical document';
   -- 16/17. Comprehensive RLS visibility boundaries.
   -- Positive test: HR with permissions sees everything under authenticated role.

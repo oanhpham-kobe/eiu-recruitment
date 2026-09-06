@@ -238,14 +238,20 @@ create policy email_history_select on public.email_history
     private.is_root_admin()
     or (
       private.has_permission('emails.history_view')
-      and (
-        (email_history.interview_id is not null and (private.has_permission('interviews.view') or private.has_permission('interviews.manage') or private.has_permission('reports.view')))
-        or (email_history.application_id is not null and (private.has_permission('applications.view') or private.has_permission('applications.manage')))
-        or (email_history.submission_id is not null and private.has_permission('submissions.view'))
-      )
+      and case
+        when email_history.email_type like 'INTERVIEW_%' then
+          email_history.interview_id is not null
+          and (private.has_permission('interviews.view') or private.has_permission('interviews.manage') or private.has_permission('reports.view'))
+        when email_history.email_type like 'APPLICATION_%' then
+          email_history.application_id is not null
+          and (private.has_permission('applications.view') or private.has_permission('applications.manage'))
+        when email_history.email_type like '%SUBMISSION%' then
+          email_history.submission_id is not null
+          and private.has_permission('submissions.view')
+        else false
+      end
     )
   );
-
 alter table public.upload_reservations
   add column if not exists finalize_request_fingerprint text,
   add column if not exists finalize_result jsonb;
