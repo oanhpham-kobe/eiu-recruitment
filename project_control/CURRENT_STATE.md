@@ -64,4 +64,4 @@ Integration CI:
 
 Next Action:
 
-`TASK-S04-004 UI dispatch is blocked on source-backed command prerequisites; TASK-S04-005 repair is materialized and awaits independent prompt review.`
+`TASK-S04-005 is prompt-reviewed and eligible for Lane A dispatch; TASK-S04-004 remains blocked on its accepted command prerequisites.`
