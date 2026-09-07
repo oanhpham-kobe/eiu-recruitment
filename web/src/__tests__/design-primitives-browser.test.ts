@@ -71,7 +71,7 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
     );
     await page.keyboard.press("Enter");
     await menu.waitFor({ state: "detached" });
-    assert.match(await statusTrigger.textContent(), /CLOSED/);
+    assert.match((await statusTrigger.textContent()) ?? "", /CLOSED/);
     assert.equal(
       await page.evaluate(() => document.activeElement?.className),
       "ui-status-menu__trigger",
