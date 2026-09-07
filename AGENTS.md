@@ -103,6 +103,8 @@ Do not copy the same skill into multiple project providers. OMP already discover
 
 `SKILLS_LOCK.yaml` is **not** a runtime resolver. Never make an executor manually resolve a filesystem skill path from that file.
 
+Local linked worktrees are execution surfaces, not durable task records. New local Orca/Git worktrees should live below the gitignored `.worktrees/` container described in `project_control/README.md`. Do not add new machine-specific absolute worktree paths to durable task history; runtime ownership belongs in the live worker state when needed.
+
 ---
 
 ## 4. Native skill usage
@@ -249,6 +251,8 @@ For scheduling, task-start, integration, CI, or next-frontier decisions, read:
 - `project_control/TASK_REGISTRY.yaml` and `SLICE_REGISTRY.yaml` — task/slice DAG.
 
 OMP Todo mirrors the currently executing work for the session. It is not a competing durable registry and must not be persisted as another control-plane authority.
+
+`project_control/CURRENT_STATE.md` is the single derived cross-session handoff/navigation snapshot. Refresh it after accepted task checkpoints or meaningful interruptions, but never let it override Git or the durable registries. Do not create runtime-specific memory/state files that duplicate it.
 
 `execution_mode` is exactly `AUTONOMOUS` or `BOUNDED`.
 
