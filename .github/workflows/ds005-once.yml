@@ -33,5 +33,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-      - name: Apply and verify DS-005
-        run: python project_control/tools/ds005_patch.py
+      - name: Repair findings and verify DS-005
+        run: |
+          python project_control/tools/ds005_retry_fix.py
+          python project_control/tools/ds005_patch.py
