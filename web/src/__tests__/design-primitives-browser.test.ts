@@ -124,22 +124,16 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
       await page.evaluate(() => document.body.style.overflow),
       "hidden",
     );
-    assert.equal(
-      await page.evaluate(() =>
-        document.activeElement?.getAttribute("data-testid"),
-      ),
-      "open-dialog",
+    await page.waitForFunction(
+      () => document.activeElement?.getAttribute("data-testid") === "open-dialog",
     );
 
     await page.keyboard.press("Escape");
     await drawer.waitFor({ state: "detached" });
     assert.equal(await page.locator("#app-root").getAttribute("inert"), null);
     assert.equal(await page.evaluate(() => document.body.style.overflow), "");
-    assert.equal(
-      await page.evaluate(() =>
-        document.activeElement?.getAttribute("data-testid"),
-      ),
-      "open-drawer",
+    await page.waitForFunction(
+      () => document.activeElement?.getAttribute("data-testid") === "open-drawer",
     );
     assert.deepEqual(pageErrors, []);
   } finally {
