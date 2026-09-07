@@ -14,13 +14,20 @@ def run(*args: str) -> str:
         args,
         cwd=ROOT,
         text=True,
-        check=True,
+        check=False,
         capture_output=True,
     )
     if result.stdout:
         print(result.stdout, end="")
     if result.stderr:
         print(result.stderr, end="")
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(
+            result.returncode,
+            result.args,
+            output=result.stdout,
+            stderr=result.stderr,
+        )
     return result.stdout.strip()
 
 
