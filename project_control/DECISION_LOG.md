@@ -47,3 +47,17 @@ Context: TASK-S00-003 requires reproducible migration foundation, strict schema 
 Decision: Established migration foundation `20260904164112_initial_foundation.sql` establishing reviewed extensions (`pgcrypto`, `citext`, `pg_trgm`, `unaccent`) under `extensions` schema, created `private` internal schema with strict revokes from `public`, `anon`, and `authenticated`, and implemented `private.touch_version()` trigger function with `SECURITY DEFINER` and empty `search_path`. Created and linked Vercel project `eiu-recruitment` (`prj_9t5t1RBtgZp4hOLuSgEYgv5nt8qY`) with root directory `web` and framework `nextjs`. Held all preview/production deployments as `NOT_PERFORMED` per explicit owner authorization.
 Why source behavior is preserved: Conforms to `review_pack/database_schema.sql`, `review_pack/40_DATABASE_INVARIANTS.md`, and `review_pack/59_RLS_POLICY_BLUEPRINT.md`.
 Affected: All database migrations, schema boundaries, and Vercel deployment infrastructure.
+
+## IMP-DEC-008 — Deterministic transaction resource-lock implementation strategy
+Date: 2026-09-08
+Context: Slice-04 schedule-activating commands must enforce the canonical candidate / room / interviewer conflict rules transactionally under concurrency.
+Decision: Implement the required resource serialization with deterministic PostgreSQL transaction-scoped advisory-lock namespaces (`candidate:`, `room:`, `interviewer:`), combined with row locks and authoritative post-lock conflict revalidation inside trusted database commands.
+Why source behavior is preserved: Full Handover v1.18 already requires transaction resource locks plus conflict recheck. This records the accepted HOW used to satisfy that invariant; it does not create a new conflict rule or business behavior.
+Affected: Accepted Slice-04 schedule save/status/reactivation/copy and related resource-blocking mutations.
+
+## IMP-DEC-009 — Append-only repair of accepted ordered migration contracts
+Date: 2026-09-08
+Context: Prompt/review of Slice-04 exposed public contract/signature defects after earlier ordered migrations had already been accepted and integrated.
+Decision: Preserve accepted migration history and apply contract corrections in a later ordered migration instead of rewriting accepted migration files. The effective database contract is the result of the full ordered migration chain; later replacements supersede earlier function bodies/signatures where explicitly defined.
+Why source behavior is preserved: This is a migration-history and implementation-maintenance rule only. Canonical product/business/technical sources remain authoritative for WHAT the public contract must do.
+Affected: `20260906090000_application_reactivation_and_participant_contract_repair.sql` and future post-acceptance migration repairs.
