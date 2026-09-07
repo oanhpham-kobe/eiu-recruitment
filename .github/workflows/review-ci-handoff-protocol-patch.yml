@@ -1,0 +1,363 @@
+name: One-shot Review CI Handoff Protocol Patch
+
+on:
+  push:
+    branches:
+      - maintenance/review-ci-handoff-protocol-001
+
+permissions:
+  contents: write
+
+concurrency:
+  group: review-ci-handoff-protocol-patch
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, '[skip-review-ci-protocol]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: maintenance/review-ci-handoff-protocol-001
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --disable-pip-version-check "PyYAML==6.0.2"
+      - name: Apply protocol patch fail-closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          expected_parent = '75c368895d7b3edfbdb2b34cadd1f7d87a0a872c'
+          parent = subprocess.check_output(['git', 'rev-parse', 'HEAD^'], text=True).strip()
+          if parent != expected_parent:
+              raise SystemExit(f'unexpected patch parent: {parent}')
+
+          def replace_one(path, old, new, label):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: match count={count}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          # AGENTS.md: make focused reruns, dual review, immutable checkpoints, and safe handoff portable.
+          replace_one(
+              'AGENTS.md',
+              '''Do not treat a subagent `completed` status, a previous test run, or a CI result for another SHA as completion proof.\n\n---\n\n## 9. Review lifecycle\n''',
+              '''Do not treat a subagent `completed` status, a previous test run, or a CI result for another SHA as completion proof.\n\n### Verification economy and failed-check closure\n\nUse the smallest fresh verification set that proves the current claim. During implementation or repair:\n\n- rerun the failed check/test plus directly affected regressions and crossed shared invariants;\n- keep previously passed unrelated checks closed when changed code, dependencies, shared contracts, or concrete regression evidence do not implicate them;\n- do not rerun unrelated database, browser, or UI suites merely because another domain failed;\n- broaden verification only when the changed surface or risk requires it.\n\nA final acceptance candidate still requires fresh exact-SHA CI for the impacted domain set. Domain-level lint/typecheck/build/test may be rerun at that acceptance boundary when the domain changed; that is distinct from blind full-system reruns on every repair commit.\n\n---\n\n## 9. Review lifecycle\n''',
+              'AGENTS verification economy insertion',
+          )
+
+          replace_one(
+              'AGENTS.md',
+              '''In `BOUNDED`, perform only the Owner-authorized work set. Do not infer a next-frontier task. Integration/CI occurs only when the bounded authorization explicitly permits it.\n\n---\n\n## 10. Durable autonomy state\n''',
+              '''In `BOUNDED`, perform only the Owner-authorized work set. Do not infer a next-frontier task. Integration/CI occurs only when the bounded authorization explicitly permits it.\n\n### Candidate producer, independent OMP review, and checkpoint acceptance\n\nFor tasks implemented outside OMP (for example, by ChatGPT through GitHub), the producer performs a first self-review, but that self-review is not the independent acceptance review. OMP then uses the read-only `eiu-reviewer` (or built-in reviewer) against the exact candidate SHA.\n\nReview waves may contain at most two independent task candidates. Each task keeps its own exact SHA, findings, verdict, CI evidence, and checkpoint. A downstream task must not consume an unaccepted dependency merely because both were implemented in the same wave.\n\nThe reviewer remains read-only and must not create or move Git refs. OMP main session owns review-result persistence, CI/integration decisions, and checkpoint creation. When the Owner requests GitHub-visible review handoff, OMP main may persist the reviewer result under `project_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md`; this is evidence only, not a new authority.\n\nAfter a repair creates a new candidate SHA, any prior PASS belongs to the old SHA and cannot accept the new one. Acceptance requires the OMP independent review PASS and exact-SHA CI PASS for the same final candidate SHA.\n\nBefore risky task implementation, create an immutable recovery ref such as `checkpoint/pre-S04-004-001`. After review and CI PASS, OMP main creates an immutable accepted ref such as `checkpoint/S04-004-accepted-001`. Never force-move an existing checkpoint; create a new numbered checkpoint for a later accepted repair.\n\nFor accepted task checkpoints:\n\n```text\nOMP_REVIEW_SHA == CI_SHA == CHECKPOINT_SHA\n```\n\nAfter all tasks in a slice are individually accepted, run an additional slice-level composition review/broader regression gate when the slice risk warrants it. Slice review supplements task review; it does not replace it.\n\n---\n\n## 10. Durable autonomy state\n''',
+              'AGENTS review/checkpoint insertion',
+          )
+
+          replace_one(
+              'AGENTS.md',
+              '''`project_control/CURRENT_STATE.md` is the single derived cross-session handoff/navigation snapshot. Refresh it after accepted task checkpoints or meaningful interruptions, but never let it override Git or the durable registries. Do not create runtime-specific memory/state files that duplicate it.\n\n`execution_mode` is exactly `AUTONOMOUS` or `BOUNDED`.\n''',
+              '''`project_control/CURRENT_STATE.md` is the single derived cross-session handoff/navigation snapshot. Refresh it after accepted task checkpoints or meaningful interruptions, but never let it override Git or the durable registries. Do not create runtime-specific memory/state files that duplicate it.\n\nWhen a long-running assistant/session approaches context pressure or another interruption boundary, do not start another risky/write-heavy phase. Finish the current atomic mutation, commit/push a recoverable SHA, run the relevant validators/checks, refresh durable state plus `CURRENT_STATE.md`, and hand off the exact branch/SHA, task status, test/review/CI state, unresolved findings, checkpoint refs, next action, and do-not-repeat boundaries. Never intentionally hand off half-edited or identity-ambiguous repository state.\n\n`execution_mode` is exactly `AUTONOMOUS` or `BOUNDED`.\n''',
+              'AGENTS safe handoff insertion',
+          )
+
+          # REVIEW.md: independent reviewer semantics and exact-SHA closure.
+          replace_one(
+              'REVIEW.md',
+              '''A subagent's `completed` status or self-reported success is not acceptance evidence.\n\n---\n\n## 3. Finding dispositions\n''',
+              '''A subagent's `completed` status or self-reported success is not acceptance evidence.\n\nThe candidate producer's self-review (including ChatGPT self-review) is a useful first quality gate but is not the independent OMP acceptance review. The OMP reviewer must remain a separate read-only reviewer bound to the exact candidate SHA.\n\nIf a repair creates a new SHA, re-review the new SHA; do not carry a PASS forward from the previous candidate. Previously passed areas remain closed unless changed code, a changed dependency/shared invariant, or concrete regression evidence justifies reopening them.\n\nA review wave may cover at most two independent task candidates, but the reviewer must return a separate exact-SHA verdict and findings set for each. A PASS on one candidate never masks blockers in the other.\n\nThe reviewer must not create/move checkpoint refs or mutate implementation. OMP main session may persist the reviewer result as evidence under `project_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md` so external implementers can consume it from GitHub.\n\n---\n\n## 3. Finding dispositions\n''',
+              'REVIEW independent reviewer insertion',
+          )
+
+          replace_one(
+              'REVIEW.md',
+              '''- confirm the evidence belongs to the exact reviewed SHA when SHA-specific acceptance is required;\n- state any residual non-blocking risk explicitly.\n''',
+              '''- confirm the evidence belongs to the exact reviewed SHA when SHA-specific acceptance is required;\n- for accepted task checkpoints, confirm `OMP_REVIEW_SHA == CI_SHA == CHECKPOINT_SHA`;\n- confirm the checkpoint was created by the coordinating/main session, not by the read-only reviewer;\n- state any residual non-blocking risk explicitly.\n''',
+              'REVIEW completion exact-SHA insertion',
+          )
+
+          # Sticky OMP rules: compact reminders only.
+          rules = Path('.omp/RULES.md')
+          r = rules.read_text(encoding='utf-8')
+          marker = '13. Repair verification is impact-selected:'
+          if marker in r:
+              raise SystemExit('sticky protocol rules already present')
+          r += '''13. Repair verification is impact-selected: rerun failed/directly affected checks and crossed invariants; keep unrelated prior PASS areas closed unless changed code/dependency/shared-contract evidence reopens them.\n14. Candidate-producer self-review is not the independent acceptance review. OMP `eiu-reviewer` is read-only and reviews exact candidate SHAs; a repair SHA requires fresh re-review.\n15. OMP main session, not the reviewer, owns GitHub review-artifact persistence, exact-SHA CI/integration decisions, and immutable pre-task/accepted checkpoint refs. Accepted checkpoint requires OMP review SHA == CI SHA == checkpoint SHA.\n16. Before context-pressure/session handoff, finish an atomic recoverable checkpoint and refresh durable state/CURRENT_STATE; do not start a new risky phase or hand off half-edited state.\n'''
+          rules.write_text(r, encoding='utf-8')
+
+          # Detailed autonomy semantics.
+          replace_one(
+              'project_control/AUTONOMY_PARALLEL_GOVERNANCE.md',
+              '''AUTONOMOUS stops only for:\n''',
+              '''#### Candidate producer and independent OMP review\n\nA candidate may be produced by an OMP Executor or by an Owner-authorized external implementer such as ChatGPT. The producer MUST perform focused verification and a first self-review before presenting the candidate. Producer self-review is not the independent acceptance review.\n\nThe independent acceptance review is performed by OMP's read-only reviewer (`eiu-reviewer` or built-in reviewer) against an exact candidate SHA. The reviewer does not mutate implementation, push repairs, integrate, create checkpoint refs, or advance the frontier. OMP main session owns those lifecycle actions.\n\nWhen GitHub-visible handoff is required, OMP main session may persist the reviewer output under:\n\n```text\nproject_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md\n```\n\nThat file is evidence only. At minimum it records task ID, exact 40-character reviewed SHA, `PASS | BLOCKING_REPAIR | OWNER_DECISION_REQUIRED`, evidence-backed findings, and `SOURCE_REOPEN_REQUIRED: YES | NO`. It never becomes product, scheduling, or authorization authority.\n\nA repair that changes the candidate SHA invalidates acceptance of the old SHA. The new SHA receives producer re-review plus targeted OMP re-review before acceptance.\n\n#### Review waves, dependency gating, and immutable checkpoints\n\nThe scheduler may accumulate/review up to two independent task candidates in one review wave when the normal parallel-eligibility rules prove that they do not depend on or overlap each other. Each candidate retains a separate SHA, verdict, evidence, CI result, and checkpoint.\n\nA task MUST NOT start or continue by consuming behavior from an unaccepted dependency. Independent batching is a throughput optimization, never permission to build a dependency chain on unreviewed work. High-risk shared-contract work (schema/migrations, RLS/auth, trusted commands, security/privacy boundaries, business-contract/concurrency/idempotency changes) is reviewed and accepted before downstream consumption.\n\nBefore a risky task begins, OMP main session creates an immutable pre-task recovery ref, for example:\n\n```text\ncheckpoint/pre-S04-004-001\n```\n\nAfter independent OMP review PASS and exact-SHA CI PASS on the same final candidate, OMP main session creates an immutable accepted ref, for example:\n\n```text\ncheckpoint/S04-004-accepted-001\n```\n\nCheckpoint refs are append-only recovery anchors. Never force-move an existing checkpoint. A later accepted repair receives a new numbered ref. Task acceptance requires:\n\n```text\nOMP_REVIEW_SHA == CI_SHA == CHECKPOINT_SHA\n```\n\nAfter all tasks in a slice are individually accepted, perform a slice-closing composition review and broader regression gate when appropriate. This gate checks cross-task integration, contract propagation, UX consistency, and slice acceptance; it supplements rather than replaces per-task review.\n\n#### Verification economy and failed-check closure\n\nVerification is impact-selected. During implementation and repair, run the narrowest fresh checks that prove the changed behavior and the directly crossed invariants.\n\nA failed check does not reopen the entire verification universe. A previously passed check remains closed when all of the following are true:\n\n```text\nits code/dependency surface did not change\nAND no shared invariant/contract it depends on changed\nAND the review finding does not implicate it\nAND no concrete regression evidence implicates it\n```\n\nOn repair, rerun the failed test/check plus directly affected regressions and any shared-invariant checks crossed by the repair. Do not rerun unrelated database, UI, browser, or security suites merely because another domain failed.\n\nAt the final task acceptance boundary, exact-SHA CI runs the minimum domain-level acceptance set selected by the changed/impacted domains. A changed domain may require its normal lint/typecheck/build/test gate even if individual tests passed earlier; this is the routine broader acceptance exception. Unchanged unrelated domains remain closed.\n\n`[full-ci]` may be used only to broaden verification for an explicit slice-closing, shared-contract, or otherwise justified full gate. No commit marker may suppress a domain that impact analysis says is affected.\n\n#### Context-pressure and cross-session safe handoff\n\nWhen a long-running main session is approaching practical context pressure, tool/runtime interruption, or another handoff boundary, it MUST avoid starting another risky/write-heavy phase. It should finish the current atomic mutation and stop at a recoverable checkpoint.\n\nA safe handoff records, in Git plus the existing durable authorities and `CURRENT_STATE.md`:\n\n- repository/branch and exact HEAD SHA;\n- current task/slice status and accepted base/checkpoint;\n- changed scope and relevant files;\n- fresh PASS/FAIL verification state;\n- producer self-review state;\n- OMP review artifact/verdict state;\n- exact-SHA CI state;\n- recovery/accepted checkpoint refs;\n- unresolved findings or stop gate;\n- exact next action and do-not-repeat/do-not-touch boundaries.\n\nDo not intentionally hand off half-edited, uncommitted, unknown-HEAD, or unresolved-but-unrecorded state. `CURRENT_STATE.md` remains derived navigation only; authority stays with Git and the durable registries/run state.\n\nAUTONOMOUS stops only for:\n''',
+              'AUTONOMY protocol insertion',
+          )
+
+          # Current live next action must require the designated pre-task recovery ref.
+          replace_one(
+              'project_control/AUTONOMY_RUN_STATE.yaml',
+              '''next_action: "Dispatch TASK-S04-004 from the reconciled safe frontier using project_control/prompts/SLICE-04_TASK-004_v3.md under active AUTONOMOUS governance."\n''',
+              '''next_action: "Before any TASK-S04-004 application edit, verify immutable recovery ref checkpoint/pre-S04-004-001 points to the final reviewed governance baseline; then dispatch TASK-S04-004 using project_control/prompts/SLICE-04_TASK-004_v3.md under the producer-self-review -> OMP independent review -> impact-selected exact-SHA CI -> immutable accepted-checkpoint lifecycle."\n''',
+              'AUTONOMY_RUN_STATE next action',
+          )
+
+          # Derived handoff snapshot: navigation only.
+          replace_one(
+              'project_control/CURRENT_STATE.md',
+              '''## Resume protocol\n\nA new session should:\n''',
+              '''## Review, CI, recovery, and handoff protocol for the next task\n\n- Candidate producer for the next implementation may be ChatGPT; producer self-review is required but is not the independent acceptance review.\n- OMP `eiu-reviewer` performs the independent read-only exact-SHA review. OMP main session may commit its result under `project_control/reviews/` so ChatGPT can consume findings directly from GitHub.\n- Designated immutable pre-task recovery ref: `checkpoint/pre-S04-004-001`. It must point to the final governance baseline before any S04-004 application edit.\n- After OMP review PASS and exact-SHA CI PASS on the same candidate, OMP main creates `checkpoint/S04-004-accepted-001` (or the next numbered accepted checkpoint after a later repair). Existing checkpoint refs are never force-moved.\n- Repair verification is targeted; unrelated prior PASS domains remain closed unless changed code/dependency/shared-contract or concrete regression evidence reopens them.\n- Final task CI is impact-selected by affected domain; slice-closing review may deliberately broaden via `[full-ci]`.\n- If the active assistant/session approaches context pressure, finish an atomic recoverable SHA, refresh durable state plus this snapshot, and hand off before starting another risky phase.\n\n## Resume protocol\n\nA new session should:\n''',
+              'CURRENT_STATE protocol section',
+          )
+
+          replace_one(
+              'project_control/CURRENT_STATE.md',
+              '''8. continue S04-004 implementation → focused verification → independent implementation review → repair/re-review if needed → serialized integration → exact-SHA CI → next safe frontier.\n''',
+              '''8. verify `checkpoint/pre-S04-004-001` resolves to the final governance baseline before any application edit;\n9. continue S04-004 implementation → focused verification → ChatGPT producer self-review/repair → OMP read-only exact-SHA review persisted by OMP main under `project_control/reviews/` → targeted repair/re-review if needed → impact-selected exact-SHA CI → immutable accepted checkpoint → slice-closing review if S04 completes.\n''',
+              'CURRENT_STATE resume lifecycle',
+          )
+
+          replace_one(
+              'project_control/CURRENT_STATE.md',
+              '''Use the released `SLICE-04_TASK-004_v3.md` and dispatch `TASK-S04-004` from the reconciled safe frontier under active AUTONOMOUS governance.\n''',
+              '''Verify `checkpoint/pre-S04-004-001` points to this final governance baseline, then use `SLICE-04_TASK-004_v3.md` to dispatch `TASK-S04-004` under the producer-self-review → OMP independent review → impact-selected exact-SHA CI → immutable accepted-checkpoint lifecycle.\n''',
+              'CURRENT_STATE next action',
+          )
+
+          # Governance CI: collapse rapid superseded pushes.
+          governance_ci = Path('.github/workflows/governance-ci.yml')
+          g = governance_ci.read_text(encoding='utf-8')
+          old = '''permissions:\n  contents: read\n\njobs:\n'''
+          new = '''permissions:\n  contents: read\n\nconcurrency:\n  group: governance-ci-${{ github.ref }}\n  cancel-in-progress: true\n\njobs:\n'''
+          if g.count(old) != 1:
+              raise SystemExit(f'governance CI concurrency anchor count={g.count(old)}')
+          governance_ci.write_text(g.replace(old, new, 1), encoding='utf-8')
+
+          # Integration CI: select impacted domains, never narrow via markers, and remove unused browser install.
+          integration = r'''name: Integration CI
+
+on:
+  push:
+    branches:
+      - autonomy/continuous-integration-20260905-01
+  workflow_dispatch:
+    inputs:
+      full_verification:
+        description: "Broaden to web + database verification for an explicit slice/shared-contract gate"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  impact:
+    name: Resolve impacted verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      web: ${{ steps.scope.outputs.web }}
+      db: ${{ steps.scope.outputs.db }}
+    steps:
+      - name: Checkout impact range
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 2
+
+      - name: Resolve impacted domains
+        id: scope
+        shell: bash
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.full_verification || false }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message || '' }}
+        run: |
+          set -euo pipefail
+
+          web=false
+          db=false
+          force_full=false
+
+          if [ "$FORCE_FULL" = "true" ] || grep -Fq '[full-ci]' <<< "$COMMIT_MESSAGE"; then
+            force_full=true
+          fi
+
+          if [ "$force_full" = "true" ]; then
+            web=true
+            db=true
+            printf '%s\n' 'FULL VERIFICATION REQUESTED (broadening only)'
+          else
+            base="$BEFORE"
+            zero=0000000000000000000000000000000000000000
+            if [ -z "$base" ] || [ "$base" = "$zero" ]; then
+              base="$(git rev-parse HEAD^)"
+            else
+              git fetch origin "$base" --depth=1 || true
+            fi
+
+            git diff --name-only "$base" "$AFTER" > /tmp/changed-files.txt
+            printf '%s\n' 'Changed files:'
+            cat /tmp/changed-files.txt
+
+            while IFS= read -r path; do
+              [ -n "$path" ] || continue
+              case "$path" in
+                web/*)
+                  web=true
+                  ;;
+                supabase/*)
+                  db=true
+                  ;;
+                recruitment_webapp/*)
+                  # Canonical product/source changes can affect both application and DB contracts.
+                  web=true
+                  db=true
+                  ;;
+                .github/workflows/integration-ci.yml)
+                  # A verification-policy change validates both paths once.
+                  web=true
+                  db=true
+                  ;;
+                AGENTS.md|REVIEW.md|SKILLS.md|SKILLS_LOCK.yaml|.omp/*|.agents/*|project_control/*|.github/workflows/governance-ci.yml)
+                  # Governance-only changes are covered by Governance CI on this branch.
+                  ;;
+                .github/*)
+                  # Unknown CI/tooling changes fail safe by broadening.
+                  web=true
+                  db=true
+                  ;;
+                *)
+                  # Unknown root/shared surfaces fail safe by broadening; no marker may narrow this.
+                  web=true
+                  db=true
+                  ;;
+              esac
+            done < /tmp/changed-files.txt
+          fi
+
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "db=$db" >> "$GITHUB_OUTPUT"
+          echo "Resolved impact: web=$web db=$db"
+
+  verify-web:
+    name: Web verification
+    needs: impact
+    if: needs.impact.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Ensure npm 11.19.0
+        shell: bash
+        run: |
+          if [ "$(npm --version)" != "11.19.0" ]; then
+            npm install --global npm@11.19.0
+          fi
+          test "$(npm --version)" = "11.19.0"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Test affected web domain acceptance set
+        run: npm run test
+
+  db-integration:
+    name: Database integration
+    needs: impact
+    if: needs.impact.outputs.db == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Replay migrations from zero
+        run: supabase db reset
+
+      - name: Execute PRE-S04 Database Integration & Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+'''
+          Path('.github/workflows/integration-ci.yml').write_text(integration, encoding='utf-8')
+
+          # Compact implementation changelog; no new authority file.
+          changelog = Path('project_control/CHANGELOG_IMPLEMENTATION.md')
+          c = changelog.read_text(encoding='utf-8')
+          marker = '## 2026-09-08 — Review, checkpoint, CI-economy, and safe-handoff protocol'
+          if marker in c:
+              raise SystemExit('changelog protocol marker already exists')
+          c += '''\n\n## 2026-09-08 — Review, checkpoint, CI-economy, and safe-handoff protocol\n\n- Formalized producer self-review followed by separate read-only OMP exact-SHA review; producer self-review is not independent acceptance evidence.\n- OMP main session owns GitHub review-artifact persistence plus immutable pre-task/accepted checkpoint refs; accepted checkpoint binds OMP review SHA, CI SHA, and checkpoint SHA.\n- Independent review waves may contain up to two dependency-independent candidates with separate verdicts; downstream work cannot consume an unaccepted dependency.\n- Formalized targeted repair verification: unrelated prior PASS areas remain closed unless changed code/dependency/shared invariant or concrete regression evidence reopens them.\n- Integration CI now resolves impacted web/database domains before dispatching expensive jobs; `[full-ci]` only broadens scope for explicit slice/shared-contract gates.\n- Removed unused Playwright Chromium installation from normal Integration CI; browser QA remains an explicit task/slice verification concern.\n- Added safe context-pressure/cross-session handoff rule using Git + existing durable authorities + CURRENT_STATE, without creating a second memory/state authority.\n'''
+          changelog.write_text(c, encoding='utf-8')
+          PY
+
+          python project_control/validate_omp_native.py
+          python project_control/validate_control_plane.py
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
+          for p in ('.github/workflows/governance-ci.yml', '.github/workflows/integration-ci.yml'):
+              yaml.safe_load(Path(p).read_text(encoding='utf-8'))
+              print(f'YAML parse PASS: {p}')
+          PY
+          git diff --check
+          expected=$'.github/workflows/governance-ci.yml\n.github/workflows/integration-ci.yml\n.omp/RULES.md\nAGENTS.md\nREVIEW.md\nproject_control/AUTONOMY_PARALLEL_GOVERNANCE.md\nproject_control/AUTONOMY_RUN_STATE.yaml\nproject_control/CHANGELOG_IMPLEMENTATION.md\nproject_control/CURRENT_STATE.md'
+          test "$(git diff --name-only | sort)" = "$expected"
+
+      - name: Commit protocol patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/governance-ci.yml .github/workflows/integration-ci.yml .omp/RULES.md AGENTS.md REVIEW.md project_control/AUTONOMY_PARALLEL_GOVERNANCE.md project_control/AUTONOMY_RUN_STATE.yaml project_control/CHANGELOG_IMPLEMENTATION.md project_control/CURRENT_STATE.md
+          git diff --cached --check
+          git commit -m "chore: formalize review CI and safe handoff protocol [skip-review-ci-protocol]"
+          git push origin HEAD:maintenance/review-ci-handoff-protocol-001
