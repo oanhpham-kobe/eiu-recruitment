@@ -29,9 +29,14 @@ jobs:
       - name: Install web dependencies
         working-directory: web
         run: npm ci
+      - name: Install Chromium for affected browser tests
+        working-directory: web
+        run: npx playwright install chromium
       - name: Configure one-shot commit identity
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-      - name: Apply and verify DS-004
-        run: python project_control/tools/ds004_patch.py
+      - name: Apply and verify DS-004 affected scope
+        run: |
+          python project_control/tools/ds004_retry_fix.py
+          python project_control/tools/ds004_patch.py
