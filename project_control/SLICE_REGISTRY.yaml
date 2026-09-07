@@ -11,7 +11,7 @@ slices:
     current_task: TASK-S01-005
   SLICE-02: {name: Candidate Form / Submission / Privacy / Documents, status: DONE, current_task: TASK-S02-005}
   SLICE-03: {name: HR Application Inbox / Application, status: DONE, current_task: TASK-S03-006}
-  SLICE-04: {name: Interview Scheduling / Participants / Copy / Reactivate, status: IN_PROGRESS, current_task: TASK-S04-005}
+  SLICE-04: {name: Interview Scheduling / Participants / Copy / Reactivate, status: IN_PROGRESS, current_task: TASK-S04-004}
   SLICE-05: {name: Interviewer Reports / HR Report / Final Decision, status: NOT_STARTED}
   SLICE-06: {name: Master Data / Users & Permissions, status: NOT_STARTED}
   SLICE-07: {name: Email / Documents / Activity / Workers, status: NOT_STARTED}
