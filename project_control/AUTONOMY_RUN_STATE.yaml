@@ -50,6 +50,26 @@ plan_reconciliation:
   independent_review: "PASS (ChatGPT exact-source reconciliation re-review; blockers: NONE)"
   feature_dispatch: RELEASED
 
+design_system_hardening:
+  initiative_id: DESIGN-SYSTEM-HARDENING-001
+  status: IN_PROGRESS
+  owner_sequencing_decision: "2026-09-08: harden the production Design System before TASK-S04-004, then resume S04-004 immediately after DS acceptance."
+  baseline_sha: "8897d08f01b9f4738500eecfd6170dc0a9c77f54"
+  pre_hardening_checkpoint: checkpoint/pre-design-system-hardening-001
+  canonical_design_system: "v1.8 CURRENT"
+  responsive_reference: "v1.10 executable UX/UAT evidence"
+  product_source_reopen_required: false
+  design_source_reopen_required: false
+  task_dag:
+    - TASK-DS-001
+    - TASK-DS-002
+    - TASK-DS-003
+    - TASK-DS-004
+    - TASK-DS-005
+    - TASK-DS-006
+  exit_checkpoint: checkpoint/design-system-production-ready-001
+  blocked_frontier_after_acceptance: TASK-S04-004
+
 active_workers: []
 
 worker_settled_history:
@@ -161,6 +181,7 @@ historical_mcp_governance_maintenance:
   ci_result: PASS
 safe_frontier:
   eligible_tasks:
+    - TASK-DS-001
+  skipped_due_to_dependency:
     - TASK-S04-004
-  skipped_due_to_dependency: []
-next_action: "Before any TASK-S04-004 application edit, verify immutable recovery ref checkpoint/pre-S04-004-001 points to the final reviewed governance baseline; then dispatch TASK-S04-004 using project_control/prompts/SLICE-04_TASK-004_v3.md under producer self-review -> OMP candidate review -> serialized integration -> final exact-SHA OMP acceptance re-review if SHA changes -> impact-selected exact-SHA CI -> immutable accepted-checkpoint."
+next_action: "Execute DESIGN-SYSTEM-HARDENING-001 from checkpoint/pre-design-system-hardening-001. Start TASK-DS-001; advance only through the materialized DAG and focused verification gates. TASK-S04-004 remains BLOCKED until TASK-DS-006 is DONE and checkpoint/design-system-production-ready-001 is created."
