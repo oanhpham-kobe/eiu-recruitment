@@ -26,6 +26,10 @@ venv/
 # GitNexus generated index
 .gitnexus/
 
+# Local Orca / Git linked worktrees
+# Worktrees are disposable local execution surfaces; durable task state lives in project_control/.
+.worktrees/
+
 # OS / editor
 .DS_Store
 Thumbs.db
