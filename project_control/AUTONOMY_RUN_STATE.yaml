@@ -39,12 +39,16 @@ authorization:
 
 plan_reconciliation:
   gate: PLAN_RECONCILIATION_GATE_S04_005
-  status: IN_PROGRESS
+  status: VERIFIED
   baseline_branch: governance/omp-native-reconstruction-001
   baseline_head: "3c3073b52a4f83a8a5318376125e94913792fdf3"
+  review_head: "a4d85a9033b3b54195265a893710d08a626ef9bb"
   accepted_implementation_through: TASK-S04-005
   canonical_source_reopen_required: false
-  feature_dispatch: HELD
+  prompt: project_control/prompts/SLICE-04_TASK-004_v3.md
+  prompt_sha256: "ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce"
+  independent_review: "PASS (ChatGPT exact-source reconciliation re-review; blockers: NONE)"
+  feature_dispatch: RELEASED
 
 active_workers: []
 
@@ -156,14 +160,7 @@ historical_mcp_governance_maintenance:
   ci_run_id: "33943629020"
   ci_result: PASS
 safe_frontier:
-  eligible_tasks: []
+  eligible_tasks:
+    - TASK-S04-004
   skipped_due_to_dependency: []
-  execution_hold: "PLAN_RECONCILIATION_GATE_S04_005"
-stop_state:
-  stop_gate: PLAN_RECONCILIATION_GATE_S04_005
-  reason: "Accepted implementation through TASK-S04-005 is being reconciled against current canonical source and downstream planning before TASK-S04-004 dispatch."
-  observed_evidence:
-    - "TASK-S04-005 ACCEPTED: exact integration CI 34039979411 PASS."
-    - "TASK-S04-005 implementation SHA ab6c5194d15eb29e2ee285106c6bef14f0291ec3 independently re-reviewed PASS."
-    - "Workspace/worktree consolidation maintenance completed and is no longer the active stop reason."
-next_action: "Complete source-to-implementation-to-plan reconciliation, independently review the rebaselined TASK-S04-004 prompt, and keep feature dispatch held until the reconciliation gate passes."
+next_action: "Dispatch TASK-S04-004 from the reconciled safe frontier using project_control/prompts/SLICE-04_TASK-004_v3.md under active AUTONOMOUS governance."

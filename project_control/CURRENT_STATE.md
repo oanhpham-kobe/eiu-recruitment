@@ -51,19 +51,20 @@ Exact integration CI:
 
 `34039979411 — PASS`
 
-## Current reconciliation gate
+## Plan reconciliation result and current frontier
 
-Current gate:
+`SOURCE → IMPLEMENTATION → PLAN RECONCILIATION @ TASK-S04-005` is **VERIFIED**.
 
-`SOURCE → IMPLEMENTATION → PLAN RECONCILIATION @ TASK-S04-005`
+- Accepted implementation is reconciled through `TASK-S04-005`.
+- No canonical Business Logic v1.2 / Technical Architecture v1.18 reopening was required.
+- The initial v2 prompt re-review found two blocking ambiguities (missing accepted `20260906060000` baseline and retry-key wording); both were repaired in v3.
+- Exact-source v3 re-review at `a4d85a9033b3b54195265a893710d08a626ef9bb` passed with no remaining blockers.
+- Authoritative task state is now `TASK-S04-004 = READY`.
+- Safe frontier is `TASK-S04-004`.
 
-Feature dispatch remains intentionally held while the accepted implementation through S04-005 is reconciled with task/slice/runtime/traceability/downstream planning.
-
-The original S04-004 prompt review correctly blocked dispatch until the application-reactivation and participant-contract repair was accepted. That dependency is now satisfied. A rebaselined prompt is being reviewed before the task is released:
+Released prompt:
 
 `project_control/prompts/SLICE-04_TASK-004_v3.md`
-
-Until the reconciliation/review gate passes, authoritative task state remains `BLOCKED`; this derived snapshot does not release work by itself.
 
 ## Workspace maintenance
 
@@ -98,10 +99,9 @@ A new session should:
 3. verify repository/branch/HEAD directly with Git;
 4. read `AUTONOMY_RUN_STATE.yaml`, `TASK_REGISTRY.yaml`, and `SLICE_REGISTRY.yaml` as authoritative execution/DAG truth;
 5. run `python project_control/validate_omp_native.py` and `python project_control/validate_control_plane.py`;
-6. confirm the `PLAN_RECONCILIATION_GATE_S04_005` state and exact accepted checkpoint;
-7. review the reconciliation diff and `SLICE-04_TASK-004_v3.md` against current canonical source and the accepted ordered migration chain through `20260906090000_application_reactivation_and_participant_contract_repair.sql`;
-8. if the reconciliation review passes with no source reopening, release S04-004 truthfully in the authoritative registries/run state;
-9. only then continue S04-004 implementation → focused verification → independent implementation review → repair/re-review if needed → serialized integration → exact-SHA CI → next safe frontier.
+6. confirm `plan_reconciliation.status = VERIFIED`, `TASK-S04-004 = READY`, and `safe_frontier = [TASK-S04-004]`;
+7. read `SLICE-04_TASK-004_v3.md` plus its canonical business/design/backend sources and the accepted ordered migration chain through `20260906090000_application_reactivation_and_participant_contract_repair.sql`;
+8. continue S04-004 implementation → focused verification → independent implementation review → repair/re-review if needed → serialized integration → exact-SHA CI → next safe frontier.
 
 ## Do not redo
 
@@ -113,4 +113,4 @@ A new session should:
 
 ## Next action
 
-Complete the S04-005 source-to-implementation-to-plan reconciliation and independent prompt/reconciliation review. Do not dispatch `TASK-S04-004` until that gate passes.
+Use the released `SLICE-04_TASK-004_v3.md` and dispatch `TASK-S04-004` from the reconciled safe frontier under active AUTONOMOUS governance.

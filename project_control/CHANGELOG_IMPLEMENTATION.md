@@ -128,3 +128,13 @@ This compact backfill records accepted checkpoints that were already present in 
 - Exact integration CI run: `34039979411` — PASS.
 - Workspace/worktree maintenance completed after S04-005 and is no longer an implementation stop reason.
 - Source-to-implementation-to-plan reconciliation started before releasing S04-004. No canonical Business Logic v1.2 / Technical Architecture v1.18 reopening was identified by the read-only audit that triggered this reconciliation.
+
+
+## 2026-09-08 — S04-005 source-to-plan reconciliation released
+
+- Reconciled task/slice/runtime/traceability/downstream prerequisite state against Full Handover v1.18 and accepted implementation through TASK-S04-005.
+- Confirmed no canonical Business Logic v1.2 / Technical Architecture v1.18 reopening is required.
+- Initial S04-004 v2 reconciliation review found two blocking prompt defects: omitted accepted migration `20260906060000_interview_schema_and_conflict_locking.sql` from the effective backend chain and ambiguous idempotency retry-key wording.
+- Repaired both defects in `project_control/prompts/SLICE-04_TASK-004_v3.md` (`ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce`).
+- Exact-source v3 re-review at reconciliation review head `a4d85a9033b3b54195265a893710d08a626ef9bb`: PASS, blockers NONE.
+- Released `TASK-S04-004` to READY and materialized it as the sole safe-frontier task.
