@@ -345,38 +345,13 @@
   outline-offset: 2px;
 }
 
-.btn-primary {
-  background-color: var(--eiu-blue);
-  color: #ffffff;
-  border: 1px solid var(--eiu-blue);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: #0d2f4d;
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background-color: #ffffff;
-  color: var(--ink-950);
-  border: 1px solid var(--line);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: var(--canvas);
-}
-
-.btn-danger {
+.candidate-btn-danger {
   background-color: var(--status-danger-bg);
   color: var(--status-danger-text);
   border: 1px solid var(--status-danger-text);
 }
 
-.btn-danger:hover {
+.candidate-btn-danger:hover {
   background-color: #f2ccc3;
 }
 
@@ -408,17 +383,6 @@
 }
 
 /* Badges */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--badge-min-height);
-  padding: 4px 12px;
-  border-radius: 4px;
-  font-size: var(--font-size-badge);
-  font-weight: var(--font-weight-semibold);
-  text-align: center;
-}
 
 .badge-new {
   background-color: var(--status-info-bg);

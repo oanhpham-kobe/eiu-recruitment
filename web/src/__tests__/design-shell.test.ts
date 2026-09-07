@@ -24,5 +24,5 @@ test("internal mobile navigation is modal, inert and focus restoring", () => {
   assert.match(mobile, /event\.key === "Escape"/);
   assert.match(mobile, /internal-nav-trigger/);
   assert.match(css, /@media \(max-width: 1024px\)/);
-  assert.match(css, /\.shell-main \{ margin-left: 0; \}/);
+  assert.match(css, /\.shell-main\s*\{[\s\S]*?margin-left:\s*0;[\s\S]*?\}/);
 });

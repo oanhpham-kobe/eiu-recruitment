@@ -97,11 +97,11 @@ export function SubmissionsList({
           style={{
             padding: "32px",
             textAlign: "center",
-            backgroundColor: "var(--canvas, #f8f6f1)",
+            backgroundColor: "var(--canvas)",
             borderRadius: "8px",
           }}
         >
-          <p style={{ fontSize: "16px", color: "var(--ink-600, #68686b)" }}>
+          <p style={{ fontSize: "16px", color: "var(--ink-600)" }}>
             Bạn chưa có hồ sơ nào được ghi nhận trong hệ thống.
           </p>
           {onNewApplication && (

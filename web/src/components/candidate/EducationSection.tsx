@@ -70,7 +70,7 @@ export function EducationSection({
               <span className="education-title">Học vấn #{index + 1}</span>
               <button
                 type="button"
-                className="btn btn-danger btn-sm"
+                className="btn candidate-btn-danger btn-sm"
                 onClick={() => handleRemove(index)}
                 disabled={disabled}
                 aria-label={`Xóa mục học vấn ${index + 1}`}

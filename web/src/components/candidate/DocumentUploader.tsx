@@ -252,12 +252,12 @@ export function DocumentUploader({
         <div
           role="alert"
           style={{
-            backgroundColor: "var(--status-warning-bg, #fff0de)",
-            color: "var(--status-warning-text, #8a4f00)",
+            backgroundColor: "var(--status-warning-bg)",
+            color: "var(--status-warning-text)",
             padding: "10px 14px",
             borderRadius: "6px",
             marginBottom: "16px",
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: 600,
           }}
         >
@@ -270,12 +270,12 @@ export function DocumentUploader({
         <div
           role="alert"
           style={{
-            backgroundColor: "var(--status-danger-bg, #f8e5e0)",
-            color: "var(--status-danger-text, #b44425)",
+            backgroundColor: "var(--status-danger-bg)",
+            color: "var(--status-danger-text)",
             padding: "10px 14px",
             borderRadius: "6px",
             marginBottom: "16px",
-            fontSize: "14px",
+            fontSize: "16px",
           }}
         >
           {uploadError}
@@ -344,9 +344,9 @@ export function DocumentUploader({
                   <span
                     style={{
                       marginLeft: "8px",
-                      fontSize: "12px",
-                      backgroundColor: "var(--status-info-bg, #e5edf5)",
-                      color: "var(--eiu-blue, #144069)",
+                      fontSize: "14px",
+                      backgroundColor: "var(--status-info-bg)",
+                      color: "var(--eiu-blue)",
                       padding: "2px 6px",
                       borderRadius: "4px",
                     }}
@@ -357,8 +357,8 @@ export function DocumentUploader({
               </div>
               <button
                 type="button"
-                className="btn btn-danger"
-                style={{ minHeight: "36px", padding: "4px 12px" }}
+                className="btn candidate-btn-danger"
+                style={{ minHeight: "44px", padding: "8px 12px" }}
                 onClick={() => void handleRemove(idx)}
                 disabled={disabled || uploading}
                 aria-label={`Xóa tệp ${doc.filename}`}
