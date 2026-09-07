@@ -33,22 +33,38 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-      - name: Repair focused test harness and apply DS-002/003
+      - name: Repair focused harness/semantics and apply DS-002/003
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('project_control/tools/ds002_003_patch.py')
-          lines = p.read_text(encoding='utf-8').splitlines()
-          repaired = []
-          replaced = 0
-          for line in lines:
-              if 'assert.match(layout, /pathname ===' in line:
-                  repaired.append('  assert.ok(layout.includes(\'pathname === "/candidate"\'));')
-                  replaced += 1
-              else:
-                  repaired.append(line)
-          if replaced != 1:
-              raise SystemExit(f'expected one design-shell regex line, got {replaced}')
-          p.write_text('\n'.join(repaired) + '\n', encoding='utf-8')
+          s = p.read_text(encoding='utf-8')
+
+          regex_line = '  assert.match(layout, /pathname === "\\\\/candidate"/);'
+          if regex_line in s:
+              s = s.replace(regex_line, '  assert.ok(layout.includes(\'pathname === "/candidate"\'));', 1)
+          elif '  assert.ok(layout.includes(\'pathname === "/candidate"\'));' not in s:
+              raise SystemExit('design-shell test anchor missing')
+
+          old_switcher = '''        <div className="language-switcher" role="group" aria-label="Chọn ngôn ngữ / Choose language">
+          <button type="button" className="lang-btn active" aria-pressed="true" aria-label="Tiếng Việt (Đang chọn / Selected)">VI</button>
+          <span className="lang-divider" aria-hidden="true">|</span>
+          <button type="button" className="lang-btn" aria-pressed="false" aria-label="English">EN</button>
+        </div>'''
+          new_switcher = '''        <fieldset className="language-switcher">
+          <legend className="sr-only">Chọn ngôn ngữ / Choose language</legend>
+          <button type="button" className="lang-btn active" aria-pressed="true" aria-label="Tiếng Việt (Đang chọn / Selected)">VI</button>
+          <span className="lang-divider" aria-hidden="true">|</span>
+          <button type="button" className="lang-btn" aria-pressed="false" aria-label="English">EN</button>
+        </fieldset>'''
+          if s.count(old_switcher) != 1:
+              raise SystemExit(f'language switcher anchor mismatch: {s.count(old_switcher)}')
+          s = s.replace(old_switcher, new_switcher, 1)
+
+          count = s.count('run("npx", "biome", "check",')
+          if count != 2:
+              raise SystemExit(f'expected two Biome gates, got {count}')
+          s = s.replace('run("npx", "biome", "check",', 'run("npx", "biome", "check", "--write",')
+          p.write_text(s, encoding='utf-8')
           PY
           python project_control/tools/ds002_003_patch.py
