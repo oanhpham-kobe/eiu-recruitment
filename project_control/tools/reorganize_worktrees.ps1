@@ -19,7 +19,21 @@ function Invoke-Git {
         throw "git $($Arguments -join ' ') failed in '$WorkingDirectory' with exit code $exitCode`n$($output -join "`n")"
     }
 
+    if ($null -eq $output) {
+        return @()
+    }
+
     return @($output)
+}
+
+function Get-FirstLine {
+    param([Parameter(Mandatory = $true)][object[]]$Lines)
+
+    if ($Lines.Count -eq 0 -or $null -eq $Lines[0]) {
+        return ""
+    }
+
+    return [string]$Lines[0]
 }
 
 function Normalize-Path {
@@ -97,7 +111,12 @@ function Get-Category {
     return 'other'
 }
 
-$repoRoot = (Invoke-Git -WorkingDirectory (Get-Location).Path -Arguments @('rev-parse', '--show-toplevel'))[0].Trim()
+$rootLines = Invoke-Git -WorkingDirectory (Get-Location).Path -Arguments @('rev-parse', '--show-toplevel')
+$repoRoot = (Get-FirstLine -Lines $rootLines).Trim()
+if (-not $repoRoot) {
+    throw 'Could not resolve the repository root.'
+}
+
 $repoRoot = Normalize-Path $repoRoot
 $destinationRootFull = Normalize-Path (Join-Path $repoRoot $DestinationRoot)
 
@@ -163,9 +182,9 @@ foreach ($record in $worktreesBefore) {
         throw "Destination collision: '$destination' already exists. Nothing has been moved."
     }
 
-    $actualHead = (Invoke-Git -WorkingDirectory $source -Arguments @('rev-parse', 'HEAD'))[0].Trim()
-    $actualBranch = (Invoke-Git -WorkingDirectory $source -Arguments @('branch', '--show-current'))[0].Trim()
-    $statusLines = Invoke-Git -WorkingDirectory $source -Arguments @('status', '--porcelain=v1')
+    $actualHead = (Get-FirstLine -Lines (Invoke-Git -WorkingDirectory $source -Arguments @('rev-parse', 'HEAD'))).Trim()
+    $actualBranch = (Get-FirstLine -Lines (Invoke-Git -WorkingDirectory $source -Arguments @('branch', '--show-current'))).Trim()
+    $statusLines = @(Invoke-Git -WorkingDirectory $source -Arguments @('status', '--porcelain=v1'))
 
     if ($actualHead -ne $record.Head) {
         throw "HEAD mismatch before move for '$source': worktree list=$($record.Head), actual=$actualHead"
@@ -181,7 +200,7 @@ foreach ($record in $worktreesBefore) {
         Category = $category
         Branch = $(if ($record.Detached) { '(detached)' } else { $actualBranch })
         Head = $actualHead
-        DirtyEntries = @($statusLines).Count
+        DirtyEntries = $statusLines.Count
     }
 }
 
@@ -222,8 +241,8 @@ foreach ($plan in $plans) {
     Write-Host "MOVE: $($plan.Source) -> $($plan.Destination)"
     Invoke-Git -WorkingDirectory $repoRoot -Arguments @('worktree', 'move', $plan.Source, $plan.Destination) | Out-Null
 
-    $newHead = (Invoke-Git -WorkingDirectory $plan.Destination -Arguments @('rev-parse', 'HEAD'))[0].Trim()
-    $newBranch = (Invoke-Git -WorkingDirectory $plan.Destination -Arguments @('branch', '--show-current'))[0].Trim()
+    $newHead = (Get-FirstLine -Lines (Invoke-Git -WorkingDirectory $plan.Destination -Arguments @('rev-parse', 'HEAD'))).Trim()
+    $newBranch = (Get-FirstLine -Lines (Invoke-Git -WorkingDirectory $plan.Destination -Arguments @('branch', '--show-current'))).Trim()
 
     if ($newHead -ne $plan.Head) {
         throw "Post-move HEAD verification failed for '$($plan.Destination)': expected $($plan.Head), got $newHead"
