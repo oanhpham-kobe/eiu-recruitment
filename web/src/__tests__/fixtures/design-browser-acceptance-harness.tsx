@@ -249,7 +249,11 @@ function LoginHarness() {
 }
 
 const mode = document.body.dataset.harness;
-const root = createRoot(document.getElementById("root")!);
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Design browser acceptance root element is missing");
+}
+const root = createRoot(rootElement);
 if (mode === "candidate") root.render(<CandidateHarness />);
 else if (mode === "login") root.render(<LoginHarness />);
 else root.render(<InternalHarness />);
