@@ -10,13 +10,7 @@
   min-height: 100vh;
   width: 100%;
   background: linear-gradient(135deg, #f8fbfd, #eef4f8);
-  font-family: var(
-    --font-stack,
-    "Be Vietnam Pro",
-    "Segoe UI",
-    system-ui,
-    sans-serif
-  );
+  font-family: var(--font-sans);
   color: var(--ink-950);
 }
 
@@ -326,7 +320,7 @@
 
 .login-alert-desc {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 /* -------------------------------------------------------------------------
@@ -483,7 +477,7 @@
   background: none;
   border: none;
   padding: 8px 4px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   font-family: inherit;
   color: var(--eiu-blue);
@@ -511,7 +505,7 @@
   border-radius: 10px;
   padding: 16px;
   margin-bottom: 24px;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
   color: var(--ink-950);
 }
@@ -553,7 +547,7 @@
   }
 
   .login-brand-panel .brand-panel-desc {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .login-brand-panel .brand-panel-footer {
