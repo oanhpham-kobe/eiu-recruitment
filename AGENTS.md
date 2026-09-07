@@ -1,959 +1,275 @@
-# AGENTS.md — EIU Recruitment Agent Instructions
+# AGENTS.md — EIU Recruitment Agent Contract
 
 ## Purpose
 
-This is the portable repository-level instruction and skill-routing contract for AI coding agents.
+This repository uses **oh-my-pi (OMP)** as the coding runtime inside a worktree and **Orca** for cross-worktree orchestration when needed. The current canonical project sources remain the business, product, design, security, and architecture authority.
 
-The project is developed primarily with:
-
-- **Orca** for worktrees, handoffs, and multi-agent orchestration.
-- **oh-my-pi (OMP)** as the primary coding-agent runtime.
-- **Supabase** for PostgreSQL, Auth, and Storage.
-- **Vercel** for deployment.
-- **Google OAuth through Supabase Auth** where required by the current project sources.
-
-The **current canonical project sources** are the Source of Truth. They are updated over time. Never hardcode or assume an older source version from memory.
+This file defines repository rules. It does not replace OMP's native Todo, skill discovery, task-agent, review, tool, or MCP runtime.
 
 ---
 
-# 1. Instruction Precedence
+## 1. Authority and source freshness
 
-Use this order when instructions conflict:
+Use this precedence when instructions conflict:
 
-1. Non-bypassable project security, authorization, privacy, data-integrity,
-   concurrency, accessibility, secret-handling, production, destructive-action,
-   and external-authorization boundaries.
-2. An explicit Owner-authorized request to CHANGE one of those canonical
-   contracts, but only through the controlled canonical-source/change process;
-   such a request authorizes changing the source contract and does not silently
-   override the existing contract during implementation.
-3. Current canonical project sources.
-4. Explicit user instruction for the current task, provided it remains within
-   the hard boundaries and frozen/current source contracts above.
-5. This AGENTS.md.
-6. REVIEW.md.
-7. Task-specific selected skills.
-8. Heuristic overlays.
-9. Generic framework/community best practices.
+1. non-bypassable security, authorization, privacy, data-integrity, concurrency, accessibility, secret, production, and destructive-action boundaries;
+2. current canonical project sources;
+3. explicit Owner instruction for the current work, when compatible with the boundaries above;
+4. this `AGENTS.md` and `REVIEW.md`;
+5. task-specific OMP skills;
+6. generic framework/community guidance.
 
-An ordinary task instruction must never bypass RLS, authorization, privacy,
-data-integrity, lock/idempotency, accessibility, secret, production, or
-destructive-operation boundaries.
+Before a non-trivial implementation or review:
 
-When Owner explicitly authorizes a business/source-contract change, update the
-canonical source first (or in the same controlled source-hotfix change) and
-then implement against that updated authority. Do not treat chat/task wording
-as a hidden runtime override of stale canonical source.
----
+- locate and read the current canonical source sections that govern the behavior;
+- inspect the current implementation and affected tests/migrations;
+- treat stale plans, old prompts, old review notes, and model memory as non-authoritative;
+- if an Owner-authorized change reopens a canonical contract, update that contract through the controlled source-change path rather than silently overriding it in code.
 
-# 2. Source Freshness Rule
-
-Before any non-trivial change:
-
-1. Locate the current canonical project sources.
-2. Read the sections relevant to the requested behavior.
-3. Search for related:
-   - business invariants;
-   - permission rules;
-   - command contracts;
-   - status rules;
-   - data model constraints;
-   - concurrency/idempotency rules;
-   - storage/privacy rules;
-   - design/accessibility rules;
-   - acceptance criteria.
-4. Treat current source content as newer than:
-   - prior chat memory;
-   - old review notes;
-   - old implementation plans;
-   - old ADRs;
-   - old generated agent instructions.
-5. If code and current source disagree:
-   - implementation task → implement the current contract;
-   - review task → report the mismatch;
-   - source-contract change → treat as an explicit change request.
-
-Do not embed source filenames or version numbers into permanent agent rules.
+Skills are advisory capability packs. They never become a second business or design source of truth.
 
 ---
 
-# 3. Orca + OMP Responsibility Split
+## 2. OMP-native runtime ownership
 
-## Orca owns
+### Main OMP session owns
 
-Use Orca when Orca-managed state matters:
+The top-level OMP session owns:
 
-- worktree creation and lifecycle;
-- terminal/workspace handoff;
-- cross-worktree parallel implementation;
-- structured multi-agent task DAGs;
-- coordinator/worker messaging;
-- Orca embedded browser and artifacts.
+- the visible native Todo;
+- decomposition of the current user/requested work;
+- selection and dispatch of task agents;
+- acceptance of subagent results;
+- focused verification;
+- review/repair coordination;
+- integration and next-frontier decisions when authorized.
 
-Use the Orca runtime skills:
+For work with three or more distinct steps, use the native Todo. Project settings in `.omp/config.yml` intentionally enable eager Todo creation so implementation starts with a visible phased plan.
 
-- `orca-cli` — worktrees, terminals, handoffs, embedded browser, Orca-managed state.
-- `orchestration` — structured multi-agent coordination and task DAGs.
+Todo is session execution state. It does **not** replace durable project state in `project_control/`.
 
-Always load the version-matched Orca guide from the installed binary before using Orca commands. Do not guess Orca flags from memory.
+### Subagents own bounded delegated work
 
-## OMP owns
+OMP task agents are workers. They:
 
-Use OMP for work inside one coding worktree:
+- receive a self-contained assignment;
+- inspect and modify only the delegated scope;
+- use their autoloaded or on-demand skills;
+- perform focused verification appropriate to the assignment;
+- return evidence and blockers to the parent.
 
-- code editing;
-- LSP symbol navigation and refactoring;
-- debugging;
-- tests and command execution;
-- on-demand skills;
-- MCP tools;
-- bounded subagents;
-- advisor/reviewer workflows;
-- context/memory management.
+Subagents do **not** own:
 
+- the parent Todo;
+- the autonomous safe frontier;
+- project-wide task scheduling;
+- integration-branch acceptance;
+- dispatch of the next project task unless the parent explicitly delegates that responsibility.
 
-## Planner / Executor / Owner Decision Boundary
+Do not recreate Todo state inside subagent prompts or evidence files.
 
-Classify work before authoring or executing a task.
-
-### Existing defect / review finding
-
-When the exact current source/runtime evidence is sufficient to determine the
-repair, the Planner/Reviewer MUST provide a DIRECT REPAIR:
-
-- exact file;
-- exact symbol/section;
-- exact wrong behavior;
-- exact required replacement/change;
-- exact verification.
-
-Do not send "investigate/fix appropriately" back to an Executor when the
-correct repair is already known.
-
-Use an investigation/discovery step only when the exact implementation source
-or runtime evidence is genuinely unavailable, or when the canonical contract
-does not resolve the technical choice.
-
-### New implementation task
-
-For a NEW task, the Planner defines WHAT must be true and the governance,
-scope, non-goals, source references, acceptance criteria, and evidence route.
-
-The Planner MUST NOT unnecessarily design the implementation for the Executor
-when the canonical source leaves ordinary implementation choices open.
-
-The Executor MUST read the current canonical plan/source, inspect current
-implementation, apply central governance, and choose the implementation within
-the frozen/current contracts.
-
-Implementation details explicitly frozen by canonical source remain mandatory.
-
-If the new implementation later fails review and the repair becomes knowable,
-switch to DIRECT REPAIR mode.
-
-### Owner decision
-
-Escalate only genuine Owner decisions, including business/product/policy,
-privacy/legal wording, scope change, architecture reopening, production/main
-authorization, destructive external operations, billing, or another explicit
-authorization boundary.
-
-Do not escalate ordinary technical choices that current source/evidence can
-resolve.
-## Multi-writer rule
-
-**Never let multiple agents concurrently write the same worktree.**
-
-Use:
-
-- Orca orchestration for parallel work on separate worktrees or independently owned tasks.
-- OMP subagents/advisor for bounded analysis/review around one primary writer.
-
-If tasks touch the same files, schema objects, migrations, or shared contract, serialize ownership or explicitly coordinate the merge boundary.
-
-
-## Execution mode
-
-`AUTONOMOUS` and `BOUNDED` are the only execution modes. Task type is
-orthogonal: FEATURE, BUGFIX, or HOTFIX does not create a third mode.
-
-- `AUTONOMOUS` uses the continuous lifecycle, including the OMP implementation
-  reviewer and targeted exact-SHA re-review after a bounded repair.
-- `BOUNDED` executes only the Planner-authorized work set, verifies, commits,
-  reports, and stops. It never schedules an internal implementation reviewer or
-  repair/re-review chain. Integration or CI occurs only when the bounded prompt
-  explicitly authorizes it; no next-frontier task is inferred or dispatched.
-
-The runtime `execution_mode` and the detailed lifecycle rules live only in:
-- `project_control/AUTONOMY_PARALLEL_GOVERNANCE.md`
-- `project_control/AUTONOMY_RUN_STATE.yaml`
-
-For scheduling, task-start, review, repair, integration, or CI decisions, read
-those two authorities before acting. `TASK_REGISTRY.yaml` and
-`SLICE_REGISTRY.yaml` remain the DAG/slice authority. Derived or summary
-documents cannot override these canonical surfaces.
 ---
 
-# 4. OMP-Native Project Layout
+## 3. OMP project layout
 
-The recommended project setup is:
+Canonical OMP integration surfaces are:
 
 ```text
 repo/
 ├─ AGENTS.md
 ├─ REVIEW.md
 ├─ SKILLS.md
+├─ SKILLS_LOCK.yaml          # provenance/integrity metadata only
 ├─ .agents/
 │  └─ skills/
 └─ .omp/
-   ├─ AGENTS.md
-   ├─ RULES.md
+   ├─ AGENTS.md              # imports root AGENTS.md
+   ├─ RULES.md               # short sticky invariants
    ├─ WATCHDOG.md
-   └─ mcp.json
+   ├─ config.yml             # project OMP settings
+   ├─ mcp.json
+   └─ agents/                # OMP-native project task agents
 ```
 
-Rules:
+Project skills live one level below `.agents/skills/`:
 
-- `AGENTS.md` at project root is the portable canonical agent instruction file.
-- `.omp/AGENTS.md` imports the root file so OMP uses native high-priority discovery without duplicating content.
-- `.omp/RULES.md` contains only short sticky hard rules.
-- `.omp/WATCHDOG.md` contains advisor-only review guidance.
-- `.agents/skills/` is the **single canonical project skill home**.
-- Do not duplicate the same skill into `.claude/skills`, `.codex`, `.omp/skills`, and `.agents/skills`.
+```text
+.agents/skills/<skill-name>/SKILL.md
+```
 
-OMP discovers skills by name and resolves collisions by provider precedence. Duplicate copies create drift and warnings even when one copy wins.
+Each skill must have a unique `name` and a useful `description` in frontmatter.
+
+Do not copy the same skill into multiple project providers. OMP already discovers providers and resolves same-name collisions by provider precedence.
+
+`SKILLS_LOCK.yaml` is **not** a runtime resolver. Never make an executor manually resolve a filesystem skill path from that file.
 
 ---
 
-# 5. Next.js Version-Matched Documentation
+## 4. Native skill usage
 
-Do **not** install the old `next-best-practices` skill.
+OMP discovers skill metadata at session startup and exposes skill content through `skill://<name>` and `/skill:<name>`.
 
-Vercel has retired it. Modern Next.js uses version-matched bundled documentation and managed `AGENTS.md` rules.
+Use skills in two ways:
 
-Before material Next.js framework work:
+1. **Agent specialization:** `.omp/agents/*.md` declares `autoloadSkills`; OMP injects those skills before the child agent's first task prompt.
+2. **On-demand specialization:** the main session or a worker reads `skill://<name>` when a newly discovered concern enters that domain.
 
-1. Inspect the installed `next` version.
-2. Prefer the documentation that matches the installed framework version.
-3. Then use `documentation-lookup` for current external clarification when needed.
+Do not maintain a parallel `AVAILABLE / LOADED / APPLIED` receipt protocol. Runtime loading belongs to OMP. Evidence should describe the implementation/test/review decision, not ask the worker to self-certify a synthetic loader state.
 
-## Next.js 16.3+
+### Database / Supabase work
 
-`next dev` can maintain a managed Next.js rule block inside root `AGENTS.md` that directs agents to:
+Use `eiu-db-executor` for material Supabase/PostgreSQL implementation. It autoloads:
 
-```text
-node_modules/next/dist/docs/
-```
+- `supabase`;
+- `supabase-postgres-best-practices`;
+- `security-review`;
+- `tdd`;
+- `verification-before-completion`.
 
-Preserve that managed block if Next.js writes it.
+Database authority remains repository migrations, declarative schema, direct SQL, and tests.
 
-Next.js may also generate:
+### React / UI work
 
-```text
-CLAUDE.md
-@AGENTS.md
-```
+Use `eiu-ui-executor` for material React/Next.js UI implementation. It autoloads:
 
-This is only a compatibility shim generated by Next.js. Do not manually maintain a separate Claude-specific instruction set. OMP's `.omp/AGENTS.md` remains the native project entry point.
+- `react-patterns`;
+- `accessibility`;
+- `react-testing`;
+- `verification-before-completion`.
 
-## Next.js 16.2
+When Next.js framework behavior matters, inspect the installed version and prefer its version-matched documentation before relying on memory.
 
-Bundled docs exist, but automatic agent rules may not. Read:
+### Debugging
 
-```text
-node_modules/next/dist/docs/
-```
+Use `eiu-debugger` for defects that require diagnosis. It autoloads:
 
-before framework-sensitive edits.
+- `diagnosing-bugs`;
+- `verification-before-completion`.
 
-## Earlier versions
+After root-cause narrowing, load additional domain skills through `skill://<name>` only if relevant.
 
-Use the current official Next.js AI-agent guidance or `documentation-lookup` rather than installing a stale `next-best-practices` copy.
+### Other implementation
 
-Do not upgrade Next.js merely to gain agent tooling unless the user explicitly requests the framework upgrade.
+Use `eiu-general-executor` only when no more specific project agent fits. It autoloads `verification-before-completion`; load additional specialist skills on demand.
 
-## Conditional Next workflow skills
+### Review
 
-Do not install by default:
+Use OMP's built-in reviewer or project `eiu-reviewer` for independent review. Reviewers are read-only. They use `REVIEW.md`, canonical project sources, the exact diff, direct source evidence, and specialist skills on demand.
 
-- `next-dev-loop`
-- `next-cache-components-adoption`
-- `next-cache-components-optimizer`
-- `next-partial-prefetching-adoption`
-
-Only add them if their specific feature and prerequisites are actually used by the current project.
+A worker's claim of success is never acceptance evidence by itself.
 
 ---
 
-# 6. Skill Routing — MANDATORY
+## 5. Task dispatch contract
 
-Load only skills relevant to the task.
+A delegated task must be self-contained and use OMP's native task semantics.
 
-## Centralized Governance / Delta-Only Task Contracts
-
-Governance is centralized; tasks carry only routing decisions and evidence
-deltas.
-
-Reusable governance is defined centrally in:
-- `AGENTS.md`
-- `SKILLS.md`
-- `SKILLS_LOCK.yaml`
-- `REVIEW.md`
-- the autonomous governance pack
-- canonical project sources
-
-Task prompts must not duplicate these full contracts.
-
-A task prompt should contain only:
-- task-specific canonical references;
-- applicable governance/profile decisions;
-- required specialist skills;
-- graph route;
-- task-specific acceptance criteria;
-- deviations/exceptions, if any;
-- evidence delta required for that task.
-
-Executor and Reviewer records should likewise store only the evidence delta
-needed to prove compliance.
-
-## Skill Execution Receipt Contract
-
-Skill routing is not proof of skill use. For every `SKILLS_REQUIRED` entry:
-
-1. resolve the effective provider/path against `SKILLS_LOCK.yaml`;
-2. actually read the effective `SKILL.md` before dependent implementation;
-3. record `loaded: YES` only after that read;
-4. record `applied: YES` only when its guidance materially informs a concrete implementation, test, review, or verification decision;
-5. persist a compact runtime receipt after execution.
-
-`AVAILABLE != LOADED != APPLIED`.
-
-`SKILLS_REQUIRED`, `SKILLS_RESOLVED`, provider availability, planning text, and implementation resemblance are not runtime-use proof. Future prompts use only `SKILLS_REQUIRED`, `SKILLS_RESOLVED`, and `SKILLS_INTENDED_APPLICATION`; never pre-populate `SKILLS_APPLIED`.
-
-```yaml
-SKILL_USAGE:
-  <skill-name>:
-    provider: "<effective provider/path>"
-    availability: AVAILABLE
-    loaded: YES|NO
-    applied: YES|NO
-    applied_to:
-      - "<specific implementation/test/review decision>"
-    reason: "<required when loaded=NO or applied=NO>"
-```
-
-Do not copy skill contents into `project_control` or claim historical skill use without evidence. For an in-progress task released before this contract, record actual reads truthfully; load an unread required skill before remaining dependent work when possible, and let independent review determine any needed focused repair.
-## 6.1 General implementation
-
-In `AUTONOMOUS`:
-1. task Executor
-2. task specialist skills
-3. focused verification
-4. independent implementation Reviewer (`eiu-code-review` where applicable)
-5. `verification-before-completion`
-
-In `BOUNDED`, the explicit Planner work set controls completion: Executor,
-focused verification, commit, report, and stop. Never add an internal
-implementation Reviewer or repair/re-review continuation. Integration or CI
-requires explicit bounded-prompt authorization; a next-frontier task is never
-inferred or dispatched.
-
-## 6.2 React / TypeScript UI
-
-For material `.ts` / `.tsx`, React components, hooks, forms, client state, or interactive UI:
-
-1. `react-patterns`
-2. `vercel-react-best-practices`
-
-Add only when relevant:
-
-- `vercel-composition-patterns` — reusable component API or real composition complexity.
-- `accessibility` — interactive forms, tables, dialogs, menus, focus, keyboard, errors.
-- `react-testing` — meaningful component/form behavior tests.
-- `click-path-audit` — sequential handlers/state updates produce a wrong final UI state.
-
-Do not add abstractions merely because a skill demonstrates them.
-
-## 6.3 Next.js / App Router / Server Boundary
-
-For App Router routes/layouts/pages, Server Components, Client Components, Route Handlers, Server Actions, SSR, cookies, middleware/proxy, metadata, caching, images/fonts/scripts, or framework behavior:
-
-1. read version-matched Next.js docs;
-2. `documentation-lookup` when current external documentation is needed;
-3. `react-patterns`;
-4. `vercel-react-best-practices`.
-
-Treat every mutation-capable Server Action or Route Handler as a public mutation endpoint.
-
-## 6.4 Supabase general work
-
-For **any** Supabase-specific implementation or debugging task:
-
-1. `supabase`
-
-This includes:
-
-- Supabase Auth;
-- `@supabase/ssr`;
-- Storage;
-- Supabase CLI;
-- Supabase MCP;
-- PostgREST/Data API;
-- logs and debugging;
-- RLS surprises;
-- Supabase-specific configuration.
-
-Use the current Supabase documentation and changelog, not model memory.
-
-## 6.5 PostgreSQL / SQL / RLS / migration
-
-Before writing or modifying anything that lives in PostgreSQL:
-
-1. `supabase-postgres-best-practices`
-
-This includes:
-
-- tables/columns/types;
-- constraints;
-- indexes;
-- migrations;
-- RLS policies;
-- grants;
-- functions/triggers/views;
-- transaction design;
-- locking/concurrency;
-- query plans;
-- connection behavior.
-
-Additionally invoke `security-review` when the change touches:
-
-- RLS or grants;
-- `SECURITY DEFINER`;
-- privileged views/functions;
-- service-role usage;
-- PII;
-- authorization;
-- sensitive documents;
-- authentication-derived identity.
-
-The official Supabase Postgres skill replaces the older generic `postgres-patterns` skill in this project to avoid duplicate guidance.
-
-## 6.6 Google OAuth / Supabase Auth
-
-For Google OAuth, Supabase sessions, callbacks, cookies, allowlists, identity binding, or login failures:
-
-1. `supabase`
-2. `documentation-lookup` when current docs must be fetched
-3. `security-review`
-
-Primary technical reference:
-
-`https://supabase.com/docs/guides/auth/social-login/auth-google`
-
-Hard rule:
-
-> Successful Google/Supabase authentication is not application authorization.
-
-After authentication, enforce the current project-defined access predicates server-side.
-
-Never rely only on:
-
-- UI hiding;
-- email-domain text checks in the browser;
-- Google account selection;
-- client-supplied role/permission data.
-
-Keep Google Client Secret and other secrets server-side.
-
-Request only scopes required for the approved feature.
-
-Do not persist Google provider access/refresh tokens unless the project explicitly needs Google APIs beyond authentication.
-
-## 6.7 Files / Storage / private documents
-
-For upload, preview, signed URLs, replacement, deletion, bucket policies, scanning/finalization:
-
-1. `supabase`
-2. `security-review`
-3. `tdd` when authorization or state transitions are high risk.
-
-Never make private business documents public for convenience.
-
-## 6.8 High-risk business behavior
-
-Use **risk-based TDD** with `tdd` for behavior where a regression can corrupt data or violate authorization, including:
-
-- auth/authorization;
-- RLS-sensitive behavior;
-- status transitions;
-- duplicate prevention;
-- sequence/round allocation;
-- scheduling/resource conflicts;
-- locking/races;
-- optimistic concurrency;
-- idempotency;
-- outcome/report derivation;
-- document ownership/visibility;
-- destructive actions.
-
-Do not force TDD on trivial copy or styling-only edits.
-
-## 6.9 Debugging
-
-For a reported bug or performance regression:
-
-1. `diagnosing-bugs`;
-2. create a tight reproduction/feedback loop;
-3. identify the root-cause domain;
-4. invoke only the relevant specialist skill;
-5. add a regression test at a meaningful public seam when valuable.
-
-Use `click-path-audit` when individual UI handlers appear correct but combined side effects produce the wrong final state.
-
-## 6.10 Architecture decisions
-
-Use `architecture-decision-records` only when a technical decision is durable and materially affects future implementation.
-
-Do not create ADRs for routine code choices.
-
-## 6.11 Context management
-
-Manage context per the project's Token Efficiency Policy when:
-- many tools/skills have accumulated;
-- agent context feels bloated;
-- quality degrades over long sessions.
----
-
-# 7. MCP & Graph Tool Routing (v2.4)
-
-## MCP Runtime Availability Contract
-
-MCP runtime state is distinct: `CONFIGURED != DISCOVERED != CALLABLE != USED`.
-
-Perform safe discovery, callability, and scope checks only when the task actually needs MCP. If runtime discovery or callability cannot be proven, fall back to direct source/LSP, persist no MCP-use receipt, and report the concrete tooling gap; never fabricate MCP use. Repository database authority remains unchanged: declarative schema, ordered migrations, direct SQL, and tests. Supabase MCP is limited to non-production, read-only inspection.
-
-## Context7 MCP
-
-`documentation-lookup` depends on Context7.
-
-Use Context7 for current library/framework/API documentation.
-
-Never send secrets, access tokens, passwords, private CV content, or sensitive PII in documentation queries.
-
-## Supabase MCP
-
-Use Supabase MCP only against a **development/test project** by default.
-
-Project MCP configuration must:
-- scope to one project;
-- default to `read_only=true`;
-- expose only required feature groups;
-- contain no committed credentials.
-
-Do not connect an AI coding agent to production Supabase data by default.
-
-Any temporary writable MCP access must:
-1. target a non-production project;
-2. be explicitly authorized for the task;
-3. be removed or returned to read-only afterward.
-
-Database schema changes must still be represented in repository migrations/schema sources. Live MCP mutations are not a substitute for migration history.
-
-## Code Review Graph (CRG 2.3.8) — Broad Discovery & Review Graph
-
-Code Review Graph is the primary tool for broad codebase discovery, unfamiliar feature exploration, and initial PR/diff triage.
-- **Scope:** Broad exploration ("Where is candidate approval handled?", "What files participate in workflow?").
-- **MCP Tool Allowlist:** Restricted strictly to:
-  `get_minimal_context_tool`, `query_graph_tool`, `detect_changes_tool`, `get_review_context_tool`, `get_architecture_overview_tool`, `list_graph_stats_tool`.
-- **Query Policy:** `detail_level=minimal`, `include_source=false`, small result limits. Do not fetch source code via graph unless direct reading is insufficient.
-- **Operational Policy:** Hooks OFF, watch daemon OFF, auto-rules OFF. Freshness is verified explicitly before use.
-
-## GitNexus (1.6.10) — Precise Code Relationship Graph
-
-GitNexus is the primary code graph engine for precise symbol, import, caller/callee, and change blast-radius analysis.
-- **Scope:** Precise questions ("What calls this?", "What does this call?", "What is the exact blast radius of changing this interface?").
-- **Configuration:** Pinned to `gitnexus@1.6.10`, pure index mode `indexOnly: true`.
-- **Standard & On-Demand Skills:** Available on-demand under `.agents/skills/`.
-
-## Graphify — DORMANT / Future Optional Tool
-
-Graphify is NOT baseline active (`DORMANT`, `FUTURE_OPTIONAL_DISCOVERY_TOOL`).
-- Binary retained in isolated virtual environment to avoid destructive churn.
-- No baseline graph built (`GRAPHIFY_GRAPH = NOT_BUILT`).
-- No MCP configured, no hooks, no agent rules, live PostgreSQL introspection disabled.
-
-## Code Intelligence Routing & Escalation Model
+Provide:
 
 ```text
-LOCALIZED / KNOWN WORK (single file, known symbol, small fix)
-    -> DIRECT SOURCE + LSP (NO graph required)
+# Target
+Exact files/symbols or bounded area; explicit non-goals.
 
-BROAD / UNFAMILIAR PROBLEM
-    -> Code Review Graph (CRG) minimal context
-    -> candidate files / symbols
-    -> direct source
-    -> GitNexus (ONLY if exact caller/callee or blast radius is needed)
+# Change
+Required behavior and constraints. Do not over-specify ordinary implementation choices when the canonical source leaves them open.
 
-SHARED SYMBOL / CONTRACT CHANGE
-    -> GitNexus precise impact analysis (after freshness gate)
-    -> direct callers / source verification
-
-PR / DIFF REVIEW
-    -> direct git diff & source
-    -> CRG diff triage (identify risk zones)
-    -> GitNexus impact selectively for high-risk symbols
-    -> direct source / tests verification
-    -> eiu-code-review verdict
+# Acceptance
+Observable focused verification and expected result.
 ```
 
-Do NOT call both graph systems for the same broad discovery question without a concrete reason.
+For independent work, batch task agents only when ownership does not overlap. Same-file or same-migration ownership must be serialized unless an explicit merge boundary has been designed first.
 
-## Mandatory Graph Freshness Contract
-
-A graph query is invalid as task evidence until freshness has been established for the current working tree:
-1. **CRG Freshness Gate:** Before first query, inspect working tree and CRG status (`code-review-graph status`). If stale, run `code-review-graph update` (or `build`).
-2. **GitNexus Freshness Gate:** Before first query, verify index freshness (`gitnexus status`). If stale, refresh index (`gitnexus analyze --skip-git --index-only`).
-3. **Stale Fallback:** If freshness cannot be established, graph evidence is UNAVAILABLE; fall back to direct source, LSP, and search. Never use stale graph evidence.
-4. **Post-Change Invalidation:** Once implementation materially modifies source, all prior graph conclusions are STALE until refreshed if reused.
-
-## Task-Level Graph Usage Receipt
-
-Every implementation task records exactly one route: `DIRECT_SOURCE_LSP_ONLY`, `CRG`, `GITNEXUS`, or `CRG_THEN_GITNEXUS`. Routing is mandatory; graph execution is conditional.
-
-For localized work:
-
-```yaml
-GRAPH_USAGE:
-  route: DIRECT_SOURCE_LSP_ONLY
-  graph_used: NO
-  reason: "<why direct source + LSP is sufficient>"
-```
-
-Do not call or refresh graphs merely to create evidence. When CRG or GitNexus is used, persist its tool, freshness before use, refresh action, analyzed HEAD, concrete purpose, and `direct_source_crosscheck: PASS`; `CRG_THEN_GITNEXUS` records those facts for each graph used. Graph evidence without freshness, analyzed HEAD, or direct-source cross-check is invalid. After material source changes, refresh before reusing graph conclusions.
-
-Database authority remains ordered migrations, declarative schema, direct SQL, and tests. Graph output is never the effective database definition.
-
-## Graph Authority Policy — Mandatory Hierarchy
-
-Graph tools (CRG, GitNexus, Graphify) are discovery and evidence systems. They are **NEVER** repository or database definition authority.
-
-Mandatory hierarchy:
-```text
-DIRECT SOURCE / LSP
-        >
-declarative schema + ordered migrations for DB behavior
-        >
-GitNexus / CRG discovery evidence
-```
-
-A graph result must never by itself justify:
-- business behavior
-- authorization behavior
-- RLS behavior
-- SQL effective definition
-- trigger execution semantics
-- RPC behavior
-- database migration order
-- security decision
-
-Always cross-check graph findings against actual source files.
-
-## Database Source-of-Truth Contract
-
-For Supabase / PostgreSQL, repository authority explicitly distinguishes:
-```text
-DISCOVERY VIEW  vs  EFFECTIVE DEFINITION
-```
-- **Discovery View:** May use grep/search, LSP, CRG, GitNexus, and Supabase read-only inspection.
-- **Effective Definition:** Must be reconstructed strictly from:
-  `declarative schema + ordered migration chain + direct function/policy/trigger SQL + applicable tests`
-
-Remote read-only introspection in dev provides deployed evidence, not repository authority.
-
-## SQL Absence Rule
-
-**NEVER** conclude:
-```text
-"function/trigger/policy/RPC does not exist"
-```
-solely because CRG or GitNexus does not return it.
-
-Before concluding absence, inspect:
-1. declarative schema;
-2. all ordered migrations;
-3. SQL/functions directory if present;
-4. RPC definitions;
-5. RLS policies;
-6. triggers;
-7. relevant Supabase configuration.
-
-## App -> Supabase Cross-Layer Rule
-
-For cross-layer flows:
-```text
-React component -> server action/API -> Supabase RPC -> SQL function -> table/RLS/trigger
-```
-CRG may narrow context and GitNexus may trace symbol relationships, but every critical boundary must be directly verified:
-1. app caller
-2. API/server implementation
-3. Supabase client call
-4. RPC/function identifier
-5. actual SQL definition
-6. RLS/policy dependencies
-7. trigger dependencies if applicable
-8. migration ordering
-
-No inferred cross-layer graph edge is sufficient alone.
+Never let multiple writing agents concurrently mutate the same worktree.
 
 ---
 
-# 8. Semantic Reuse / Deduplication Rule
+## 6. Supabase, security, and privacy invariants
 
-Do not add a separate `code-deduplication` skill unless a trusted maintained source is later selected.
+Authentication is not authorization.
 
-Before adding reusable:
-
-- hooks;
-- components;
-- validators;
-- mappers;
-- formatters;
-- services;
-- helpers;
-- shared types;
-- utility functions;
-
-search existing code first using:
-
-1. GitNexus query/context/impact;
-2. OMP LSP/symbol search;
-3. focused grep/search.
-
-Reuse an existing implementation when it already expresses the same behavior and using it does not violate locality or the current source contract.
-
-Do not force deduplication when two pieces of code only look syntactically similar but have different business semantics.
-
----
-
-# 9. OMP Advisor and Independent Review
-
-The internal OMP review workflow in this section applies only to
-`AUTONOMOUS`.
-
-## AUTONOMOUS Advisor
-
-`AUTONOMOUS` may use `.omp/WATCHDOG.md` for advisor priorities:
-
-- enable advisor for high-risk auth/RLS/concurrency/migration/privacy work;
-- keep advisor investigative/read-only by default;
-- do not grant mutating advisor tools unless explicitly needed.
-
-Advisor output is advice, not source authority.
-
-## AUTONOMOUS OMP `/review`
-
-In `AUTONOMOUS`, use OMP's independent review for:
-
-- large/high-risk diffs;
-- pre-merge security/data changes;
-- final review after a major implementation slice.
-
-It supplements, not replaces, the AUTONOMOUS independent implementation review.
-
-Suggested AUTONOMOUS review stack for high-risk changes:
-
-```text
-independent implementation Reviewer (`eiu-code-review` where applicable)
--> OMP independent /review
--> ponytail-review if complexity increased
--> verification-before-completion
-```
-
-Do not run multiple heavyweight reviewers for trivial AUTONOMOUS changes.
-
-## BOUNDED
-
-Do not schedule an internal implementation Reviewer, OMP independent `/review`,
-or post-commit repair/re-review stage. External Planner/Reviewer inspection
-occurs after the bounded commit and is outside the internal OMP lifecycle.
-After authorized work, focused verification, commit, and report: STOP.
-
----
-
-# 10. React Doctor
-
-Use React Doctor as a **tool/quality gate**, not as another always-loaded skill.
-
-For meaningful React/Next.js diffs:
-
-```bash
-npx react-doctor@latest --verbose --scope changed
-```
-
-Use the current CLI syntax. Do not copy old sample-repo commands blindly.
-
-React Doctor is supplementary static/runtime-oriented analysis. Its findings do not override the project's current design/business source.
-
-Do not auto-fix large sets of findings without reviewing scope and source conformance.
-
----
-
-# 11. Database Mutation Discipline
-
-For high-risk mutations, preserve the current authoritative transactional command model.
-
-Reject implementation patterns that:
-
-- validate mutable state then write later without required locks/rechecks;
-- split an atomic business command across browser-orchestrated writes;
-- allow stale whole-row writes to overwrite newer data;
-- bypass required idempotency;
-- compute sequences without required locking;
-- weaken RLS/grants to solve permission errors;
-- put service-role credentials in browser code;
-- assume a server boundary alone replaces authorization;
-- call external providers inside a DB transaction when the current project contract requires after-commit/outbox behavior.
-
-Lock ordering must be deterministic where multiple resources are involved.
-
----
-
-# 12. Server Boundary Discipline
-
-Conceptual mutation order:
+For mutation paths enforce, where applicable:
 
 ```text
 authenticate
--> authorize
--> validate
--> invoke approved transactional command/RPC
--> return stable result/error
+→ authorize server-side
+→ validate untrusted input
+→ execute the approved transactional command/RPC
+→ return a stable safe result/error
 ```
 
-UI visibility and disabled controls are UX only, never authorization.
+Never weaken RLS, grants, locking, optimistic concurrency, idempotency, audit, private Storage, or authorization to make a feature pass.
 
-Derive security-sensitive caller identity/permissions server-side.
+Never expose service-role keys, Google Client Secret, session/refresh tokens, OTPs, signed private URLs, or other secrets.
 
----
-
-# 13. UI / Accessibility Discipline
-
-The current canonical design source is authoritative.
-
-Preserve at minimum:
-
-- semantic HTML;
-- proper labels and accessible names;
-- keyboard operation;
-- visible focus;
-- accessible validation/error association;
-- status meaning not conveyed by color alone;
-- correct operational table semantics;
-- responsive behavior required by the project;
-- readable/reflowable business text;
-- reduced-motion handling where motion exists.
-For major UI/pre-release audit, use the canonical Design System v1.8,
-the applicable Design Review Checklist, `accessibility`, `browser-qa`,
-and React Doctor when applicable. These checks do not authorize redesign
-outside the canonical design source.
-Use `browser-qa` against preview/staging for required user journeys.
+Supabase MCP is developer tooling only. It must default to a non-production project and read-only access. Repository migrations/schema remain authority over live MCP inspection.
 
 ---
 
-# 14. Vercel
+## 7. Graph and documentation tools
 
-For deployment:
+GitNexus is an optional impact/navigation aid for shared or high-risk code. Use it when graph evidence materially improves understanding; do not call or refresh it ceremonially.
 
-- use `deploy-to-vercel`;
-- prefer preview deployment before production.
+Every material graph conclusion must be confirmed against direct source. Database definitions are never inferred from graph absence.
 
-For deployed performance/reliability/cost:
-
-- use `vercel-optimize`.
-
-Do not deploy to production without explicit authorization or a repository workflow that clearly authorizes it.
-
-Do not put secrets into Vercel-visible client environment variables.
+Use `documentation-lookup` when current library/framework documentation is needed. Current canonical project sources still outrank external documentation for project behavior.
 
 ---
 
-# 15. Minimal-Diff Rule
+## 8. Verification and completion
 
-Every changed line should trace to:
+Before accepting a worker result or claiming work is fixed/complete:
 
-- the requested task;
-- a necessary consequence of that task;
-- a required test/verification adjustment.
+1. inspect the actual diff/result;
+2. run fresh focused verification that proves the claim;
+3. read the output and exit status;
+4. run broader verification only when the scope/risk requires it;
+5. obtain independent review for the lifecycle when required;
+6. report the actual state, including failures or blockers.
 
-Do not bundle unrelated:
-
-- refactors;
-- formatting rewrites;
-- dependency upgrades;
-- cleanup;
-- architecture changes.
-
-Report unrelated issues separately.
+Do not treat a subagent `completed` status, a previous test run, or a CI result for another SHA as completion proof.
 
 ---
 
-# 16. Verification Before Completion
+## 9. Review lifecycle
 
-No claim such as `done`, `fixed`, `pass`, or `ready` without fresh evidence.
+`REVIEW.md` defines project-specific review priorities and reject conditions.
 
-Before completion:
+In `AUTONOMOUS`, the parent may run implementation → focused verification → independent review → bounded repair/re-review → serialized integration → exact-SHA CI → next safe frontier, subject to the durable autonomy policy.
 
-1. identify checks that prove the claim;
-2. run them fresh;
-3. inspect exit status and actual failures;
-4. run focused tests for changed behavior;
-5. run broader checks appropriate to the change;
-6. run React Doctor for meaningful React/Next diffs;
-7. run RLS/concurrency/auth tests when applicable;
-8. review final diff for scope creep;
-9. run `verification-before-completion`;
-10. only then state the result.
-
-A green typecheck/build does not prove authorization, race safety, accessibility, or business correctness.
+In `BOUNDED`, perform only the Owner-authorized work set. Do not infer a next-frontier task. Integration/CI occurs only when the bounded authorization explicitly permits it.
 
 ---
 
-# 17. Git / Deployment Safety
+## 10. Durable autonomy state
 
-Unless explicitly authorized by the user or an existing repository workflow:
+For scheduling, task-start, integration, CI, or next-frontier decisions, read:
 
-- do not commit;
-- do not push;
-- do not merge;
-- do not production-deploy;
-- do not apply destructive live migrations;
-- do not delete production data;
-- do not rotate credentials;
-- do not change Google/Supabase/Vercel production settings.
+- `project_control/AUTONOMY_PARALLEL_GOVERNANCE.md` — lifecycle/scheduling authority;
+- `project_control/AUTONOMY_RUN_STATE.yaml` — live durable runtime state;
+- `project_control/TASK_REGISTRY.yaml` and `SLICE_REGISTRY.yaml` — task/slice DAG.
 
-Never use `--no-verify` to bypass repository hooks without explicit authorization.
+OMP Todo mirrors the currently executing work for the session. It is not a competing durable registry and must not be persisted as another control-plane authority.
+
+`execution_mode` is exactly `AUTONOMOUS` or `BOUNDED`.
 
 ---
 
-# 18. Completion Handoff
+## 11. External actions
 
-For non-trivial work report:
+Do not push/merge to `main`, production-deploy, apply destructive live migrations, delete production data, or cross another explicit external authorization boundary unless the Owner has authorized that action.
 
-- scope implemented;
-- current source contract followed;
-- files materially changed;
-- specialist skills/tools used;
-- tests/checks executed and results;
-- unresolved risks/follow-up;
-- Git/worktree state;
-- deployment state if applicable.
+Routine work on an Owner-authorized development/governance branch may be committed and pushed when the active task explicitly authorizes repository writes.
 
-Do not promise background/future work.
 ---
 
-## GitHub Actions CI Contract
+## 12. Simplicity rule
 
-- Every accepted integration checkpoint must pass the exact pushed commit SHA in the GitHub Actions `integration-ci` workflow once CI is enabled.
-- CI runs on a clean `ubuntu-latest` runner with minimum `contents: read` permissions, the repository `web/package-lock.json`, Node.js `24.20.0`, npm `11.19.0`, and the required install, audit, lint, typecheck, test, and build checks.
-- CI is verification only: it has no deployment trigger, production credentials, or production resource access.
-- A CI failure is not an accepted integration checkpoint and must not be bypassed or weakened.
+Prefer OMP-native primitives over repository-invented runtime abstractions:
+
+- native Todo instead of Markdown/checklist lifecycle emulation;
+- native task agents instead of prose-only Executor roles;
+- `autoloadSkills` / `skill://` instead of custom skill-path loaders;
+- native reviewer/task tooling instead of workflow skills that duplicate OMP;
+- project config instead of machine-specific assumptions.
+
+Add governance only where it protects a project invariant that OMP itself cannot know.
