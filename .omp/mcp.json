@@ -8,7 +8,7 @@
     "supabase-dev": {
       "enabled": true,
       "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=yrjclhdvjlekwvfeczcj&read_only=true&features=docs,database,debugging,development"
+      "url": "https://mcp.supabase.com/mcp?project_ref=${SUPABASE_PROJECT_REF}&read_only=true&features=docs,database,debugging,development"
     },
     "gitnexus-recruitment": {
       "enabled": true,
@@ -18,19 +18,6 @@
         "-y",
         "gitnexus@1.6.10",
         "mcp"
-      ]
-    },
-    "code-review-graph": {
-      "enabled": true,
-      "type": "stdio",
-      "command": "uvx",
-      "args": [
-        "--from",
-        "code-review-graph==2.3.8",
-        "code-review-graph",
-        "serve",
-        "--tools",
-        "get_minimal_context_tool,query_graph_tool,detect_changes_tool,get_review_context_tool,get_architecture_overview_tool,list_graph_stats_tool"
       ]
     }
   }
