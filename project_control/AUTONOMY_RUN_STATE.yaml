@@ -37,6 +37,14 @@ authorization:
       create_pr: false
       merge_pr: false
 
+plan_reconciliation:
+  gate: PLAN_RECONCILIATION_GATE_S04_005
+  status: IN_PROGRESS
+  baseline_branch: governance/omp-native-reconstruction-001
+  baseline_head: "3c3073b52a4f83a8a5318376125e94913792fdf3"
+  accepted_implementation_through: TASK-S04-005
+  canonical_source_reopen_required: false
+  feature_dispatch: HELD
 
 active_workers: []
 
@@ -106,18 +114,22 @@ worker_settled_history:
     settled_at: "2026-09-06T15:00:00Z"
     review_blockers: NONE
 last_accepted_task:
-  id: TASK-S04-003
-  commit: "919e4a428dcd2d76730947ca1c4c174441bdfb63"
+  id: TASK-S04-005
+  commit: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"
   evidence:
-    - "COPY-INTERVIEW-SCHEDULE-001: VERIFIED"
+    - "APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001: VERIFIED"
     - "prompt_reviewed: PASS"
     - "supabase db reset --local: PASS"
-    - "copy_interview_schedule_test.sql: PASS"
-    - "interview_round_and_conflict_locking_test.sql: PASS"
-    - "interview_lifecycle_test.sql: PASS"
-    - "implementation_reviewed: PASS (agent://TaskS04003FinalExactReview; blockers: NONE)"
-    - "github_ci: VERIFIED (Integration CI run 34036486527; commit f46ac9fbcc4356df4855aa715dcc56359ffe30c8; PASS — fast verification + database integration)"
+    - "application_reactivation_and_participant_contract_repair_test.sql: PASS"
+    - "Slice-04 regression suites: PASS"
+    - "implementation_reviewed: PASS (agent://TaskS04005ExactReReview; blockers: NONE)"
+    - "github_ci: VERIFIED (Integration CI run 34039979411; integration checkpoint 8819d9fec1143e94aea7721e47ae84a8abcd82b9; PASS — fast verification + database integration)"
 previous_accepted_tasks:
+  TASK-S04-003:
+    commit: "919e4a428dcd2d76730947ca1c4c174441bdfb63"
+    evidence:
+      - "COPY-INTERVIEW-SCHEDULE-001: VERIFIED"
+      - "github_ci: VERIFIED (Integration CI run 34036486527; integration commit f46ac9fbcc4356df4855aa715dcc56359ffe30c8; PASS)"
   TASK-S03-006:
     commit: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"
     evidence:
@@ -145,13 +157,13 @@ historical_mcp_governance_maintenance:
   ci_result: PASS
 safe_frontier:
   eligible_tasks: []
-  skipped_due_to_dependency:
-    - "TASK-S04-004: maintenance stop armed after TASK-S04-005 CI verification"
-  execution_hold: "OWNER_AUTHORIZED_SKILL_TOOL_GOVERNANCE_MAINTENANCE"
+  skipped_due_to_dependency: []
+  execution_hold: "PLAN_RECONCILIATION_GATE_S04_005"
 stop_state:
-  stop_gate: OWNER_AUTHORIZED_SKILL_TOOL_GOVERNANCE_MAINTENANCE
-  reason: "TASK-S04-005 exact integration CI passed; Owner directed maintenance stop before TASK-S04-004 dispatch."
+  stop_gate: PLAN_RECONCILIATION_GATE_S04_005
+  reason: "Accepted implementation through TASK-S04-005 is being reconciled against current canonical source and downstream planning before TASK-S04-004 dispatch."
   observed_evidence:
     - "TASK-S04-005 ACCEPTED: exact integration CI 34039979411 PASS."
     - "TASK-S04-005 implementation SHA ab6c5194d15eb29e2ee285106c6bef14f0291ec3 independently re-reviewed PASS."
-next_action: "Stop autonomous implementation dispatch. Perform only Owner-authorized skill/tool governance maintenance."
+    - "Workspace/worktree consolidation maintenance completed and is no longer the active stop reason."
+next_action: "Complete source-to-implementation-to-plan reconciliation, independently review the rebaselined TASK-S04-004 prompt, and keep feature dispatch held until the reconciliation gate passes."
