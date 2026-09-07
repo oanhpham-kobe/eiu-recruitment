@@ -8,8 +8,46 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: SLICE_04_IN_PROGRESS_TASK_S04_005_ACCEPTED_MAINTENANCE_STOP
-  note: "All tasks through TASK-S04-005 are independently reviewed, serially integrated, and verified on exact-SHA GitHub Actions CI. Owner-authorized maintenance stop is armed before TASK-S04-004 dispatch."
+  status: SLICE_04_IN_PROGRESS_TASK_S04_004_READY_PLAN_RECONCILED
+  note: "Accepted implementation through TASK-S04-005 remains independently reviewed and exact-SHA CI verified. Source-to-implementation-to-plan reconciliation is VERIFIED; TASK-S04-004 is READY on the reviewed v3 prompt and is the sole safe-frontier task."
+
+  PLAN-RECONCILIATION-S04-005-001:
+    operation: SOURCE_IMPLEMENTATION_PLAN_RECONCILIATION
+    status: VERIFIED
+    baseline_branch: governance/omp-native-reconstruction-001
+    baseline_head: "3c3073b52a4f83a8a5318376125e94913792fdf3"
+    canonical_source:
+      full_handover: "1.18"
+      business_logic: "1.2 FROZEN"
+      technical_architecture: "1.18 FROZEN"
+      design_system: "1.8 CURRENT"
+      reopen_required: false
+    accepted_implementation_through: TASK-S04-005
+    accepted_application_checkpoint: "8819d9fec1143e94aea7721e47ae84a8abcd82b9"
+    accepted_application_ci_run: "34039979411"
+    reconciliation_review_head: "a4d85a9033b3b54195265a893710d08a626ef9bb"
+    prompt_v2_review:
+      status: BLOCKING_REPAIR
+      findings:
+        - "Omitted accepted 20260906060000 interview schema/round-allocation migration from the effective backend baseline."
+        - "Used ambiguous idempotency-key wording that could regenerate a key on retry of the same mutation intent."
+    released_prompt:
+      path: project_control/prompts/SLICE-04_TASK-004_v3.md
+      sha256: "ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce"
+      independent_review: "PASS (ChatGPT exact-source reconciliation re-review @ a4d85a9033b3b54195265a893710d08a626ef9bb; blockers: NONE)"
+    planning:
+      task_slice_state: PASS
+      traceability_through_s04_005: PASS
+      cross_slice_prerequisites: PASS
+      s04_004_status: READY
+      safe_frontier:
+        - TASK-S04-004
+    validation:
+      release_checkpoint: "d6cc9212d9da3e9415cfb1979c70652288e6e694"
+      governance_ci_run: "34149683892"
+      governance_ci: PASS
+      validate_omp_native: PASS
+      validate_control_plane: PASS
 
   COPY-INTERVIEW-SCHEDULE-001:
     task: TASK-S04-003
