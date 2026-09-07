@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { AppShell } from "@/components/shell/AppShell";
+import { CandidateShell } from "@/components/shell/CandidateShell";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -11,16 +12,41 @@ export const metadata: Metadata = {
     "Hệ thống Tuyển dụng Giảng viên & Nhân viên Đại học Quốc tế Miền Đông",
 };
 
+type ShellKind = "auth" | "candidate" | "internal";
+
+export function resolveShellKind(pathname: string): ShellKind {
+  if (
+    pathname === "/login" ||
+    pathname.startsWith("/login/") ||
+    pathname.startsWith("/auth/")
+  ) {
+    return "auth";
+  }
+  if (pathname === "/candidate" || pathname.startsWith("/candidate/")) {
+    return "candidate";
+  }
+  return "internal";
+}
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const reqHeaders = await headers();
   const nonce = reqHeaders.get("x-nonce") ?? undefined;
   const pathname = reqHeaders.get("x-pathname") ?? "";
-  const isAuthRoute = pathname === "/login" || pathname.startsWith("/login");
+  const shellKind = resolveShellKind(pathname);
+
+  const content =
+    shellKind === "auth" ? (
+      children
+    ) : shellKind === "candidate" ? (
+      <CandidateShell>{children}</CandidateShell>
+    ) : (
+      <AppShell currentPath={pathname}>{children}</AppShell>
+    );
 
   return (
     <html lang="vi">
       <body nonce={nonce}>
-        {isAuthRoute ? children : <AppShell>{children}</AppShell>}
+        <div id="app-root">{content}</div>
       </body>
     </html>
   );

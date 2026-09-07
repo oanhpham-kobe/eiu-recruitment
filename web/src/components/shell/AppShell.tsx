@@ -1,5 +1,9 @@
+"use client";
+
 import type React from "react";
+import { useState } from "react";
 import { Header } from "./Header";
+import { MobileNavigation } from "./MobileNavigation";
 import { Sidebar } from "./Sidebar";
 import { SkipLink } from "./SkipLink";
 
@@ -9,13 +13,27 @@ export interface AppShellProps {
   currentPath?: string;
 }
 
-export function AppShell({ children, title, currentPath }: AppShellProps) {
+export function AppShell({
+  children,
+  title,
+  currentPath = "/",
+}: AppShellProps) {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   return (
     <div className="shell">
       <SkipLink />
       <Sidebar currentPath={currentPath} />
+      <MobileNavigation
+        open={mobileNavOpen}
+        currentPath={currentPath}
+        onClose={() => setMobileNavOpen(false)}
+      />
       <div className="shell-main">
-        <Header title={title} />
+        <Header
+          title={title}
+          mobileNavOpen={mobileNavOpen}
+          onOpenNavigation={() => setMobileNavOpen(true)}
+        />
         <main id="main-content" tabIndex={-1} className="content">
           {children}
         </main>

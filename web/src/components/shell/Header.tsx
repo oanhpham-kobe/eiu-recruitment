@@ -2,24 +2,34 @@ import type React from "react";
 
 export interface HeaderProps {
   title?: React.ReactNode;
+  mobileNavOpen?: boolean;
+  onOpenNavigation?: () => void;
 }
 
 export function Header({
   title = "Hệ thống Tuyển dụng EIU / EIU Recruitment",
+  mobileNavOpen = false,
+  onOpenNavigation,
 }: HeaderProps) {
   return (
     <header className="topbar">
+      <button
+        id="internal-nav-trigger"
+        type="button"
+        className="internal-nav-trigger"
+        aria-label="Mở menu / Open navigation"
+        aria-expanded={mobileNavOpen}
+        aria-controls="mobile-internal-navigation"
+        onClick={onOpenNavigation}
+      >
+        <span aria-hidden="true">☰</span>
+      </button>
       <div className="topbar-title">
         {typeof title === "string" ? <h1>{title}</h1> : title}
       </div>
-
       <div className="topbar-utility">
-        {/* biome-ignore lint/a11y/useSemanticElements: toolbar button group per WAI-ARIA pattern */}
-        <div
-          className="language-switcher"
-          role="group"
-          aria-label="Chọn ngôn ngữ / Choose language"
-        >
+        <fieldset className="language-switcher">
+          <legend className="sr-only">Chọn ngôn ngữ / Choose language</legend>
           <button
             type="button"
             className="lang-btn active"
@@ -39,7 +49,7 @@ export function Header({
           >
             EN
           </button>
-        </div>
+        </fieldset>
       </div>
     </header>
   );
