@@ -79,6 +79,11 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
 
     await statusTrigger.click();
     await menu.waitFor({ state: "visible" });
+    await page.waitForFunction(
+      () =>
+        document.activeElement?.getAttribute("role") === "menuitemradio" &&
+        document.activeElement?.getAttribute("aria-checked") === "true",
+    );
     assert.equal(
       await page.evaluate(() => document.activeElement?.textContent?.trim()),
       "Đã đóng",
