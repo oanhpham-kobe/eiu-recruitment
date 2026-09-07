@@ -138,3 +138,14 @@ This compact backfill records accepted checkpoints that were already present in 
 - Repaired both defects in `project_control/prompts/SLICE-04_TASK-004_v3.md` (`ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce`).
 - Exact-source v3 re-review at reconciliation review head `a4d85a9033b3b54195265a893710d08a626ef9bb`: PASS, blockers NONE.
 - Released `TASK-S04-004` to READY and materialized it as the sole safe-frontier task.
+
+
+## 2026-09-08 — Review, checkpoint, CI-economy, and safe-handoff protocol
+
+- Formalized producer self-review followed by separate read-only OMP exact-SHA review; producer self-review is not independent acceptance evidence.
+- OMP main session owns review-artifact persistence on non-candidate evidence branches plus immutable pre-task/accepted checkpoint refs; if serialized integration changes SHA, a targeted final exact-SHA OMP acceptance re-review binds the final review SHA, CI SHA, and accepted-checkpoint SHA.
+- Independent review waves may contain up to two dependency-independent candidates with separate verdicts; downstream work cannot consume an unaccepted dependency.
+- Formalized targeted repair verification: unrelated prior PASS areas remain closed unless changed code/dependency/shared invariant or concrete regression evidence reopens them.
+- Integration CI now resolves impacted web/database domains before dispatching expensive jobs; `[full-ci]` only broadens scope for explicit slice/shared-contract gates.
+- Removed unused Playwright Chromium installation from normal Integration CI; browser QA remains an explicit task/slice verification concern.
+- Added safe context-pressure/cross-session handoff rule using Git + existing durable authorities + CURRENT_STATE, without creating a second memory/state authority.

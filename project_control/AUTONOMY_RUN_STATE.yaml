@@ -163,4 +163,4 @@ safe_frontier:
   eligible_tasks:
     - TASK-S04-004
   skipped_due_to_dependency: []
-next_action: "Dispatch TASK-S04-004 from the reconciled safe frontier using project_control/prompts/SLICE-04_TASK-004_v3.md under active AUTONOMOUS governance."
+next_action: "Before any TASK-S04-004 application edit, verify immutable recovery ref checkpoint/pre-S04-004-001 points to the final reviewed governance baseline; then dispatch TASK-S04-004 using project_control/prompts/SLICE-04_TASK-004_v3.md under producer self-review -> OMP candidate review -> serialized integration -> final exact-SHA OMP acceptance re-review if SHA changes -> impact-selected exact-SHA CI -> immutable accepted-checkpoint."

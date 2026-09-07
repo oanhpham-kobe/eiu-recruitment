@@ -229,6 +229,96 @@ Previously passed areas remain closed unless changed code, a materially changed
 dependency, a crossed shared invariant, or concrete regression evidence
 justifies reopening them.
 
+#### Candidate producer and independent OMP review
+
+A candidate may be produced by an OMP Executor or by an Owner-authorized external implementer such as ChatGPT. The producer MUST perform focused verification and a first self-review before presenting the candidate. Producer self-review is not the independent acceptance review.
+
+The independent acceptance review is performed by OMP's read-only reviewer (`eiu-reviewer` or built-in reviewer) against an exact candidate SHA. The reviewer does not mutate implementation, push repairs, integrate, create checkpoint refs, or advance the frontier. OMP main session owns those lifecycle actions.
+
+When GitHub-visible handoff is required, OMP main session persists the reviewer output on a non-candidate evidence branch, for example:
+
+```text
+review/<TASK_ID>-<SHORT_SHA>-vN
+```
+
+with the artifact at:
+
+```text
+project_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md
+```
+
+The evidence branch MUST NOT move or mutate the reviewed candidate ref. The file is evidence only. At minimum it records task ID, exact 40-character reviewed SHA, `PASS | BLOCKING_REPAIR | OWNER_DECISION_REQUIRED`, evidence-backed findings, and `SOURCE_REOPEN_REQUIRED: YES | NO`. It never becomes product, scheduling, or authorization authority. Evidence branches are append-only review handoff surfaces, not integration or task branches.
+
+A repair that changes the candidate SHA invalidates acceptance of the old SHA. The new SHA receives producer re-review plus targeted OMP re-review before acceptance.
+
+Serialized integration may preserve the candidate SHA (fast-forward) or produce a new integration SHA (for example by cherry-pick/merge). If the SHA changes, OMP MUST perform a targeted exact-SHA final acceptance re-review/equivalence check on the integration SHA before acceptance CI. The targeted review verifies that the independently reviewed implementation delta is preserved, integration introduced no unauthorized behavioral drift, and all blocking findings remain closed. If the exact SHA is preserved, the candidate review may serve as the final acceptance review.
+
+#### Review waves, dependency gating, and immutable checkpoints
+
+The scheduler may accumulate/review up to two independent task candidates in one review wave when the normal parallel-eligibility rules prove that they do not depend on or overlap each other. Each candidate retains a separate SHA, verdict, evidence, CI result, and checkpoint.
+
+A task MUST NOT start or continue by consuming behavior from an unaccepted dependency. Independent batching is a throughput optimization, never permission to build a dependency chain on unreviewed work. High-risk shared-contract work (schema/migrations, RLS/auth, trusted commands, security/privacy boundaries, business-contract/concurrency/idempotency changes) is reviewed and accepted before downstream consumption.
+
+Before a risky task begins, OMP main session creates an immutable pre-task recovery ref, for example:
+
+```text
+checkpoint/pre-S04-004-001
+```
+
+After final OMP acceptance review PASS and exact-SHA CI PASS on the final integration SHA, OMP main session creates an immutable accepted ref, for example:
+
+```text
+checkpoint/S04-004-accepted-001
+```
+
+Checkpoint refs are append-only recovery anchors. Never force-move an existing checkpoint. A later accepted repair receives a new numbered ref. Task acceptance requires:
+
+```text
+FINAL_OMP_ACCEPTANCE_REVIEW_SHA == CI_SHA == ACCEPTED_CHECKPOINT_SHA
+```
+
+The earlier candidate-review SHA may differ from this final triple when serialized integration changes Git identity; that difference is valid only when the final exact-SHA acceptance re-review/equivalence check passes.
+
+After all tasks in a slice are individually accepted, perform a slice-closing composition review and broader regression gate when appropriate. This gate checks cross-task integration, contract propagation, UX consistency, and slice acceptance; it supplements rather than replaces per-task review.
+
+#### Verification economy and failed-check closure
+
+Verification is impact-selected. During implementation and repair, run the narrowest fresh checks that prove the changed behavior and the directly crossed invariants.
+
+A failed check does not reopen the entire verification universe. A previously passed check remains closed when all of the following are true:
+
+```text
+its code/dependency surface did not change
+AND no shared invariant/contract it depends on changed
+AND the review finding does not implicate it
+AND no concrete regression evidence implicates it
+```
+
+On repair, rerun the failed test/check plus directly affected regressions and any shared-invariant checks crossed by the repair. Do not rerun unrelated database, UI, browser, or security suites merely because another domain failed.
+
+At the final task acceptance boundary, exact-SHA CI runs the minimum domain-level acceptance set selected by the changed/impacted domains. A changed domain may require its normal lint/typecheck/build/test gate even if individual tests passed earlier; this is the routine broader acceptance exception. Unchanged unrelated domains remain closed.
+
+`[full-ci]` may be used only to broaden verification for an explicit slice-closing, shared-contract, or otherwise justified full gate. No commit marker may suppress a domain that impact analysis says is affected.
+
+#### Context-pressure and cross-session safe handoff
+
+When a long-running main session is approaching practical context pressure, tool/runtime interruption, or another handoff boundary, it MUST avoid starting another risky/write-heavy phase. It should finish the current atomic mutation and stop at a recoverable checkpoint.
+
+A safe handoff records, in Git plus the existing durable authorities and `CURRENT_STATE.md`:
+
+- repository/branch and exact HEAD SHA;
+- current task/slice status and accepted base/checkpoint;
+- changed scope and relevant files;
+- fresh PASS/FAIL verification state;
+- producer self-review state;
+- OMP review artifact/verdict state;
+- exact-SHA CI state;
+- recovery/accepted checkpoint refs;
+- unresolved findings or stop gate;
+- exact next action and do-not-repeat/do-not-touch boundaries.
+
+Do not intentionally hand off half-edited, uncommitted, unknown-HEAD, or unresolved-but-unrecorded state. `CURRENT_STATE.md` remains derived navigation only; authority stays with Git and the durable registries/run state.
+
 AUTONOMOUS stops only for:
 1. `OWNER_DECISION_REQUIRED`;
 2. a business, architecture, or source-contract reopening;

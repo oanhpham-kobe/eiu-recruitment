@@ -230,6 +230,17 @@ Before accepting a worker result or claiming work is fixed/complete:
 
 Do not treat a subagent `completed` status, a previous test run, or a CI result for another SHA as completion proof.
 
+### Verification economy and failed-check closure
+
+Use the smallest fresh verification set that proves the current claim. During implementation or repair:
+
+- rerun the failed check/test plus directly affected regressions and crossed shared invariants;
+- keep previously passed unrelated checks closed when changed code, dependencies, shared contracts, or concrete regression evidence do not implicate them;
+- do not rerun unrelated database, browser, or UI suites merely because another domain failed;
+- broaden verification only when the changed surface or risk requires it.
+
+A final acceptance candidate still requires fresh exact-SHA CI for the impacted domain set. Domain-level lint/typecheck/build/test may be rerun at that acceptance boundary when the domain changed; that is distinct from blind full-system reruns on every repair commit.
+
 ---
 
 ## 9. Review lifecycle
@@ -239,6 +250,26 @@ Do not treat a subagent `completed` status, a previous test run, or a CI result 
 In `AUTONOMOUS`, the parent may run implementation → focused verification → independent review → bounded repair/re-review → serialized integration → exact-SHA CI → next safe frontier, subject to the durable autonomy policy.
 
 In `BOUNDED`, perform only the Owner-authorized work set. Do not infer a next-frontier task. Integration/CI occurs only when the bounded authorization explicitly permits it.
+
+### Candidate producer, independent OMP review, and checkpoint acceptance
+
+For tasks implemented outside OMP (for example, by ChatGPT through GitHub), the producer performs a first self-review, but that self-review is not the independent acceptance review. OMP then uses the read-only `eiu-reviewer` (or built-in reviewer) against the exact candidate SHA.
+
+Review waves may contain at most two independent task candidates. Each task keeps its own exact SHA, findings, verdict, CI evidence, and checkpoint. A downstream task must not consume an unaccepted dependency merely because both were implemented in the same wave.
+
+The reviewer remains read-only and must not create or move Git refs. OMP main session owns review-result persistence, CI/integration decisions, and checkpoint creation. When the Owner requests GitHub-visible review handoff, OMP main persists the reviewer result on a non-candidate evidence branch such as `review/<TASK_ID>-<SHORT_SHA>-vN`, with the artifact at `project_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md`. The evidence branch must not mutate the candidate ref; the artifact is evidence only, not a new authority.
+
+After a repair creates a new candidate SHA, any prior PASS belongs to the old SHA and cannot accept the new one. The pre-integration candidate review remains bound to that candidate SHA. After serialized integration, if the final integration SHA differs, OMP performs a targeted exact-SHA acceptance re-review/equivalence check on the integration SHA before CI. If serialized integration preserves the exact candidate SHA, the candidate review may serve as the final acceptance review.
+
+Before risky task implementation, create an immutable recovery ref such as `checkpoint/pre-S04-004-001`. After final OMP acceptance review PASS and exact-SHA CI PASS, OMP main creates an immutable accepted ref such as `checkpoint/S04-004-accepted-001`. Never force-move an existing checkpoint; create a new numbered checkpoint for a later accepted repair.
+
+For accepted task checkpoints:
+
+```text
+FINAL_OMP_ACCEPTANCE_REVIEW_SHA == CI_SHA == ACCEPTED_CHECKPOINT_SHA
+```
+
+After all tasks in a slice are individually accepted, run an additional slice-level composition review/broader regression gate when the slice risk warrants it. Slice review supplements task review; it does not replace it.
 
 ---
 
@@ -253,6 +284,8 @@ For scheduling, task-start, integration, CI, or next-frontier decisions, read:
 OMP Todo mirrors the currently executing work for the session. It is not a competing durable registry and must not be persisted as another control-plane authority.
 
 `project_control/CURRENT_STATE.md` is the single derived cross-session handoff/navigation snapshot. Refresh it after accepted task checkpoints or meaningful interruptions, but never let it override Git or the durable registries. Do not create runtime-specific memory/state files that duplicate it.
+
+When a long-running assistant/session approaches context pressure or another interruption boundary, do not start another risky/write-heavy phase. Finish the current atomic mutation, commit/push a recoverable SHA, run the relevant validators/checks, refresh durable state plus `CURRENT_STATE.md`, and hand off the exact branch/SHA, task status, test/review/CI state, unresolved findings, checkpoint refs, next action, and do-not-repeat boundaries. Never intentionally hand off half-edited or identity-ambiguous repository state.
 
 `execution_mode` is exactly `AUTONOMOUS` or `BOUNDED`.
 
