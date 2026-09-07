@@ -1,0 +1,29 @@
+name: DS Hardening Plan Once
+
+on:
+  push:
+    branches:
+      - governance/design-system-hardening-001
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ds-hardening-plan-once
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --disable-pip-version-check PyYAML==6.0.2
+      - name: Materialize hardening plan and validate control plane
+        run: python project_control/tools/ds_hardening_plan_patch.py
