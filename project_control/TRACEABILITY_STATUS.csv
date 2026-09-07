@@ -1,4 +1,4 @@
-Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,Commit,Notes (DERIVED / NON-AUTHORITATIVE / REPORTING ONLY — Reconciled through SLICE-03)
+Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,Commit,Notes (DERIVED / NON-AUTHORITATIVE / REPORTING ONLY — Reconciled through accepted checkpoint TASK-S04-005)
 ,review_pack/command_registry.yaml,provision_candidate_identity,web/src/lib/auth/candidate.ts,CAND-PROVISION-001,IMPLEMENTED,,a8a23f0,TASK-S01-003 candidate provisioning command
 ,review_pack/command_registry.yaml,start_candidate_form_session,web/src/lib/commands/form-session.ts,FORM-SESSION-001,IMPLEMENTED,,c7b40af,TASK-S02-002 form session lifecycle
 ,review_pack/command_registry.yaml,reserve_candidate_form_upload,supabase/migrations/20260905080000,STORAGE-RESERVATION-001,IMPLEMENTED,,75018b9,TASK-S02-003 private storage reservation
@@ -16,26 +16,26 @@ Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,C
 ,review_pack/command_registry.yaml,set_candidate_active,web/src/lib/commands/candidate-lifecycle.ts,APPLICATION-INBOX-BULK-001,IMPLEMENTED,,fa59ab2,TASK-S03-006 candidate lifecycle
 ,review_pack/command_registry.yaml,create_or_update_application,web/src/lib/commands/application-lifecycle.ts,APP-LIFECYCLE-001,IMPLEMENTED,,84ed46f,TASK-S03-002 / S03-005 application create/update
 ,review_pack/command_registry.yaml,update_application_hr_owner,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,reactivate_application,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,delete_or_inactivate_application,web/src/lib/commands/application-lifecycle.ts,APP-LIFECYCLE-001,IMPLEMENTED,,84ed46f,TASK-S03-002 application delete/inactivate
-,review_pack/command_registry.yaml,create_next_interview_round,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,copy_interview_schedule,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,save_interview_schedule,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,change_interview_schedule_status,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,reactivate_interview,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,delete_or_inactivate_interview,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,add_interview_participant,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,remove_interview_participant,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,readd_interview_participant,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,reorder_interview_participants,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,reserve_interview_upload,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,finalize_interview_upload,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,delete_interview_document,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,save_interviewer_report,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,update_hr_report_note,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,change_report_status,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,set_report_visibility,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,delete_or_inactivate_report,,,NOT_STARTED,,,Production trusted command; implementation status only.
+,review_pack/command_registry.yaml,reactivate_application,supabase/migrations/20260906090000_application_reactivation_and_participant_contract_repair.sql,APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001,IMPLEMENTED,,ab6c519,TASK-S04-005 accepted application reactivation contract
+,review_pack/command_registry.yaml,delete_or_inactivate_application,supabase/migrations/20260906090000_application_reactivation_and_participant_contract_repair.sql,APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001,IMPLEMENTED,,ab6c519,S04-005 effective accepted body supersedes earlier lifecycle body
+,review_pack/command_registry.yaml,create_next_interview_round,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 interview lifecycle
+,review_pack/command_registry.yaml,copy_interview_schedule,supabase/migrations/20260906080000_copy_interview_schedule.sql,COPY-INTERVIEW-SCHEDULE-001,IMPLEMENTED,,919e4a4,TASK-S04-003 dedicated atomic copy command
+,review_pack/command_registry.yaml,save_interview_schedule,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 schedule lifecycle
+,review_pack/command_registry.yaml,change_interview_schedule_status,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 schedule status lifecycle
+,review_pack/command_registry.yaml,reactivate_interview,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 interview reactivation
+,review_pack/command_registry.yaml,delete_or_inactivate_interview,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 interview delete/inactivate
+,review_pack/command_registry.yaml,add_interview_participant,supabase/migrations/20260906090000_application_reactivation_and_participant_contract_repair.sql,APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001,IMPLEMENTED,,ab6c519,S04-005 effective accepted participant signature/body
+,review_pack/command_registry.yaml,remove_interview_participant,supabase/migrations/20260906090000_application_reactivation_and_participant_contract_repair.sql,APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001,IMPLEMENTED,,ab6c519,S04-005 effective accepted participant signature/body
+,review_pack/command_registry.yaml,readd_interview_participant,supabase/migrations/20260906090000_application_reactivation_and_participant_contract_repair.sql,APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001,IMPLEMENTED,,ab6c519,S04-005 effective accepted participant signature/body
+,review_pack/command_registry.yaml,reorder_interview_participants,supabase/migrations/20260906090000_application_reactivation_and_participant_contract_repair.sql,APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001,IMPLEMENTED,,ab6c519,S04-005 effective accepted participant signature/body
+,review_pack/command_registry.yaml,reserve_interview_upload,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 interview upload reservation
+,review_pack/command_registry.yaml,finalize_interview_upload,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 interview upload finalization
+,review_pack/command_registry.yaml,delete_interview_document,,,NOT_STARTED,,,No accepted public command implementation found through TASK-S04-005.
+,review_pack/command_registry.yaml,save_interviewer_report,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 report backend prerequisite for SLICE-05
+,review_pack/command_registry.yaml,update_hr_report_note,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 report backend prerequisite for SLICE-05
+,review_pack/command_registry.yaml,change_report_status,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 report backend prerequisite for SLICE-05
+,review_pack/command_registry.yaml,set_report_visibility,,,NOT_STARTED,,,No accepted public command implementation found through TASK-S04-005.
+,review_pack/command_registry.yaml,delete_or_inactivate_report,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 report backend prerequisite for SLICE-05
 ,review_pack/command_registry.yaml,enqueue_email,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,delete_email_history,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,bulk_create_or_update_applications,web/src/lib/commands/application-lifecycle.ts,BULK-COMMANDS-001,IMPLEMENTED,,5042b70,TASK-S03-003 bulk application create/update
@@ -55,6 +55,6 @@ Requirement/Rule ID,Source,Command,Implementation Path,Test/Evidence,Status,PR,C
 ,review_pack/command_registry.yaml,revoke_hr_permission,,,NOT_STARTED,,,Production trusted command; implementation status only.
 ,review_pack/command_registry.yaml,bulk_set_candidate_active,web/src/lib/commands/candidate-lifecycle.ts,APPLICATION-INBOX-BULK-001,IMPLEMENTED,,fa59ab2,TASK-S03-006 bulk candidate lifecycle
 ,review_pack/command_registry.yaml,bulk_set_latest_submission_manual_status,web/src/lib/commands/submission-status.ts,BULK-COMMANDS-001,IMPLEMENTED,,5042b70,TASK-S03-003 / S03-006 bulk manual status
-,review_pack/command_registry.yaml,bulk_delete_or_inactivate_interviews,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,bulk_change_interview_schedule_status,,,NOT_STARTED,,,Production trusted command; implementation status only.
-,review_pack/command_registry.yaml,bulk_change_report_status,,,NOT_STARTED,,,Production trusted command; implementation status only.
+,review_pack/command_registry.yaml,bulk_delete_or_inactivate_interviews,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 bulk interview lifecycle
+,review_pack/command_registry.yaml,bulk_change_interview_schedule_status,supabase/migrations/20260906070000_interview_lifecycle_commands.sql,INTERVIEW-LIFECYCLE-001,IMPLEMENTED,,52f35ee,TASK-S04-002 bulk schedule status
+,review_pack/command_registry.yaml,bulk_change_report_status,,,NOT_STARTED,,,No accepted public command implementation found through TASK-S04-005.
