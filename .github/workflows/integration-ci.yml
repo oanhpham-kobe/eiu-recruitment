@@ -138,6 +138,9 @@ jobs:
       - name: Audit dependencies
         run: npm audit --audit-level=high
 
+      - name: Validate production design contract
+        run: npm run design:check
+
       - name: Lint
         run: npm run lint
 
