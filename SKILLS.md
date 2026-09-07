@@ -1,491 +1,242 @@
-## Approved v2.4 Tool & Authority Hierarchy
-
-```text
-DIRECT_SOURCE_LSP
-  = DEFAULT_LOCAL_IMPLEMENTATION_PATH (Primary implementation evidence)
-
-CODE_REVIEW_GRAPH
-  = BROAD_DISCOVERY_AND_REVIEW_GRAPH (Broad discovery, diff triage, context)
-
-GITNEXUS
-  = PRECISE_CODE_RELATIONSHIP_GRAPH (Caller/callee, blast radius, symbol tracing)
-
-DATABASE_AUTHORITY
-  = DECLARATIVE_SCHEMA + ORDERED_MIGRATIONS + DIRECT_SQL + TESTS
-
-GRAPHIFY
-  = FUTURE_OPTIONAL_DISCOVERY_TOOL (Dormant, not baseline active)
-```
-
-## Skill Topology Overview
-
-- **Project Specialists (13):** `documentation-lookup`, `react-patterns`, `security-review`, `accessibility`, `react-testing`, `browser-qa`, `architecture-decision-records`, `click-path-audit`, `supabase`, `supabase-postgres-best-practices`, `tdd`, `diagnosing-bugs`, `ponytail-review`.
-- **Release-Only (2):** `deploy-to-vercel`, `vercel-optimize`.
-- **GitNexus On-Demand (8):** `gitnexus-exploring`, `gitnexus-impact-analysis`, `gitnexus-debugging`, `gitnexus-refactoring`, `gitnexus-guide`, `gitnexus-cli`, `gitnexus-pdg-query`, `gitnexus-taint-analysis`.
-- **EIU Native (1):** `.omp/skills/eiu-code-review`.
-- **Global Reuse (3):** `vercel-react-best-practices`, `vercel-composition-patterns`, `verification-before-completion` (native p100 copies in `~/.omp/agent/skills/`).
-- **Deliberately Excluded (5):** `implement`, `code-review`, `context-budget`, `frontend-checklist-global`, `karpathy-guidelines` (removed from project provider to prevent workflow conflicts).
-
-
-
-# SKILLS.md — EIU Recruitment Skill & Tool Inventory
+# SKILLS.md — EIU Recruitment OMP Skill Inventory
 
 ## Purpose
 
-This file defines the approved project skill set for **Orca + OMP**.
+This file documents the project skill catalog and routing intent. It does **not** implement runtime loading.
 
-Skills are capabilities, not source authority.
+OMP owns skill discovery, provider precedence, `skill://<name>` resolution, `/skill:<name>` commands, and `autoloadSkills` injection for task agents.
 
-`AGENTS.md` defines when each skill is used.
+Project business/design authority remains the current canonical project sources.
 
 ---
 
-# 1. Canonical Skill Location
+## 1. Canonical project skill home
 
-Use one project skill home:
+Project skills live at:
 
 ```text
 .agents/skills/<skill-name>/SKILL.md
 ```
 
-Why:
-
-- OMP discovers `.agents/skills`.
-- Orca can work with Agent Skills / OMP skill homes.
-- It is portable across agent runtimes.
-- It avoids maintaining duplicate `.claude/skills`, `.omp/skills`, and `.agents/skills` copies.
-
-Every installed skill must have:
+Each skill must be one directory below `skills/` and should contain explicit frontmatter:
 
 ```yaml
 ---
-name: ...
-description: ...
+name: <unique-skill-name>
+description: <clear trigger/use description>
 ---
 ```
 
-Keep references/scripts/assets inside the same skill directory.
+Keep references/scripts/assets inside the same skill directory. Avoid duplicate skill names across project providers.
 
-Do not install multiple active copies of the same `name:`.
-
----
-
-# 2. Active Project Specialists — 13
-
-## `affaan-m/ECC` — selective
-
-| Skill | Priority | Use |
-|---|---:|---|
-| `documentation-lookup` | ★★★★★ | Current library/framework docs through Context7 |
-| `react-patterns` | ★★★★★ | React / App Router implementation patterns |
-| `security-review` | ★★★★★ | Auth/authz, PII, uploads, secrets, APIs |
-| `accessibility` | ★★★★★ | WCAG 2.2 AA |
-| `react-testing` | ★★★★★ | React/component/form testing |
-| `browser-qa` | ★★★★★ | Preview/staging UI journeys |
-| `architecture-decision-records` | ★★★★☆ | Durable technical decisions |
-| `click-path-audit` | ★★★★☆ | Sequential UI state/side-effect analysis |
-
-### Removed from previous list
-
-`postgres-patterns` is **not installed**.
-It is replaced by the official `supabase-postgres-best-practices` skill for
-PostgreSQL, schema, RLS, locking, concurrency, and performance guidance.
-
-`context-budget` is **not installed**.
-Its purpose is superseded by the centralized Token Efficiency Policy.
----
-
-## `supabase/agent-skills` — install both official skills
-
-| Skill | Priority | Use |
-|---|---:|---|
-| `supabase` | ★★★★★ | Supabase Auth/SSR/Storage/CLI/MCP/debugging |
-| `supabase-postgres-best-practices` | ★★★★★ | SQL/schema/RLS/index/locking/concurrency/performance |
-
-These are maintained by Supabase and are the primary Supabase/Postgres specialist skills.
+`.omp/skills/` is reserved for a genuinely OMP-native project skill only when native provider priority is specifically required. The previous `eiu-code-review` workflow skill has been removed; review behavior now belongs to OMP task-agent/reviewer primitives.
 
 ---
 
-## `mattpocock/skills` — selective
+## 2. Runtime model
 
-|Skill|Priority|Use|
-|---|---:|---|
-|`tdd`|★★★★★|Risk-based TDD for critical behavior|
-|`diagnosing-bugs`|★★★★★|Root-cause debugging|
-
-`implement` and `code-review` are **deliberately not installed**:
-- implementation is performed by OMP task Executor + applicable specialist skills;
-- review is performed by independent implementation Reviewer
-  (`eiu-code-review` where applicable).
-
----
-
-## `vercel-labs/agent-skills` — selective
-
-| Skill | Priority | Use |
-|---|---:|---|
-| `vercel-react-best-practices` | ★★★★★ | React/Next performance |
-| `vercel-composition-patterns` | ★★★★☆ | Component composition |
-| `deploy-to-vercel` | ★★★★★ | Vercel deployment |
-| `vercel-optimize` | ★★★★☆ | Deployed Vercel performance/reliability/cost |
-
----
-
-## `DietrichGebert/ponytail` — selective
-
-| Skill | Priority | Use |
-|---|---:|---|
-| `ponytail-review` | ★★★★☆ | Over-engineering review |
-
----
-
-## `obra/superpowers` — selective
-
-| Skill | Priority | Use |
-|---|---:|---|
-| `verification-before-completion` | ★★★★★ | Fresh verification evidence before completion |
-
----
-
-## `thedaviddias/Front-End-Checklist` — selective
-
-`frontend-checklist-global` is **deliberately not installed**.
-
-Major UI/pre-release verification is covered by:
-- canonical Design System v1.8;
-- the applicable Design Review Checklist;
-- `accessibility`;
-- `browser-qa`;
-- React Doctor when applicable.
-
-Do NOT add or reference `web-design-guidelines` unless it is later explicitly
-approved and added to SKILLS_LOCK.yaml.
-
----
-
-## `multica-ai/andrej-karpathy-skills`
-
-`karpathy-guidelines` is **deliberately not installed**.
-
-Its useful simplicity heuristics are represented by the project's core
-engineering principles without an external skill dependency.
-
-Do not copy its root `CLAUDE.md` into this project.
----
-
-# 3. Effective Skill Topology Count
+At session startup OMP discovers skill metadata. The model loads content only when needed:
 
 ```text
-Active project specialists              13
-Release-only skills                      2
-GitNexus on-demand skills                8
-EIU native review skill                  1
-Global-reuse skills                      3
-
-Deliberately excluded skills             5
+skill://<name>
 ```
 
-These are separate provider/topology categories.
+or through a project agent's frontmatter:
 
-Do not combine them into a single total because:
+```yaml
+autoloadSkills:
+  - <name>
+```
 
-- release-only skills are not active implementation specialists;
-- GitNexus skills are on-demand;
-- global-reuse skills come from the effective global provider;
-- eiu-code-review is an EIU-native review contract.
+Do not manually resolve an absolute filesystem path from `SKILLS_LOCK.yaml` and do not maintain a parallel `AVAILABLE / LOADED / APPLIED` runtime protocol.
 
-`SKILLS_LOCK.yaml` is the effective availability/provider truth.
-
----
-
-# 4. Next.js — No `next-best-practices` Skill
-
-Do **not** install `next-best-practices`.
-
-Vercel moved/retired that skill. Next.js now delivers best-practice/reference knowledge through version-matched bundled docs and managed agent rules.
-
-Current official approach:
-
-- Next.js 16.3+:
-  - `next dev` can maintain an `AGENTS.md` managed block.
-  - docs live in `node_modules/next/dist/docs/`.
-- Next.js 16.2:
-  - bundled docs are available but agent rule generation differs.
-- earlier versions:
-  - follow the current official AI-agent guide / codemod as appropriate.
-
-Reference:
-`https://nextjs.org/docs/app/guides/ai-agents`
-
-## Conditional Next workflow skills — not initial install
-
-Available from current `vercel/next.js` only when needed:
-
-- `next-dev-loop`
-- `next-cache-components-adoption`
-- `next-cache-components-optimizer`
-- `next-partial-prefetching-adoption`
-
-Do not install unless the current project actually uses their required feature/version/runtime.
+`SKILLS_LOCK.yaml` is provenance/integrity metadata only.
 
 ---
 
-# 5. Orca Runtime Skills — Do Not Vendor-Copy
+## 3. Project-local domain skills
 
-Orca ships/version-matches its own operating skills.
+These are available directly from `.agents/skills/` and are suitable for task-specific use.
 
-Required runtime capabilities:
+| Skill | Use |
+|---|---|
+| `documentation-lookup` | Current framework/library documentation when repository sources are insufficient |
+| `react-patterns` | React/Next.js implementation patterns and server/client boundaries |
+| `security-review` | Auth/authz, secrets, PII, privileged APIs/functions, sensitive data |
+| `accessibility` | Accessible forms, tables, dialogs, keyboard/focus/error semantics |
+| `react-testing` | Component/hook/form behavior tests |
+| `browser-qa` | Browser journey verification on an authorized target |
+| `architecture-decision-records` | Durable technical decisions when architecture is intentionally changed |
+| `click-path-audit` | Sequential UI state/side-effect analysis |
+| `supabase` | Supabase Auth/SSR/Storage/CLI/MCP/debugging |
+| `supabase-postgres-best-practices` | PostgreSQL schema, RLS, locking, indexes, concurrency, performance |
+| `tdd` | Risk-based TDD for security/data-integrity/business-critical behavior |
+| `diagnosing-bugs` | Root-cause debugging before repair |
+| `ponytail-review` | Over-engineering/complexity review when abstraction grows |
+| `verification-before-completion` | Fresh evidence before success/completion claims |
 
-| Orca skill | Priority | Use |
-|---|---:|---|
-| `orca-cli` | ★★★★★ | Orca worktrees, terminals, handoffs, embedded browser |
-| `orchestration` | ★★★★☆ | Multi-agent DAG/coordinator workflows |
+### Native agent autoload routes
 
-Do not copy these from GitHub into `.agents/skills` as static project copies.
-
-Use the installed Orca binary's version-matched guide, e.g. the current binary's:
+`eiu-db-executor` autoloads:
 
 ```text
-ORCA skills get orca-cli
-ORCA skills get orchestration
+supabase
+supabase-postgres-best-practices
+security-review
+tdd
+verification-before-completion
 ```
 
-where `ORCA` means the correct executable resolved by the Orca skill/runtime.
+`eiu-ui-executor` autoloads:
 
-## Orca skills not needed initially
+```text
+react-patterns
+accessibility
+react-testing
+verification-before-completion
+```
 
-- `computer-use` — only if external OS/window UI automation is actually needed.
-- `orca-linear` — only if Linear becomes a workflow dependency.
-- `orca-emulator`
-- `orca-emulator-android`
-- `orca-per-workspace-env` — only if disposable per-workspace VM/cloud environments are later adopted.
+`eiu-debugger` autoloads:
+
+```text
+diagnosing-bugs
+verification-before-completion
+```
+
+`eiu-general-executor` autoloads:
+
+```text
+verification-before-completion
+```
+
+Additional skills are read on demand through `skill://<name>` after the task actually enters that domain.
 
 ---
 
-# 6. GitNexus — PRIMARY Code Graph Engine + Controlled Skills
+## 4. Release skills
 
-Repository:
+| Skill | Use |
+|---|---|
+| `deploy-to-vercel` | Explicitly authorized Vercel deployment workflow |
+| `vercel-optimize` | Post-deploy Vercel performance/reliability/cost analysis |
 
-`abhigyanpatwari/GitNexus` (pinned version: `1.6.10`, `indexOnly: true`)
+These skills are not routine implementation requirements and must not imply deployment authorization.
 
-GitNexus is the primary code graph engine for TypeScript/React symbols, call hierarchies, and change blast radius.
+---
 
-Keep these 6 standard GitNexus skills installed into `.agents/skills`:
+## 5. GitNexus skills — on demand
+
+Installed project skills:
+
 - `gitnexus-exploring`
 - `gitnexus-impact-analysis`
 - `gitnexus-debugging`
 - `gitnexus-refactoring`
 - `gitnexus-guide`
 - `gitnexus-cli`
+- `gitnexus-pdg-query`
+- `gitnexus-taint-analysis`
 
-# 7. Graphify — OPTIONAL Architecture & Semantic Discovery Tool
+Use GitNexus only when graph/context/impact analysis materially helps the task. Direct source and LSP remain primary code evidence. Repository SQL/migrations remain database authority.
 
-Repository:
-
-`https://github.com/Graphify-Labs/graphify` (version: `0.9.47`, PyPI `graphifyy[sql]==0.9.47`, commit `b14b52e94ec3d9840413d81777f4c134eac0a40d`)
-
-Category: `OPTIONAL_DISCOVERY_TOOL`
-
-- On-demand architecture visualization, community mapping, and semantic discovery.
-- Not an always-on skill, not a source of truth, not database authority.
-- Isolated CLI execution via `uv tool`; no auto-hooks or persistent agent modifications.
-- Live PostgreSQL introspection disabled; semantic LLM extraction disabled by default during baseline.
-- Graph build is on-demand only (baseline: `GRAPHIFY_GRAPH = NOT_BUILT`).
+Operational or niche GitNexus skills may remain discoverable without being autoloaded into routine workers.
 
 ---
 
-# 7. MCP Tools
+## 6. Skills deliberately not used as project workflow primitives
 
-## Context7 MCP — ADD
+Do not add project-local workflow skills that duplicate OMP's native runtime:
 
-Needed by `documentation-lookup`.
+- `implement` — OMP task agents already perform implementation;
+- `code-review` — OMP has reviewer/task-agent primitives and project `eiu-reviewer`;
+- `context-budget` — OMP owns context/read/compaction behavior;
+- `frontend-checklist-global` — project design source + accessibility/browser QA cover the required review surface;
+- `karpathy-guidelines` — generic heuristic overlay, not a required capability.
 
-Preferred OMP project config:
+Do not make project correctness depend on a skill that exists only in a developer's global OMP profile.
+
+### Optional globally discovered skills
+
+OMP may discover user-level skills such as:
+
+- `vercel-react-best-practices`;
+- `vercel-composition-patterns`.
+
+They can be used on demand if present, but they are **not required project dependencies** and project agents must not autoload them until the repository vendors a complete verified project copy.
+
+---
+
+## 7. Next.js guidance
+
+Do not install a stale `next-best-practices` workflow skill.
+
+For framework-sensitive work:
+
+1. detect the installed Next.js version;
+2. read version-matched installed docs when available;
+3. use `documentation-lookup` for current external clarification when needed;
+4. apply project React/accessibility skills only where relevant.
+
+Do not upgrade Next.js merely to gain agent tooling.
+
+---
+
+## 8. MCP and tools are not skills
+
+Project MCP definitions live in `.omp/mcp.json`.
+
+Current intended surface:
+
+- Context7 — documentation retrieval;
+- Supabase dev — non-production, read-only, project ref supplied through `SUPABASE_PROJECT_REF`;
+- GitNexus — on-demand graph/impact engine.
+
+MCP availability does not prove a tool was used, and tool output never outranks direct source or canonical project contracts.
+
+React Doctor remains a CLI quality aid, not another React skill.
+
+---
+
+## 9. Quick routing
 
 ```text
-.omp/mcp.json
-```
+Supabase implementation
+  -> eiu-db-executor
 
-Use the Context7 remote OAuth endpoint:
+SQL / migration / RLS / concurrency
+  -> eiu-db-executor
 
-`https://mcp.context7.com/mcp/oauth`
+React / UI implementation
+  -> eiu-ui-executor
 
-No Context7 skill needs to be added because `documentation-lookup` already provides the project routing behavior.
+Reported defect / failing behavior
+  -> eiu-debugger
+  -> load narrowed domain skill if needed
 
----
+Other bounded implementation
+  -> eiu-general-executor
 
-## Supabase MCP — ADD, restricted
+Independent review
+  -> OMP built-in reviewer or eiu-reviewer
+  -> specialist skill:// reads only when materially relevant
 
-Official server:
+Shared/high-impact symbol investigation
+  -> GitNexus on demand + direct source/LSP confirmation
 
-`https://mcp.supabase.com/mcp`
-
-Project defaults:
-
-- development/test project only;
-- scope using `project_ref`;
-- `read_only=true`;
-- minimum feature groups;
-- credentials through OMP OAuth/user profile, never committed.
-
-Recommended initial feature groups:
-
-```text
-docs,database,debugging,development
-```
-
-Do not enable account management, branching, functions, or storage-management groups unless the task requires them.
-
-Official safety guidance:
-`https://supabase.com/docs/guides/ai-tools/mcp`
-
----
-
-## GitNexus MCP — ENABLE AFTER SETUP
-
-Canonical stdio shape:
-
-```json
-{
-  "enabled": true,
-  "command": "npx",
-  "args": ["-y", "gitnexus@latest", "mcp"]
-}
-```
-
-Normal project state after successful setup/license acceptance:
-
-```text
-GitNexus MCP = ENABLED
-GitNexus index = CURRENT
-```
-
-This does **not** mean every task must call GitNexus. Use it selectively according to `AGENTS.md`.
-
-If organizational-use licensing has not been accepted, do not run GitNexus; disable the MCP entry until the license decision is complete.
-
----
-
-# 8. Tooling — Add Without Another Skill
-
-## React Doctor CLI — ADD
-
-Use as a focused quality gate:
-
-```bash
-npx react-doctor@latest --verbose --scope changed
-```
-
-Do not install its agent skill initially because React review is already covered by selected React/testing/review skills.
-
-Use the current `--scope changed` syntax; old `--diff` is deprecated.
-
----
-
-# 9. OMP Built-ins — Use Instead of Installing Duplicates
-
-Do not add external duplicates for capabilities OMP already provides.
-
-Use OMP built-ins for:
-
-- LSP symbol navigation/rename/refactor support;
-- debugger/DAP;
-- bounded subagents;
-- advisor;
-- `/review`;
-- memory/recall;
-- context compaction;
-- shell/edit/search primitives.
-
-Therefore do not add from the sample repo:
-
-- AgentMemory;
-- WarpGrep;
-- Morph editing;
-- context-mode MCP;
-- custom Claude `post_implementation_reviewer`.
-
----
-
-# 10. Sample Repo Items Not Added
-
-| Item | Decision | Reason |
-|---|---|---|
-| `next-best-practices` | SKIP | Retired by Vercel; use version-matched Next docs |
-| `context-engineering` | SKIP | overlaps OMP + `context-budget` |
-| `context-mode` MCP | SKIP | environment-specific; OMP already manages context |
-| AgentMemory | SKIP | OMP has memory capabilities |
-| Code Review Graph | CONFIGURED / DISCOVERED / CALLABLE (SELECTIVE) | Configured in `.omp/mcp.json`, discovered by OMP runtime, callable via restricted allowlist tools (`get_minimal_context_tool`, `list_graph_stats_tool`, `detect_changes_tool`, `get_review_context_tool`, `get_architecture_overview_tool`, `query_graph_tool`). Explicit freshness gate required before use; direct source/LSP remains default authority. |
-| WarpGrep | SKIP | OMP search/LSP + GitNexus |
-| Morph edit | SKIP | OMP editing/LSP |
-| OpenSpec | SKIP | would create second spec authority |
-| `generate-tests` | SKIP | `tdd` + `react-testing` |
-| `web-design-guidelines` | SKIP | canonical design + accessibility + Front-End Checklist |
-| `grill-with-docs` | SKIP | coding phase source is already defined |
-| `grilling` | SKIP | same |
-| `domain-modeling` | SKIP | risks reopening settled domain rules |
-| `wayfinder` | SKIP | Orca orchestration handles larger work decomposition |
-| custom `post_implementation_reviewer` | SKIP | OMP `/review` + advisor |
-| `code-deduplication` skill | SKIP for now | source unclear; use GitNexus/LSP/search rule |
-| Lefthook | DEFER | add after project verification scripts/CI stabilize |
-| React Doctor skill | SKIP | use CLI, avoid React-skill overlap |
-
----
-
-# 11. Quick Router
-
-```text
-Any Supabase task
-  -> supabase
-
-SQL / migration / RLS
-  -> supabase-postgres-best-practices
-  -> security-review if security-sensitive
-
-Google OAuth / Supabase Auth
-  -> supabase
-  -> documentation-lookup
-  -> security-review
-
-React / TSX
-  -> react-patterns
-  -> vercel-react-best-practices
-
-Next.js framework behavior
-  -> installed-version Next docs
-  -> documentation-lookup
-  -> react-patterns
-
-High-risk behavior
-  -> tdd
-
-Bug
-  -> diagnosing-bugs
-  -> specialist after root-cause narrowing
-
-Shared/high-impact symbol
-  -> GitNexus impact/context
-  -> OMP LSP/search
-
-Pre-merge
-  -> independent implementation Reviewer (`eiu-code-review` where applicable)
-  -> OMP independent /review for high-risk
-  -> ponytail-review if complexity grew
-  -> React Doctor for meaningful React diff
+Before completion
   -> verification-before-completion
-
-Major UI / pre-release
-  -> canonical Design System v1.8
-  -> applicable Design Review Checklist
-  -> accessibility
-  -> browser-qa
-  -> React Doctor when applicable
-Vercel deployment
-  -> deploy-to-vercel
-
-Cross-worktree parallel implementation
-  -> Orca orchestration
-
-Orca worktree/terminal/handoff
-  -> orca-cli
 ```
+
+---
+
+## 10. Inventory invariant
+
+The project should be clonable and usable without machine-specific skill paths.
+
+Validation must reject:
+
+- duplicate discovered project skill names;
+- missing `SKILL.md` for an `autoloadSkills` entry;
+- project agent autoload references that resolve only from a developer's global profile;
+- hardcoded user-home skill paths in project governance;
+- reintroduction of a separate project runtime skill loader.
