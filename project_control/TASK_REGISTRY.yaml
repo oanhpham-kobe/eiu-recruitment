@@ -1,6 +1,6 @@
 version: 1
-current_slice: SLICE-04
-current_task: TASK-S04-004
+current_slice: SLICE-DS
+current_task: TASK-DS-001
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1002,14 +1002,15 @@ tasks:
   TASK-S04-004:
     title: "HR Interview scheduling UI over accepted trusted commands"
     slice: SLICE-04
-    status: READY
+    status: BLOCKED
     lane: LANE_A
     depends_on:
       - TASK-S04-005
+      - TASK-DS-006
     prompt: project_control/prompts/SLICE-04_TASK-004_v3.md
     prompt_sha256: ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce
     prompt_review_status: "PASS (ChatGPT exact-source reconciliation re-review @ a4d85a9033b3b54195265a893710d08a626ef9bb; blockers: NONE)"
-    notes: "TASK-S04-005 dependency is satisfied and CI-verified. Reconciliation review found and repaired the v2 backend-baseline/idempotency ambiguities in v3. Exact-source v3 re-review passed with no canonical-source reopening; TASK-S04-004 is READY for the authorized frontier after reconciliation release."
+    notes: "TASK-S04-005 remains satisfied and CI-verified. Owner sequencing decision 2026-09-08 requires Production Design-System Hardening (TASK-DS-001..006) before S04-004 implementation so Interview desktop/responsive UI consumes a converged production design foundation. This is planning/implementation sequencing only; no Product/Business/Design source reopening is required. Release S04-004 only after TASK-DS-006 is DONE and checkpoint/design-system-production-ready-001 exists."
 
   TASK-S04-005:
     title: "Application reactivation and participant command contract repair"
@@ -1024,3 +1025,70 @@ tasks:
     review_status: "PASS (agent://TaskS04005ExactReReview; blockers: NONE)"
     github_ci: "VERIFIED (run 34039979411; integration commit 8819d9fec1143e94aea7721e47ae84a8abcd82b9; PASS)"
     notes: "Append-only reactivation/participant contract repair passed local replay and all Slice-04 regressions. Initial review found P1 predecessor idempotency and PostgREST named-argument compatibility defects; exact repair re-review passed. Exact integration CI passed."
+
+  TASK-DS-001:
+    title: "Design-system canonical/runtime token convergence and production token hygiene"
+    slice: SLICE-DS
+    status: READY
+    lane: LANE_A
+    depends_on:
+      - TASK-S04-005
+    prompt: project_control/prompts/DESIGN_SYSTEM_HARDENING_v1.md
+    plan_section: DS-001
+    notes: "Reconcile documented/runtime token semantics, fix known token-name drift, remove scoped undefined/fallback palette debt, and establish unambiguous Interview 144px operational badge handling without reopening Design System v1.8."
+
+  TASK-DS-002:
+    title: "Production shell architecture and responsive internal navigation"
+    slice: SLICE-DS
+    status: PLANNED
+    lane: LANE_A
+    depends_on:
+      - TASK-DS-001
+    prompt: project_control/prompts/DESIGN_SYSTEM_HARDENING_v1.md
+    plan_section: DS-002
+    notes: "Separate Auth/Candidate/Internal shell responsibilities and implement desktop/tablet/mobile InternalAppShell navigation with focus, Escape, inertness, scroll-lock, and restoration semantics while preserving accepted business routes."
+
+  TASK-DS-003:
+    title: "Reusable production UI primitive layer for current and near-frontier operational pages"
+    slice: SLICE-DS
+    status: PLANNED
+    lane: LANE_B
+    depends_on:
+      - TASK-DS-001
+    prompt: project_control/prompts/DESIGN_SYSTEM_HARDENING_v1.md
+    plan_section: DS-003
+    notes: "Materialize a bounded shared primitive layer (buttons/status/menu/dialog/drawer/form/table-scroller/async feedback as justified by current consumers) and stop feature-local primitive duplication. No speculative theme/framework rewrite."
+
+  TASK-DS-004:
+    title: "Existing production responsive convergence on in-scope accepted routes"
+    slice: SLICE-DS
+    status: PLANNED
+    lane: LANE_A
+    depends_on:
+      - TASK-DS-002
+      - TASK-DS-003
+    prompt: project_control/prompts/DESIGN_SYSTEM_HARDENING_v1.md
+    plan_section: DS-004
+    notes: "Converge Login, Candidate shell/Form/Phiếu của tôi, Application Inbox, and shared overlays/navigation to Design System v1.8 + Responsive Prototype v1.10 presentation without changing accepted business/RPC/schema behavior."
+
+  TASK-DS-005:
+    title: "Production design-contract static linting and enforcement"
+    slice: SLICE-DS
+    status: PLANNED
+    lane: LANE_A
+    depends_on:
+      - TASK-DS-004
+    prompt: project_control/prompts/DESIGN_SYSTEM_HARDENING_v1.md
+    plan_section: DS-005
+    notes: "Extend design validation from documentation-only checks into production token/CSS/TSX contract checks that are statically provable; avoid pretending static lint proves runtime accessibility."
+
+  TASK-DS-006:
+    title: "Production responsive browser acceptance gate for the hardened design foundation"
+    slice: SLICE-DS
+    status: PLANNED
+    lane: LANE_A
+    depends_on:
+      - TASK-DS-005
+    prompt: project_control/prompts/DESIGN_SYSTEM_HARDENING_v1.md
+    plan_section: DS-006
+    notes: "Run production browser QA at representative phone/tablet/desktop widths with focused repair reruns and one full hardening acceptance matrix; acceptance creates checkpoint/design-system-production-ready-001 before S04-004 is released."

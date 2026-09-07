@@ -53,18 +53,22 @@ Exact integration CI:
 
 ## Plan reconciliation result and current frontier
 
-`SOURCE → IMPLEMENTATION → PLAN RECONCILIATION @ TASK-S04-005` is **VERIFIED**.
+`SOURCE → IMPLEMENTATION → PLAN RECONCILIATION @ TASK-S04-005` remains **VERIFIED**.
 
-- Accepted implementation is reconciled through `TASK-S04-005`.
-- No canonical Business Logic v1.2 / Technical Architecture v1.18 reopening was required.
-- The initial v2 prompt re-review found two blocking ambiguities (missing accepted `20260906060000` baseline and retry-key wording); both were repaired in v3.
-- Exact-source v3 re-review at `a4d85a9033b3b54195265a893710d08a626ef9bb` passed with no remaining blockers.
-- Authoritative task state is now `TASK-S04-004 = READY`.
-- Safe frontier is `TASK-S04-004`.
+- Accepted application implementation remains reconciled through `TASK-S04-005`.
+- No canonical Business Logic v1.2 / Technical Architecture v1.18 reopening is required.
+- `SLICE-04_TASK-004_v3.md` remains the released S04-004 product/technical prompt.
+- Owner sequencing decision on 2026-09-08 inserts a bounded **Production Design-System Hardening** initiative before S04-004 so the Interview page consumes a converged responsive production foundation.
+- This is planning/implementation sequencing, not a Product/Business/Design source rewrite.
+- Current authoritative frontier is `TASK-DS-001`; `TASK-S04-004 = BLOCKED` until `TASK-DS-006 = DONE` and `checkpoint/design-system-production-ready-001` exists.
 
-Released prompt:
+Design-System hardening DAG:
 
-`project_control/prompts/SLICE-04_TASK-004_v3.md`
+`DS-001 Tokens → (DS-002 Shell || DS-003 Primitives) → DS-004 Responsive convergence → DS-005 Design-contract lint → DS-006 Browser acceptance → S04-004`
+
+Hardening plan:
+
+`project_control/prompts/DESIGN_SYSTEM_HARDENING_v1.md`
 
 ## Workspace maintenance
 
@@ -109,10 +113,10 @@ A new session should:
 3. verify repository/branch/HEAD directly with Git;
 4. read `AUTONOMY_RUN_STATE.yaml`, `TASK_REGISTRY.yaml`, and `SLICE_REGISTRY.yaml` as authoritative execution/DAG truth;
 5. run `python project_control/validate_omp_native.py` and `python project_control/validate_control_plane.py`;
-6. confirm `plan_reconciliation.status = VERIFIED`, `TASK-S04-004 = READY`, and `safe_frontier = [TASK-S04-004]`;
-7. read `SLICE-04_TASK-004_v3.md` plus its canonical business/design/backend sources and the accepted ordered migration chain through `20260906090000_application_reactivation_and_participant_contract_repair.sql`;
-8. verify `checkpoint/pre-S04-004-001` resolves to the final governance baseline before any application edit;
-9. continue S04-004 implementation → focused verification → ChatGPT producer self-review/repair → OMP read-only candidate review persisted by OMP main on a non-candidate review evidence branch → targeted repair/re-review if needed → serialized integration → final exact-SHA OMP acceptance re-review/equivalence check if SHA changes → impact-selected exact-SHA CI → immutable accepted checkpoint → slice-closing review if S04 completes.
+6. confirm `plan_reconciliation.status = VERIFIED`, `design_system_hardening.status = IN_PROGRESS`, `TASK-DS-001 = READY`, and `safe_frontier = [TASK-DS-001]`;
+7. read `DESIGN_SYSTEM_HARDENING_v1.md`, current Design System v1.8 and Responsive Prototype v1.10 authority before production UI hardening;
+8. verify `checkpoint/pre-design-system-hardening-001` resolves to `8897d08f01b9f4738500eecfd6170dc0a9c77f54`;
+9. complete DS-001..006 under focused verification and stop the hardening initiative once its explicit exit criteria pass; create `checkpoint/design-system-production-ready-001`; then re-release/rebase S04-004 on that exact checkpoint and resume the established ChatGPT producer → OMP independent review → exact-SHA acceptance lifecycle.
 
 ## Do not redo
 
@@ -124,4 +128,4 @@ A new session should:
 
 ## Next action
 
-Verify `checkpoint/pre-S04-004-001` points to this final governance baseline, then use `SLICE-04_TASK-004_v3.md` to dispatch `TASK-S04-004` under producer self-review → OMP candidate review → serialized integration → final exact-SHA OMP acceptance re-review if needed → impact-selected exact-SHA CI → immutable accepted-checkpoint lifecycle.
+Execute `TASK-DS-001` from `checkpoint/pre-design-system-hardening-001`, then advance through the bounded Design-System Hardening DAG. Do not start S04-004 application implementation until DS-006 is accepted and `checkpoint/design-system-production-ready-001` is verified.
