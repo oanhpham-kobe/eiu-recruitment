@@ -1,0 +1,73 @@
+name: One-shot S04-004 v3 Registry Repair
+
+on:
+  push:
+    branches:
+      - governance/source-plan-reconciliation-s04-005-001
+
+permissions:
+  contents: write
+
+concurrency:
+  group: s04-004-v3-registry-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, '[skip-v3-repair]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: governance/source-plan-reconciliation-s04-005-001
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check pyyaml
+      - name: Patch registry and handoff fail-closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+
+          root = Path('.')
+          prompt = root / 'project_control/prompts/SLICE-04_TASK-004_v3.md'
+          expected = 'ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce'
+          actual = hashlib.sha256(prompt.read_bytes()).hexdigest()
+          if actual != expected:
+              raise SystemExit(f'prompt hash mismatch: {actual}')
+
+          task = root / 'project_control/TASK_REGISTRY.yaml'
+          text = task.read_text(encoding='utf-8')
+          old = '''    prompt: project_control/prompts/SLICE-04_TASK-004_v2.md\n    prompt_sha256: dacac3a2b6f4bdc622aa170445a9aa5f0febabdc78bffb7f30f047639bc97353\n    prompt_review_status: "PENDING_INDEPENDENT_REVIEW"\n    notes: "TASK-S04-005 dependency is satisfied and CI-verified. The original v1 prompt blocker was repaired by the accepted S04-005 backend contract. Dispatch remains blocked only by PLAN_RECONCILIATION_GATE_S04_005 and independent review of the rebaselined v2 prompt."\n'''
+          new = '''    prompt: project_control/prompts/SLICE-04_TASK-004_v3.md\n    prompt_sha256: ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce\n    prompt_review_status: "PENDING_INDEPENDENT_REVIEW"\n    notes: "TASK-S04-005 dependency is satisfied and CI-verified. Independent reconciliation review found v2 omitted accepted migration 20260906060000 and used ambiguous retry-key wording. v3 repairs the complete ordered backend baseline and operation-scoped idempotency-key reuse semantics. Dispatch remains blocked by PLAN_RECONCILIATION_GATE_S04_005 pending exact v3 re-review."\n'''
+          if text.count(old) != 1:
+              raise SystemExit(f'TASK-S04-004 v2 block match count={text.count(old)}')
+          task.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          state = root / 'project_control/CURRENT_STATE.md'
+          s = state.read_text(encoding='utf-8')
+          count = s.count('project_control/prompts/SLICE-04_TASK-004_v2.md')
+          if count != 1:
+              raise SystemExit(f'CURRENT_STATE v2 reference count={count}')
+          s = s.replace('project_control/prompts/SLICE-04_TASK-004_v2.md', 'project_control/prompts/SLICE-04_TASK-004_v3.md', 1)
+          s = s.replace('review the reconciliation diff and `SLICE-04_TASK-004_v2.md`', 'review the reconciliation diff and `SLICE-04_TASK-004_v3.md`', 1)
+          state.write_text(s, encoding='utf-8')
+          PY
+          python project_control/validate_omp_native.py
+          python project_control/validate_control_plane.py
+          git diff --check
+          test "$(git diff --name-only | sort)" = $'project_control/CURRENT_STATE.md\nproject_control/TASK_REGISTRY.yaml'
+      - name: Commit repaired prompt binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add project_control/TASK_REGISTRY.yaml project_control/CURRENT_STATE.md
+          git diff --cached --check
+          git commit -m "chore: bind S04-004 to reviewed v3 candidate [skip-v3-repair]"
+          git push origin HEAD:governance/source-plan-reconciliation-s04-005-001
