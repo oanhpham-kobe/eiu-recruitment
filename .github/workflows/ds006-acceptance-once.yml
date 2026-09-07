@@ -1,13 +1,42 @@
-name: DS-006 Acceptance Once
+name: DS-006 Focused Closure
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - oanhpham-kobe/DESIGN-SYSTEM-HARDENING-001
 
 permissions:
   contents: read
 
+concurrency:
+  group: ds006-focused-closure
+  cancel-in-progress: true
+
 jobs:
-  acceptance:
+  closure:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - run: echo "DS-006 push gate temporarily paused for focused test repair"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+      - name: Install Chromium for seven-width acceptance
+        working-directory: web
+        run: npx playwright install chromium
+      - name: Lint repaired DS-006 scope
+        working-directory: web
+        run: npm run lint
+      - name: Typecheck repaired DS-006 scope
+        working-directory: web
+        run: npm run typecheck
+      - name: Run focused shell and seven-width browser acceptance
+        working-directory: web
+        run: node --conditions react-server --test --import tsx src/__tests__/shell-a11y.test.ts src/__tests__/design-browser-acceptance.test.ts
+      - name: Verify diff hygiene
+        run: git diff --check
