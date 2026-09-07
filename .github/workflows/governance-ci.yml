@@ -14,6 +14,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: governance-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   governance-validation:
     name: Governance validation

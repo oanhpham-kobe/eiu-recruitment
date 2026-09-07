@@ -12,3 +12,7 @@
 10. GitNexus is on-demand graph/impact assistance. Direct source, LSP, migrations, schema, SQL, and tests remain authoritative; never call graph tools ceremonially.
 11. Autonomous scheduling authority remains `project_control/AUTONOMY_PARALLEL_GOVERNANCE.md` plus `project_control/AUTONOMY_RUN_STATE.yaml`. Durable registry state and OMP session Todo are separate concerns.
 12. `execution_mode` is exactly `AUTONOMOUS` or `BOUNDED`. AUTONOMOUS may continue through review/repair/integration/CI/next frontier unless a true stop condition occurs; BOUNDED performs only the explicitly authorized work set and stops.
+13. Repair verification is impact-selected: rerun failed/directly affected checks and crossed invariants; keep unrelated prior PASS areas closed unless changed code/dependency/shared-contract evidence reopens them.
+14. Candidate-producer self-review is not the independent acceptance review. OMP `eiu-reviewer` is read-only and reviews exact candidate SHAs; a repair SHA requires fresh re-review.
+15. OMP main session, not the reviewer, owns GitHub review-artifact persistence, exact-SHA CI/integration decisions, and immutable pre-task/accepted checkpoint refs. Accepted checkpoint requires OMP review SHA == CI SHA == checkpoint SHA.
+16. Before context-pressure/session handoff, finish an atomic recoverable checkpoint and refresh durable state/CURRENT_STATE; do not start a new risky phase or hand off half-edited state.

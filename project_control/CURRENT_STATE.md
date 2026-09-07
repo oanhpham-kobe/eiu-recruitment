@@ -90,6 +90,16 @@ Slice status reflects completion of each slice's feature scope; it does not impl
 - `SLICE-07` remains `NOT_STARTED`, but accepted S04 interview document/email-history foundations already exist and must be treated as prerequisites rather than recreated.
 - The official pixel-perfect PDF asset remains deferred to its explicit owner-provided trigger; it does not block S04-004.
 
+## Review, CI, recovery, and handoff protocol for the next task
+
+- Candidate producer for the next implementation may be ChatGPT; producer self-review is required but is not the independent acceptance review.
+- OMP `eiu-reviewer` performs the independent read-only exact-SHA review. OMP main session may commit its result under `project_control/reviews/` so ChatGPT can consume findings directly from GitHub.
+- Designated immutable pre-task recovery ref: `checkpoint/pre-S04-004-001`. It must point to the final governance baseline before any S04-004 application edit.
+- After OMP review PASS and exact-SHA CI PASS on the same candidate, OMP main creates `checkpoint/S04-004-accepted-001` (or the next numbered accepted checkpoint after a later repair). Existing checkpoint refs are never force-moved.
+- Repair verification is targeted; unrelated prior PASS domains remain closed unless changed code/dependency/shared-contract or concrete regression evidence reopens them.
+- Final task CI is impact-selected by affected domain; slice-closing review may deliberately broaden via `[full-ci]`.
+- If the active assistant/session approaches context pressure, finish an atomic recoverable SHA, refresh durable state plus this snapshot, and hand off before starting another risky phase.
+
 ## Resume protocol
 
 A new session should:
@@ -101,7 +111,8 @@ A new session should:
 5. run `python project_control/validate_omp_native.py` and `python project_control/validate_control_plane.py`;
 6. confirm `plan_reconciliation.status = VERIFIED`, `TASK-S04-004 = READY`, and `safe_frontier = [TASK-S04-004]`;
 7. read `SLICE-04_TASK-004_v3.md` plus its canonical business/design/backend sources and the accepted ordered migration chain through `20260906090000_application_reactivation_and_participant_contract_repair.sql`;
-8. continue S04-004 implementation → focused verification → independent implementation review → repair/re-review if needed → serialized integration → exact-SHA CI → next safe frontier.
+8. verify `checkpoint/pre-S04-004-001` resolves to the final governance baseline before any application edit;
+9. continue S04-004 implementation → focused verification → ChatGPT producer self-review/repair → OMP read-only exact-SHA review persisted by OMP main under `project_control/reviews/` → targeted repair/re-review if needed → impact-selected exact-SHA CI → immutable accepted checkpoint → slice-closing review if S04 completes.
 
 ## Do not redo
 
@@ -113,4 +124,4 @@ A new session should:
 
 ## Next action
 
-Use the released `SLICE-04_TASK-004_v3.md` and dispatch `TASK-S04-004` from the reconciled safe frontier under active AUTONOMOUS governance.
+Verify `checkpoint/pre-S04-004-001` points to this final governance baseline, then use `SLICE-04_TASK-004_v3.md` to dispatch `TASK-S04-004` under the producer-self-review → OMP independent review → impact-selected exact-SHA CI → immutable accepted-checkpoint lifecycle.
