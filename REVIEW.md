@@ -2,674 +2,283 @@
 
 ## Purpose
 
-This file defines project-specific review priorities and reject conditions.
+This file defines project-specific review priorities and reject conditions. It complements OMP's native reviewer; it does not implement a separate review runtime.
 
-Always review against the **current canonical project sources**. This file is a guardrail summary, not a replacement for those sources.
-
-If this file and the current source disagree, the current source wins and this file should be corrected.
+Always review against the **current canonical project sources** and the exact implementation diff. If this file conflicts with a current canonical source, the canonical source wins and this file should be corrected.
 
 ---
 
-# 1. Review Priority Order
+## 1. Review order
 
-1. **Current Source Conformance**
-2. **Security & Authorization**
-3. **Data Integrity & Concurrency**
-4. **Privacy & Document Security**
-5. **Authentication & Identity**
-6. **Database / Migration Safety**
-7. **Functional Correctness**
-8. **Type / Boundary Safety**
-9. **Accessibility & UI Contract**
-10. **Performance & Reliability**
-11. **Maintainability / Simplicity**
-12. **Agent / Tooling Safety**
+Review in this order:
+
+1. current-source conformance;
+2. security and authorization;
+3. data integrity, concurrency, and idempotency;
+4. privacy and private-document handling;
+5. database/migration safety;
+6. functional correctness and boundary safety;
+7. accessibility and UI contract;
+8. performance/reliability;
+9. maintainability and unnecessary complexity;
+10. workflow/tooling safety.
 
 A lower-priority improvement must never introduce a higher-priority regression.
 
 ---
 
-# 2. Current Source Conformance — BLOCKER
+## 2. Reviewer execution contract
 
-Reviewer must verify:
+Use OMP's built-in reviewer or `.omp/agents/eiu-reviewer.md`.
 
-- [ ] Implementation uses the current canonical source, not a remembered/older rule.
-- [ ] Entity ownership and relationships match current source.
-- [ ] Status transitions/derived outcomes match current source.
-- [ ] Permission predicates match current source.
-- [ ] Delete/inactive/destructive behavior matches current source.
-- [ ] Current-record/current-round/current-source derivations match current source.
-- [ ] UI behavior matches current design source.
-- [ ] No external skill has silently redesigned approved business logic.
+The reviewer is read-only. It must:
 
-Reject if:
+- start from the exact diff/SHA under review;
+- read the affected implementation and relevant consumers;
+- read the canonical source sections governing the behavior;
+- inspect affected tests, migrations, schema, and trust boundaries where relevant;
+- use OMP-discovered specialist skills on demand through `skill://<name>` when they materially help;
+- confirm material graph/tool findings against direct source;
+- report only evidence-backed, actionable findings.
 
-- behavior was invented without source support;
-- settled business logic was reopened without an explicit change request;
-- stale memory/old docs are treated as more authoritative than current source;
-- a generic best practice overrides a project-specific invariant.
+Do not require a synthetic skill-usage receipt. The review target is the resulting behavior, code, tests, and evidence.
 
-
-## Finding Disposition Contract
-
-Every material review finding must be dispositioned as exactly one of:
-
-- `BLOCKING_REPAIR`
-- `NEEDS_SOURCE_DISCOVERY`
-- `OWNER_DECISION_REQUIRED`
-- `CLOSED_AS_DESIGNED`
-- `DEFER_UNTIL_FEATURE`
-- `DEFER_UNTIL_PREPROD`
-- `STALE_OR_NOT_APPLICABLE`
-
-Rules:
-
-1. `BLOCKING_REPAIR`
-   - current defect is proven;
-   - source/evidence is sufficient;
-   - reviewer must state exact evidence, root cause, direct repair, and exact
-     verification;
-   - do not bounce a knowable repair back as vague investigation.
-
-2. `NEEDS_SOURCE_DISCOVERY`
-   - use only when current source/runtime evidence is genuinely insufficient;
-   - state exactly what evidence must be obtained;
-   - do not guess.
-
-3. `OWNER_DECISION_REQUIRED`
-   - use only for genuine business/product/policy/privacy/scope/production or
-     other explicit authorization decisions;
-   - do not escalate resolvable technical choices.
-
-4. `CLOSED_AS_DESIGNED`
-   - behavior is an explicit current Owner/canonical decision;
-   - reviewer may note risk/trade-off but must not reopen it as technical debt
-     without new regression evidence or an explicit change request.
-
-5. `DEFER_UNTIL_FEATURE`
-   - valid unresolved concern whose triggering feature does not yet exist;
-   - it must return as acceptance criteria when that feature begins.
-
-6. `DEFER_UNTIL_PREPROD`
-   - valid unresolved operational/release concern that is not an implementation
-     blocker yet;
-   - it must be resolved by its recorded pre-production trigger/exit condition.
-
-7. `STALE_OR_NOT_APPLICABLE`
-   - current source/runtime proves the finding is already fixed, superseded, or
-     does not apply.
-
-Review severity and lifecycle disposition are separate concepts.
-Do not convert every best-practice suggestion into a blocker.
-Do not call a deferred item "resolved forever".
-
-## Execution-Mode Review Contract
-
-Review behavior follows `execution_mode` in
-`project_control/AUTONOMY_RUN_STATE.yaml`; task type does not select a review
-mode.
-
-### AUTONOMOUS
-
-The OMP independent implementation Reviewer evaluates the first exact task SHA
-after focused verification. A `BLOCKING_REPAIR` is repaired within the active
-task lane when its direct repair is known, then receives a fresh exact-SHA
-re-review. That re-review covers every unresolved blocking finding, the repair
-delta, directly affected invariants/dependencies, and concrete repair
-regressions. Previously passed areas remain closed unless changed code, a
-material changed dependency, a crossed shared invariant, or concrete regression
-evidence justifies reopening them. A SHA change makes the verdict fresh; it
-does not reset review scope to zero. Ordinary review and repair outcomes do not
-return to a Planner checkpoint.
-
-### BOUNDED
-
-No internal OMP implementation reviewer or repair/re-review chain is scheduled
-in BOUNDED. Integration or CI occurs only when the bounded Planner prompt
-explicitly authorizes it; no next-task dispatch is inferred. The external
-Planner/Reviewer owns post-commit inspection. An executor may correct
-verification failures caused by the authorized work, but reports unrelated
-findings without expanding scope.
+A subagent's `completed` status or self-reported success is not acceptance evidence.
 
 ---
 
-# 3. Security & Authorization — BLOCKER
+## 3. Finding dispositions
 
-## Server-side authorization
+Every material finding should resolve to one of:
+
+- `BLOCKING_REPAIR` — a current defect is proven and the repair is knowable;
+- `NEEDS_SOURCE_DISCOVERY` — current source/runtime evidence is genuinely insufficient;
+- `OWNER_DECISION_REQUIRED` — a real business/product/policy/privacy/scope/production authorization decision is required;
+- `CLOSED_AS_DESIGNED` — behavior matches an explicit current decision;
+- `DEFER_UNTIL_FEATURE` — valid concern whose triggering feature does not exist yet;
+- `DEFER_UNTIL_PREPROD` — valid release/operational concern with a later exit condition;
+- `STALE_OR_NOT_APPLICABLE` — current evidence proves the finding is superseded or irrelevant.
+
+Do not bounce a knowable repair back as vague investigation. Do not escalate ordinary technical choices that current source and implementation evidence can resolve.
+
+---
+
+## 4. Current-source conformance — BLOCKER
+
+Reject when implementation:
+
+- invents behavior without source support;
+- follows stale plans/prompts instead of current source;
+- reopens settled product/business rules without authorization;
+- changes entity ownership, status semantics, permissions, deletion/inactive behavior, or derived-state rules contrary to current source;
+- lets a generic skill or framework pattern override project-specific behavior;
+- contradicts the current design/accessibility source.
+
+---
+
+## 5. Security and authorization — BLOCKER
 
 Reject if:
 
-- authorization exists only in UI;
+- authorization exists only in the UI;
 - hidden/disabled controls are treated as security;
-- a Server Action/Route Handler mutates without authenticating and authorizing;
-- client-supplied role/permission/ownership is trusted where it must be server-derived;
-- service-role/secret keys reach the browser;
-- service-role usage skips caller reauthorization;
-- private tables/views/functions are exposed more broadly than required;
-- RLS or grants are weakened to make a feature work.
+- a mutation endpoint/Server Action/RPC path fails to authenticate and authorize server-side;
+- client-supplied role, permission, ownership, actor, or status is trusted when it must be server-derived;
+- service-role or secret credentials reach browser code;
+- RLS or grants are broadened merely to make a feature work;
+- privileged functions expose more execute privilege than required;
+- `SECURITY DEFINER` usage lacks controlled search path and authorization reasoning;
+- sensitive output/logging exposes secrets, tokens, signed URLs, PII, or private-document content.
 
-For mutation paths verify:
+For mutation paths verify the effective sequence where applicable:
 
 ```text
 authenticate
--> authorize
--> validate
--> approved transactional command/RPC
--> stable response/error
+→ authorize
+→ validate
+→ transactional command/RPC
+→ stable safe result/error
 ```
 
-Browser code must not orchestrate a complex atomic business command through independent writes.
+---
+
+## 6. Supabase / PostgreSQL — BLOCKER or HIGH
+
+For affected database work verify:
+
+- migration order remains valid from a clean database;
+- declarative schema and ordered migrations agree where both are maintained;
+- constraints encode durable invariants where appropriate;
+- RLS and grants are both reviewed;
+- indexes support required operational/query paths;
+- locking order is deterministic where concurrency requires it;
+- state is re-read/revalidated after required locks;
+- optimistic version checks and idempotency are enforced where specified;
+- rollback cannot leave partial business state;
+- privileged routines revoke public/anonymous execution as required;
+- database findings are grounded in repository SQL, not graph absence or remote MCP state.
+
+Use the `supabase`, `supabase-postgres-best-practices`, `security-review`, and `tdd` skills when the review scope needs their specialist guidance.
+
+Supabase MCP is supporting inspection only. Repository migrations/schema remain authority.
 
 ---
 
-# 4. Supabase Security — BLOCKER
-
-For affected Supabase paths verify:
-
-- [ ] `supabase` skill/current Supabase docs were consulted for version-sensitive behavior.
-- [ ] Exposed tables use required RLS.
-- [ ] Grants and RLS are both reviewed; one does not replace the other.
-- [ ] RLS policies include actual ownership/context authorization, not only `TO authenticated`.
-- [ ] User-editable metadata is not trusted for authorization.
-- [ ] Sensitive views preserve intended RLS/security semantics.
-- [ ] `SECURITY DEFINER` is used only when justified.
-- [ ] Privileged functions have controlled `search_path` and explicit execute privileges.
-- [ ] `PUBLIC` execute privilege is revoked where required.
-- [ ] service role / secret key is server-only.
-- [ ] Storage policies preserve private document boundaries.
-
-Reject if a permission error is “fixed” by broadly bypassing RLS.
-
----
-
-# 5. Authentication & Google OAuth — BLOCKER
-
-Primary technical reference:
-
-`https://supabase.com/docs/guides/auth/social-login/auth-google`
-
-## Google provider configuration
-
-Verify:
-
-- [ ] Google OAuth Client ID/Secret are outside source control.
-- [ ] Client Secret is never bundled to browser code.
-- [ ] Authorized origins match intended environments.
-- [ ] Google authorized redirect URI matches the Supabase callback endpoint.
-- [ ] Supabase Site URL / redirect allow list is deliberate.
-- [ ] preview/staging/production redirects are not accidentally open-ended.
-- [ ] OAuth scopes are limited to approved needs.
-
-## SSR / PKCE
-
-Where the current Supabase SSR flow uses PKCE:
-
-- [ ] `signInWithOAuth` uses an approved `redirectTo`.
-- [ ] callback exchanges the authorization code for a Supabase session.
-- [ ] cookies/session handling uses current `@supabase/ssr` guidance.
-- [ ] callback destination cannot become an open redirect.
-- [ ] callback errors do not leak tokens/secrets.
-
-## Authentication is not authorization
-
-Critical rule:
-
-> A valid Google/Supabase session does not automatically grant application access.
-
-After auth, verify all current project-defined checks are enforced server-side, including whichever apply:
-
-- allowed identity/domain;
-- internal-user allowlist;
-- active state;
-- account binding;
-- role/permission resolution;
-- contextual authorization.
-
-Reject browser-only domain/role checks as the sole enforcement.
-
-## Provider tokens
-
-If Google is only used for sign-in:
-
-- do not persist provider access tokens;
-- do not persist provider refresh tokens;
-- do not request offline access/forced consent unnecessarily.
-
----
-
-# 6. Data Integrity & Concurrency — BLOCKER
-
-For race-prone commands compare implementation to the exact current concurrency contract.
-
-Reject if:
-
-- validation and write are separated without required locks/recheck;
-- resource conflicts are checked outside required deterministic locking;
-- stale whole-row writes can overwrite current data;
-- required version checks are omitted;
-- duplicate prevention exists only in UI;
-- sequence allocation lacks required lock/transaction;
-- aggregate/derived state is recalculated outside the authoritative transaction;
-- retry-prone operations lack required idempotency;
-- external provider calls occur inside a DB transaction contrary to current command/outbox design.
-
-Checklist:
-
-- [ ] one transaction maps to one business command where required;
-- [ ] lock order is deterministic;
-- [ ] state is re-read after locks where required;
-- [ ] eligibility/conflict checks use current locked state;
-- [ ] idempotency/version tokens are enforced;
-- [ ] rollback cannot leave partial business state;
-- [ ] concurrency tests cover meaningful competing operations.
-
----
-
-# 7. SQL / Migration Review — BLOCKER/HIGH
-
-Before approval:
-
-- [ ] `supabase-postgres-best-practices` was used.
-- [ ] schema changes are represented in repository migration/schema sources.
-- [ ] clean-install/migration ordering remains viable.
-- [ ] constraints encode durable invariants when appropriate.
-- [ ] indexes support required query/search paths.
-- [ ] no unbounded operational query is introduced.
-- [ ] destructive change has an explicit recovery/migration plan.
-- [ ] transaction/locking semantics match current source.
-- [ ] privileged functions/views/grants were security-reviewed.
-- [ ] realistic `EXPLAIN` evidence exists for critical performance paths when required.
-
-Reject dashboard-only schema drift that is not represented in version-controlled database sources.
-
----
-
-# 8. Supabase MCP Safety — BLOCKER
-
-Supabase MCP is a developer tool, not an application dependency.
-
-Reject project tooling configuration if:
-
-- MCP is pointed at production by default;
-- project scoping is omitted when a project can be scoped;
-- write-capable mode is enabled by default;
-- unnecessary feature groups are enabled;
-- credentials/tokens are committed;
-- live MCP SQL is treated as a replacement for migration files.
-
-Default should be:
-
-- non-production project;
-- `project_ref` scoped;
-- `read_only=true`;
-- minimum feature groups.
-
-Temporary write mode requires explicit task authorization and a non-production target.
-
-## Conditional MCP Runtime Evidence — HIGH
-
-Review MCP runtime evidence only when the task actually requires MCP:
-
-- [ ] configured, discovered, callable, and used are evidenced separately; `CONFIGURED != DISCOVERED != CALLABLE != USED`.
-- [ ] discovery, callability, and scope checks are safe and task-scoped.
-- [ ] if runtime proof is unavailable, direct source/LSP fallback is used, no MCP-use receipt is claimed, and the concrete tooling gap is reported.
-- [ ] repository database authority remains declarative schema, ordered migrations, direct SQL, and tests; Supabase MCP use is non-production, read-only inspection only.
-
----
-
-# 9. Privacy & Private Documents — BLOCKER
-
-Reject if:
-
-- private documents are stored in a public bucket;
-- long-lived signed URLs are persisted/logged;
-- upload validation is bypassed;
-- required scan/finalization state is bypassed;
-- one user/context can access another unauthorized user's document;
-- sensitive document content is logged;
-- raw tokens/session/OTP/provider secrets are logged;
-- purge/retention changes are invented outside current source.
-
-Verify:
-
-- [ ] preview/download authorization occurs before access is issued;
-- [ ] signed access is short-lived;
-- [ ] file type/size/count rules are enforced server-side;
-- [ ] staging/finalization follows current contract;
-- [ ] abandoned temporary files have a cleanup path.
-
----
-
-# 10. TypeScript / Boundary Safety — HIGH
-
-Reject:
-
-- unjustified `any`;
-- unvalidated untrusted payloads;
-- client payloads cast directly into trusted domain types;
-- secrets referenced from client components;
-- security-sensitive ownership fields accepted from clients when they should be derived server-side;
-- empty catch blocks or silently swallowed errors.
-
-Prefer:
-
-- `unknown` + validation/type guards for untrusted data;
-- explicit request/response/domain types;
-- validation at trust boundaries;
-- stable machine-readable error codes;
-- separate safe user-facing messages.
-
-Do not add a new validation dependency merely because a generic skill prefers it.
-
----
-
-# 11. React / Next.js — HIGH
-
-## Version-matched Next.js docs
-
-Do not approve framework-sensitive code written from stale memory when installed-version docs are available.
-
-For modern Next.js, preserve the managed Next.js agent rules in root `AGENTS.md` if generated by the framework.
-
-Do not install or rely on the retired `next-best-practices` skill.
-
-## Server/client boundaries
-
-Verify:
-
-- [ ] Server Components remain default where appropriate.
-- [ ] Client Components exist for real interaction/browser state.
-- [ ] sensitive server data is not over-serialized to client.
-- [ ] Server Actions are authenticated/authorized like public endpoints.
-- [ ] independent server work is parallelized when safe.
-- [ ] no avoidable fetch waterfall is introduced.
-
-## React state
-
-Reject:
-
-- duplicated derived state that can diverge;
-- effect-driven state that should be derived during render;
-- stale closure/update patterns affecting important form state;
-- global state introduced for a local concern without clear need.
-
-## Components
-
-Use composition when it removes real complexity.
-
-Reject speculative provider/compound-component architecture for one-off needs.
-
----
-
-# 12. Accessibility & UI Contract — HIGH
-
-The current canonical design source is authoritative.
+## 7. Authentication / OAuth — BLOCKER
 
 Verify where relevant:
 
-- [ ] semantic interactive elements;
-- [ ] keyboard operation;
-- [ ] visible focus;
-- [ ] accessible names/labels;
-- [ ] programmatic form-error association;
-- [ ] status meaning not conveyed only by color;
-- [ ] semantic table headers/relationships;
-- [ ] required responsive behavior;
-- [ ] essential text reflows without clipping;
-- [ ] reduced motion is respected;
-- [ ] locale/bilingual behavior preserves required state.
-
-For major UI/pre-release:
-
-- verify canonical Design System v1.8;
-- apply the applicable Design Review Checklist;
-- use `accessibility`;
-- run `browser-qa` on preview/staging when a preview/staging target is available and authorized;
-- run React Doctor when applicable.
-
-`frontend-checklist-global` is deliberately excluded; do not reinstall it.
+- Google/Supabase authentication is separated from application authorization;
+- OAuth Client Secret and provider/session tokens remain server-side;
+- callback/redirect targets are allowlisted and cannot become open redirects;
+- SSR/PKCE session exchange follows the installed/current Supabase guidance;
+- access predicates such as active state, account binding, permissions, and contextual authorization are enforced server-side;
+- provider access/refresh tokens are not persisted unless an approved feature actually needs Google APIs beyond login.
 
 ---
 
-# 13. Performance & Reliability — HIGH/MEDIUM
+## 8. Concurrency and business integrity — BLOCKER
 
-Verify:
+Reject if:
 
-- [ ] server-side pagination for operational lists;
-- [ ] no full-dataset browser filtering where server search is required;
-- [ ] deterministic stable sorting;
-- [ ] required DB indexes exist;
-- [ ] no avoidable React/Next waterfalls;
-- [ ] client bundle growth is justified;
-- [ ] heavy UI can be deferred/lazy-loaded where appropriate;
-- [ ] external delivery is retryable/after-commit where required;
-- [ ] rate limiting is durable where required;
-- [ ] PII responses follow required private/no-store behavior;
-- [ ] code fits Vercel stateless/serverless runtime assumptions.
+- required validation and write are separated without required lock/recheck;
+- conflict detection occurs outside the authoritative transaction;
+- stale whole-row writes can overwrite newer state;
+- duplicate prevention exists only in UI;
+- sequence/round/resource allocation omits required locking;
+- aggregate/derived state is recalculated outside its authoritative transaction;
+- retry-prone operations omit required idempotency;
+- historical/current-row selection rules can race with the mutation.
 
-After deployment use `vercel-optimize` for Vercel-specific performance/cost investigation.
+Concurrency tests should exercise meaningful competing operations, not only happy-path serial execution.
 
 ---
 
-# 14. Semantic Duplication — MEDIUM
+## 9. Privacy and private documents — BLOCKER
 
-Before introducing shared reusable logic, reviewer must check whether equivalent behavior already exists using:
+Reject if:
 
-- GitNexus;
-- OMP LSP/symbol search;
-- focused grep/search.
+- private documents are made public for convenience;
+- one user/context can access another unauthorized user's files;
+- long-lived signed URLs are persisted or logged;
+- required upload validation/finalization/scanning state is bypassed;
+- sensitive content or credentials are logged;
+- retention/purge semantics are invented outside current source.
 
-Flag:
-
-- duplicate business validators;
-- duplicate mappers/formatters;
-- duplicate auth/permission helpers;
-- duplicate hooks/components that should share semantics.
-
-Do not merge code solely because syntax is similar. Business semantics determine whether reuse is correct.
+Verify authorization before issuing preview/download access and keep signed access short-lived.
 
 ---
 
-# 15. Maintainability / Simplicity — MEDIUM
+## 10. TypeScript and trust boundaries — HIGH
 
-Use `ponytail-review` when the diff adds meaningful abstraction/dependencies.
+Reject:
+
+- unjustified `any` across trust-sensitive boundaries;
+- unvalidated untrusted payloads;
+- direct casts from client/network data into trusted domain types;
+- client control of server-derived security fields;
+- swallowed errors that hide a failed business/security operation;
+- unsafe serialization of sensitive server data into Client Components.
+
+Prefer explicit types, `unknown` plus validation at trust boundaries, and stable machine-readable error codes.
+
+---
+
+## 11. React / Next.js / UI — HIGH
+
+When framework behavior matters, use installed-version Next.js documentation rather than stale memory.
+
+Verify where relevant:
+
+- Server Components remain default unless interactivity/browser state requires a Client Component;
+- mutation-capable Server Actions/Route Handlers are authenticated and authorized like public endpoints;
+- avoidable server/client fetch waterfalls are not introduced;
+- state is not duplicated when it can be derived;
+- effects are not used to maintain derivable state;
+- stale closures or update ordering cannot corrupt meaningful form/workflow state;
+- composition is introduced only when it removes real complexity;
+- current canonical design behavior is preserved.
+
+Use `react-patterns`, `accessibility`, `react-testing`, `browser-qa`, or `click-path-audit` when those concerns are actually present.
+
+---
+
+## 12. Accessibility — HIGH
+
+Verify where relevant:
+
+- semantic interactive elements;
+- keyboard operation;
+- visible focus;
+- accessible names and labels;
+- programmatic form-error relationships;
+- status meaning not conveyed only by color;
+- semantic tables/headers;
+- responsive reflow without essential clipping;
+- reduced motion where motion exists;
+- locale/bilingual behavior preserves required state.
+
+Major UI/pre-release review should use the canonical design source plus `accessibility` and `browser-qa`; run React Doctor when useful for a material React diff.
+
+---
+
+## 13. Performance and reliability — HIGH/MEDIUM
+
+Verify where relevant:
+
+- server-side pagination/search for operational data sets;
+- deterministic stable sorting;
+- required database indexes;
+- no avoidable React/Next.js waterfalls;
+- justified client bundle growth;
+- retryable/after-commit external delivery where required;
+- stateless/serverless runtime assumptions remain valid;
+- expensive shared logic is not duplicated unnecessarily.
+
+Use GitNexus only when symbol/impact tracing materially improves confidence, and confirm conclusions against direct source.
+
+---
+
+## 14. Maintainability — MEDIUM
 
 Flag:
 
 - speculative abstraction;
 - wrappers without policy;
-- unnecessary dependency;
-- generalized API with one real use;
-- broad unrelated refactor;
-- avoidable indirection.
+- generalized APIs with only one real use;
+- broad unrelated refactors;
+- unnecessary dependencies;
+- duplicate business/security semantics that should share one authoritative helper.
 
-Never simplify away:
+Use `ponytail-review` when the diff materially increases abstraction/indirection.
 
-- authorization;
-- RLS/grants;
-- validation;
-- concurrency;
-- idempotency;
-- privacy;
-- accessibility;
-- audit requirements;
-- explicit current-source requirements.
+Never simplify away authorization, RLS/grants, validation, concurrency, idempotency, privacy, accessibility, audit requirements, or explicit canonical-source behavior.
 
 ---
 
-# 16. Orca / OMP Workflow Safety — HIGH
+## 15. Workflow and agent safety — HIGH
 
-## Worktrees
+Reject the workflow if:
 
-Reject workflow if:
-
-- two writing agents modify the same worktree concurrently;
-- parallel Orca tasks own overlapping schema migrations without coordination;
-- a handoff does not state current branch/worktree and verification state.
-
-Use Orca for separate-worktree parallelism.
-
-Use OMP subagents/advisor for bounded analysis/review around one writer.
-
-## OMP instructions
-
-Preferred project-native structure:
-
-```text
-.omp/AGENTS.md  -> imports root AGENTS.md
-.omp/RULES.md   -> short sticky hard rules
-.omp/WATCHDOG.md -> advisor-only review priorities
-.agents/skills/ -> canonical project skills
-```
-
-Do not maintain a separate hand-written `CLAUDE.md` policy for this project.
-
-A `CLAUDE.md` generated by Next.js as `@AGENTS.md` is a compatibility shim, not a second policy source.
+- multiple writing agents concurrently mutate the same worktree;
+- overlapping migrations/schema objects are assigned concurrently without an explicit merge boundary;
+- a subagent is allowed to treat itself as owner of the parent Todo or autonomous frontier;
+- worker success is accepted without parent diff inspection and fresh verification;
+- machine-specific global skill paths are required for project correctness;
+- a runtime skill loader is implemented in project governance instead of using OMP discovery/autoload;
+- production/deploy/destructive actions occur without explicit authorization.
 
 ---
 
-# 17. OMP Advisor / Independent Review
+## 16. Completion gate
 
-This section applies to `AUTONOMOUS`. In `BOUNDED`, use the execution-mode
-contract in §2: no internal implementation review or repair/re-review chain is
-scheduled. Integration or CI requires explicit bounded-prompt authorization;
-no next-frontier execution is inferred.
+Before PASS/ACCEPTED:
 
-For high-risk AUTONOMOUS diffs, prefer independent review.
+- inspect exact diff/result;
+- verify all blocking findings are closed;
+- run fresh focused tests/checks for the changed behavior;
+- run broader lint/typecheck/build/test only when lifecycle/risk requires them;
+- confirm the evidence belongs to the exact reviewed SHA when SHA-specific acceptance is required;
+- state any residual non-blocking risk explicitly.
 
-Suggested sequence:
-
-```text
-independent implementation Reviewer (`eiu-code-review` where applicable)
--> OMP independent /review for high-risk work when useful
--> ponytail-review if complexity increased
--> verification-before-completion
-```
-
-Advisor/WATCHDOG should focus on:
-
-- source drift;
-- authn/authz confusion;
-- RLS/grant bypass;
-- races/lock ordering;
-- stale writes/idempotency;
-- private document exposure;
-- unsafe MCP/live environment operations;
-- overbroad changes.
-
-Keep advisor investigative/read-only unless explicitly authorized otherwise.
-
----
-
-# 18. React Doctor Gate
-
-For meaningful React/Next.js changes run current syntax:
-
-```bash
-npx react-doctor@latest --verbose --scope changed
-```
-
-Do not use stale `--diff` examples as the preferred form.
-
-Treat findings as review input; do not automatically rewrite unrelated code.
-
-
-## Skill Execution Evidence — HIGH
-
-For every task with `SKILLS_REQUIRED`, verify the effective `SKILLS_LOCK.yaml` provider, actual `SKILL.md` read state, concrete `applied_to` decisions, and truthful reasons for unloaded/non-applied skills. `SKILLS_INTENDED_APPLICATION` is planning only.
-
-Reject a receipt that treats `SKILLS_REQUIRED`, `SKILLS_RESOLVED`, availability, or pre-execution `SKILLS_APPLIED` as proof; claims `loaded: YES` without an actual read; claims `applied: YES` without a concrete decision; or fabricates historical evidence. Do not fail accepted historical tasks solely because they predate this contract.
----
-
-# 19. Graph Intelligence & Code Review Contracts (v2.4)
-
-This project uses Code Review Graph for broad diff triage and GitNexus for precise caller/callee and blast-radius impact.
-
-### Review Workflow:
-1. `REVIEW.md` / task contract and acceptance criteria check.
-2. Direct git diff and source inspection.
-3. CRG minimal diff triage when useful (`detect_changes_tool`, `get_review_context_tool`).
-4. Identify highest-risk changed symbols.
-5. GitNexus precise impact for those symbols when useful (`impact`, `context`).
-6. Direct source and tests verification.
-7. Final review findings issued through `eiu-code-review`.
-
-### Review Rules & Invariants:
-- Do not require graph calls for trivial or localized diffs.
-- Never issue findings or verdicts solely from graph output.
-- `GRAPH_FINDING_NEEDS_SOURCE_CONFIRMATION`: Mandatory direct source confirmation for any graph-material finding.
-- `DB_EFFECTIVE_DEFINITION_VERIFIED`: Database findings must be verified against direct SQL, declarative schema, and ordered migrations before assigning a defect.
-- `SQL_ABSENCE_VERIFIED`: Never conclude a function, trigger, RPC, or policy is missing based on graph absence alone.
-- Both CRG and GitNexus require explicit freshness verification before review evidence is accepted.
-
-Verify:
-- [ ] CRG MCP is available for broad triage;
-- [ ] GitNexus MCP is available for precise impact analysis;
-- [ ] freshness gates are checked before using graph evidence;
-- [ ] shared/high-risk edits use impact analysis when relationships are not trivially local;
-- [ ] large/high-risk final diffs receive GitNexus change-impact review where useful;
-- [ ] actual source is inspected before assigning findings;
-- [ ] database findings are verified against migrations, schema, and direct SQL;
-- [ ] Graphify is recognized as dormant and non-authoritative.
-
-## Graph Usage Evidence — HIGH
-
-Verify persisted `GRAPH_USAGE`. For `DIRECT_SOURCE_LSP_ONLY`, require `graph_used: NO` and a concrete locality reason; absence of graph calls is correct. For graph-used tasks, require freshness before first query, refresh when stale, analyzed HEAD, route-matched purpose, and direct-source confirmation of material findings. Do not approve intended routing as graph evidence, and require fresh evidence before reusing graph conclusions after material changes.
-
----
-
-# 20. Final Verification Gate
-
-Before approval:
-
-- [ ] current source conformance checked;
-- [ ] affected auth/authorization paths tested;
-- [ ] type/static checks pass;
-- [ ] focused tests pass;
-- [ ] database/RLS tests pass when applicable;
-- [ ] concurrency/idempotency tests pass when applicable;
-- [ ] React Doctor passes/has reviewed findings when applicable;
-- [ ] UI/browser QA completed when applicable;
-- [ ] final diff has no unrelated scope creep;
-- [ ] independent review used for high-risk work;
-- [ ] `verification-before-completion` evidence is fresh.
-
-A green build alone is not sufficient proof of business/security correctness.
-
----
-
-# 21. Reviewer Output Format
-
-Use:
-
-```text
-BLOCKER
-HIGH
-MEDIUM
-LOW
-```
-
-Every finding should include:
-
-1. file/symbol;
-2. violated current-source/review contract;
-3. concrete failure mode;
-4. smallest safe remediation;
-5. verification required.
-
-Prefer fewer high-confidence findings over speculative nitpicks.
----
-
-## GitHub Actions CI Evidence — HIGH
-
-- [ ] Exact pushed commit SHA is identified and matches the accepted checkpoint.
-- [ ] `npm ci` passes on the clean runner using `web/package-lock.json`.
-- [ ] `npm audit --audit-level=high` passes.
-- [ ] `npm run lint` passes.
-- [ ] `npm run typecheck` passes.
-- [ ] `npm run test` passes.
-- [ ] `npm run build` passes.
-- [ ] Workflow permissions are no broader than `contents: read`.
-- [ ] Workflow has no deployment trigger, production credential, or production resource.
-
-CI PASS is required after activation but is insufficient without local verification and independent review.
+`verification-before-completion` is the project-local completion-evidence skill. It reinforces this gate; it does not replace reviewer judgment.
