@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-04
-current_task: TASK-S04-003
+current_task: TASK-S04-004
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1006,10 +1006,10 @@ tasks:
     lane: LANE_A
     depends_on:
       - TASK-S04-005
-    prompt: project_control/prompts/SLICE-04_TASK-004_v1.md
-    prompt_sha256: 67a4e356d63343a93dbeba1394bca351795da22da51408eeb549b32a257a9c16
-    prompt_review_status: "BLOCKING_REPAIR (agent://TaskS04004PromptReview)"
-    notes: "Prompt review proved missing reactivate_application and noncanonical/ambiguous participant RPC contracts. UI dispatch is blocked until TASK-S04-005 is accepted."
+    prompt: project_control/prompts/SLICE-04_TASK-004_v2.md
+    prompt_sha256: dacac3a2b6f4bdc622aa170445a9aa5f0febabdc78bffb7f30f047639bc97353
+    prompt_review_status: "PENDING_INDEPENDENT_REVIEW"
+    notes: "TASK-S04-005 dependency is satisfied and CI-verified. The original v1 prompt blocker was repaired by the accepted S04-005 backend contract. Dispatch remains blocked only by PLAN_RECONCILIATION_GATE_S04_005 and independent review of the rebaselined v2 prompt."
 
   TASK-S04-005:
     title: "Application reactivation and participant command contract repair"

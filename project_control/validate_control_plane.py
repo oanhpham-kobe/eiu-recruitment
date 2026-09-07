@@ -253,6 +253,90 @@ def main() -> int:
                 )
 
     # ---------------------------------------------------------
+    # Current pointer / accepted-task semantic consistency
+    # ---------------------------------------------------------
+
+    task_current_slice = task_registry.get("current_slice")
+    slice_current_slice = slice_registry.get("current_slice")
+    task_current_task = task_registry.get("current_task")
+
+    if task_current_slice != slice_current_slice:
+        errors.append(
+            "TASK_REGISTRY.current_slice does not match "
+            "SLICE_REGISTRY.current_slice"
+        )
+
+    current_task_entry = tasks.get(task_current_task)
+    if not isinstance(current_task_entry, dict):
+        errors.append(
+            f"TASK_REGISTRY.current_task references unknown task {task_current_task!r}"
+        )
+    else:
+        if current_task_entry.get("slice") != task_current_slice:
+            errors.append(
+                "TASK_REGISTRY.current_task does not belong to current_slice"
+            )
+
+    current_slice_entry = slices.get(slice_current_slice)
+    if isinstance(current_slice_entry, dict):
+        if current_slice_entry.get("current_task") != task_current_task:
+            errors.append(
+                "SLICE_REGISTRY current slice current_task does not match "
+                "TASK_REGISTRY.current_task"
+            )
+
+        if (
+            current_slice_entry.get("status") == "IN_PROGRESS"
+            and isinstance(current_task_entry, dict)
+            and current_task_entry.get("status") == "DONE"
+        ):
+            incomplete_members = [
+                task_id
+                for task_id, task in tasks.items()
+                if isinstance(task, dict)
+                and task.get("slice") == slice_current_slice
+                and task.get("status")
+                not in {"DONE", "SUPERSEDED", "CANCELLED"}
+            ]
+            if incomplete_members:
+                errors.append(
+                    "current_slice is IN_PROGRESS but current_task is DONE while "
+                    "non-terminal members remain: "
+                    + ", ".join(sorted(incomplete_members))
+                )
+
+    last_accepted = run_state.get("last_accepted_task")
+    if last_accepted is not None:
+        if not isinstance(last_accepted, dict):
+            errors.append("last_accepted_task must be a mapping")
+        else:
+            accepted_id = last_accepted.get("id")
+            accepted_commit = last_accepted.get("commit")
+            accepted_task = tasks.get(accepted_id)
+            if not isinstance(accepted_task, dict):
+                errors.append(
+                    f"last_accepted_task references unknown task {accepted_id!r}"
+                )
+            else:
+                if accepted_task.get("status") != "DONE":
+                    errors.append(
+                        f"last_accepted_task {accepted_id} is not DONE"
+                    )
+                if not is_exact_sha(accepted_commit):
+                    errors.append(
+                        "last_accepted_task.commit must be an exact 40-character SHA"
+                    )
+                implementation_sha = accepted_task.get("implementation_sha")
+                if (
+                    implementation_sha is not None
+                    and accepted_commit != implementation_sha
+                ):
+                    errors.append(
+                        "last_accepted_task.commit does not match "
+                        f"{accepted_id}.implementation_sha"
+                    )
+
+    # ---------------------------------------------------------
     # Safe frontier
     # ---------------------------------------------------------
 
@@ -276,6 +360,12 @@ def main() -> int:
         "safe_frontier.eligible_tasks",
         errors,
     )
+
+    execution_hold = safe_frontier.get("execution_hold")
+    if execution_hold and eligible_tasks:
+        errors.append(
+            "safe_frontier.execution_hold is set while eligible_tasks is non-empty"
+        )
 
     for task_id in eligible_tasks:
         task = tasks.get(task_id)

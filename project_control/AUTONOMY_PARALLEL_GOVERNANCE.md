@@ -31,6 +31,21 @@ Before creating any new control-plane or governance document:
 2. Create a new governance file only if it represents a fundamentally new authority domain and existing files would become incoherent if overloaded.
 3. A newly observed failure mode must result in repairing existing policies, updating the dynamic validator, or adding a regression test—never creating another policy layer.
 
+### Cross-slice accepted prerequisite rule
+
+Slice status represents completion of that slice's user/business feature scope; it does not imply exclusive ownership of every implementation artifact later consumed by that slice.
+
+If an earlier accepted task legitimately materializes a backend, schema, infrastructure, or trusted-command prerequisite that a later slice will consume:
+
+- the later slice may remain `NOT_STARTED` until its own feature work begins;
+- the accepted prerequisite remains authoritative implementation and must be recorded in planning/traceability;
+- future task materialization must consume that accepted prerequisite instead of recreating, forking, or silently superseding it;
+- a later slice's `NOT_STARTED` state is never evidence that its already-accepted prerequisite is unimplemented; and
+- any real contradiction between the accepted prerequisite and current canonical source is a reconciliation/source gate, not permission to duplicate the contract.
+
+This rule preserves slice-status meaning while preventing downstream reimplementation drift (for example, report backend prerequisites accepted in Slice-04 and later consumed by Slice-05).
+
+
 ---
 
 ## 2. Execution Mode and Runtime Authority
