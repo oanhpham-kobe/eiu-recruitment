@@ -1,17 +1,14 @@
-# EIU Recruitment — Sticky Rules
+# EIU Recruitment — OMP Sticky Rules
 
-1. The **current canonical project sources** always outrank memory, old plans, old docs, generic skills, and examples.
-2. Authentication is not authorization. Enforce application permissions server-side.
-3. Never weaken RLS, grants, validation, concurrency/locking, idempotency, privacy, private Storage, or accessibility requirements for convenience.
-4. Never expose service-role keys, Google Client Secret, session/refresh tokens, OTPs, signed private URLs, or other secrets.
-5. Supabase MCP must default to a non-production project, project-scoped and read-only. Never use AI-driven production DB writes without explicit authorization.
-6. Never let multiple writing agents concurrently modify the same worktree.
-7. Do not commit, push, merge, production-deploy, apply destructive live migrations, or delete production data unless explicitly authorized.
-8. Do not claim `done`, `fixed`, `pass`, or `ready` without fresh verification evidence.
-9. External skills/tools are advisory implementation aids, never a second business/design Source of Truth.
-10. After accepted setup, keep GitNexus MCP available as the default graph/impact engine; use it selectively for cross-module/shared/high-risk work, not mechanically for trivial edits.
-11. Required skill routing is not satisfied by availability or prompt text. Resolve the effective provider, actually read the required `SKILL.md` before dependent implementation, and persist a truthful runtime receipt. `AVAILABLE != LOADED != APPLIED`.
-12. Every implementation task records `GRAPH_USAGE`. Graph calls require freshness evidence. `DIRECT_SOURCE_LSP_ONLY` records `graph_used: NO`; do not refresh graphs ceremonially. If a graph is used, record freshness, refresh action, analyzed HEAD, purpose, and direct-source cross-check.
-13. Accepted integration checkpoints require exact-SHA GitHub Actions Fast CI once CI is enabled. CI is clean-runner verification only: it never implies deploy authorization and never replaces local verification or independent review.
-14. Autonomous Coordinator runs must read `project_control/AUTONOMY_PARALLEL_GOVERNANCE.md` (scheduling/lifecycle authority) and `project_control/AUTONOMY_RUN_STATE.yaml` (runtime-state authority) before making scheduling, task-start, or integration decisions. One fact has one canonical authority.
-15. `execution_mode` is exactly `AUTONOMOUS` or `BOUNDED`. In `AUTONOMOUS`, continue the approved lifecycle through OMP implementation review, scoped repair when required, exact-SHA targeted re-review, serialized integration, exact-SHA CI, and the next safe frontier unless a true stop condition occurs. In `BOUNDED`, perform only the authorized work set, verify, commit, report, and stop; never schedule internal review or repair/re-review. Integration or CI requires explicit bounded-prompt authorization; never infer or dispatch a next-frontier task.
+1. Current canonical project sources outrank memory, old plans, generic skills, examples, and historical task prompts.
+2. Authentication is not authorization. Preserve server-side authorization, RLS/grants, validation, locking/concurrency, idempotency, privacy, private Storage, accessibility, and secret boundaries.
+3. Supabase MCP defaults to non-production and read-only. Production writes, destructive live operations, deploys, main merges, or other external authorization boundaries require explicit Owner authorization.
+4. Never let multiple writing agents concurrently modify the same worktree.
+5. The main OMP session owns the visible Todo and task lifecycle. For non-trivial work, initialize and maintain the native Todo before and during implementation. Subagents must not own or recreate the parent Todo.
+6. Skills use OMP-native discovery. Prefer project skills under `.agents/skills/<name>/SKILL.md`; use `autoloadSkills` on project agents for deterministic worker specialization and `skill://<name>` for additional on-demand skill reads. Do not manually resolve runtime skill paths through `SKILLS_LOCK.yaml`.
+7. A skill is guidance, not project authority. Apply only skills relevant to the delegated work; do not create a second business/design source of truth from skill text.
+8. Subagents are bounded workers. They implement, investigate, or review the assigned scope and return evidence to the parent; they do not select the autonomous frontier, integrate branches, or dispatch the next project task unless explicitly delegated by the main session.
+9. Do not trust a subagent success claim by itself. The parent verifies the diff/result and obtains fresh evidence before accepting, committing, integrating, or claiming completion.
+10. GitNexus is on-demand graph/impact assistance. Direct source, LSP, migrations, schema, SQL, and tests remain authoritative; never call graph tools ceremonially.
+11. Autonomous scheduling authority remains `project_control/AUTONOMY_PARALLEL_GOVERNANCE.md` plus `project_control/AUTONOMY_RUN_STATE.yaml`. Durable registry state and OMP session Todo are separate concerns.
+12. `execution_mode` is exactly `AUTONOMOUS` or `BOUNDED`. AUTONOMOUS may continue through review/repair/integration/CI/next frontier unless a true stop condition occurs; BOUNDED performs only the explicitly authorized work set and stops.
