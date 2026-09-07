@@ -257,16 +257,16 @@ For tasks implemented outside OMP (for example, by ChatGPT through GitHub), the 
 
 Review waves may contain at most two independent task candidates. Each task keeps its own exact SHA, findings, verdict, CI evidence, and checkpoint. A downstream task must not consume an unaccepted dependency merely because both were implemented in the same wave.
 
-The reviewer remains read-only and must not create or move Git refs. OMP main session owns review-result persistence, CI/integration decisions, and checkpoint creation. When the Owner requests GitHub-visible review handoff, OMP main may persist the reviewer result under `project_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md`; this is evidence only, not a new authority.
+The reviewer remains read-only and must not create or move Git refs. OMP main session owns review-result persistence, CI/integration decisions, and checkpoint creation. When the Owner requests GitHub-visible review handoff, OMP main persists the reviewer result on a non-candidate evidence branch such as `review/<TASK_ID>-<SHORT_SHA>-vN`, with the artifact at `project_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md`. The evidence branch must not mutate the candidate ref; the artifact is evidence only, not a new authority.
 
-After a repair creates a new candidate SHA, any prior PASS belongs to the old SHA and cannot accept the new one. Acceptance requires the OMP independent review PASS and exact-SHA CI PASS for the same final candidate SHA.
+After a repair creates a new candidate SHA, any prior PASS belongs to the old SHA and cannot accept the new one. The pre-integration candidate review remains bound to that candidate SHA. After serialized integration, if the final integration SHA differs, OMP performs a targeted exact-SHA acceptance re-review/equivalence check on the integration SHA before CI. If serialized integration preserves the exact candidate SHA, the candidate review may serve as the final acceptance review.
 
-Before risky task implementation, create an immutable recovery ref such as `checkpoint/pre-S04-004-001`. After review and CI PASS, OMP main creates an immutable accepted ref such as `checkpoint/S04-004-accepted-001`. Never force-move an existing checkpoint; create a new numbered checkpoint for a later accepted repair.
+Before risky task implementation, create an immutable recovery ref such as `checkpoint/pre-S04-004-001`. After final OMP acceptance review PASS and exact-SHA CI PASS, OMP main creates an immutable accepted ref such as `checkpoint/S04-004-accepted-001`. Never force-move an existing checkpoint; create a new numbered checkpoint for a later accepted repair.
 
 For accepted task checkpoints:
 
 ```text
-OMP_REVIEW_SHA == CI_SHA == CHECKPOINT_SHA
+FINAL_OMP_ACCEPTANCE_REVIEW_SHA == CI_SHA == ACCEPTED_CHECKPOINT_SHA
 ```
 
 After all tasks in a slice are individually accepted, run an additional slice-level composition review/broader regression gate when the slice risk warrants it. Slice review supplements task review; it does not replace it.

@@ -143,7 +143,7 @@ This compact backfill records accepted checkpoints that were already present in 
 ## 2026-09-08 — Review, checkpoint, CI-economy, and safe-handoff protocol
 
 - Formalized producer self-review followed by separate read-only OMP exact-SHA review; producer self-review is not independent acceptance evidence.
-- OMP main session owns GitHub review-artifact persistence plus immutable pre-task/accepted checkpoint refs; accepted checkpoint binds OMP review SHA, CI SHA, and checkpoint SHA.
+- OMP main session owns review-artifact persistence on non-candidate evidence branches plus immutable pre-task/accepted checkpoint refs; if serialized integration changes SHA, a targeted final exact-SHA OMP acceptance re-review binds the final review SHA, CI SHA, and accepted-checkpoint SHA.
 - Independent review waves may contain up to two dependency-independent candidates with separate verdicts; downstream work cannot consume an unaccepted dependency.
 - Formalized targeted repair verification: unrelated prior PASS areas remain closed unless changed code/dependency/shared invariant or concrete regression evidence reopens them.
 - Integration CI now resolves impacted web/database domains before dispatching expensive jobs; `[full-ci]` only broadens scope for explicit slice/shared-contract gates.

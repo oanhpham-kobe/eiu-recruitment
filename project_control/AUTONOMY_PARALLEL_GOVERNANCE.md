@@ -235,15 +235,23 @@ A candidate may be produced by an OMP Executor or by an Owner-authorized externa
 
 The independent acceptance review is performed by OMP's read-only reviewer (`eiu-reviewer` or built-in reviewer) against an exact candidate SHA. The reviewer does not mutate implementation, push repairs, integrate, create checkpoint refs, or advance the frontier. OMP main session owns those lifecycle actions.
 
-When GitHub-visible handoff is required, OMP main session may persist the reviewer output under:
+When GitHub-visible handoff is required, OMP main session persists the reviewer output on a non-candidate evidence branch, for example:
+
+```text
+review/<TASK_ID>-<SHORT_SHA>-vN
+```
+
+with the artifact at:
 
 ```text
 project_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md
 ```
 
-That file is evidence only. At minimum it records task ID, exact 40-character reviewed SHA, `PASS | BLOCKING_REPAIR | OWNER_DECISION_REQUIRED`, evidence-backed findings, and `SOURCE_REOPEN_REQUIRED: YES | NO`. It never becomes product, scheduling, or authorization authority.
+The evidence branch MUST NOT move or mutate the reviewed candidate ref. The file is evidence only. At minimum it records task ID, exact 40-character reviewed SHA, `PASS | BLOCKING_REPAIR | OWNER_DECISION_REQUIRED`, evidence-backed findings, and `SOURCE_REOPEN_REQUIRED: YES | NO`. It never becomes product, scheduling, or authorization authority. Evidence branches are append-only review handoff surfaces, not integration or task branches.
 
 A repair that changes the candidate SHA invalidates acceptance of the old SHA. The new SHA receives producer re-review plus targeted OMP re-review before acceptance.
+
+Serialized integration may preserve the candidate SHA (fast-forward) or produce a new integration SHA (for example by cherry-pick/merge). If the SHA changes, OMP MUST perform a targeted exact-SHA final acceptance re-review/equivalence check on the integration SHA before acceptance CI. The targeted review verifies that the independently reviewed implementation delta is preserved, integration introduced no unauthorized behavioral drift, and all blocking findings remain closed. If the exact SHA is preserved, the candidate review may serve as the final acceptance review.
 
 #### Review waves, dependency gating, and immutable checkpoints
 
@@ -257,7 +265,7 @@ Before a risky task begins, OMP main session creates an immutable pre-task recov
 checkpoint/pre-S04-004-001
 ```
 
-After independent OMP review PASS and exact-SHA CI PASS on the same final candidate, OMP main session creates an immutable accepted ref, for example:
+After final OMP acceptance review PASS and exact-SHA CI PASS on the final integration SHA, OMP main session creates an immutable accepted ref, for example:
 
 ```text
 checkpoint/S04-004-accepted-001
@@ -266,8 +274,10 @@ checkpoint/S04-004-accepted-001
 Checkpoint refs are append-only recovery anchors. Never force-move an existing checkpoint. A later accepted repair receives a new numbered ref. Task acceptance requires:
 
 ```text
-OMP_REVIEW_SHA == CI_SHA == CHECKPOINT_SHA
+FINAL_OMP_ACCEPTANCE_REVIEW_SHA == CI_SHA == ACCEPTED_CHECKPOINT_SHA
 ```
+
+The earlier candidate-review SHA may differ from this final triple when serialized integration changes Git identity; that difference is valid only when the final exact-SHA acceptance re-review/equivalence check passes.
 
 After all tasks in a slice are individually accepted, perform a slice-closing composition review and broader regression gate when appropriate. This gate checks cross-task integration, contract propagation, UX consistency, and slice acceptance; it supplements rather than replaces per-task review.
 

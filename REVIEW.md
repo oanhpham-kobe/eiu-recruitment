@@ -51,7 +51,9 @@ If a repair creates a new SHA, re-review the new SHA; do not carry a PASS forwar
 
 A review wave may cover at most two independent task candidates, but the reviewer must return a separate exact-SHA verdict and findings set for each. A PASS on one candidate never masks blockers in the other.
 
-The reviewer must not create/move checkpoint refs or mutate implementation. OMP main session may persist the reviewer result as evidence under `project_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md` so external implementers can consume it from GitHub.
+The reviewer must not create/move checkpoint refs or mutate implementation. OMP main session may persist the reviewer result on a non-candidate evidence branch such as `review/<TASK_ID>-<SHORT_SHA>-vN`, with the artifact under `project_control/reviews/<TASK_ID>_OMP_REVIEW_<SHORT_SHA>_vN.md`, so external implementers can consume it from GitHub without changing the reviewed candidate SHA.
+
+When serialized integration produces a different SHA from the reviewed candidate, perform a targeted exact-SHA acceptance re-review/equivalence check on the integration SHA before acceptance CI. That re-review confirms the reviewed implementation delta is preserved, no unauthorized integration drift was introduced, and all blocking findings remain closed. If integration preserves the exact candidate SHA, the candidate review can serve as the final acceptance review.
 
 ---
 
@@ -287,7 +289,7 @@ Before PASS/ACCEPTED:
 - run fresh focused tests/checks for the changed behavior;
 - run broader lint/typecheck/build/test only when lifecycle/risk requires them;
 - confirm the evidence belongs to the exact reviewed SHA when SHA-specific acceptance is required;
-- for accepted task checkpoints, confirm `OMP_REVIEW_SHA == CI_SHA == CHECKPOINT_SHA`;
+- for accepted task checkpoints, confirm `FINAL_OMP_ACCEPTANCE_REVIEW_SHA == CI_SHA == ACCEPTED_CHECKPOINT_SHA`;
 - confirm the checkpoint was created by the coordinating/main session, not by the read-only reviewer;
 - state any residual non-blocking risk explicitly.
 
