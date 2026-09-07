@@ -19,25 +19,15 @@
 - Business Logic Core: `v1.2 FROZEN`
 - Technical Architecture: `v1.18 FROZEN`
 - Design System: `v1.8 CURRENT / REVIEWED`
+- Current reconciliation audit has not identified a canonical-source reopening requirement.
 
-## OMP-native governance reconstruction
+## Governance/runtime baseline
 
-Verified reconstruction baseline:
+Verified OMP-native reconstruction baseline:
 
 `8c1e40d5bc16976f289b575d804c9f1ce730da34`
 
-Fresh local OMP runtime verification reported PASS after restart:
-
-- native main-session Todo initialized before substantive work;
-- `todo.eager = always`;
-- 24 project skills discovered through OMP native discovery;
-- five EIU project agents discovered;
-- `eiu-db-executor` runtime child autoload injection proved the expected five skills;
-- obsolete `.omp/skills/eiu-code-review/SKILL.md` absent;
-- `validate_omp_native.py` PASS;
-- `validate_control_plane.py` PASS.
-
-This reconstruction is the governance/runtime baseline for subsequent implementation. Do not restore the historical manual skill-loader receipt model.
+The project uses OMP-native Todo/skills/agents plus the durable control-plane authorities above. Do not restore the historical manual skill-loader receipt model.
 
 ## Current slice and accepted application checkpoint
 
@@ -61,43 +51,43 @@ Exact integration CI:
 
 `34039979411 — PASS`
 
-## Pending task reconciliation
+## Current reconciliation gate
 
-`TASK-S04-004 — HR Interview scheduling UI over accepted trusted commands`
+Current gate:
 
-The task registry still records `BLOCKED` because its prompt review originally required `TASK-S04-005` contract repair. `TASK-S04-005` is now DONE and CI-verified, so this block is expected to be reconciled after the current Owner-authorized workspace/governance maintenance finishes.
+`SOURCE → IMPLEMENTATION → PLAN RECONCILIATION @ TASK-S04-005`
 
-Do not treat this derived statement as the status mutation itself; update the authoritative registries/run state only when the maintenance hold is intentionally released and all gates are rechecked.
+Feature dispatch remains intentionally held while the accepted implementation through S04-005 is reconciled with task/slice/runtime/traceability/downstream planning.
 
-## Current execution hold
+The original S04-004 prompt review correctly blocked dispatch until the application-reactivation and participant-contract repair was accepted. That dependency is now satisfied. A rebaselined prompt is being reviewed before the task is released:
 
-Execution mode remains:
+`project_control/prompts/SLICE-04_TASK-004_v2.md`
 
-`AUTONOMOUS`
+Until the reconciliation/review gate passes, authoritative task state remains `BLOCKED`; this derived snapshot does not release work by itself.
 
-The durable run state currently retains the Owner-authorized maintenance stop that prevented S04-004 dispatch.
+## Workspace maintenance
 
-Current maintenance concern:
+Local linked-worktree consolidation is **COMPLETED / VERIFIED**.
 
-- consolidate local Orca/Git linked worktrees under one ignored `.worktrees/` container;
-- make project-control navigation/resume behavior explicit;
-- keep durable handoff small and authority-safe;
-- do not use full linked-worktree directories as historical task records.
+Verified local outcome reported by the Owner:
 
-Local inspection before this maintenance found 31 registered worktrees total (root + 30 child worktrees). These filesystem directories are local execution surfaces and are not mirrored as repository folders on GitHub.
+- 31 registered worktrees total (root + 30 child) preserved;
+- 24 task worktrees consolidated under `.worktrees/tasks/`;
+- 6 maintenance worktrees consolidated under `.worktrees/maintenance/`;
+- malformed worktree registrations normalized;
+- root tracked state preserved;
+- `.tmp-pre-s04-supabase/` left untouched;
+- both control-plane validators passed after consolidation.
 
-## Workspace layout transition
+Workspace maintenance is no longer the active implementation stop reason.
 
-Target local layout for registered child worktrees:
+## Cross-slice accepted prerequisites
 
-```text
-.worktrees/
-├─ tasks/
-├─ maintenance/
-└─ other/
-```
+Slice status reflects completion of each slice's feature scope; it does not imply that a later slice owns every backend artifact it will consume.
 
-Use `project_control/tools/reorganize_worktrees.ps1` in dry-run mode before applying any move. The unregistered `.tmp-pre-s04-supabase/` directory is not a registered worktree and must not be moved or deleted by the consolidation helper.
+- `SLICE-05` remains `NOT_STARTED`, but accepted S04-002 report schema/RPC foundations already exist and must be consumed rather than reimplemented when S05 tasks are materialized.
+- `SLICE-07` remains `NOT_STARTED`, but accepted S04 interview document/email-history foundations already exist and must be treated as prerequisites rather than recreated.
+- The official pixel-perfect PDF asset remains deferred to its explicit owner-provided trigger; it does not block S04-004.
 
 ## Resume protocol
 
@@ -106,21 +96,21 @@ A new session should:
 1. read `AGENTS.md` and `.omp/RULES.md`;
 2. read this file for navigation only;
 3. verify repository/branch/HEAD directly with Git;
-4. read `AUTONOMY_RUN_STATE.yaml`, `TASK_REGISTRY.yaml`, and `SLICE_REGISTRY.yaml`;
-5. run both control-plane validators;
-6. reconcile stale derived state against Git/registries;
-7. if the workspace maintenance is complete and the Owner authorization remains active, release the maintenance stop truthfully;
-8. reconcile `TASK-S04-004` dependency status against completed `TASK-S04-005`;
-9. read `project_control/prompts/SLICE-04_TASK-004_v1.md` plus its canonical business/design/backend sources;
-10. continue through implementation → focused verification → independent review → repair/re-review if needed → serialized integration → exact-SHA CI → next safe frontier.
+4. read `AUTONOMY_RUN_STATE.yaml`, `TASK_REGISTRY.yaml`, and `SLICE_REGISTRY.yaml` as authoritative execution/DAG truth;
+5. run `python project_control/validate_omp_native.py` and `python project_control/validate_control_plane.py`;
+6. confirm the `PLAN_RECONCILIATION_GATE_S04_005` state and exact accepted checkpoint;
+7. review the reconciliation diff and `SLICE-04_TASK-004_v2.md` against current canonical source and the accepted ordered migration chain through `20260906090000_application_reactivation_and_participant_contract_repair.sql`;
+8. if the reconciliation review passes with no source reopening, release S04-004 truthfully in the authoritative registries/run state;
+9. only then continue S04-004 implementation → focused verification → independent implementation review → repair/re-review if needed → serialized integration → exact-SHA CI → next safe frontier.
 
 ## Do not redo
 
-- accepted S04-001 through S04-005 application/database implementation;
+- accepted S04-001, S04-002, S04-003, or S04-005 application/database implementation;
+- accepted ordered Slice-04 migrations/tests merely to simplify the UI task;
 - OMP-native governance reconstruction at `8c1e40d5...`;
 - obsolete `eiu-code-review` skill runtime;
 - historical manual `AVAILABLE / LOADED / APPLIED` skill receipt behavior.
 
 ## Next action
 
-Finish and validate the workspace/handoff maintenance, consolidate local registered worktrees safely, then reconcile and resume `TASK-S04-004` under the verified OMP-native governance.
+Complete the S04-005 source-to-implementation-to-plan reconciliation and independent prompt/reconciliation review. Do not dispatch `TASK-S04-004` until that gate passes.
