@@ -109,3 +109,22 @@
 - Verified source authority integrity: `recruitment_webapp/` remains 100% byte-identical to baseline.
 - Updated project control: `TASK-S00-003 = DONE`, `TASK-S00-004 = PLANNED`.
 - Next action: Return Task003 evidence and repository state to Planner for TASK-S00-004 planning.
+
+## 2026-09-08 — Accepted implementation reconciliation through TASK-S04-005
+
+This compact backfill records accepted checkpoints that were already present in Git, task/evidence registries, review records, and exact-SHA CI, but were missing from this chronological narrative. It does not reopen accepted implementation.
+
+- `SLICE-00`: DONE through `TASK-S00-005` (foundation shell/runtime/security baseline accepted).
+- `SLICE-01`: DONE through `TASK-S01-005` (identity/auth/provisioning/login accepted).
+- `SLICE-02`: DONE through `TASK-S02-005` (candidate form/submission/privacy/document portal accepted).
+- `SLICE-03`: DONE through `TASK-S03-006` (HR inbox/application/detail/bulk lifecycle accepted).
+- `TASK-S04-001`: DONE — Interview round/schedule schema, conflict locking, participant data model.
+- `TASK-S04-002`: DONE — Interview/report lifecycle trusted commands, participant/schedule mutations, document-storage foundations, derived views.
+- `TASK-S04-003`: DONE — dedicated atomic `copy_interview_schedule` trusted command.
+- `TASK-S04-005`: DONE — application reactivation and participant public-contract repair.
+- `TASK-S04-004` was intentionally not dispatched after its prompt review identified the missing S04-005 contract repair.
+- Latest accepted application implementation SHA: `ab6c5194d15eb29e2ee285106c6bef14f0291ec3`.
+- Latest verified application integration checkpoint: `8819d9fec1143e94aea7721e47ae84a8abcd82b9`.
+- Exact integration CI run: `34039979411` — PASS.
+- Workspace/worktree maintenance completed after S04-005 and is no longer an implementation stop reason.
+- Source-to-implementation-to-plan reconciliation started before releasing S04-004. No canonical Business Logic v1.2 / Technical Architecture v1.18 reopening was identified by the read-only audit that triggered this reconciliation.
