@@ -7,6 +7,7 @@ const FOCUSABLE =
 
 let activeOverlayLocks = 0;
 let originalBodyOverflow: string | null = null;
+const overlayStack: symbol[] = [];
 
 function acquireBackgroundLock() {
   if (activeOverlayLocks === 0) {
@@ -30,6 +31,17 @@ function releaseBackgroundLock() {
   originalBodyOverflow = null;
 }
 
+function pushOverlay(token: symbol) {
+  overlayStack.push(token);
+  acquireBackgroundLock();
+}
+
+function popOverlay(token: symbol) {
+  const index = overlayStack.lastIndexOf(token);
+  if (index >= 0) overlayStack.splice(index, 1);
+  releaseBackgroundLock();
+}
+
 export function useOverlayFocus(
   open: boolean,
   containerRef: RefObject<HTMLElement | null>,
@@ -37,12 +49,13 @@ export function useOverlayFocus(
 ) {
   useEffect(() => {
     if (!open) return;
+    const token = Symbol("overlay");
     const previous =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
 
-    acquireBackgroundLock();
+    pushOverlay(token);
 
     const focusable = () =>
       Array.from(
@@ -52,11 +65,13 @@ export function useOverlayFocus(
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (overlayStack[overlayStack.length - 1] !== token) return;
         event.preventDefault();
         onClose();
         return;
       }
       if (event.key !== "Tab") return;
+      if (overlayStack[overlayStack.length - 1] !== token) return;
       const items = focusable();
       if (!items.length) return;
       const first = items[0];
@@ -73,7 +88,7 @@ export function useOverlayFocus(
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      releaseBackgroundLock();
+      popOverlay(token);
       previous?.focus();
     };
   }, [open, containerRef, onClose]);
