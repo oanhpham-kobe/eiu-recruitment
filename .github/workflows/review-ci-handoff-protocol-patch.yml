@@ -26,7 +26,18 @@ jobs:
           python-version: '3.13'
       - run: python -m pip install --disable-pip-version-check "PyYAML==6.0.2"
       - name: Apply fail-closed patch
-        run: python project_control/tools/_apply_review_ci_handoff_protocol_patch.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          python project_control/tools/_apply_review_ci_handoff_protocol_patch.py
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/integration-ci.yml')
+          t = p.read_text(encoding='utf-8')
+          t = t.replace("printf '%s\n' 'FULL VERIFICATION REQUESTED (broadening only)'", "printf '%s\\n' 'FULL VERIFICATION REQUESTED (broadening only)'")
+          t = t.replace("printf '%s\n' 'Changed files:'", "printf '%s\\n' 'Changed files:'")
+          p.write_text(t, encoding='utf-8')
+          PY
       - name: Validate patched governance and workflow YAML
         shell: bash
         run: |
