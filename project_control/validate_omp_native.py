@@ -37,9 +37,6 @@ LEGACY_RUNTIME_MARKERS = (
     "SKILLS_RESOLVED",
     "SKILLS_APPLIED",
     "effective_provider: \"native-user",
-    "C:\\Users\\Admin",
-    "C:\\Users\Admin",
-    "C:/Users/Admin",
 )
 
 
