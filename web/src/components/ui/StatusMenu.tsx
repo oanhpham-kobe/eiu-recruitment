@@ -1,5 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 export interface StatusMenuOption {
   value: string;
@@ -28,12 +34,15 @@ export function StatusMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const openFocusRef = useRef<OpenFocus>("current");
 
-  const enabledItems = () =>
-    Array.from(
-      panelRef.current?.querySelectorAll<HTMLButtonElement>(
-        '[role="menuitemradio"]:not(:disabled)',
-      ) ?? [],
-    );
+  const enabledItems = useCallback(
+    () =>
+      Array.from(
+        panelRef.current?.querySelectorAll<HTMLButtonElement>(
+          '[role="menuitemradio"]:not(:disabled)',
+        ) ?? [],
+      ),
+    [],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -73,17 +82,19 @@ export function StatusMenu({
       document.removeEventListener("pointerdown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [enabledItems, open]);
 
   const openMenu = (focus: OpenFocus) => {
     openFocusRef.current = focus;
     setOpen(true);
   };
 
-  const moveMenuFocus = (event: React.KeyboardEvent<HTMLDivElement>) => {
+  const moveMenuFocus = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     const items = enabledItems();
     if (items.length === 0) return;
-    const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
+    const currentIndex = items.indexOf(
+      document.activeElement as HTMLButtonElement,
+    );
     let nextIndex: number | undefined;
 
     if (event.key === "ArrowDown") {
