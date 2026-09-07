@@ -25,12 +25,18 @@ function InternalHarness() {
   return (
     <div id="app-root" data-harness-ready="internal">
       <AppShell currentPath="/" title="Quản lý Phiếu Ứng tuyển">
-        <section className="application-inbox" aria-label="Application Inbox design fixture">
+        <section
+          className="application-inbox"
+          aria-label="Application Inbox design fixture"
+        >
           <div className="application-inbox__header">
             <h2>Quản lý Phiếu Ứng tuyển</h2>
             <p>Production responsive design acceptance fixture.</p>
           </div>
-          <form className="application-inbox__toolbar" onSubmit={(event) => event.preventDefault()}>
+          <form
+            className="application-inbox__toolbar"
+            onSubmit={(event) => event.preventDefault()}
+          >
             <label className="application-inbox__search">
               Tìm kiếm Candidate
               <input type="search" defaultValue="" />
@@ -44,9 +50,14 @@ function InternalHarness() {
             </label>
           </form>
           <div className="application-inbox__bulk-toolbar">
-            <span className="application-inbox__selection-count">1 Candidate được chọn</span>
+            <span className="application-inbox__selection-count">
+              1 Candidate được chọn
+            </span>
             <div className="application-inbox__bulk-actions">
-              <button type="button" className="btn-secondary application-inbox__bulk-btn">
+              <button
+                type="button"
+                className="btn-secondary application-inbox__bulk-btn"
+              >
                 Đánh dấu Đã đọc
               </button>
               <button
@@ -59,7 +70,10 @@ function InternalHarness() {
               </button>
             </div>
           </div>
-          <div className="application-inbox__table-scroll" data-testid="internal-table-scroll">
+          <div
+            className="application-inbox__table-scroll"
+            data-testid="internal-table-scroll"
+          >
             <table className="application-inbox__table">
               <colgroup>
                 {COLUMNS.map((key) => (
@@ -83,15 +97,25 @@ function InternalHarness() {
                 <tr>
                   <td data-label="Chọn">
                     <label className="application-inbox__selection-control">
-                      <input type="checkbox" defaultChecked aria-label="Chọn Nguyễn Thị An" />
+                      <input
+                        type="checkbox"
+                        defaultChecked
+                        aria-label="Chọn Nguyễn Thị An"
+                      />
                     </label>
                   </td>
                   <td data-label="Candidate">
-                    <button type="button" className="application-inbox__expand-button" aria-expanded="false">
+                    <button
+                      type="button"
+                      className="application-inbox__expand-button"
+                      aria-expanded="false"
+                    >
                       Nguyễn Thị An
                     </button>
                   </td>
-                  <td data-label="Email" className="wrap-anywhere">an@example.com</td>
+                  <td data-label="Email" className="wrap-anywhere">
+                    an@example.com
+                  </td>
                   <td data-label="Ngày sinh">15/08/1995</td>
                   <td data-label="Giới tính">Nữ</td>
                   <td data-label="SĐT">0901 234 567</td>
@@ -100,9 +124,14 @@ function InternalHarness() {
                       Đã lên lịch / Scheduled
                     </StatusBadge>
                   </td>
-                  <td data-label="HR Note">Đã liên hệ và xác nhận thông tin.</td>
+                  <td data-label="HR Note">
+                    Đã liên hệ và xác nhận thông tin.
+                  </td>
                   <td data-label="Thao tác">
-                    <button type="button" className="btn-secondary application-inbox__action-btn">
+                    <button
+                      type="button"
+                      className="btn-secondary application-inbox__action-btn"
+                    >
                       Chi tiết
                     </button>
                   </td>
@@ -115,7 +144,11 @@ function InternalHarness() {
           open={drawerOpen}
           title="Chi tiết Candidate"
           onClose={() => setDrawerOpen(false)}
-          footer={<button type="button" className="ui-button ui-button--primary">Lưu</button>}
+          footer={
+            <button type="button" className="ui-button ui-button--primary">
+              Lưu
+            </button>
+          }
         >
           <p>Drawer production design acceptance content.</p>
           <label>
@@ -172,8 +205,12 @@ function LoginHarness() {
       <div className="login-page">
         <aside className="login-brand-panel">
           <div className="brand-panel-header">
-            <div className="brand-panel-logo"><span className="brand-logo-text">EIU</span></div>
-            <div className="brand-panel-institution">Eastern International University</div>
+            <div className="brand-panel-logo">
+              <span className="brand-logo-text">EIU</span>
+            </div>
+            <div className="brand-panel-institution">
+              Eastern International University
+            </div>
           </div>
           <div className="brand-panel-body">
             <span className="brand-panel-badge">Recruitment</span>
@@ -188,11 +225,22 @@ function LoginHarness() {
               <p className="login-card-subtitle">Chọn tài khoản phù hợp.</p>
             </header>
             <div className="login-form-group">
-              <label className="login-label" htmlFor="login-email">Email</label>
-              <input id="login-email" className="login-input" type="email" defaultValue="hr@eiu.edu.vn" />
+              <label className="login-label" htmlFor="login-email">
+                Email
+              </label>
+              <input
+                id="login-email"
+                className="login-input"
+                type="email"
+                defaultValue="hr@eiu.edu.vn"
+              />
             </div>
-            <button type="button" className="btn-login-primary">Tiếp tục / Continue</button>
-            <button type="button" className="btn-login-link">Đặt lại / Reset</button>
+            <button type="button" className="btn-login-primary">
+              Tiếp tục / Continue
+            </button>
+            <button type="button" className="btn-login-link">
+              Đặt lại / Reset
+            </button>
           </section>
         </main>
       </div>
