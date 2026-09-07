@@ -5,7 +5,6 @@ import test from "node:test";
 import React from "react";
 
 import Loading from "@/app/loading";
-import { AppShell } from "@/components/shell/AppShell";
 import { Header } from "@/components/shell/Header";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { SkipLink } from "@/components/shell/SkipLink";
@@ -31,7 +30,8 @@ function isReactElement(node: unknown): node is React.ReactElement {
 }
 
 /**
- * Recursively resolves React composite function components down to host elements
+ * Recursively resolves stateless React composite function components down to
+ * host elements. Stateful client components are covered by browser tests.
  */
 function expand(node: React.ReactNode): React.ReactNode {
   if (!isReactElement(node)) {
@@ -53,7 +53,7 @@ function expand(node: React.ReactNode): React.ReactNode {
 }
 
 /**
- * Searches an expanded React element tree for nodes matching a predicate
+ * Searches an expanded React element tree for nodes matching a predicate.
  */
 function findElements(
   node: React.ReactNode,
@@ -82,38 +82,24 @@ function findElements(
   return results;
 }
 
-test("AppShell renders all required semantic landmarks", () => {
-  const tree = expand(
-    React.createElement(
-      AppShell,
-      null,
-      React.createElement("div", { id: "test-child" }, "Child Content"),
-    ),
+test("AppShell composes the required semantic landmark-bearing shell", () => {
+  const source = fs.readFileSync(
+    path.resolve("src/components/shell/AppShell.tsx"),
+    "utf8",
   );
 
-  // 1. Semantic <aside> sidebar landmark
-  const asides = findElements(tree, (el) => el.type === "aside");
-  assert.equal(asides.length, 1);
-  assert.equal(
-    asides[0].props["aria-label"],
-    "Thanh điều hướng chính / Main sidebar",
+  // AppShell is now a stateful client component because it owns responsive
+  // navigation. Runtime landmark behavior is covered by the production shell
+  // browser test; this static contract keeps composition explicit without
+  // illegally invoking Hooks outside React rendering.
+  assert.match(source, /<SkipLink\s*\/>/);
+  assert.match(source, /<Sidebar\s+currentPath=\{currentPath\}\s*\/>/);
+  assert.match(source, /<MobileNavigation[\s\S]*?open=\{mobileNavOpen\}/);
+  assert.match(source, /<Header[\s\S]*?mobileNavOpen=\{mobileNavOpen\}/);
+  assert.match(
+    source,
+    /<main\s+id="main-content"\s+tabIndex=\{-1\}\s+className="content">/,
   );
-
-  // 2. Semantic <nav> navigation landmark
-  const navs = findElements(tree, (el) => el.type === "nav");
-  assert.equal(navs.length, 1);
-  assert.equal(navs[0].props["aria-label"], "Menu chức năng / Navigation menu");
-
-  // 3. Semantic <header> topbar landmark
-  const headers = findElements(tree, (el) => el.type === "header");
-  assert.equal(headers.length, 1);
-  assert.equal(headers[0].props.className, "topbar");
-
-  // 4. Semantic <main> landmark targeting #main-content with tabIndex={-1}
-  const mains = findElements(tree, (el) => el.type === "main");
-  assert.equal(mains.length, 1);
-  assert.equal(mains[0].props.id, "main-content");
-  assert.equal(mains[0].props.tabIndex, -1);
 });
 
 test("SkipLink renders an accessible skip link targeting #main-content", () => {
@@ -133,14 +119,12 @@ test("Sidebar renders brand header, navigation active state, and user card", () 
     React.createElement(Sidebar, { currentPath: "#applications" }),
   );
 
-  // Brand header
   const brandLogos = findElements(
     tree,
     (el) => el.props?.className === "brand-logo",
   );
   assert.equal(brandLogos.length, 1);
 
-  // Active navigation link has aria-current="page"
   const activeLinks = findElements(
     tree,
     (el) => el.props?.["aria-current"] === "page",
@@ -148,14 +132,12 @@ test("Sidebar renders brand header, navigation active state, and user card", () 
   assert.equal(activeLinks.length, 1);
   assert.equal(activeLinks[0].props.href, "#applications");
 
-  // Inactive navigation links do not have aria-current
   const inactiveLinks = findElements(
     tree,
     (el) => el.type === "a" && el.props?.["aria-current"] !== "page",
   );
   assert.equal(inactiveLinks.length, 3);
 
-  // Accessible user card
   const avatars = findElements(
     tree,
     (el) => el.props?.className === "user-avatar",
@@ -168,32 +150,36 @@ test("Sidebar renders brand header, navigation active state, and user card", () 
   );
 });
 
-test("Header renders title slot and language toggle with accessible labels", () => {
+test("Header renders title slot and semantic language selector", () => {
   const customTitle = "Hồ sơ ứng tuyển / Application Inbox";
   const tree = expand(React.createElement(Header, { title: customTitle }));
 
-  // Title slot renders h1
   const h1s = findElements(tree, (el) => el.type === "h1");
   assert.equal(h1s.length, 1);
   assert.equal(String(h1s[0].props.children), customTitle);
 
-  // Language switcher has group role and accessible label
   const switchers = findElements(
     tree,
-    (el) => el.props?.className === "language-switcher",
+    (el) => el.type === "fieldset" && el.props?.className === "language-switcher",
   );
   assert.equal(switchers.length, 1);
-  assert.equal(switchers[0].props.role, "group");
+
+  const legends = findElements(tree, (el) => el.type === "legend");
+  assert.equal(legends.length, 1);
+  assert.equal(legends[0].props.className, "sr-only");
   assert.match(
-    switchers[0].props["aria-label"] ?? "",
+    String(legends[0].props.children),
     /Chọn ngôn ngữ \/ Choose language/,
   );
 
-  // Language toggle buttons have accessible states
   const buttons = findElements(tree, (el) => el.type === "button");
-  assert.equal(buttons.length, 2);
-  assert.equal(buttons[0].props["aria-pressed"], "true");
-  assert.equal(buttons[1].props["aria-pressed"], "false");
+  // Header now contains the mobile navigation trigger plus VI/EN controls.
+  const languageButtons = buttons.filter((button) =>
+    String(button.props.className ?? "").includes("lang-btn"),
+  );
+  assert.equal(languageButtons.length, 2);
+  assert.equal(languageButtons[0].props["aria-pressed"], "true");
+  assert.equal(languageButtons[1].props["aria-pressed"], "false");
 });
 
 test("loading boundary conforms to accessible status semantics", () => {
@@ -212,19 +198,16 @@ test("globals.css defines focus visibility, reduced motion, and skip link styles
     "utf8",
   );
 
-  // Focus visible ring
   assert.match(
     globalsCss,
     /:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--eiu-blue\)/,
   );
   assert.match(globalsCss, /outline-offset:\s*2px/);
 
-  // prefers-reduced-motion media query
   assert.match(globalsCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   assert.match(globalsCss, /animation-duration:\s*0\.01ms/);
   assert.match(globalsCss, /transition-duration:\s*0\.01ms/);
 
-  // Skip link styles
   assert.match(globalsCss, /\.skip-link\s*\{[^}]*position:\s*absolute/);
   assert.match(globalsCss, /\.skip-link\s*\{[^}]*top:\s*-999px/);
   assert.match(globalsCss, /\.skip-link:focus\s*\{[^}]*top:\s*16px/);
