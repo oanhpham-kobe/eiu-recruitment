@@ -85,7 +85,7 @@ export function ApplicationInboxTableRows({
               : undefined
           }
         >
-          <td className="application-inbox__select-cell">
+          <td className="application-inbox__select-cell" data-label="Chọn">
             <label className="application-inbox__selection-control">
               <input
                 type="checkbox"
@@ -102,7 +102,7 @@ export function ApplicationInboxTableRows({
               />
             </label>
           </td>
-          <td>
+          <td data-label="Candidate">
             {expandable ? (
               <button
                 type="button"
@@ -125,11 +125,15 @@ export function ApplicationInboxTableRows({
               <strong>{latest.fullName}</strong>
             )}
           </td>
-          <td className="wrap-anywhere">{group.email}</td>
-          <td>{formatDateOfBirth(latest.dateOfBirth)}</td>
-          <td>{formatGender(latest.gender)}</td>
-          <td>{latest.phone ?? "—"}</td>
-          <td>
+          <td className="wrap-anywhere" data-label="Email">
+            {group.email}
+          </td>
+          <td data-label="Ngày sinh">
+            {formatDateOfBirth(latest.dateOfBirth)}
+          </td>
+          <td data-label="Giới tính">{formatGender(latest.gender)}</td>
+          <td data-label="SĐT">{latest.phone ?? "—"}</td>
+          <td data-label="Trạng thái">
             <span className={`status-badge ${STATUS_CLASS[latest.status]}`}>
               {SUBMISSION_STATUS_LABEL[latest.status]}
             </span>
@@ -137,8 +141,8 @@ export function ApplicationInboxTableRows({
               <span className="candidate-status-badge">Candidate inactive</span>
             )}
           </td>
-          <td>{latest.hrNote ?? "—"}</td>
-          <td>
+          <td data-label="HR Note">{latest.hrNote ?? "—"}</td>
+          <td data-label="Thao tác">
             <button
               type="button"
               className="btn-secondary application-inbox__action-btn"
@@ -158,25 +162,27 @@ export function ApplicationInboxTableRows({
               key={submission.submissionId}
               className="application-inbox__child-row"
             >
-              <td aria-hidden="true" />
-              <td>
+              <td aria-hidden="true" data-mobile-hidden="true" />
+              <td data-label="Loại">
                 <span className="application-inbox__child-label">
                   Ngày ứng tuyển
                 </span>
               </td>
-              <td aria-hidden="true" />
-              <td>{formatSubmittedAt(submission.submittedAt)}</td>
-              <td aria-hidden="true" />
-              <td aria-hidden="true" />
-              <td>
+              <td aria-hidden="true" data-mobile-hidden="true" />
+              <td data-label="Ngày ứng tuyển">
+                {formatSubmittedAt(submission.submittedAt)}
+              </td>
+              <td aria-hidden="true" data-mobile-hidden="true" />
+              <td aria-hidden="true" data-mobile-hidden="true" />
+              <td data-label="Trạng thái">
                 <span
                   className={`status-badge ${STATUS_CLASS[submission.status]}`}
                 >
                   {SUBMISSION_STATUS_LABEL[submission.status]}
                 </span>
               </td>
-              <td>{submission.hrNote ?? "—"}</td>
-              <td>
+              <td data-label="HR Note">{submission.hrNote ?? "—"}</td>
+              <td data-label="Thao tác">
                 <button
                   type="button"
                   className="btn-secondary application-inbox__action-btn"

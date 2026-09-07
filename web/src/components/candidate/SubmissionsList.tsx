@@ -142,24 +142,24 @@ export function SubmissionsList({
                 );
                 return (
                   <tr key={sub.submissionId}>
-                    <td>{index + 1}</td>
-                    <td>
+                    <td data-label="STT">{index + 1}</td>
+                    <td data-label="Ngày ứng tuyển / Submitted">
                       {formatDate(sub.submittedAt)} (v{sub.versionNo})
                     </td>
-                    <td>
+                    <td data-label="Trạng thái / Status">
                       <span className={`status-badge ${badgeClass}`}>
                         {label}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Thao tác / Actions">
                       {canEdit && onEditSubmission ? (
                         <button
                           type="button"
                           className="btn btn-secondary"
                           style={{
-                            minHeight: "36px",
-                            padding: "4px 12px",
-                            fontSize: "14px",
+                            minHeight: "44px",
+                            padding: "8px 12px",
+                            fontSize: "16px",
                           }}
                           onClick={() => onEditSubmission(sub.submissionId)}
                           aria-label={`Chỉnh sửa hồ sơ nộp ngày ${formatDate(sub.submittedAt)}`}
@@ -171,9 +171,9 @@ export function SubmissionsList({
                           type="button"
                           className="btn btn-secondary"
                           style={{
-                            minHeight: "36px",
-                            padding: "4px 12px",
-                            fontSize: "14px",
+                            minHeight: "44px",
+                            padding: "8px 12px",
+                            fontSize: "16px",
                           }}
                           onClick={() => onViewSubmission(sub.submissionId)}
                           aria-label={`Xem hồ sơ nộp ngày ${formatDate(sub.submittedAt)}`}
@@ -183,8 +183,8 @@ export function SubmissionsList({
                       ) : (
                         <span
                           style={{
-                            fontSize: "14px",
-                            color: "var(--ink-600, #68686b)",
+                            fontSize: "16px",
+                            color: "var(--ink-600)",
                           }}
                         >
                           Đã ghi nhận
