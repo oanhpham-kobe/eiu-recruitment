@@ -1,0 +1,39 @@
+name: Governance CI
+
+on:
+  push:
+    branches:
+      - "governance/**"
+      - autonomy/continuous-integration-20260905-01
+  pull_request:
+    branches:
+      - autonomy/continuous-integration-20260905-01
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  governance-validation:
+    name: Governance validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install validator dependency
+        run: python -m pip install --disable-pip-version-check "PyYAML==6.0.2"
+
+      - name: Validate OMP-native integration
+        run: python project_control/validate_omp_native.py
+
+      - name: Validate durable control plane
+        run: python project_control/validate_control_plane.py
