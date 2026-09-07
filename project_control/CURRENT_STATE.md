@@ -61,7 +61,7 @@ Feature dispatch remains intentionally held while the accepted implementation th
 
 The original S04-004 prompt review correctly blocked dispatch until the application-reactivation and participant-contract repair was accepted. That dependency is now satisfied. A rebaselined prompt is being reviewed before the task is released:
 
-`project_control/prompts/SLICE-04_TASK-004_v2.md`
+`project_control/prompts/SLICE-04_TASK-004_v3.md`
 
 Until the reconciliation/review gate passes, authoritative task state remains `BLOCKED`; this derived snapshot does not release work by itself.
 
@@ -99,7 +99,7 @@ A new session should:
 4. read `AUTONOMY_RUN_STATE.yaml`, `TASK_REGISTRY.yaml`, and `SLICE_REGISTRY.yaml` as authoritative execution/DAG truth;
 5. run `python project_control/validate_omp_native.py` and `python project_control/validate_control_plane.py`;
 6. confirm the `PLAN_RECONCILIATION_GATE_S04_005` state and exact accepted checkpoint;
-7. review the reconciliation diff and `SLICE-04_TASK-004_v2.md` against current canonical source and the accepted ordered migration chain through `20260906090000_application_reactivation_and_participant_contract_repair.sql`;
+7. review the reconciliation diff and `SLICE-04_TASK-004_v3.md` against current canonical source and the accepted ordered migration chain through `20260906090000_application_reactivation_and_participant_contract_repair.sql`;
 8. if the reconciliation review passes with no source reopening, release S04-004 truthfully in the authoritative registries/run state;
 9. only then continue S04-004 implementation → focused verification → independent implementation review → repair/re-review if needed → serialized integration → exact-SHA CI → next safe frontier.
 

@@ -1006,10 +1006,10 @@ tasks:
     lane: LANE_A
     depends_on:
       - TASK-S04-005
-    prompt: project_control/prompts/SLICE-04_TASK-004_v2.md
-    prompt_sha256: dacac3a2b6f4bdc622aa170445a9aa5f0febabdc78bffb7f30f047639bc97353
+    prompt: project_control/prompts/SLICE-04_TASK-004_v3.md
+    prompt_sha256: ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce
     prompt_review_status: "PENDING_INDEPENDENT_REVIEW"
-    notes: "TASK-S04-005 dependency is satisfied and CI-verified. The original v1 prompt blocker was repaired by the accepted S04-005 backend contract. Dispatch remains blocked only by PLAN_RECONCILIATION_GATE_S04_005 and independent review of the rebaselined v2 prompt."
+    notes: "TASK-S04-005 dependency is satisfied and CI-verified. Independent reconciliation review found v2 omitted accepted migration 20260906060000 and used ambiguous retry-key wording. v3 repairs the complete ordered backend baseline and operation-scoped idempotency-key reuse semantics. Dispatch remains blocked by PLAN_RECONCILIATION_GATE_S04_005 pending exact v3 re-review."
 
   TASK-S04-005:
     title: "Application reactivation and participant command contract repair"
