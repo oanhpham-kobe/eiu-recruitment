@@ -110,6 +110,7 @@ test("spacing scale and badge sizing tokens meet v1.8 specification", () => {
   // Badge widths
   assert.match(tokensCss, /--badge-width-submission:\s*112px/);
   assert.match(tokensCss, /--badge-width-interview:\s*112px/);
+  assert.match(tokensCss, /--badge-width-interview-operational:\s*144px/);
   assert.match(tokensCss, /--badge-width-candidate:\s*128px/);
   assert.match(tokensCss, /--badge-width-report:\s*168px/);
 });

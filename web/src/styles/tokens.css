@@ -78,6 +78,9 @@
   /* 5. Badge Sizing */
   --badge-width-submission: 112px;
   --badge-width-interview: 112px;
+  /* Current Interview / HR Report operational page benchmark.
+     Scoped page consumers use this instead of reinterpreting the initial generic token. */
+  --badge-width-interview-operational: 144px;
   --badge-width-candidate: 128px;
   --badge-width-report: 168px;
   --badge-min-height: 32px;
