@@ -31,7 +31,9 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
   let browser: Browser | undefined;
   try {
     browser = await chromium.launch();
-    const page = await browser.newPage({ viewport: { width: 1024, height: 800 } });
+    const page = await browser.newPage({
+      viewport: { width: 1024, height: 800 },
+    });
     const pageErrors: string[] = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
     page.on("console", (message) => {
@@ -94,7 +96,10 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
     const drawer = page.locator(".ui-drawer");
     await drawer.waitFor({ state: "visible" });
     assert.equal(await page.locator("#app-root").getAttribute("inert"), "");
-    assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
+    assert.equal(
+      await page.evaluate(() => document.body.style.overflow),
+      "hidden",
+    );
 
     const dialogTrigger = page.locator('[data-testid="open-dialog"]');
     await dialogTrigger.click();
@@ -104,9 +109,16 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
 
     await page.keyboard.press("Escape");
     await dialog.waitFor({ state: "detached" });
-    assert.equal(await drawer.count(), 1, "closing top Dialog must keep Drawer open");
+    assert.equal(
+      await drawer.count(),
+      1,
+      "closing top Dialog must keep Drawer open",
+    );
     assert.equal(await page.locator("#app-root").getAttribute("inert"), "");
-    assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
+    assert.equal(
+      await page.evaluate(() => document.body.style.overflow),
+      "hidden",
+    );
     assert.equal(
       await page.evaluate(() =>
         document.activeElement?.getAttribute("data-testid"),
