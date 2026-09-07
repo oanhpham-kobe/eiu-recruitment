@@ -172,7 +172,7 @@ function CandidateHarness() {
               <p>Candidate responsive production fixture.</p>
             </div>
           </header>
-          <main className="portal-main">
+          <main id="main-content" className="portal-main">
             <SubmissionsList
               submissions={[
                 {
