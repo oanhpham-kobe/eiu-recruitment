@@ -33,5 +33,22 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-      - name: Apply and verify DS-002/003
-        run: python project_control/tools/ds002_003_patch.py
+      - name: Repair focused test harness and apply DS-002/003
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('project_control/tools/ds002_003_patch.py')
+          lines = p.read_text(encoding='utf-8').splitlines()
+          repaired = []
+          replaced = 0
+          for line in lines:
+              if 'assert.match(layout, /pathname ===' in line:
+                  repaired.append('  assert.ok(layout.includes(\'pathname === "/candidate"\'));')
+                  replaced += 1
+              else:
+                  repaired.append(line)
+          if replaced != 1:
+              raise SystemExit(f'expected one design-shell regex line, got {replaced}')
+          p.write_text('\n'.join(repaired) + '\n', encoding='utf-8')
+          PY
+          python project_control/tools/ds002_003_patch.py
