@@ -125,7 +125,8 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
       "hidden",
     );
     await page.waitForFunction(
-      () => document.activeElement?.getAttribute("data-testid") === "open-dialog",
+      () =>
+        document.activeElement?.getAttribute("data-testid") === "open-dialog",
     );
 
     await page.keyboard.press("Escape");
@@ -133,7 +134,8 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
     assert.equal(await page.locator("#app-root").getAttribute("inert"), null);
     assert.equal(await page.evaluate(() => document.body.style.overflow), "");
     await page.waitForFunction(
-      () => document.activeElement?.getAttribute("data-testid") === "open-drawer",
+      () =>
+        document.activeElement?.getAttribute("data-testid") === "open-drawer",
     );
     assert.deepEqual(pageErrors, []);
   } finally {
