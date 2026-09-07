@@ -316,7 +316,7 @@ if ($repairPlans.Count -gt 0) {
         Format-Table -AutoSize
     Write-Host ""
     Write-Host "Required repairs: $($repairPlans.Count)"
-    Write-Host 'DRY RUN does not mutate these registrations; APPLY uses documented git worktree repair after all preflight checks pass.'
+    Write-Host 'DRY RUN does not mutate these registrations; APPLY repairs each malformed registration from inside its verified linked-worktree root after all preflight checks pass.'
     Write-Host ""
 }
 
@@ -348,10 +348,38 @@ if (-not $Apply) {
 
 if ($repairPlans.Count -gt 0) {
     Write-Host ""
-    Write-Host 'Repairing malformed Git worktree administrative registrations...'
+    Write-Host 'Repairing malformed Git worktree administrative registrations from the linked worktree roots...'
 
-    $repairPaths = @($repairPlans | ForEach-Object { $_.WorktreeRoot })
-    Invoke-Git -WorkingDirectory $repoRoot -Arguments (@('worktree', 'repair') + $repairPaths) | Out-Null
+    foreach ($repair in $repairPlans) {
+        Write-Host "REPAIR: $($repair.RegisteredPath) -> $($repair.WorktreeRoot)"
+
+        # Git documents that a linked worktree whose connection is stale can
+        # repair that connection by running `git worktree repair` from inside
+        # the linked worktree itself. This avoids asking the main worktree to
+        # traverse the malformed registered path before it has been repaired.
+        Invoke-Git -WorkingDirectory $repair.WorktreeRoot -Arguments @('worktree', 'repair') | Out-Null
+
+        $afterSingleRepair = Get-Worktrees -RepoRoot $repoRoot
+        if ($afterSingleRepair.Count -ne $worktreesBefore.Count) {
+            throw "Worktree count changed during administrative repair of '$($repair.WorktreeRoot)': before=$($worktreesBefore.Count), after=$($afterSingleRepair.Count)"
+        }
+
+        $match = $afterSingleRepair | Where-Object {
+            (Normalize-Path $_.Path).Equals($repair.WorktreeRoot, [System.StringComparison]::OrdinalIgnoreCase)
+        }
+
+        if ($null -eq $match) {
+            throw "Administrative repair from linked root did not register expected worktree root '$($repair.WorktreeRoot)'."
+        }
+
+        if ($match.Head -ne $repair.Head) {
+            throw "Administrative repair changed HEAD for '$($repair.WorktreeRoot)': expected $($repair.Head), got $($match.Head)"
+        }
+
+        if ($repair.Branch -ne '(detached)' -and $match.Branch -ne $repair.Branch) {
+            throw "Administrative repair changed branch for '$($repair.WorktreeRoot)': expected $($repair.Branch), got $($match.Branch)"
+        }
+    }
 
     $afterRepair = Get-Worktrees -RepoRoot $repoRoot
     if ($afterRepair.Count -ne $worktreesBefore.Count) {
