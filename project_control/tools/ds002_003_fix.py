@@ -26,6 +26,23 @@ if old_switcher in s:
 elif new_switcher not in s:
     raise SystemExit('language switcher anchor missing')
 
+old_scroll = '''write(SRC / "components/ui/TableScrollContainer.tsx", r\'\'\'
+import type { ReactNode } from "react";
+export function TableScrollContainer({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`ui-table-scroll ${className}`.trim()} tabIndex={0} aria-label="Bảng dữ liệu có thể cuộn ngang / Horizontally scrollable data table">{children}</div>;
+}
+\'\'\')'''
+new_scroll = '''write(SRC / "components/ui/TableScrollContainer.tsx", r\'\'\'
+import type { ReactNode } from "react";
+export function TableScrollContainer({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`ui-table-scroll ${className}`.trim()}>{children}</div>;
+}
+\'\'\')'''
+if old_scroll in s:
+    s = s.replace(old_scroll, new_scroll, 1)
+elif new_scroll not in s:
+    raise SystemExit('table scroll container anchor missing')
+
 needle = 'run("npx", "biome", "check",'
 replacement = 'run("npx", "biome", "check", "--write",'
 count = s.count(needle)
