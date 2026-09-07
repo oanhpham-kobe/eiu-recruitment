@@ -160,7 +160,8 @@ test("Header renders title slot and semantic language selector", () => {
 
   const switchers = findElements(
     tree,
-    (el) => el.type === "fieldset" && el.props?.className === "language-switcher",
+    (el) =>
+      el.type === "fieldset" && el.props?.className === "language-switcher",
   );
   assert.equal(switchers.length, 1);
 
