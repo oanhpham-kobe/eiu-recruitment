@@ -97,12 +97,12 @@ def main() -> int:
     )
 
     frontier_anchor = '''    eligible_tasks = require_list(\n        safe_frontier.get(\n            "eligible_tasks",\n            [],\n        ),\n        "safe_frontier.eligible_tasks",\n        errors,\n    )\n\n'''
-    frontier_insertion = '''    execution_hold = safe_frontier.get("execution_hold")\n    if execution_hold and eligible_tasks:\n        errors.append(\n            "safe_frontier.execution_hold is set while eligible_tasks is non-empty"\n        )\n\n'''
-    insert_once(
+    frontier_check = '''    execution_hold = safe_frontier.get("execution_hold")\n    if execution_hold and eligible_tasks:\n        errors.append(\n            "safe_frontier.execution_hold is set while eligible_tasks is non-empty"\n        )\n\n'''
+    replace_exact(
         validator_path,
         frontier_anchor,
-        frontier_insertion,
-        "safe_frontier.execution_hold is set while eligible_tasks is non-empty",
+        frontier_anchor + frontier_check,
+        "safe frontier hold/eligibility ordering",
     )
 
     changed = run("git", "diff", "--name-only").splitlines()
