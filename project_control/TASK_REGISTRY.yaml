@@ -1,6 +1,6 @@
 version: 1
-current_slice: SLICE-04
-current_task: TASK-S04-004
+current_slice: SLICE-05
+current_task: TASK-S05-001
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -133,11 +133,11 @@ tasks:
       - "REMOTE_MIGRATION_CONVERGENCE: PASS (supabase db push --linked is idempotent; all migrations applied)"
       - "DATABASE_VERIFICATION: PASS (extensions + private schema + touch_version trigger)"
       - "BILLING_PLAN_VERIFICATION: NOT_OBSERVABLE (default non-production tier; zero paid upgrade performed)"
-      - "EPHEMERAL_STATE_AUDIT: PASS (web/.env.local, .vercel/, supabase/.temp/ gitignored and uncommitted)"
-      - "VERCEL_AUTH: PASS (oanhpham-kobe / kobe17)"
-      - "VERCEL_PROJECT: CREATED (eiu-recruitment, prj_9t5t1RBtgZp4hOLuSgEYgv5nt8qY)"
-      - "VERCEL_PROJECT_LINK: PASS (root + web/ linked)"
-      - "VERCEL_DEPLOYMENT: NOT_PERFORMED"
+      - "EPHEMERAL_STATE_AUDIT: PASS (web/.env.local, .vercel/, web/.vercel/, supabase/.temp/ are 100% gitignored and uncommitted)"
+      - "VERCEL_AUTH: PASS (authenticated user: oanhpham-kobe / kobe17)"
+      - "VERCEL_PROJECT: eiu-recruitment (ID: prj_9t5t1RBtgZp4hOLuSgEYgv5nt8qY)"
+      - "VERCEL_PROJECT_LINK: PASS (linked via vercel link --yes --project eiu-recruitment)"
+      - "VERCEL_DEPLOYMENT: NOT_PERFORMED (explicitly held per owner authorization)"
       - "SECRET_SCAN: PASS"
       - "SOURCE_INTEGRITY: PASS"
       - "EVIDENCE_INDEX: DEV-INFRA-001"
@@ -1103,3 +1103,23 @@ tasks:
     prompt: project_control/prompts/DESIGN_SYSTEM_HARDENING_v1.md
     plan_section: DS-006
     notes: "Run production browser QA at representative phone/tablet/desktop widths with focused repair reruns and one full hardening acceptance matrix; acceptance creates checkpoint/design-system-production-ready-001 before S04-004 is released."
+
+  TASK-S05-001:
+    title: "Interviewer Report Experience over Accepted Report Contracts"
+    slice: SLICE-05
+    status: IN_PROGRESS
+    lane: LANE_A
+    branch: oanhpham-kobe/TASK-S05-001-interviewer-report-experience
+    depends_on:
+      - TASK-S04-002
+      - TASK-S04-005
+      - TASK-S04-004
+      - TASK-DS-006
+    prompt: project_control/prompts/SLICE-05_TASK-001_v1.md
+    prompt_sha256: "6dd884c22c4d58ac6120cfae133e9e27efb48ada228d3f7be1b790be37ad59c5"
+    prompt_review_status: "PASS (S05-001-PROMPT-REVIEW-001-R2 @ 54a1f450b27bf8470e683cf66791fba7b7f62791; source reopen: NO)"
+    prompt_review_evidence:
+      branch: review/S05-001-PROMPT-54a1f45-v2
+      commit: "36b5df1af4564853fb299af24696f0c8796228d0"
+      artifact: project_control/reviews/S05_001_PROMPT_REVIEW_54a1f45_v2.md
+    notes: "Materialized and released after independent targeted OMP prompt re-review PASS. Consumes accepted Slice-04 mutations; minimal additive contextual read projection is allowed only under the reviewed prompt security boundary. Official pixel-perfect PDF template remains excluded by ASSET-001."

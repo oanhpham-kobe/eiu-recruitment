@@ -42,9 +42,9 @@ integration:
   last_verified_application_ci_run: "34196505808"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
-  last_verified_control_plane_sha: "458b3856eafc812d8c8edca0b74c205fbfcd2f43"
-  last_verified_control_plane_integration_ci_run: "34207832446"
-  last_verified_control_plane_governance_ci_run: "34207832481"
+  last_verified_control_plane_sha: "54a1f450b27bf8470e683cf66791fba7b7f62791"
+  last_verified_control_plane_integration_ci_run: "34211382997"
+  last_verified_control_plane_governance_ci_run: "34211383102"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -89,7 +89,22 @@ design_system_hardening:
   verified_web_candidate_sha: "cb42f0fe301fba70cdc32704d605872b05d12515"
   blocked_frontier_after_acceptance: TASK-S04-004
 
-active_workers: []
+active_workers:
+  - task_id: TASK-S05-001
+    lane: LANE_A
+    role: EXECUTOR
+    branch: oanhpham-kobe/TASK-S05-001-interviewer-report-experience
+    worktree: REMOTE_GITHUB_BRANCH
+    exact_sha: null
+    state: STARTING
+    started_at: "2026-09-08T10:24:12Z"
+    last_observed_at: "2026-09-08T10:24:12Z"
+
+active_task:
+  id: TASK-S05-001
+  slice: SLICE-05
+  phase: IMPLEMENTATION
+  reviewer_status: NOT_STARTED
 
 last_accepted_task:
   id: TASK-S04-004
@@ -124,8 +139,9 @@ historical_mcp_governance_maintenance:
   ci_result: PASS
 
 slice_05_planning:
-  status: PROMPT_RE_REVIEW_REQUIRED
+  status: IMPLEMENTATION_STARTING
   proposed_first_task: TASK-S05-001
+  materialized_task: TASK-S05-001
   prompt: project_control/prompts/SLICE-05_TASK-001_v1.md
   prompt_sha256: "6dd884c22c4d58ac6120cfae133e9e27efb48ada228d3f7be1b790be37ad59c5"
   canonical_sources:
@@ -140,7 +156,7 @@ slice_05_planning:
     - TASK-S04-004
     - TASK-DS-006
   source_reopen_required: false
-  prompt_review:
+  initial_prompt_review:
     work_id: S05-001-PROMPT-REVIEW-001
     reviewed_sha: "458b3856eafc812d8c8edca0b74c205fbfcd2f43"
     result: BLOCKING_REPAIR
@@ -149,12 +165,17 @@ slice_05_planning:
     evidence_commit: "569b623a281004e901d5ef374f527b2dfd1906cf"
     evidence_path: "project_control/reviews/S05_001_PROMPT_REVIEW_458b385_v1.md"
     required_findings: [F1, F2, F3, F4]
-    repair_status: APPLIED_PENDING_RE_REVIEW
-    repair_summary:
-      F1: "Canonical eight-raw-state Interviewer status projection added, including masking FOLLOW_UP/ON_HOLD/HIRED to REPORT_SUBMITTED while raw status remains authoritative for writes."
-      F2: "Minimal additive contextual read projection/RPC/server-adapter allowance added with fail-closed safe DTO and no HR permission widening."
-      F3: "Final Decision Source eligibility, qualitative-only metadata isolation, deterministic ordering, atomic whole-block selection, and clear-all fallback added."
-      F4: "Canonical 360/390/430/768/1024/desktop plus constrained-height matrix and VI/EN state-preservation coverage added."
+  prompt_re_review:
+    work_id: S05-001-PROMPT-REVIEW-001-R2
+    reviewed_sha: "54a1f450b27bf8470e683cf66791fba7b7f62791"
+    result: PASS
+    source_reopen_required: false
+    findings_closed: [F1, F2, F3, F4]
+    new_blocking_findings: NONE
+    evidence_branch: "review/S05-001-PROMPT-54a1f45-v2"
+    evidence_commit: "36b5df1af4564853fb299af24696f0c8796228d0"
+    evidence_path: "project_control/reviews/S05_001_PROMPT_REVIEW_54a1f45_v2.md"
+    release_decision: PROMPT_APPROVED_FOR_TASK_MATERIALIZATION_AND_IMPLEMENTATION
   external_review_transport: "If OMP is not directly invokable from the Coordinator runtime, Coordinator must emit a complete copy-ready Owner handoff package before yielding; Owner transports it and returns the complete verdict/evidence."
   owner_asset_gap:
     id: ASSET-001
@@ -164,15 +185,5 @@ slice_05_planning:
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
-  execution_hold: "Repaired TASK-S05-001 prompt requires targeted independent OMP re-review before task materialization/release."
 
-stop_gate:
-  status: WAITING_EXTERNAL_REVIEW
-  type: OMP_PROMPT_RE_REVIEW
-  target: project_control/prompts/SLICE-05_TASK-001_v1.md
-  review_iteration: 2
-  handoff_package_requirement: COPY_READY_OWNER_TRANSPORT_BEFORE_YIELD
-  owner_role: "Transport the Coordinator-supplied narrowed re-review package to OMP and return the complete verdict/evidence; do not author the review instructions."
-  resume_on: "OMP re-review verdict PASS or BLOCKING_REPAIR/OWNER_DECISION_REQUIRED handoff"
-
-next_action: "After exact-SHA CI verifies the prompt-repair control-plane commit, Coordinator supplies a narrowed copy-ready independent OMP re-review package covering F1-F4 and the repair delta only. On PASS, materialize TASK-S05-001 in TASK_REGISTRY, set SLICE-05 IN_PROGRESS/READY as appropriate, recompute safe frontier, validate control plane, and dispatch."
+next_action: "After exact-SHA control-plane CI passes, create immutable pre-task recovery checkpoint and task branch from that verified SHA, transition the task Executor to RUNNING, implement TASK-S05-001, perform focused verification and producer self-review, then stop at the independent OMP implementation-review boundary with an exact candidate SHA and copy-ready review package."
