@@ -1,6 +1,6 @@
 "use client";
 import type { RefObject } from "react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -47,6 +47,9 @@ export function useOverlayFocus(
   containerRef: RefObject<HTMLElement | null>,
   onClose: () => void,
 ) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
     const token = Symbol("overlay");
@@ -67,7 +70,7 @@ export function useOverlayFocus(
       if (event.key === "Escape") {
         if (overlayStack[overlayStack.length - 1] !== token) return;
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab") return;
@@ -91,5 +94,5 @@ export function useOverlayFocus(
       popOverlay(token);
       previous?.focus();
     };
-  }, [open, containerRef, onClose]);
+  }, [open, containerRef]);
 }
