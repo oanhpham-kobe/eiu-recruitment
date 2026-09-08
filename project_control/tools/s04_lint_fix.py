@@ -14,9 +14,6 @@ def once(old: str, new: str, label: str) -> None:
 
 once("  type InterviewParticipant,\n", "", "unused participant import")
 
-# The draft uses stopPropagation only to protect row-click behavior around real controls.
-# Replace those handlers with event delegation on the parent row instead of making static
-# wrapper/cell elements interactive.
 stop = ' onClick={(event) => event.stopPropagation()}'
 if text.count(stop) != 4:
     raise SystemExit(f"stopPropagation anchors: expected 4, found {text.count(stop)}")
@@ -68,6 +65,21 @@ replacement = ".interview-filters {\n  margin: 0;\n  padding: 0;\n  border: 0;\n
 if css.count(anchor) != 1:
     raise SystemExit(f"filter css anchor: expected one, found {css.count(anchor)}")
 css = css.replace(anchor, replacement, 1)
+anchor = '''.interview-checkbox-label input,
+.interview-copy-participants input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+}'''
+replacement = '''.interview-checkbox-label input,
+.interview-copy-participants input[type="checkbox"] {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+}'''
+if css.count(anchor) != 1:
+    raise SystemExit(f"checkbox size anchor: expected one, found {css.count(anchor)}")
+css = css.replace(anchor, replacement, 1)
 CSS.write_text(css.rstrip() + "\n", encoding="utf-8")
 
-print("S04 lint blockers repaired")
+print("S04 lint/design blockers repaired")
