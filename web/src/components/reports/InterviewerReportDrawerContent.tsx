@@ -25,6 +25,7 @@ export function InterviewerReportDrawerContent({
   locale,
   mode,
   draft,
+  pending,
   onDraftChange,
   onSelectRound,
 }: {
@@ -33,6 +34,7 @@ export function InterviewerReportDrawerContent({
   locale: ReportLocale;
   mode: ReportMode;
   draft: ReportFields;
+  pending: boolean;
   onDraftChange: (key: (typeof REPORT_FIELD_KEYS)[number], value: string) => void;
   onSelectRound: (round: InterviewerReportRound) => void;
 }) {
@@ -54,6 +56,7 @@ export function InterviewerReportDrawerContent({
                 item.interviewId === round.interviewId ? "primary" : "secondary"
               }
               aria-pressed={item.interviewId === round.interviewId}
+              disabled={pending}
               onClick={() => onSelectRound(item)}
             >
               {t("Vòng", "Round")} {item.roundNo}
@@ -120,7 +123,7 @@ export function InterviewerReportDrawerContent({
         {mode === "edit" && round.canEdit ? (
           <div className="interviewer-report__form">
             {(["evaluation", "decision"] as const).map((section) => (
-              <fieldset key={section}>
+              <fieldset key={section} disabled={pending}>
                 <legend>
                   {section === "evaluation"
                     ? t("Đánh giá và nhận xét", "Evaluation and Comment")
@@ -137,6 +140,7 @@ export function InterviewerReportDrawerContent({
                       name={key}
                       rows={3}
                       value={draft[key] ?? ""}
+                      disabled={pending}
                       onChange={(event) => onDraftChange(key, event.target.value)}
                     />
                   </label>
