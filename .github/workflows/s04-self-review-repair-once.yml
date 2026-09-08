@@ -29,6 +29,9 @@ jobs:
       - name: Install web dependencies
         working-directory: web
         run: npm ci
+      - name: Format directly affected files
+        working-directory: web
+        run: npx biome check --write src/lib/commands/interview-lifecycle.ts src/components/interview/InterviewDrawer.tsx src/components/interview/InterviewDialogs.tsx src/components/interview/InterviewPage.tsx src/__tests__/interview-commands.test.ts
       - name: Focused Interview regression tests
         working-directory: web
         run: node --conditions react-server --test --import tsx src/__tests__/interview-commands.test.ts src/__tests__/interview-model.test.ts
