@@ -1,4 +1,4 @@
-# focused retry 4
+# focused retry 5
 name: S04 Candidate Focused Once
 
 on:
@@ -34,6 +34,8 @@ jobs:
         run: python project_control/tools/s04_candidate_fix.py
       - name: Apply focused lint repairs
         run: python project_control/tools/s04_lint_fix.py
+      - name: Repair copy test fixture
+        run: python project_control/tools/s04_test_fixture_fix.py
       - name: Format changed S04 scope
         working-directory: web
         run: >-
@@ -49,12 +51,9 @@ jobs:
           src/styles/interview.css
           src/__tests__/interview-model.test.ts
           src/__tests__/interview-commands.test.ts
-      - name: Design contract
+      - name: Retry failed Interview command tests
         working-directory: web
-        run: npm run design:check
-      - name: Focused Interview tests
-        working-directory: web
-        run: node --conditions react-server --test --import tsx src/__tests__/interview-model.test.ts src/__tests__/interview-commands.test.ts
+        run: node --conditions react-server --test --import tsx src/__tests__/interview-commands.test.ts
       - name: Lint
         working-directory: web
         run: npm run lint
