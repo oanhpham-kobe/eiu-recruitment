@@ -1,6 +1,6 @@
 version: 1
-current_slice: SLICE-DS
-current_task: TASK-DS-006
+current_slice: SLICE-04
+current_task: TASK-S04-004
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1002,7 +1002,7 @@ tasks:
   TASK-S04-004:
     title: "HR Interview scheduling UI over accepted trusted commands"
     slice: SLICE-04
-    status: BLOCKED
+    status: READY
     lane: LANE_A
     depends_on:
       - TASK-S04-005

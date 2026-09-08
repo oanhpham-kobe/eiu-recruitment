@@ -1,5 +1,5 @@
 version: 1
-current_slice: SLICE-DS
+current_slice: SLICE-04
 slices:
   SLICE-00:
     name: Foundation / Production Skeleton

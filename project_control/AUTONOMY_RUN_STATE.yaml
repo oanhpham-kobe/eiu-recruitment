@@ -52,7 +52,7 @@ plan_reconciliation:
 
 design_system_hardening:
   initiative_id: DESIGN-SYSTEM-HARDENING-001
-  status: VERIFIED_PENDING_CHECKPOINT
+  status: VERIFIED
   owner_sequencing_decision: "2026-09-08: harden the production Design System before TASK-S04-004, then resume S04-004 immediately after DS acceptance."
   baseline_sha: "8897d08f01b9f4738500eecfd6170dc0a9c77f54"
   pre_hardening_checkpoint: checkpoint/pre-design-system-hardening-001
@@ -68,7 +68,10 @@ design_system_hardening:
     - TASK-DS-005
     - TASK-DS-006
   exit_checkpoint: checkpoint/design-system-production-ready-001
-  verified_web_candidate_sha: "d473b11217d6f6b2fc8c83fec9029e649f1b05a7"
+  accepted_checkpoint_sha: "cb42f0fe301fba70cdc32704d605872b05d12515"
+  final_web_acceptance_run: "34172591716 PASS"
+  final_governance_ci_run: "34172664420 PASS"
+  verified_web_candidate_sha: "cb42f0fe301fba70cdc32704d605872b05d12515"
   verification_evidence:
     - "DS-006 seven-width browser acceptance: PASS (360/390/430/768/1024/1280/1440)"
     - "design:check: PASS"
@@ -190,7 +193,7 @@ historical_mcp_governance_maintenance:
   ci_run_id: "33943629020"
   ci_result: PASS
 safe_frontier:
-  eligible_tasks: []
-  skipped_due_to_dependency:
+  eligible_tasks:
     - TASK-S04-004
-next_action: "Create and verify immutable checkpoint/design-system-production-ready-001 at the Phase-A closure SHA. Keep TASK-S04-004 BLOCKED until that checkpoint exists; then perform Phase-B release."
+  skipped_due_to_dependency: []
+next_action: "Dispatch TASK-S04-004 from checkpoint/design-system-production-ready-001 on a fresh task branch. Preserve accepted backend contracts and stop at the ChatGPT-reviewed exact candidate SHA for independent OMP review."

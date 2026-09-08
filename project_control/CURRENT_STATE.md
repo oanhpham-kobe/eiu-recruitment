@@ -60,7 +60,7 @@ Exact integration CI:
 - `SLICE-04_TASK-004_v3.md` remains the released S04-004 product/technical prompt.
 - Owner sequencing decision on 2026-09-08 inserts a bounded **Production Design-System Hardening** initiative before S04-004 so the Interview page consumes a converged responsive production foundation.
 - This is planning/implementation sequencing, not a Product/Business/Design source rewrite.
-- `TASK-DS-001..006 = DONE`. Production Design-System hardening implementation and focused/browser verification are complete. `TASK-S04-004` remains `BLOCKED` only until immutable `checkpoint/design-system-production-ready-001` is created and verified in Phase B.
+- `TASK-DS-001..006 = DONE` and `checkpoint/design-system-production-ready-001` is verified at `cb42f0fe301fba70cdc32704d605872b05d12515`. `TASK-S04-004 = READY` and is the sole safe-frontier task.
 
 Design-System hardening DAG:
 
@@ -113,7 +113,7 @@ A new session should:
 3. verify repository/branch/HEAD directly with Git;
 4. read `AUTONOMY_RUN_STATE.yaml`, `TASK_REGISTRY.yaml`, and `SLICE_REGISTRY.yaml` as authoritative execution/DAG truth;
 5. run `python project_control/validate_omp_native.py` and `python project_control/validate_control_plane.py`;
-6. confirm `plan_reconciliation.status = VERIFIED`, `design_system_hardening.status = VERIFIED_PENDING_CHECKPOINT`, `TASK-DS-001..006 = DONE`, and `safe_frontier = []`;
+6. confirm `plan_reconciliation.status = VERIFIED`, `design_system_hardening.status = VERIFIED`, `TASK-DS-001..006 = DONE`, `TASK-S04-004 = READY`, and `safe_frontier = [TASK-S04-004]`;
 7. read `DESIGN_SYSTEM_HARDENING_v1.md`, current Design System v1.8 and Responsive Prototype v1.10 authority before production UI hardening;
 8. verify `checkpoint/pre-design-system-hardening-001` resolves to `8897d08f01b9f4738500eecfd6170dc0a9c77f54`;
 9. complete DS-001..006 under focused verification and stop the hardening initiative once its explicit exit criteria pass; create `checkpoint/design-system-production-ready-001`; then re-release/rebase S04-004 on that exact checkpoint and resume the established ChatGPT producer → OMP independent review → exact-SHA acceptance lifecycle.
@@ -128,4 +128,4 @@ A new session should:
 
 ## Next action
 
-Create and verify immutable `checkpoint/design-system-production-ready-001` at the exact Phase-A closure SHA. Then perform the explicit Phase-B control-plane release of `TASK-S04-004` and start it from that checkpoint.
+Create a fresh S04-004 task branch from `checkpoint/design-system-production-ready-001`, implement the released v3 prompt over the accepted trusted commands, self-review and run focused/browser verification, then stop at an exact candidate SHA for independent OMP review.

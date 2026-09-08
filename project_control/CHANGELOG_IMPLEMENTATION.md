@@ -159,3 +159,11 @@ This compact backfill records accepted checkpoints that were already present in 
 - Final self-review repaired Candidate landmark ownership plus StatusMenu keyboard semantics and re-entrant/topmost overlay focus/lock behavior.
 - Focused verification remained impact-scoped; unrelated database verification was not rerun.
 - Phase A intentionally keeps TASK-S04-004 blocked until immutable checkpoint/design-system-production-ready-001 is created and verified.
+
+
+## 2026-09-08 — Design-System production-ready checkpoint and S04-004 release
+
+- Final exact-SHA web acceptance on `cb42f0fe301fba70cdc32704d605872b05d12515`: run `34172591716` PASS (audit, design contract, lint, typecheck, build, full web regression, seven-width browser acceptance).
+- Exact Phase-A Governance CI `34172664420`: PASS.
+- Created immutable `checkpoint/design-system-production-ready-001` at `cb42f0fe301fba70cdc32704d605872b05d12515`.
+- Released `TASK-S04-004` to READY as the sole safe-frontier task. No canonical source, SQL, RLS, migration, or accepted RPC behavior was changed by this release.
