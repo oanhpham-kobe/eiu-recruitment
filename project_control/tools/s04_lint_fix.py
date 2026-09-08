@@ -13,11 +13,15 @@ def once(old: str, new: str, label: str) -> None:
     text = text.replace(old, new, 1)
 
 once("  type InterviewParticipant,\n", "", "unused participant import")
-once(
-    '      <div\n        className={`interview-status-menu interview-status-menu--${round.scheduleStatus.toLowerCase()}`}\n        onClick={(event) => event.stopPropagation()}\n      >',
-    '      <div\n        className={`interview-status-menu interview-status-menu--${round.scheduleStatus.toLowerCase()}`}\n      >',
-    "status wrapper click",
-)
+
+# The draft uses stopPropagation only to protect row-click behavior around real controls.
+# Replace those handlers with event delegation on the parent row instead of making static
+# wrapper/cell elements interactive.
+stop = ' onClick={(event) => event.stopPropagation()}'
+if text.count(stop) != 4:
+    raise SystemExit(f"stopPropagation anchors: expected 4, found {text.count(stop)}")
+text = text.replace(stop, "")
+
 once(
     '<div className="interview-toolbar" aria-label="Thao tác Interview">',
     '<div className="interview-toolbar" role="group" aria-label="Thao tác Interview">',
@@ -29,29 +33,22 @@ once(
     "filter semantics",
 )
 once(
-    '{INTERVIEW_COLUMNS.map((width, index) => (\n              <col key={`${width}-${index}`} style={{ width }} />\n            ))}',
-    '{INTERVIEW_COLUMNS.map((width) => (\n              <col key={width} style={{ width }} />\n            ))}',
+    'INTERVIEW_COLUMNS.map((width, index) => <col key={`${width}-${index}`} style={{ width }} />)',
+    'INTERVIEW_COLUMNS.map((width) => <col key={width} style={{ width }} />)',
     "stable col keys",
 )
 once(
     '<tr className={`interview-application-row ${application.isActive ? "" : "is-inactive"}`} onClick={onToggle}>',
-    '''<tr\n        className={`interview-application-row ${application.isActive ? "" : "is-inactive"}`}\n        onClick={(event) => {\n          const target = event.target as HTMLElement;\n          if (target.closest("button,input,a,select,textarea")) return;\n          onToggle();\n        }}\n      >''',
+    '''<tr
+        className={`interview-application-row ${application.isActive ? "" : "is-inactive"}`}
+        onClick={(event) => {
+          const target = event.target as HTMLElement;
+          if (target.closest("button,input,a,select,textarea")) return;
+          onToggle();
+        }}
+      >''',
     "row event delegation",
 )
-once(
-    '<td data-label="Chọn" onClick={(event) => event.stopPropagation()}>',
-    '<td data-label="Chọn">',
-    "checkbox cell click",
-)
-once(
-    '<td\n          data-label="Trạng thái"\n          onClick={(event) => event.stopPropagation()}\n        >',
-    '<td data-label="Trạng thái">',
-    "status cell click",
-)
-once(
-    '<td data-label="Action" onClick={(event) => event.stopPropagation()}>',
-    '<td data-label="Action">',
-    "action cell click",
-)
+
 P.write_text(text.rstrip() + "\n", encoding="utf-8")
 print("S04 lint blockers repaired")
