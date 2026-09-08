@@ -76,7 +76,6 @@ export interface InterviewerReportRound {
   ownVersionNo: number;
   ownReport: ReportFields;
   preview: ReportPreview | null;
-  updatedAt: string;
 }
 
 export interface InterviewerReportPageData {
@@ -158,40 +157,60 @@ export function groupInterviewerReportRounds(
     );
 }
 
-const FORBIDDEN_DTO_KEYS = new Set([
-  "hr_report_note",
-  "hr_owner_id",
-  "hr_owner",
-  "decision_updated_at",
-  "decision_updated_by",
-  "final_source",
-  "final_source_report_id",
-  "submission_id",
-  "candidate_id",
-  "email_snapshot",
-  "phone",
-  "snapshot_email",
-  "report_status_code",
-]);
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function assertNoForbiddenDtoKeys(value: unknown): void {
-  if (Array.isArray(value)) {
-    for (const child of value) assertNoForbiddenDtoKeys(child);
-    return;
-  }
-  if (!isRecord(value)) return;
-
-  for (const [key, child] of Object.entries(value)) {
-    if (FORBIDDEN_DTO_KEYS.has(key)) {
-      throw new Error(`Unsafe Interviewer report DTO key: ${key}`);
+function assertExactKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+  context: string,
+): void {
+  const allowed = new Set(allowedKeys);
+  for (const key of Object.keys(value)) {
+    if (!allowed.has(key)) {
+      throw new Error(
+        `Unexpected Interviewer report DTO key at ${context}: ${key}`,
+      );
     }
-    assertNoForbiddenDtoKeys(child);
   }
 }
+
+const REPORT_FIELDS_DTO_KEYS = [...REPORT_FIELD_KEYS] as const;
+const FINAL_DECISION_DTO_KEYS = [
+  "conclusion",
+  "expected_specific_job_assigned",
+  "expected_recruitment_time",
+] as const;
+const PREVIEW_PARTICIPANT_DTO_KEYS = [
+  "participant_order",
+  "name",
+  "job_title",
+  "report",
+] as const;
+const PREVIEW_DTO_KEYS = ["participants", "final_decision"] as const;
+const ROUND_DTO_KEYS = [
+  "application_id",
+  "interview_id",
+  "round_no",
+  "is_current_round",
+  "candidate_name",
+  "position_name_vi",
+  "position_name_en",
+  "start_at",
+  "end_at",
+  "format_name_vi",
+  "format_name_en",
+  "room_name",
+  "meeting_link",
+  "display_report_status",
+  "can_edit",
+  "interview_participant_id",
+  "has_own_report",
+  "own_version_no",
+  "own_report",
+  "preview",
+] as const;
 
 function stringValue(
   value: unknown,
@@ -230,14 +249,18 @@ function reportFields(value: unknown): ReportFields {
   if (!isRecord(value)) {
     throw new Error("Invalid Interviewer report fields");
   }
+  assertExactKeys(value, REPORT_FIELDS_DTO_KEYS, "report");
 
   const parsed = { ...EMPTY_REPORT_FIELDS };
   for (const key of REPORT_FIELD_KEYS) {
     const fieldValue = value[key];
-    if (fieldValue !== null && typeof fieldValue !== "string") {
+    if (fieldValue === null) {
+      parsed[key] = null;
+    } else if (typeof fieldValue === "string") {
+      parsed[key] = fieldValue;
+    } else {
       throw new Error(`Invalid Interviewer report field: ${key}`);
     }
-    parsed[key] = fieldValue;
   }
   return parsed;
 }
@@ -247,9 +270,11 @@ function previewValue(value: unknown): ReportPreview | null {
   if (!isRecord(value) || !Array.isArray(value.participants)) {
     throw new Error("Invalid Interviewer report preview");
   }
+  assertExactKeys(value, PREVIEW_DTO_KEYS, "preview");
 
   const participants = value.participants.map((item) => {
     if (!isRecord(item)) throw new Error("Invalid preview participant");
+    assertExactKeys(item, PREVIEW_PARTICIPANT_DTO_KEYS, "preview.participant");
     return {
       participantOrder: numberValue(
         item.participant_order,
@@ -264,6 +289,11 @@ function previewValue(value: unknown): ReportPreview | null {
   if (!isRecord(value.final_decision)) {
     throw new Error("Invalid Interviewer final decision");
   }
+  assertExactKeys(
+    value.final_decision,
+    FINAL_DECISION_DTO_KEYS,
+    "preview.final_decision",
+  );
 
   return {
     participants,
@@ -289,6 +319,7 @@ function previewValue(value: unknown): ReportPreview | null {
 
 function roundValue(value: unknown): InterviewerReportRound {
   if (!isRecord(value)) throw new Error("Invalid Interviewer report round");
+  assertExactKeys(value, ROUND_DTO_KEYS, "round");
 
   return {
     applicationId: stringValue(value.application_id, "application_id") as string,
@@ -321,19 +352,30 @@ function roundValue(value: unknown): InterviewerReportRound {
     ownVersionNo: numberValue(value.own_version_no, "own_version_no"),
     ownReport: reportFields(value.own_report),
     preview: previewValue(value.preview),
-    updatedAt: stringValue(value.updated_at, "updated_at") as string,
   };
 }
 
 export function parseInterviewerReportPageRpc(
   value: unknown,
 ): InterviewerReportPageData {
-  assertNoForbiddenDtoKeys(value);
   if (!isRecord(value)) throw new Error("Invalid Interviewer report RPC response");
-  if (value.success !== true || !isRecord(value.data)) {
-    const code = typeof value.error_code === "string" ? value.error_code : "READ_FAILED";
+
+  if (value.success !== true) {
+    assertExactKeys(
+      value,
+      ["success", "error_code", "message"],
+      "error response",
+    );
+    const code =
+      typeof value.error_code === "string" ? value.error_code : "READ_FAILED";
     throw new Error(code);
   }
+
+  assertExactKeys(value, ["success", "data"], "success response");
+  if (!isRecord(value.data)) {
+    throw new Error("Invalid Interviewer report data payload");
+  }
+  assertExactKeys(value.data, ["rounds"], "data");
   if (!Array.isArray(value.data.rounds)) {
     throw new Error("Invalid Interviewer report rounds payload");
   }
