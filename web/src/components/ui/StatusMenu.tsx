@@ -34,6 +34,28 @@ export function StatusMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const openFocusRef = useRef<OpenFocus>("current");
 
+  const positionPanel = useCallback(() => {
+    const panel = panelRef.current;
+    const root = rootRef.current;
+    const trigger = triggerRef.current;
+    if (!panel || !root || !trigger) return;
+
+    panel.style.left = "0px";
+    const rootRect = root.getBoundingClientRect();
+    const triggerRect = trigger.getBoundingClientRect();
+    const panelWidth = panel.getBoundingClientRect().width;
+    const gutter = 16;
+    const maxViewportLeft = Math.max(
+      gutter,
+      window.innerWidth - panelWidth - gutter,
+    );
+    const viewportLeft = Math.min(
+      Math.max(triggerRect.left, gutter),
+      maxViewportLeft,
+    );
+    panel.style.left = `${viewportLeft - rootRect.left}px`;
+  }, []);
+
   const enabledItems = useCallback(
     () =>
       Array.from(
@@ -48,6 +70,7 @@ export function StatusMenu({
     if (!open) return;
 
     const focusMenu = requestAnimationFrame(() => {
+      positionPanel();
       const items = enabledItems();
       if (items.length === 0) return;
       if (openFocusRef.current === "first") {
@@ -77,12 +100,14 @@ export function StatusMenu({
 
     document.addEventListener("pointerdown", onPointer);
     document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", positionPanel);
     return () => {
       cancelAnimationFrame(focusMenu);
       document.removeEventListener("pointerdown", onPointer);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", positionPanel);
     };
-  }, [enabledItems, open]);
+  }, [enabledItems, open, positionPanel]);
 
   const openMenu = (focus: OpenFocus) => {
     openFocusRef.current = focus;

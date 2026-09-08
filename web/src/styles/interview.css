@@ -199,10 +199,20 @@
   font-weight: 700;
 }
 
+.interview-select-target {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  cursor: pointer;
+}
+
 .interview-table input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  margin: 2px auto;
+  margin: 0;
 }
 
 .interview-status-menu .ui-status-menu__trigger,

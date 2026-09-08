@@ -1088,14 +1088,16 @@ function ApplicationRows({
       >
         <td data-label="Chọn">
           {selectId ? (
-            <input
-              type="checkbox"
-              aria-label={`Chọn ${application.candidateName}`}
-              checked={selectedInterviewId === selectId}
-              onChange={(event) =>
-                onSelect(event.target.checked ? selectId : null)
-              }
-            />
+            <label className="interview-select-target">
+              <input
+                type="checkbox"
+                aria-label={`Chọn ${application.candidateName}`}
+                checked={selectedInterviewId === selectId}
+                onChange={(event) =>
+                  onSelect(event.target.checked ? selectId : null)
+                }
+              />
+            </label>
           ) : null}
         </td>
         <th scope="row" data-label="Ứng viên / Application">
@@ -1172,14 +1174,16 @@ function ApplicationRows({
               className={`interview-round-row ${round.isActive ? "" : "is-inactive"}`}
             >
               <td data-label="Chọn">
-                <input
-                  type="checkbox"
-                  aria-label={`Chọn Vòng ${round.roundNo}`}
-                  checked={selectedInterviewId === round.interviewId}
-                  onChange={(event) =>
-                    onSelect(event.target.checked ? round.interviewId : null)
-                  }
-                />
+                <label className="interview-select-target">
+                  <input
+                    type="checkbox"
+                    aria-label={`Chọn Vòng ${round.roundNo}`}
+                    checked={selectedInterviewId === round.interviewId}
+                    onChange={(event) =>
+                      onSelect(event.target.checked ? round.interviewId : null)
+                    }
+                  />
+                </label>
               </td>
               <th scope="row" data-label="Ứng viên / Application">
                 <strong>Vòng {round.roundNo}</strong>

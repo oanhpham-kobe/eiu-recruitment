@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { StatusMenu } from "@/components/ui/StatusMenu";
 import { INTERVIEW_COLUMNS } from "@/lib/interview/model";
 import "@/app/globals.css";
+import "@/styles/interview.css";
 
 const STATUS_OPTIONS = [
   { value: "AVAILABLE", label: "Có thể sắp lịch / Available" },
@@ -21,7 +22,10 @@ function InterviewBrowserHarness() {
   return (
     <div id="app-root" data-harness-ready="interview">
       <AppShell currentPath="/interviews" title="Lịch phỏng vấn">
-        <section className="interview-page" aria-label="Interview design fixture">
+        <section
+          className="interview-page"
+          aria-label="Interview design fixture"
+        >
           <div className="interview-page-heading">
             <h1>Lịch phỏng vấn / Interviews</h1>
             <p>Production responsive browser acceptance fixture.</p>
@@ -63,8 +67,8 @@ function InterviewBrowserHarness() {
           >
             <table className="interview-table">
               <colgroup>
-                {INTERVIEW_COLUMNS.map((width, index) => (
-                  <col key={`${width}-${index}`} style={{ width }} />
+                {INTERVIEW_COLUMNS.map((width) => (
+                  <col key={width} style={{ width }} />
                 ))}
               </colgroup>
               <thead>
@@ -113,7 +117,10 @@ function InterviewBrowserHarness() {
                     Application có nhiều vòng phỏng vấn và lịch sử được giữ lại.
                   </td>
                   <td data-label="Action">
-                    <button type="button" className="ui-button ui-button--secondary">
+                    <button
+                      type="button"
+                      className="ui-button ui-button--secondary"
+                    >
                       Chi tiết
                     </button>
                   </td>
@@ -125,8 +132,7 @@ function InterviewBrowserHarness() {
                     </label>
                   </td>
                   <th scope="row" data-label="Ứng viên / Application">
-                    Vòng 1
-                    <small>Interview round</small>
+                    Vòng 1<small>Interview round</small>
                   </th>
                   <td data-label="Thời gian">14:00 – 15:30 · 20/05/2025</td>
                   <td data-label="Địa điểm">Phòng A1.01</td>
@@ -147,7 +153,10 @@ function InterviewBrowserHarness() {
                     Nội dung nghiệp vụ dài phải wrap thay vì ép nhỏ typography.
                   </td>
                   <td data-label="Action">
-                    <button type="button" className="ui-button ui-button--secondary">
+                    <button
+                      type="button"
+                      className="ui-button ui-button--secondary"
+                    >
                       Mở
                     </button>
                   </td>
@@ -167,12 +176,12 @@ function InterviewBrowserHarness() {
             </button>
           }
         >
-          <div className="interview-detail-grid">
+          <dl className="interview-detail-grid">
             <dt>Thời gian phỏng vấn</dt>
             <dd>14:00 – 15:30 · 20/05/2025</dd>
             <dt>Địa điểm</dt>
             <dd>Phòng A1.01</dd>
-          </div>
+          </dl>
         </Drawer>
       </AppShell>
     </div>

@@ -50,13 +50,35 @@ async function openHarness(
 }
 
 async function assertNoPageOverflow(page: Page, label: string) {
-  const dimensions = await page.evaluate(() => ({
-    clientWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth,
-  }));
+  const dimensions = await page.evaluate(() => {
+    const clientWidth = document.documentElement.clientWidth;
+    const offenders = Array.from(
+      document.querySelectorAll<HTMLElement>("body *"),
+    )
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          tag: element.tagName.toLowerCase(),
+          id: element.id,
+          className: element.className,
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+          width: Math.round(rect.width),
+          scrollWidth: element.scrollWidth,
+        };
+      })
+      .filter((item) => item.left < -1 || item.right > clientWidth + 1)
+      .sort((a, b) => b.right - a.right)
+      .slice(0, 8);
+    return {
+      clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      offenders,
+    };
+  });
   assert.ok(
     dimensions.scrollWidth <= dimensions.clientWidth + 1,
-    `${label}: unexpected page overflow ${dimensions.scrollWidth} > ${dimensions.clientWidth}`,
+    `${label}: unexpected page overflow ${dimensions.scrollWidth} > ${dimensions.clientWidth}; offenders=${JSON.stringify(dimensions.offenders)}`,
   );
 }
 
@@ -90,140 +112,155 @@ async function assertDrawerContract(page: Page, width: number) {
   await drawer.waitFor({ state: "detached" });
 }
 
-test(
-  "Interview production UI passes the seven-width responsive browser contract",
-  { timeout: 180_000 },
-  async () => {
-    const assets = await bundleHarness();
-    let browser: Browser | undefined;
-    try {
-      browser = await chromium.launch();
-      for (const width of WIDTHS) {
-        const { page, errors } = await openHarness(browser, assets, width);
-        await assertNoPageOverflow(page, `interview@${width}`);
-        assert.deepEqual(errors, [], `interview@${width}: console/page errors`);
+test("Interview production UI passes the seven-width responsive browser contract", {
+  timeout: 180_000,
+}, async () => {
+  const assets = await bundleHarness();
+  let browser: Browser | undefined;
+  try {
+    browser = await chromium.launch();
+    for (const width of WIDTHS) {
+      const { page, errors } = await openHarness(browser, assets, width);
+      await assertNoPageOverflow(page, `interview@${width}`);
+      assert.deepEqual(errors, [], `interview@${width}: console/page errors`);
 
-        const table = page.locator(".interview-table");
-        const tableScroll = page.locator('[data-testid="interview-table-scroll"]');
-        const selectTarget = page.locator(".interview-select-target").first();
-        const selectTargetBox = await selectTarget.boundingBox();
-        assert.ok(selectTargetBox, `interview@${width}: select target must exist`);
-        assert.ok(
-          selectTargetBox.width >= 44 && selectTargetBox.height >= 44,
-          `interview@${width}: selection target must be at least 44x44`,
+      const table = page.locator(".interview-table");
+      const tableScroll = page.locator(
+        '[data-testid="interview-table-scroll"]',
+      );
+      const selectTarget = page.locator(".interview-select-target").first();
+      const selectTargetBox = await selectTarget.boundingBox();
+      assert.ok(
+        selectTargetBox,
+        `interview@${width}: select target must exist`,
+      );
+      assert.ok(
+        selectTargetBox.width >= 44 && selectTargetBox.height >= 44,
+        `interview@${width}: selection target must be at least 44x44`,
+      );
+
+      const filterControl = page.locator(".interview-filters input").first();
+      const filterBox = await filterControl.boundingBox();
+      assert.ok(
+        filterBox && filterBox.height >= 44,
+        `interview@${width}: filter controls must be at least 44px high`,
+      );
+
+      const badge = page.locator(".ui-status-badge--interview").first();
+      const badgeWidth = await badge.evaluate(
+        (element) => element.getBoundingClientRect().width,
+      );
+      assert.ok(
+        Math.abs(badgeWidth - 144) <= 1,
+        `interview@${width}: Interview badge must be 144px`,
+      );
+
+      if (width > 640) {
+        assert.equal(
+          await table.evaluate((element) => getComputedStyle(element).display),
+          "table",
         );
-
-        const filterControl = page.locator(".interview-filters input").first();
-        const filterBox = await filterControl.boundingBox();
-        assert.ok(
-          filterBox && filterBox.height >= 44,
-          `interview@${width}: filter controls must be at least 44px high`,
-        );
-
-        const badge = page.locator(".ui-status-badge--interview").first();
-        const badgeWidth = await badge.evaluate(
+        const tableWidth = await table.evaluate(
           (element) => element.getBoundingClientRect().width,
         );
         assert.ok(
-          Math.abs(badgeWidth - 144) <= 1,
-          `interview@${width}: Interview badge must be 144px`,
+          Math.abs(tableWidth - 1480) <= 1,
+          `interview@${width}: semantic Interview table must stay 1480px`,
         );
-
-        if (width > 640) {
-          assert.equal(
-            await table.evaluate((element) => getComputedStyle(element).display),
-            "table",
-          );
-          const tableWidth = await table.evaluate(
-            (element) => element.getBoundingClientRect().width,
-          );
-          assert.ok(
-            Math.abs(tableWidth - 1480) <= 1,
-            `interview@${width}: semantic Interview table must stay 1480px`,
-          );
-          const overflow = await tableScroll.evaluate((element) => ({
-            clientWidth: element.clientWidth,
-            scrollWidth: element.scrollWidth,
-          }));
-          assert.ok(
-            overflow.scrollWidth > overflow.clientWidth,
-            `interview@${width}: wide table must scroll only inside its container`,
-          );
-          const firstCell = page.locator(".interview-table tbody tr").first().locator("td").first();
-          const identityCell = page
+        const overflow = await tableScroll.evaluate((element) => ({
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+        }));
+        assert.ok(
+          overflow.scrollWidth > overflow.clientWidth,
+          `interview@${width}: wide table must scroll only inside its container`,
+        );
+        const firstCell = page
+          .locator(".interview-table tbody tr")
+          .first()
+          .locator("td")
+          .first();
+        const identityCell = page
+          .locator(".interview-table tbody tr")
+          .first()
+          .locator("th")
+          .first();
+        assert.equal(
+          await firstCell.evaluate(
+            (element) => getComputedStyle(element).position,
+          ),
+          "sticky",
+          `interview@${width}: Select context must remain sticky`,
+        );
+        assert.equal(
+          await identityCell.evaluate(
+            (element) => getComputedStyle(element).position,
+          ),
+          "sticky",
+          `interview@${width}: Application identity must remain sticky`,
+        );
+        const identityLeft = await identityCell.evaluate(
+          (element) => getComputedStyle(element).left,
+        );
+        assert.equal(identityLeft, "48px");
+      } else {
+        assert.equal(
+          await table.evaluate((element) => getComputedStyle(element).display),
+          "block",
+        );
+        assert.equal(
+          await page
             .locator(".interview-table tbody tr")
             .first()
-            .locator("th")
-            .first();
-          assert.equal(
-            await firstCell.evaluate((element) => getComputedStyle(element).position),
-            "sticky",
-            `interview@${width}: Select context must remain sticky`,
-          );
-          assert.equal(
-            await identityCell.evaluate(
-              (element) => getComputedStyle(element).position,
-            ),
-            "sticky",
-            `interview@${width}: Application identity must remain sticky`,
-          );
-          const identityLeft = await identityCell.evaluate(
-            (element) => getComputedStyle(element).left,
-          );
-          assert.equal(identityLeft, "48px");
-        } else {
-          assert.equal(
-            await table.evaluate((element) => getComputedStyle(element).display),
-            "block",
-          );
-          assert.equal(
-            await page
-              .locator(".interview-table tbody tr")
-              .first()
-              .evaluate((element) => getComputedStyle(element).display),
-            "grid",
-            `interview@${width}: phone presentation must use structured labelled rows`,
-          );
-          const scrollState = await tableScroll.evaluate((element) => ({
-            clientWidth: element.clientWidth,
-            scrollWidth: element.scrollWidth,
-          }));
-          assert.ok(
-            scrollState.scrollWidth <= scrollState.clientWidth + 1,
-            `interview@${width}: phone cards must not preserve horizontal table overflow`,
-          );
-        }
-
-        if (width === 390) {
-          const trigger = page.locator(".interview-status-menu .ui-status-menu__trigger");
-          await trigger.click();
-          const panel = page.locator(".interview-status-menu .ui-status-menu__panel");
-          await panel.waitFor({ state: "visible" });
-          const panelBox = await panel.boundingBox();
-          assert.ok(panelBox, "interview@390: status menu panel must exist");
-          assert.ok(
-            panelBox.x >= -1 && panelBox.x + panelBox.width <= width + 1,
-            "interview@390: status menu must stay inside the viewport",
-          );
-          await page.keyboard.press("Escape");
-          await panel.waitFor({ state: "detached" });
-          assert.equal(
-            await trigger.evaluate((element) => document.activeElement === element),
-            true,
-            "interview@390: Escape must restore focus to the status trigger",
-          );
-        }
-
-        if (width === 390 || width === 768 || width === 1280) {
-          await assertDrawerContract(page, width);
-        }
-
-        await assertNoPageOverflow(page, `interview@${width}:after-interactions`);
-        assert.deepEqual(errors, [], `interview@${width}: interaction errors`);
-        await page.close();
+            .evaluate((element) => getComputedStyle(element).display),
+          "grid",
+          `interview@${width}: phone presentation must use structured labelled rows`,
+        );
+        const scrollState = await tableScroll.evaluate((element) => ({
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+        }));
+        assert.ok(
+          scrollState.scrollWidth <= scrollState.clientWidth + 1,
+          `interview@${width}: phone cards must not preserve horizontal table overflow`,
+        );
       }
-    } finally {
-      await browser?.close();
+
+      if (width === 390) {
+        const trigger = page.locator(
+          ".interview-status-menu .ui-status-menu__trigger",
+        );
+        await trigger.click();
+        const panel = page.locator(
+          ".interview-status-menu .ui-status-menu__panel",
+        );
+        await panel.waitFor({ state: "visible" });
+        const panelBox = await panel.boundingBox();
+        assert.ok(panelBox, "interview@390: status menu panel must exist");
+        assert.ok(
+          panelBox.x >= -1 && panelBox.x + panelBox.width <= width + 1,
+          "interview@390: status menu must stay inside the viewport",
+        );
+        await page.keyboard.press("Escape");
+        await panel.waitFor({ state: "detached" });
+        assert.equal(
+          await trigger.evaluate(
+            (element) => document.activeElement === element,
+          ),
+          true,
+          "interview@390: Escape must restore focus to the status trigger",
+        );
+      }
+
+      if (width === 390 || width === 768 || width === 1280) {
+        await assertDrawerContract(page, width);
+      }
+
+      await assertNoPageOverflow(page, `interview@${width}:after-interactions`);
+      assert.deepEqual(errors, [], `interview@${width}: interaction errors`);
+      await page.close();
     }
-  },
-);
+  } finally {
+    await browser?.close();
+  }
+});
