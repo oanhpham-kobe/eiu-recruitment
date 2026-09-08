@@ -1,0 +1,260 @@
+from pathlib import Path
+import re
+
+FINAL_SHA = "7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
+PRODUCT_SHA = "cb118cae60cbb0d6a684d7729388d3269fb7fcf2"
+
+
+def read(path: str) -> str:
+    return Path(path).read_text(encoding="utf-8")
+
+
+def write(path: str, text: str) -> None:
+    Path(path).write_text(text, encoding="utf-8")
+
+
+def replace_once(text: str, old: str, new: str, label: str) -> str:
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"{label}: expected one match, found {count}")
+    return text.replace(old, new, 1)
+
+
+# TASK_REGISTRY — accepted task authority.
+path = "project_control/TASK_REGISTRY.yaml"
+text = read(path)
+start = text.index("  TASK-S04-004:\n")
+end = text.index("\n  TASK-S04-005:", start)
+block = f'''  TASK-S04-004:
+    title: "HR Interview scheduling UI over accepted trusted commands"
+    slice: SLICE-04
+    status: DONE
+    lane: LANE_A
+    depends_on:
+      - TASK-S04-005
+      - TASK-DS-006
+    prompt: project_control/prompts/SLICE-04_TASK-004_v3.md
+    prompt_sha256: ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce
+    prompt_review_status: "PASS (ChatGPT exact-source reconciliation re-review @ a4d85a9033b3b54195265a893710d08a626ef9bb; blockers: NONE)"
+    product_candidate_sha: "{PRODUCT_SHA}"
+    implementation_sha: "{FINAL_SHA}"
+    review_status: "PASS (OMP final exact-SHA acceptance review @ {FINAL_SHA}; blockers: NONE; source reopen: NO)"
+    github_ci: "VERIFIED (Integration CI run 34196505808; Governance CI run 34196505793; final integration SHA {FINAL_SHA}; PASS)"
+    accepted_checkpoint: "checkpoint/S04-004-accepted-001"
+    notes: "Accepted Interview scheduling UI over the previously accepted S04 trusted-command chain. Initial independent review found the Copy-target PII pre-match cap; repaired candidate cb118cae removed it. Serialized integration required a CI-only Playwright Chromium installation repair; final exact-SHA equivalence review passed on 7fa6f580. No Product/Business/Design source reopening, deployment, or connected-dev migration application occurred."
+    acceptance:
+      - "S04-004 implementation independent re-review: PASS @ {PRODUCT_SHA}"
+      - "S04-004 final exact-SHA acceptance review: PASS @ {FINAL_SHA}"
+      - "Integration CI 34196505808: PASS"
+      - "Governance CI 34196505793: PASS"
+      - "checkpoint/S04-004-accepted-001 @ {FINAL_SHA}"
+'''
+text = text[:start] + block + text[end:]
+write(path, text)
+
+# AUTONOMY_RUN_STATE — live task accepted, slice close still held.
+path = "project_control/AUTONOMY_RUN_STATE.yaml"
+text = read(path)
+text = replace_once(
+    text,
+    "slice_04_execution:\n  status: RELEASED_FOR_AUTONOMOUS_EXECUTION",
+    "slice_04_execution:\n  status: TASKS_ACCEPTED_SLICE_CLOSURE_PENDING",
+    "slice04 runtime status",
+)
+text = replace_once(
+    text,
+    '  last_verified_application_checkpoint: "8819d9fec1143e94aea7721e47ae84a8abcd82b9"\n  last_verified_application_ci_run: "34039979411"',
+    f'  last_verified_application_checkpoint: "{FINAL_SHA}"\n  last_verified_application_ci_run: "34196505808"',
+    "integration checkpoint",
+)
+text = replace_once(
+    text,
+    "  accepted_implementation_through: TASK-S04-005",
+    "  accepted_implementation_through: TASK-S04-004",
+    "accepted implementation through",
+)
+start = text.index("last_accepted_task:\n")
+end = text.index("previous_accepted_tasks:\n", start)
+accepted = f'''last_accepted_task:
+  id: TASK-S04-004
+  commit: "{FINAL_SHA}"
+  evidence:
+    - "product_candidate_sha: {PRODUCT_SHA}"
+    - "implementation_re-review: PASS (review/S04-004-IMPLEMENTATION-cb118ca-v2; evidence commit 04af512386e476c7250d4f936459f997ec71a0ec)"
+    - "final_exact_sha_acceptance_review: PASS (review/S04-004-FINAL-ACCEPTANCE-7fa6f58-v1; evidence commit 8ebcc13b98ab4ae4b64ed634cf64f36341bf8478)"
+    - "github_ci: VERIFIED (Integration CI run 34196505808; Governance CI run 34196505793; final SHA {FINAL_SHA}; PASS)"
+    - "accepted_checkpoint: checkpoint/S04-004-accepted-001 @ {FINAL_SHA}"
+'''
+text = text[:start] + accepted + text[end:]
+marker = "previous_accepted_tasks:\n"
+previous_s04_005 = '''  TASK-S04-005:
+    commit: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"
+    evidence:
+      - "APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001: VERIFIED"
+      - "github_ci: VERIFIED (Integration CI run 34039979411; integration checkpoint 8819d9fec1143e94aea7721e47ae84a8abcd82b9; PASS)"
+'''
+text = replace_once(text, marker, marker + previous_s04_005, "previous S04-005")
+safe_start = text.index("safe_frontier:\n")
+next_start = text.index("next_action:", safe_start)
+safe = '''safe_frontier:
+  eligible_tasks: []
+  skipped_due_to_dependency: []
+  execution_hold: "SLICE-04 composition review and broader slice-closing regression gate pending"
+'''
+text = text[:safe_start] + safe + text[next_start:]
+text = re.sub(
+    r"next_action:.*$",
+    'next_action: "Run the Slice-04 composition review and explicit broader [full-ci] regression gate on the current integration line; only after that gate passes, mark SLICE-04 DONE and materialize the next source-backed frontier."',
+    text,
+    count=1,
+    flags=re.M,
+)
+write(path, text)
+
+# EVIDENCE_INDEX — compact immutable task acceptance receipt.
+path = "project_control/EVIDENCE_INDEX.yaml"
+text = read(path)
+if "  INTERVIEW-UI-ACCEPTANCE-001:\n" in text:
+    raise SystemExit("INTERVIEW-UI-ACCEPTANCE-001 already exists")
+evidence = f'''  INTERVIEW-UI-ACCEPTANCE-001:
+    task: TASK-S04-004
+    operation: HR_INTERVIEW_SCHEDULING_UI_ACCEPTANCE
+    status: VERIFIED
+    source_reopen_required: false
+    pre_task_checkpoint: "checkpoint/pre-S04-004-002 @ 052a82841ab158a9dea29063de9e1601e65fe9bc"
+    product_candidate_sha: "{PRODUCT_SHA}"
+    final_acceptance_sha: "{FINAL_SHA}"
+    implementation_review: "PASS (review/S04-004-IMPLEMENTATION-cb118ca-v2; artifact project_control/reviews/S04_004_IMPLEMENTATION_REVIEW_cb118ca_v2.md)"
+    final_exact_sha_review: "PASS (review/S04-004-FINAL-ACCEPTANCE-7fa6f58-v1; artifact project_control/reviews/S04_004_FINAL_ACCEPTANCE_REVIEW_7fa6f58_v1.md)"
+    integration_ci: "34196505808 PASS"
+    governance_ci: "34196505793 PASS"
+    accepted_checkpoint: "checkpoint/S04-004-accepted-001 @ {FINAL_SHA}"
+    product_equivalence: "PASS (cb118cae...7fa6f580 changed only .github/workflows/integration-ci.yml to install Playwright Chromium before browser-backed tests)"
+    supabase: "PASS (local migration replay from zero + PRE-S04 DB regression assertions in exact-SHA CI; connected DEV migration application remains a later authorized UAT/deployment action)"
+    vercel: "PASS (Next.js typecheck/build on Node 24.20.0; no deployment performed)"
+    follow_up_non_blockers:
+      - "typeahead 25/50 result windows may later add refinement/more-results feedback"
+      - "database-backed UAT should include >250 matching Submission search scenario"
+      - "apply accepted Slice-04 migrations to target DEV before manual UAT under appropriate authorization"
+'''
+if not text.endswith("\n"):
+    text += "\n"
+text += evidence
+write(path, text)
+
+# CURRENT_STATE — derived snapshot only.
+current = f'''# Current Implementation State — Derived Handoff Snapshot
+
+> **DERIVED / NON-AUTHORITATIVE REPORTING ONLY**
+>
+> Runtime authority: `project_control/AUTONOMY_RUN_STATE.yaml`.
+> DAG/task/slice authority: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.
+> Exact code/history authority: Git.
+
+## Canonical product baseline
+
+- Source baseline: `Full Handover v1.18`.
+- Source SHA256: `8874551cb5a7f78ac28f64a94c1820dc7d2c3a62f85cfb93b2bad70b611438a0`.
+- Business Logic Core: `v1.2 FROZEN`.
+- Technical Architecture: `v1.18 FROZEN`.
+- Design System: `v1.8 CURRENT / REVIEWED`.
+- No Product/Business/Design source reopening is required by the accepted S04-004 lifecycle.
+
+## Current integration and task acceptance
+
+Integration branch: `autonomy/continuous-integration-20260905-01`.
+
+Latest accepted task: `TASK-S04-004 — HR Interview scheduling UI over accepted trusted commands — DONE`.
+
+- Product candidate `{PRODUCT_SHA}`: independent OMP implementation re-review PASS.
+- Final exact-SHA acceptance/integration identity: `{FINAL_SHA}`.
+- Integration CI `34196505808`: PASS.
+- Governance CI `34196505793`: PASS.
+- `checkpoint/S04-004-accepted-001` → `{FINAL_SHA}`.
+
+Acceptance invariant:
+
+`FINAL_OMP_ACCEPTANCE_REVIEW_SHA == CI_SHA == ACCEPTED_CHECKPOINT_SHA == {FINAL_SHA}`
+
+## Slice-04 state
+
+Every materialized Slice-04 task is individually accepted:
+
+- `TASK-S04-001`: DONE — Interview schema/conflict locking/participant model.
+- `TASK-S04-002`: DONE — lifecycle/report/participant/schedule/document trusted-command foundation.
+- `TASK-S04-003`: DONE — atomic copy interview schedule command.
+- `TASK-S04-005`: DONE — Application reactivation and participant public-contract repair.
+- `TASK-S04-004`: DONE — production HR Interview scheduling UI.
+
+`SLICE-04` remains `IN_PROGRESS` only for its required slice-closing composition review and broader regression gate.
+
+## Design-system prerequisite
+
+`TASK-DS-001..006 = DONE`; `checkpoint/design-system-production-ready-001` remains accepted at `cb42f0fe301fba70cdc32704d605872b05d12515`.
+
+## Platform notes
+
+- Supabase/PostgreSQL contracts replayed from zero in exact-SHA CI and PRE-S04 DB regression assertions passed.
+- Applying accepted Slice-04 migrations to connected DEV remains a later authorized deployment/UAT action.
+- Vercel/Next.js Node 24 production build passed; no deployment was performed.
+- Typeahead 25/50 result windows and >250-row live UAT remain non-blocking follow-ups.
+
+## Current safe frontier
+
+`safe_frontier.eligible_tasks = []`
+
+Execution hold: `SLICE-04 composition review and broader slice-closing regression gate pending`.
+
+## Next action
+
+Run a Slice-04 composition review across S04-001/002/003/005/004 and one explicit broader `[full-ci]` regression gate on the current integration line. If both pass, persist slice-closing evidence, mark `SLICE-04 = DONE`, inspect `OPEN_GAPS` plus canonical Slice-05 source, materialize the next source-backed tasks, recompute dependencies, and release the next safe frontier.
+
+## Do not redo
+
+- Do not reopen accepted S04 tasks without concrete regression/source evidence.
+- Do not rerun task-local repair suites merely because the slice-closing gate is pending; use the explicit broader gate once.
+- Do not force-move accepted checkpoints.
+- Do not merge/push `main`, deploy Vercel, or apply connected Supabase migrations without the explicit Owner boundary required for those actions.
+
+## Resume protocol
+
+1. Verify integration branch HEAD directly from Git.
+2. Verify `checkpoint/S04-004-accepted-001 == {FINAL_SHA}`.
+3. Read runtime/task/slice authorities.
+4. Run both control-plane validators.
+5. Complete Slice-04 composition review + broader regression gate.
+6. Only after PASS, close Slice-04 and resolve/materialize the Slice-05 frontier.
+'''
+write("project_control/CURRENT_STATE.md", current)
+
+# Derived traceability header; S04-004 added no backend command.
+path = "project_control/TRACEABILITY_STATUS.csv"
+text = read(path)
+text = replace_once(
+    text,
+    "Reconciled through accepted checkpoint TASK-S04-005",
+    "Reconciled through accepted checkpoint TASK-S04-004",
+    "traceability header",
+)
+write(path, text)
+
+# Chronological closure record.
+path = "project_control/CHANGELOG_IMPLEMENTATION.md"
+text = read(path)
+marker = "## 2026-09-08 — TASK-S04-004 exact-SHA acceptance\n"
+if marker in text:
+    raise SystemExit("S04-004 changelog closure already exists")
+entry = f'''## 2026-09-08 — TASK-S04-004 exact-SHA acceptance
+
+- Accepted the production HR Interview scheduling UI after producer self-review, independent OMP review, bounded repair/re-review, serialized integration, and final exact-SHA equivalence review.
+- Product candidate `{PRODUCT_SHA}`: OMP implementation re-review PASS; Copy-target PII pre-match cap blocker resolved.
+- Final integration/acceptance SHA `{FINAL_SHA}` differs only by the CI-only Playwright Chromium installation step required for browser-backed tests.
+- Integration CI `34196505808`: PASS; Governance CI `34196505793`: PASS.
+- Immutable `checkpoint/S04-004-accepted-001` points exactly to `{FINAL_SHA}`; final OMP acceptance review SHA = CI SHA = accepted checkpoint SHA.
+- No main mutation, Vercel deployment, or connected Supabase migration application was performed.
+- Slice-04 remains IN_PROGRESS until its composition review and one broader slice-closing regression gate pass.
+'''
+if not text.endswith("\n"):
+    text += "\n"
+text += "\n" + entry
+write(path, text)
