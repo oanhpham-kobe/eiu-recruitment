@@ -12,8 +12,23 @@ autonomy_policy_activation:
   max_active_implementation_tasks: 2
 
 slice_04_execution:
-  status: TASKS_ACCEPTED_SLICE_CLOSURE_PENDING
-  rule: "SLICE-04 execution is Owner-authorized under active AUTONOMOUS governance. Safe-frontier tasks may be dispatched subject to DAG, capacity, parallel eligibility, security, review, serialized integration, and exact-SHA CI gates."
+  status: CLOSED
+  rule: "SLICE-04 execution was Owner-authorized under active AUTONOMOUS governance and is closed after all constituent tasks, exact-SHA CI, composition review, and broader slice-closing regression passed."
+
+slice_04_closure:
+  work_id: SLICE-04-CLOSING-REVIEW-001
+  result: PASS
+  source_reopen_required: false
+  reviewed_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
+  full_ci_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
+  integration_ci_run: "34201054499"
+  integration_ci_result: PASS
+  governance_ci_run: "34201054414"
+  governance_ci_result: PASS
+  composition_verdict: "PASS — complete cross-task composition; zero source reopen requirements"
+  evidence_branch: "review/SLICE-04-CLOSING-e3daa69-v1"
+  evidence_commit: "ce82b8369f042bba9f4519ada7274cc47875e40e"
+  evidence_path: "project_control/reviews/SLICE_04_CLOSING_REVIEW_e3daa69_v1.md"
 
 canonical_baseline:
   branch: main
@@ -25,6 +40,9 @@ integration:
   head_resolution: DIRECT_GIT_RUNTIME
   last_verified_application_checkpoint: "7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
   last_verified_application_ci_run: "34196505808"
+  last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
+  last_verified_slice_closing_ci_run: "34201054499"
+
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -48,7 +66,7 @@ plan_reconciliation:
   prompt: project_control/prompts/SLICE-04_TASK-004_v3.md
   prompt_sha256: "ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce"
   independent_review: "PASS (ChatGPT exact-source reconciliation re-review; blockers: NONE)"
-  feature_dispatch: RELEASED
+  feature_dispatch: COMPLETED
 
 design_system_hardening:
   initiative_id: DESIGN-SYSTEM-HARDENING-001
@@ -60,96 +78,16 @@ design_system_hardening:
   responsive_reference: "v1.10 executable UX/UAT evidence"
   product_source_reopen_required: false
   design_source_reopen_required: false
-  task_dag:
-    - TASK-DS-001
-    - TASK-DS-002
-    - TASK-DS-003
-    - TASK-DS-004
-    - TASK-DS-005
-    - TASK-DS-006
+  task_dag: [TASK-DS-001, TASK-DS-002, TASK-DS-003, TASK-DS-004, TASK-DS-005, TASK-DS-006]
   exit_checkpoint: checkpoint/design-system-production-ready-001
   accepted_checkpoint_sha: "cb42f0fe301fba70cdc32704d605872b05d12515"
   final_web_acceptance_run: "34172591716 PASS"
   final_governance_ci_run: "34172664420 PASS"
   verified_web_candidate_sha: "cb42f0fe301fba70cdc32704d605872b05d12515"
-  verification_evidence:
-    - "DS-006 seven-width browser acceptance: PASS (360/390/430/768/1024/1280/1440)"
-    - "design:check: PASS"
-    - "lint: PASS"
-    - "typecheck: PASS"
-    - "build: PASS before focused post-review repairs; post-review production repairs reverified by focused lint/typecheck/browser gates"
-    - "web regression baseline: 263/265 PASS; two stale shell tests repaired and focused reverified"
-    - "CandidateShell landmark repair focused gate: PASS (run 34171263268)"
-    - "primitive keyboard/stacked-overlay focused gate: PASS (run 34171925884)"
   blocked_frontier_after_acceptance: TASK-S04-004
 
 active_workers: []
 
-worker_settled_history:
-  - task_id: TASK-S03-006
-    lane: LANE_A
-    role: EXECUTOR
-    result: COMPLETED
-    exact_sha: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"
-    settled_at: "2026-09-05T11:45:00Z"
-  - task_id: TASK-S03-006
-    lane: LANE_A
-    role: REVIEWER
-    result: PASS
-    exact_sha: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"
-    settled_at: "2026-09-05T11:48:00Z"
-  - task_id: TASK-S04-001
-    lane: LANE_A
-    role: EXECUTOR
-    result: COMPLETED
-    exact_sha: "8c1913b7253e1601a40d60842535b44d258bb436"
-    settled_at: "2026-09-06T09:09:17Z"
-  - task_id: TASK-S04-001
-    lane: LANE_A
-    role: REVIEWER
-    result: PASS
-    exact_sha: "8c1913b7253e1601a40d60842535b44d258bb436"
-    settled_at: "2026-09-06T09:09:17Z"
-    review_blockers: NONE
-  - task_id: TASK-S04-002
-    lane: LANE_A
-    role: EXECUTOR
-    result: COMPLETED
-    exact_sha: "52f35eeb10b20f83bb65ebd214f89a835ad0cb31"
-    settled_at: "2026-09-06T12:00:00Z"
-  - task_id: TASK-S04-002
-    lane: LANE_A
-    role: REVIEWER
-    result: PASS
-    exact_sha: "52f35eeb10b20f83bb65ebd214f89a835ad0cb31"
-    settled_at: "2026-09-06T12:00:00Z"
-    review_blockers: NONE
-  - task_id: TASK-S04-003
-    lane: LANE_A
-    role: EXECUTOR
-    result: COMPLETED
-    exact_sha: "919e4a428dcd2d76730947ca1c4c174441bdfb63"
-    settled_at: "2026-09-06T13:00:00Z"
-  - task_id: TASK-S04-003
-    lane: LANE_A
-    role: REVIEWER
-    result: PASS
-    exact_sha: "919e4a428dcd2d76730947ca1c4c174441bdfb63"
-    settled_at: "2026-09-06T13:00:00Z"
-    review_blockers: NONE
-  - task_id: TASK-S04-005
-    lane: LANE_A
-    role: EXECUTOR
-    result: COMPLETED
-    exact_sha: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"
-    settled_at: "2026-09-06T15:00:00Z"
-  - task_id: TASK-S04-005
-    lane: LANE_A
-    role: REVIEWER
-    result: PASS
-    exact_sha: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"
-    settled_at: "2026-09-06T15:00:00Z"
-    review_blockers: NONE
 last_accepted_task:
   id: TASK-S04-004
   commit: "7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
@@ -157,46 +95,58 @@ last_accepted_task:
     - "product_candidate_sha: cb118cae60cbb0d6a684d7729388d3269fb7fcf2"
     - "implementation_re-review: PASS (review/S04-004-IMPLEMENTATION-cb118ca-v2; evidence commit 04af512386e476c7250d4f936459f997ec71a0ec)"
     - "final_exact_sha_acceptance_review: PASS (review/S04-004-FINAL-ACCEPTANCE-7fa6f58-v1; evidence commit 8ebcc13b98ab4ae4b64ed634cf64f36341bf8478)"
-    - "github_ci: VERIFIED (Integration CI run 34196505808; Governance CI run 34196505793; final SHA 7fa6f5805d4c17c0d92889a3786ae03a577a5ae8; PASS)"
+    - "github_ci: VERIFIED (Integration CI run 34196505808; Governance CI run 34196505793; PASS)"
     - "accepted_checkpoint: checkpoint/S04-004-accepted-001 @ 7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
+
 previous_accepted_tasks:
-  TASK-S04-005:
-    commit: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"
-    evidence:
-      - "APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001: VERIFIED"
-      - "github_ci: VERIFIED (Integration CI run 34039979411; integration checkpoint 8819d9fec1143e94aea7721e47ae84a8abcd82b9; PASS)"
-  TASK-S04-003:
-    commit: "919e4a428dcd2d76730947ca1c4c174441bdfb63"
-    evidence:
-      - "COPY-INTERVIEW-SCHEDULE-001: VERIFIED"
-      - "github_ci: VERIFIED (Integration CI run 34036486527; integration commit f46ac9fbcc4356df4855aa715dcc56359ffe30c8; PASS)"
-  TASK-S03-006:
-    commit: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"
-    evidence:
-      - "APPLICATION-INBOX-BULK-001: VERIFIED"
-      - "prompt_reviewed: PASS"
-      - "executor_pre_review_ui_test_gate: PASS"
-      - "implementation_reviewed: PASS (independent REVIEW #6)"
-      - "github_ci: VERIFIED (Integration CI exact SHA 2e786e194afefdf5b2b7dc6548c6438c6574f552; run 33970358657)"
+  TASK-S04-005: {commit: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"}
+  TASK-S04-003: {commit: "919e4a428dcd2d76730947ca1c4c174441bdfb63"}
+  TASK-S03-006: {commit: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"}
+
 governance_continuation_repair_ci:
   commit: "faf1716340b55d522981fa3e8fffc5736e5c0506"
   ci_run_id: "34027335569"
   ci_result: PASS
-  checks:
-    fast_verification: PASS
-    database_integration: PASS
+
 governance_hotfix:
   commit: "73a49ca8be4f5b2bc2fbc5feb15cb69accf298ee"
   ci_run_id: "33936480169"
   ci_result: PASS
   skill_execution_receipt_contract: PASS
   graph_usage_receipt_contract: PASS
+
 historical_mcp_governance_maintenance:
   commit: "ffb7038e939599fd5bbbcda1592c25619ca6a624"
   ci_run_id: "33943629020"
   ci_result: PASS
+
+slice_05_planning:
+  status: PROMPT_REVIEW_REQUIRED
+  proposed_first_task: TASK-S05-001
+  prompt: project_control/prompts/SLICE-05_TASK-001_v1.md
+  canonical_sources:
+    - recruitment_webapp/review_pack/06_INTERVIEW_REPORT_HR_AND_INTERVIEWER.md
+    - recruitment_webapp/review_pack/02_ROLES_PERMISSIONS_AND_NAVIGATION.md
+  accepted_prerequisites:
+    - TASK-S04-002
+    - TASK-S04-005
+    - TASK-S04-004
+    - TASK-DS-006
+  source_reopen_required: false
+  owner_asset_gap:
+    id: ASSET-001
+    blocking_now: false
+    scope: "official PDF pixel-perfect template integration only"
+
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
-  execution_hold: "SLICE-04 composition review and broader slice-closing regression gate pending"
-next_action: "Run the Slice-04 composition review and explicit broader [full-ci] regression gate on the current integration line; only after that gate passes, mark SLICE-04 DONE and materialize the next source-backed frontier."
+  execution_hold: "Independent OMP prompt review required for proposed TASK-S05-001 before task materialization/release."
+
+stop_gate:
+  status: WAITING_EXTERNAL_REVIEW
+  type: OMP_PROMPT_REVIEW
+  target: project_control/prompts/SLICE-05_TASK-001_v1.md
+  resume_on: "OMP verdict PASS or BLOCKING_REPAIR/OWNER_DECISION_REQUIRED handoff"
+
+next_action: "Run independent OMP prompt/source reconciliation review for project_control/prompts/SLICE-05_TASK-001_v1.md. On PASS, materialize TASK-S05-001 in TASK_REGISTRY, set SLICE-05 IN_PROGRESS/READY as appropriate, recompute safe frontier, validate control plane, and dispatch."
