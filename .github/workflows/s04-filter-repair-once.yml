@@ -47,7 +47,7 @@ jobs:
         if: steps.typecheck.outputs.exit_code != '0'
         shell: bash
         run: |
-          git add .github/s04-typecheck.log
+          git add -f .github/s04-typecheck.log
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore(s04): capture filter typecheck diagnostic"
