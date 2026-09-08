@@ -26,6 +26,9 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Apply reviewed search-cap repair
         run: python .github/s04_004_search_cap_repair.py
+      - name: Mark intentional Supabase thenable test double
+        run: |
+          sed -i '/^  then<TResult1/ i\  // biome-ignore lint/suspicious/noThenProperty: Supabase query builders are intentionally awaitable in this test double.' web/src/__tests__/interview-search-contract.test.ts
       - name: Install web dependencies
         working-directory: web
         run: npm ci
