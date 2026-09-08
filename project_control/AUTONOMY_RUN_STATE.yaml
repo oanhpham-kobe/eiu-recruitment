@@ -52,7 +52,7 @@ plan_reconciliation:
 
 design_system_hardening:
   initiative_id: DESIGN-SYSTEM-HARDENING-001
-  status: IN_PROGRESS
+  status: VERIFIED_PENDING_CHECKPOINT
   owner_sequencing_decision: "2026-09-08: harden the production Design System before TASK-S04-004, then resume S04-004 immediately after DS acceptance."
   baseline_sha: "8897d08f01b9f4738500eecfd6170dc0a9c77f54"
   pre_hardening_checkpoint: checkpoint/pre-design-system-hardening-001
@@ -68,6 +68,16 @@ design_system_hardening:
     - TASK-DS-005
     - TASK-DS-006
   exit_checkpoint: checkpoint/design-system-production-ready-001
+  verified_web_candidate_sha: "d473b11217d6f6b2fc8c83fec9029e649f1b05a7"
+  verification_evidence:
+    - "DS-006 seven-width browser acceptance: PASS (360/390/430/768/1024/1280/1440)"
+    - "design:check: PASS"
+    - "lint: PASS"
+    - "typecheck: PASS"
+    - "build: PASS before focused post-review repairs; post-review production repairs reverified by focused lint/typecheck/browser gates"
+    - "web regression baseline: 263/265 PASS; two stale shell tests repaired and focused reverified"
+    - "CandidateShell landmark repair focused gate: PASS (run 34171263268)"
+    - "primitive keyboard/stacked-overlay focused gate: PASS (run 34171925884)"
   blocked_frontier_after_acceptance: TASK-S04-004
 
 active_workers: []
@@ -180,8 +190,7 @@ historical_mcp_governance_maintenance:
   ci_run_id: "33943629020"
   ci_result: PASS
 safe_frontier:
-  eligible_tasks:
-    - TASK-DS-001
+  eligible_tasks: []
   skipped_due_to_dependency:
     - TASK-S04-004
-next_action: "Execute DESIGN-SYSTEM-HARDENING-001 from checkpoint/pre-design-system-hardening-001. Start TASK-DS-001; advance only through the materialized DAG and focused verification gates. TASK-S04-004 remains BLOCKED until TASK-DS-006 is DONE and checkpoint/design-system-production-ready-001 is created."
+next_action: "Create and verify immutable checkpoint/design-system-production-ready-001 at the Phase-A closure SHA. Keep TASK-S04-004 BLOCKED until that checkpoint exists; then perform Phase-B release."

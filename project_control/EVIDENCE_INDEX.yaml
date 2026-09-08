@@ -1044,3 +1044,28 @@ implementation_evidence:
       route: DIRECT_SOURCE_LSP_ONLY
       graph_used: NO
       reason: "Single migration/test task with authoritative ordered SQL and canonical review sources."
+
+
+  DESIGN-SYSTEM-HARDENING-001:
+    operation: PRODUCTION_DESIGN_SYSTEM_HARDENING
+    status: VERIFIED_PENDING_CHECKPOINT
+    source_reopen_required: false
+    baseline_sha: "8897d08f01b9f4738500eecfd6170dc0a9c77f54"
+    pre_hardening_checkpoint: checkpoint/pre-design-system-hardening-001
+    verified_web_candidate_sha: "d473b11217d6f6b2fc8c83fec9029e649f1b05a7"
+    tasks:
+      - TASK-DS-001
+      - TASK-DS-002
+      - TASK-DS-003
+      - TASK-DS-004
+      - TASK-DS-005
+      - TASK-DS-006
+    verification:
+      design_contract: PASS
+      lint: PASS
+      typecheck: PASS
+      seven_width_browser_acceptance: PASS
+      candidate_landmark_repair_run: "34171263268 PASS"
+      primitive_interaction_repair_run: "34171925884 PASS"
+      database_required: false
+    checkpoint: PENDING_PHASE_A_REF_CREATION

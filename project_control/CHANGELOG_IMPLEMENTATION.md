@@ -149,3 +149,13 @@ This compact backfill records accepted checkpoints that were already present in 
 - Integration CI now resolves impacted web/database domains before dispatching expensive jobs; `[full-ci]` only broadens scope for explicit slice/shared-contract gates.
 - Removed unused Playwright Chromium installation from normal Integration CI; browser QA remains an explicit task/slice verification concern.
 - Added safe context-pressure/cross-session handoff rule using Git + existing durable authorities + CURRENT_STATE, without creating a second memory/state authority.
+
+
+## 2026-09-08 — Design-System production hardening implementation complete
+
+- Completed bounded TASK-DS-001..006 without reopening frozen Product/Business/Design authority.
+- Converged runtime design tokens, Auth/Candidate/Internal shell responsibilities, responsive Internal navigation, bounded shared UI primitives, existing responsive production surfaces, static production design-contract validation, and seven-width browser acceptance.
+- Preserved the accepted Application/Interview backend contracts; no Supabase migration/RLS/RPC changes were made.
+- Final self-review repaired Candidate landmark ownership plus StatusMenu keyboard semantics and re-entrant/topmost overlay focus/lock behavior.
+- Focused verification remained impact-scoped; unrelated database verification was not rerun.
+- Phase A intentionally keeps TASK-S04-004 blocked until immutable checkpoint/design-system-production-ready-001 is created and verified.

@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-DS
-current_task: TASK-DS-001
+current_task: TASK-DS-006
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1029,7 +1029,7 @@ tasks:
   TASK-DS-001:
     title: "Design-system canonical/runtime token convergence and production token hygiene"
     slice: SLICE-DS
-    status: READY
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-S04-005
@@ -1040,7 +1040,7 @@ tasks:
   TASK-DS-002:
     title: "Production shell architecture and responsive internal navigation"
     slice: SLICE-DS
-    status: PLANNED
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-DS-001
@@ -1051,7 +1051,7 @@ tasks:
   TASK-DS-003:
     title: "Reusable production UI primitive layer for current and near-frontier operational pages"
     slice: SLICE-DS
-    status: PLANNED
+    status: DONE
     lane: LANE_B
     depends_on:
       - TASK-DS-001
@@ -1062,7 +1062,7 @@ tasks:
   TASK-DS-004:
     title: "Existing production responsive convergence on in-scope accepted routes"
     slice: SLICE-DS
-    status: PLANNED
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-DS-002
@@ -1074,7 +1074,7 @@ tasks:
   TASK-DS-005:
     title: "Production design-contract static linting and enforcement"
     slice: SLICE-DS
-    status: PLANNED
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-DS-004
@@ -1085,7 +1085,7 @@ tasks:
   TASK-DS-006:
     title: "Production responsive browser acceptance gate for the hardened design foundation"
     slice: SLICE-DS
-    status: PLANNED
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-DS-005
