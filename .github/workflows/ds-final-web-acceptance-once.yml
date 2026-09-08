@@ -1,0 +1,53 @@
+name: DS Final Web Acceptance Once
+
+on:
+  push:
+    branches:
+      - verification/design-system-web-acceptance-001
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact DS Phase-A SHA
+        uses: actions/checkout@v4
+        with:
+          ref: cb42f0fe301fba70cdc32704d605872b05d12515
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+      - name: Audit dependencies
+        working-directory: web
+        run: npm audit --audit-level=high
+      - name: Install Chromium
+        working-directory: web
+        run: npx playwright install chromium
+      - name: Validate production design contract
+        working-directory: web
+        run: npm run design:check
+      - name: Lint
+        working-directory: web
+        run: npm run lint
+      - name: Typecheck
+        working-directory: web
+        run: npm run typecheck
+      - name: Build
+        working-directory: web
+        run: npm run build
+      - name: Web regression suite
+        working-directory: web
+        run: npm run test
+      - name: Seven-width production browser acceptance
+        working-directory: web
+        run: npm run design:browser
+      - name: Verify tested SHA
+        run: test "$(git rev-parse HEAD)" = "cb42f0fe301fba70cdc32704d605872b05d12515"
