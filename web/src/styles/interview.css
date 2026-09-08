@@ -17,6 +17,9 @@
 }
 
 .interview-toolbar {
+  margin: 0;
+  border: 0;
+  min-width: 0;
   position: sticky;
   top: var(--header-height);
   z-index: 20;
@@ -30,6 +33,10 @@
 }
 
 .interview-filters {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: end;
@@ -246,9 +253,9 @@
 }
 
 .interview-empty {
-  padding: var(--space-6) !important;
-  text-align: center !important;
-  color: var(--ink-600) !important;
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--ink-600);
 }
 
 .interview-pagination {
@@ -345,16 +352,16 @@
 }
 
 .interview-checkbox-label {
-  grid-template-columns: auto 1fr !important;
+  grid-template-columns: auto 1fr;
   align-items: start;
-  font-weight: 500 !important;
+  font-weight: 500;
 }
 
 .interview-checkbox-label input,
 .interview-copy-participants input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  min-height: 20px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
 }
 
 .interview-copy-participants {
@@ -504,4 +511,45 @@
   .interview-drawer-actions .ui-button {
     flex: 1 1 auto;
   }
+}
+
+.interview-submission-selector {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.interview-submission-options {
+  display: grid;
+  gap: var(--space-2);
+  max-height: 320px;
+  overflow: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--canvas);
+}
+
+.interview-submission-option {
+  min-height: 72px;
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink-950);
+  font: inherit;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.interview-submission-option[aria-selected="true"] {
+  border-color: var(--eiu-blue);
+  box-shadow: 0 0 0 2px var(--status-info-bg);
+}
+
+.interview-submission-option span {
+  color: var(--ink-600);
 }

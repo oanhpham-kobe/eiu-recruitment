@@ -152,9 +152,7 @@ export function normalizeInterviewFilters(
       : "ACTIVE";
   return {
     query:
-      typeof value?.query === "string"
-        ? value.query.trim().slice(0, 256)
-        : "",
+      typeof value?.query === "string" ? value.query.trim().slice(0, 256) : "",
     activity,
   };
 }

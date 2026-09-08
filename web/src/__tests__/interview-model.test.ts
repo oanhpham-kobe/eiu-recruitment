@@ -1,15 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  INTERVIEW_COLUMNS,
   formatInterviewTime,
+  INTERVIEW_COLUMNS,
   nextExpandedApplicationId,
   normalizeInterviewFilters,
 } from "@/lib/interview/model";
 
 test("Interview table contract remains exact 1480px seven-column grid", () => {
   assert.deepEqual(INTERVIEW_COLUMNS, [48, 340, 250, 220, 170, 360, 92]);
-  assert.equal(INTERVIEW_COLUMNS.reduce((sum, width) => sum + width, 0), 1480);
+  assert.equal(
+    INTERVIEW_COLUMNS.reduce((sum, width) => sum + width, 0),
+    1480,
+  );
 });
 
 test("only one Application group is expanded at a time", () => {

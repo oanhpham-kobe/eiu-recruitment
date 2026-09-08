@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
-import { vietnamLocalToIso } from "./InterviewDrawer";
+import type { AssignmentOptions } from "@/lib/application-inbox/submission-detail-model";
 import type {
   ApplicationSelectorOption,
   InterviewApplicationGroup,
@@ -13,7 +13,7 @@ import type {
   InterviewUserOption,
   SubmissionSelectorOption,
 } from "@/lib/interview/model";
-import type { AssignmentOptions } from "@/lib/application-inbox/submission-detail-model";
+import { vietnamLocalToIso } from "./InterviewDrawer";
 
 function localInput(value: string | null): string {
   if (!value) return "";
@@ -26,7 +26,7 @@ function localInput(value: string | null): string {
     minute: "2-digit",
     hour12: false,
   }).formatToParts(new Date(value));
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
+  const get = (type: string) =>
     parts.find((part) => part.type === type)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }
@@ -54,7 +54,9 @@ export function ApplicationAssignmentDialog({
   }) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [submissions, setSubmissions] = useState<SubmissionSelectorOption[]>([]);
+  const [submissions, setSubmissions] = useState<SubmissionSelectorOption[]>(
+    [],
+  );
   const [assignment, setAssignment] = useState<AssignmentOptions | null>(null);
   const [submissionId, setSubmissionId] = useState("");
   const [unitId, setUnitId] = useState("");
@@ -78,7 +80,9 @@ export function ApplicationAssignmentDialog({
     };
   }, [open, onLoadAssignmentOptions, onSearchSubmissions]);
 
-  const teams = assignment?.department_teams.filter((team) => team.unit_id === unitId) ?? [];
+  const teams =
+    assignment?.department_teams.filter((team) => team.unit_id === unitId) ??
+    [];
   const positions =
     assignment?.positions.filter(
       (position) =>
@@ -116,27 +120,53 @@ export function ApplicationAssignmentDialog({
         <div className="interview-search-row">
           <label>
             Tìm Phiếu theo Tên / Email / SĐT
-            <input value={query} onChange={(event) => setQuery(event.target.value)} autoComplete="off" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              autoComplete="off"
+            />
           </label>
           <Button
             disabled={pending}
-            onClick={async () => setSubmissions(await onSearchSubmissions(query))}
+            onClick={async () =>
+              setSubmissions(await onSearchSubmissions(query))
+            }
           >
             Tìm
           </Button>
         </div>
-        <label>
-          Phiếu ứng tuyển cụ thể
-          <select value={submissionId} onChange={(event) => setSubmissionId(event.target.value)}>
-            <option value="">Chọn Phiếu</option>
+        <div className="interview-submission-selector">
+          <strong id="submission-selector-label">Phiếu ứng tuyển cụ thể</strong>
+          <div
+            className="interview-submission-options"
+            role="listbox"
+            aria-labelledby="submission-selector-label"
+          >
             {submissions.map((option) => (
-              <option key={option.submissionId} value={option.submissionId}>
-                {option.candidateName} — {option.verifiedEmail} — {new Date(option.submittedAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })} — {option.status}
-              </option>
+              <button
+                key={option.submissionId}
+                type="button"
+                role="option"
+                aria-selected={submissionId === option.submissionId}
+                className="interview-submission-option"
+                onClick={() => setSubmissionId(option.submissionId)}
+              >
+                <strong>{option.candidateName}</strong>
+                <span>{option.verifiedEmail}</span>
+                <span>
+                  Phiếu:{" "}
+                  {new Date(option.submittedAt).toLocaleString("vi-VN", {
+                    timeZone: "Asia/Ho_Chi_Minh",
+                  })}{" "}
+                  · {option.status}
+                </span>
+              </button>
             ))}
-          </select>
-          <span className="interview-field-hint">Không tự suy ra Phiếu mới nhất.</span>
-        </label>
+          </div>
+          <span className="interview-field-hint">
+            Không tự suy ra Phiếu mới nhất.
+          </span>
+        </div>
         <label>
           Khoa / Phòng
           <select
@@ -148,33 +178,69 @@ export function ApplicationAssignmentDialog({
             }}
           >
             <option value="">Chọn Khoa / Phòng</option>
-            {assignment?.units.map((unit) => <option key={unit.unit_id} value={unit.unit_id}>{unit.name_vi}</option>)}
+            {assignment?.units.map((unit) => (
+              <option key={unit.unit_id} value={unit.unit_id}>
+                {unit.name_vi}
+              </option>
+            ))}
           </select>
         </label>
         <label>
           Ngành / Tổ
-          <select value={teamId} onChange={(event) => { setTeamId(event.target.value); setPositionId(""); }}>
+          <select
+            value={teamId}
+            onChange={(event) => {
+              setTeamId(event.target.value);
+              setPositionId("");
+            }}
+          >
             <option value="">Không chọn</option>
-            {teams.map((team) => <option key={team.department_team_id} value={team.department_team_id}>{team.name_vi}</option>)}
+            {teams.map((team) => (
+              <option
+                key={team.department_team_id}
+                value={team.department_team_id}
+              >
+                {team.name_vi}
+              </option>
+            ))}
           </select>
         </label>
         <label>
           Vị trí
-          <select value={positionId} onChange={(event) => setPositionId(event.target.value)}>
+          <select
+            value={positionId}
+            onChange={(event) => setPositionId(event.target.value)}
+          >
             <option value="">Chọn vị trí</option>
-            {positions.map((position) => <option key={position.position_id} value={position.position_id}>{position.name_vi}</option>)}
+            {positions.map((position) => (
+              <option key={position.position_id} value={position.position_id}>
+                {position.name_vi}
+              </option>
+            ))}
           </select>
         </label>
         <label>
           HR phụ trách
-          <select value={hrOwnerId} onChange={(event) => setHrOwnerId(event.target.value)}>
+          <select
+            value={hrOwnerId}
+            onChange={(event) => setHrOwnerId(event.target.value)}
+          >
             <option value="">Chọn HR</option>
-            {assignment?.hr_owners.map((owner) => <option key={owner.app_user_id} value={owner.app_user_id}>{owner.full_name} — {owner.email}</option>)}
+            {assignment?.hr_owners.map((owner) => (
+              <option key={owner.app_user_id} value={owner.app_user_id}>
+                {owner.full_name} — {owner.email}
+              </option>
+            ))}
           </select>
         </label>
         <label className="interview-checkbox-label">
-          <input type="checkbox" checked={confirmDuplicate} onChange={(event) => setConfirmDuplicate(event.target.checked)} />
-          Xác nhận tiếp tục nếu đúng identity Application đã tồn tại (update cùng Application ID).
+          <input
+            type="checkbox"
+            checked={confirmDuplicate}
+            onChange={(event) => setConfirmDuplicate(event.target.checked)}
+          />
+          Xác nhận tiếp tục nếu đúng identity Application đã tồn tại (update
+          cùng Application ID).
         </label>
       </div>
     </Dialog>
@@ -223,7 +289,10 @@ export function CopyScheduleDialog({
   const [meetingLink, setMeetingLink] = useState(sourceRound.meetingLink ?? "");
   const [note, setNote] = useState(sourceRound.interviewNote ?? "");
   const [participantIds, setParticipantIds] = useState<string[]>(
-    sourceRound.participants.filter((p) => p.isCurrent).sort((a, b) => a.order - b.order).map((p) => p.appUserId),
+    sourceRound.participants
+      .filter((p) => p.isCurrent)
+      .sort((a, b) => a.order - b.order)
+      .map((p) => p.appUserId),
   );
 
   useEffect(() => {
@@ -232,10 +301,14 @@ export function CopyScheduleDialog({
     onSearchApplications("").then((data) => {
       if (!active) return;
       setTargets(data);
-      const same = data.find((option) => option.applicationId === sourceApplication.applicationId);
+      const same = data.find(
+        (option) => option.applicationId === sourceApplication.applicationId,
+      );
       if (same) setTargetId(same.applicationId);
     });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [open, onSearchApplications, sourceApplication.applicationId]);
 
   const target = targets.find((option) => option.applicationId === targetId);
@@ -244,9 +317,15 @@ export function CopyScheduleDialog({
   const activeRooms = rooms.filter((room) => room.isActive);
   const startIso = startAt ? vietnamLocalToIso(startAt) : null;
   const endIso = endAt ? vietnamLocalToIso(endAt) : null;
-  const canSubmit = Boolean(target && (!startAt || (startIso && endIso && startIso < endIso && formatId)));
+  const canSubmit = Boolean(
+    target &&
+      (!startAt || (startIso && endIso && startIso < endIso && formatId)),
+  );
   const orderedSelectedUsers = useMemo(
-    () => participantIds.map((id) => users.find((user) => user.id === id)).filter((user): user is InterviewUserOption => Boolean(user)),
+    () =>
+      participantIds
+        .map((id) => users.find((user) => user.id === id))
+        .filter((user): user is InterviewUserOption => Boolean(user)),
     [participantIds, users],
   );
 
@@ -268,7 +347,9 @@ export function CopyScheduleDialog({
               endAt: endIso,
               interviewFormatId: formatId || null,
               roomId: selectedFormat?.requiresRoom ? roomId || null : null,
-              meetingLink: selectedFormat?.requiresMeetingLink ? meetingLink.trim() || null : null,
+              meetingLink: selectedFormat?.requiresMeetingLink
+                ? meetingLink.trim() || null
+                : null,
               interviewNote: note.trim() || null,
               participantAppUserIds: participantIds,
             });
@@ -279,24 +360,55 @@ export function CopyScheduleDialog({
       }
     >
       <div className="interview-dialog-stack">
-        <p className="interview-info-note">Đây chỉ là draft trên client. Chưa có dữ liệu được ghi cho đến khi bấm Save Copy. Demo Topic của vòng đích luôn để trống.</p>
+        <p className="interview-info-note">
+          Đây chỉ là draft trên client. Chưa có dữ liệu được ghi cho đến khi bấm
+          Save Copy. Demo Topic của vòng đích luôn để trống.
+        </p>
         <div className="interview-search-row">
           <label>
             Tìm Application đích
-            <input value={query} onChange={(event) => setQuery(event.target.value)} />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
           </label>
-          <Button onClick={async () => setTargets(await onSearchApplications(query))}>Tìm</Button>
+          <Button
+            onClick={async () => setTargets(await onSearchApplications(query))}
+          >
+            Tìm
+          </Button>
         </div>
         <label>
           Application đích
-          <select value={targetId} onChange={(event) => setTargetId(event.target.value)}>
+          <select
+            value={targetId}
+            onChange={(event) => setTargetId(event.target.value)}
+          >
             <option value="">Chọn Application</option>
-            {targets.map((option) => <option key={option.applicationId} value={option.applicationId}>{option.label} — Vòng hiện tại {option.latestRoundNo}</option>)}
+            {targets.map((option) => (
+              <option key={option.applicationId} value={option.applicationId}>
+                {option.label} — Vòng hiện tại {option.latestRoundNo}
+              </option>
+            ))}
           </select>
         </label>
         <div className="interview-form-grid">
-          <label>Bắt đầu<input type="datetime-local" value={startAt} onChange={(event) => setStartAt(event.target.value)} /></label>
-          <label>Kết thúc<input type="datetime-local" value={endAt} onChange={(event) => setEndAt(event.target.value)} /></label>
+          <label>
+            Bắt đầu
+            <input
+              type="datetime-local"
+              value={startAt}
+              onChange={(event) => setStartAt(event.target.value)}
+            />
+          </label>
+          <label>
+            Kết thúc
+            <input
+              type="datetime-local"
+              value={endAt}
+              onChange={(event) => setEndAt(event.target.value)}
+            />
+          </label>
           <label>
             Hình thức
             <select
@@ -310,12 +422,47 @@ export function CopyScheduleDialog({
               }}
             >
               <option value="">Chọn hình thức</option>
-              {activeFormats.map((format) => <option key={format.id} value={format.id}>{format.name}</option>)}
+              {activeFormats.map((format) => (
+                <option key={format.id} value={format.id}>
+                  {format.name}
+                </option>
+              ))}
             </select>
           </label>
-          {selectedFormat?.requiresRoom ? <label>Phòng<select value={roomId} onChange={(event) => setRoomId(event.target.value)}><option value="">Chọn phòng</option>{activeRooms.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}</select></label> : null}
-          {selectedFormat?.requiresMeetingLink ? <label>Meeting Link<input type="url" value={meetingLink} onChange={(event) => setMeetingLink(event.target.value)} /></label> : null}
-          <label className="interview-form-span">Interview Note<textarea rows={3} value={note} onChange={(event) => setNote(event.target.value)} /></label>
+          {selectedFormat?.requiresRoom ? (
+            <label>
+              Phòng
+              <select
+                value={roomId}
+                onChange={(event) => setRoomId(event.target.value)}
+              >
+                <option value="">Chọn phòng</option>
+                {activeRooms.map((room) => (
+                  <option key={room.id} value={room.id}>
+                    {room.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {selectedFormat?.requiresMeetingLink ? (
+            <label>
+              Meeting Link
+              <input
+                type="url"
+                value={meetingLink}
+                onChange={(event) => setMeetingLink(event.target.value)}
+              />
+            </label>
+          ) : null}
+          <label className="interview-form-span">
+            Interview Note
+            <textarea
+              rows={3}
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+            />
+          </label>
         </div>
         <fieldset className="interview-copy-participants">
           <legend>Participants prefill — có thể chỉnh trước Save Copy</legend>
@@ -324,12 +471,23 @@ export function CopyScheduleDialog({
               <input
                 type="checkbox"
                 checked={participantIds.includes(user.id)}
-                onChange={(event) => setParticipantIds((current) => event.target.checked ? [...current, user.id] : current.filter((id) => id !== user.id))}
+                onChange={(event) =>
+                  setParticipantIds((current) =>
+                    event.target.checked
+                      ? [...current, user.id]
+                      : current.filter((id) => id !== user.id),
+                  )
+                }
               />
               {user.name} — {user.email}
             </label>
           ))}
-          {orderedSelectedUsers.length ? <p className="interview-field-hint">Thứ tự hiện tại: {orderedSelectedUsers.map((user) => user.name).join(" → ")}</p> : null}
+          {orderedSelectedUsers.length ? (
+            <p className="interview-field-hint">
+              Thứ tự hiện tại:{" "}
+              {orderedSelectedUsers.map((user) => user.name).join(" → ")}
+            </p>
+          ) : null}
         </fieldset>
       </div>
     </Dialog>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { StatusMenu } from "@/components/ui/StatusMenu";
 import {
+  formatInterviewTime,
   INTERVIEW_STATUS_LABEL,
   type InterviewApplicationGroup,
   type InterviewFormatOption,
@@ -14,7 +15,6 @@ import {
   type InterviewRound,
   type InterviewScheduleStatus,
   type InterviewUserOption,
-  formatInterviewTime,
 } from "@/lib/interview/model";
 
 const STATUS_OPTIONS = Object.entries(INTERVIEW_STATUS_LABEL).map(
@@ -32,7 +32,7 @@ function toLocalInput(value: string | null): string {
     minute: "2-digit",
     hour12: false,
   }).formatToParts(new Date(value));
-  const get = (type: Intl.DateTimeFormatPartTypes) =>
+  const get = (type: string) =>
     parts.find((part) => part.type === type)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }
@@ -42,7 +42,13 @@ export function vietnamLocalToIso(value: string): string | null {
   if (!match) return null;
   const [, y, m, d, h, minute] = match;
   return new Date(
-    Date.UTC(Number(y), Number(m) - 1, Number(d), Number(h) - 7, Number(minute)),
+    Date.UTC(
+      Number(y),
+      Number(m) - 1,
+      Number(d),
+      Number(h) - 7,
+      Number(minute),
+    ),
   ).toISOString();
 }
 
@@ -112,6 +118,7 @@ export function InterviewDrawer({
   const [demoTopic, setDemoTopic] = useState(round.demoTopic ?? "");
   const [note, setNote] = useState(round.interviewNote ?? "");
   const [participantUserId, setParticipantUserId] = useState("");
+  const [participantQuery, setParticipantQuery] = useState("");
 
   const currentParticipants = useMemo(
     () =>
@@ -134,13 +141,25 @@ export function InterviewDrawer({
   const currentUserIds = new Set(
     currentParticipants.map((participant) => participant.appUserId),
   );
-  const selectableUsers = users.filter((user) => !currentUserIds.has(user.id));
+  const normalizedParticipantQuery = participantQuery
+    .trim()
+    .toLocaleLowerCase("vi");
+  const selectableUsers = users.filter((user) => {
+    if (currentUserIds.has(user.id)) return false;
+    if (!normalizedParticipantQuery) return true;
+    return `${user.name} ${user.email} ${user.jobTitle ?? ""}`
+      .toLocaleLowerCase("vi")
+      .includes(normalizedParticipantQuery);
+  });
 
   const moveParticipant = (index: number, direction: -1 | 1) => {
     const target = index + direction;
     if (target < 0 || target >= currentParticipants.length) return;
     const reordered = [...currentParticipants];
-    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    [reordered[index], reordered[target]] = [
+      reordered[target],
+      reordered[index],
+    ];
     onReorderParticipants(reordered);
   };
 
@@ -169,7 +188,9 @@ export function InterviewDrawer({
                     startAt: startIso,
                     endAt: endIso,
                     interviewFormatId: formatId,
-                    roomId: selectedFormat?.requiresRoom ? roomId || null : null,
+                    roomId: selectedFormat?.requiresRoom
+                      ? roomId || null
+                      : null,
                     meetingLink: selectedFormat?.requiresMeetingLink
                       ? meetingLink.trim() || null
                       : null,
@@ -193,7 +214,11 @@ export function InterviewDrawer({
                 ? "Xếp lại lịch đã xác nhận"
                 : "Lưu lịch"}
             </Button>
-            <Button variant="danger" pending={pending} onClick={onDeleteInterview}>
+            <Button
+              variant="danger"
+              pending={pending}
+              onClick={onDeleteInterview}
+            >
               Xóa / Ngừng hoạt động
             </Button>
           </div>
@@ -201,17 +226,35 @@ export function InterviewDrawer({
       }
     >
       <dl className="interview-detail-grid">
-        <dt>Họ tên</dt><dd>{application.candidateName}</dd>
-        <dt>Email</dt><dd>{application.candidateEmail}</dd>
-        <dt>SĐT</dt><dd>{application.candidatePhone}</dd>
+        <dt>Họ tên</dt>
+        <dd>{application.candidateName}</dd>
+        <dt>Email</dt>
+        <dd>{application.candidateEmail}</dd>
+        <dt>SĐT</dt>
+        <dd>{application.candidatePhone}</dd>
         <dt>Application</dt>
-        <dd>{application.positionName} - {application.departmentTeamName ? `${application.departmentTeamName} - ` : ""}{application.unitName}</dd>
-        <dt>Vòng</dt><dd>Vòng {round.roundNo}{round.isActive ? "" : " — Không hoạt động"}</dd>
-        <dt>Thời gian</dt><dd>{formatInterviewTime(round.startAt, round.endAt)}</dd>
-        <dt>HR phụ trách</dt><dd>{application.hrOwnerName}</dd>
+        <dd>
+          {application.positionName} -{" "}
+          {application.departmentTeamName
+            ? `${application.departmentTeamName} - `
+            : ""}
+          {application.unitName}
+        </dd>
+        <dt>Vòng</dt>
+        <dd>
+          Vòng {round.roundNo}
+          {round.isActive ? "" : " — Không hoạt động"}
+        </dd>
+        <dt>Thời gian</dt>
+        <dd>{formatInterviewTime(round.startAt, round.endAt)}</dd>
+        <dt>HR phụ trách</dt>
+        <dd>{application.hrOwnerName}</dd>
       </dl>
 
-      <section className="interview-drawer-section" aria-labelledby="interview-status-heading">
+      <section
+        className="interview-drawer-section"
+        aria-labelledby="interview-status-heading"
+      >
         <h3 id="interview-status-heading">Trạng thái lịch</h3>
         {permissions.canChangeStatus ? (
           <StatusMenu
@@ -228,22 +271,35 @@ export function InterviewDrawer({
       {!round.isActive && permissions.canManage ? (
         <section className="interview-drawer-section">
           <h3>Vòng không hoạt động</h3>
-          <p>Khôi phục vòng này là thao tác riêng với Kích hoạt lại Application.</p>
+          <p>
+            Khôi phục vòng này là thao tác riêng với Kích hoạt lại Application.
+          </p>
           <Button pending={pending} onClick={onReactivateInterview}>
             Kích hoạt lại Interview
           </Button>
         </section>
       ) : null}
 
-      <fieldset className="interview-form-grid" disabled={!permissions.canManage || pending}>
+      <fieldset
+        className="interview-form-grid"
+        disabled={!permissions.canManage || pending}
+      >
         <legend>Lịch / Logistics</legend>
         <label>
           Bắt đầu
-          <input type="datetime-local" value={startAt} onChange={(event) => setStartAt(event.target.value)} />
+          <input
+            type="datetime-local"
+            value={startAt}
+            onChange={(event) => setStartAt(event.target.value)}
+          />
         </label>
         <label>
           Kết thúc
-          <input type="datetime-local" value={endAt} onChange={(event) => setEndAt(event.target.value)} />
+          <input
+            type="datetime-local"
+            value={endAt}
+            onChange={(event) => setEndAt(event.target.value)}
+          />
         </label>
         <label>
           Hình thức
@@ -259,8 +315,13 @@ export function InterviewDrawer({
           >
             <option value="">Chọn hình thức</option>
             {selectableFormats.map((format) => (
-              <option key={format.id} value={format.id} disabled={!format.isActive}>
-                {format.name}{format.isActive ? "" : " (không hoạt động)"}
+              <option
+                key={format.id}
+                value={format.id}
+                disabled={!format.isActive}
+              >
+                {format.name}
+                {format.isActive ? "" : " (không hoạt động)"}
               </option>
             ))}
           </select>
@@ -268,11 +329,15 @@ export function InterviewDrawer({
         {selectedFormat?.requiresRoom ? (
           <label>
             Phòng
-            <select value={roomId} onChange={(event) => setRoomId(event.target.value)}>
+            <select
+              value={roomId}
+              onChange={(event) => setRoomId(event.target.value)}
+            >
               <option value="">Chọn phòng</option>
               {selectableRooms.map((room) => (
                 <option key={room.id} value={room.id} disabled={!room.isActive}>
-                  {room.name}{room.building ? ` — ${room.building}` : ""}
+                  {room.name}
+                  {room.building ? ` — ${room.building}` : ""}
                 </option>
               ))}
             </select>
@@ -281,48 +346,106 @@ export function InterviewDrawer({
         {selectedFormat?.requiresMeetingLink ? (
           <label>
             Meeting Link
-            <input type="url" value={meetingLink} onChange={(event) => setMeetingLink(event.target.value)} />
+            <input
+              type="url"
+              value={meetingLink}
+              onChange={(event) => setMeetingLink(event.target.value)}
+            />
           </label>
         ) : null}
         <label className="interview-form-span">
           Demo Topic
-          <textarea value={demoTopic} onChange={(event) => setDemoTopic(event.target.value)} rows={2} />
+          <textarea
+            value={demoTopic}
+            onChange={(event) => setDemoTopic(event.target.value)}
+            rows={2}
+          />
         </label>
         <label className="interview-form-span">
           Interview Note
-          <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={3} />
+          <textarea
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            rows={3}
+          />
         </label>
       </fieldset>
 
-      <section className="interview-drawer-section" aria-labelledby="participants-heading">
+      <section
+        className="interview-drawer-section"
+        aria-labelledby="participants-heading"
+      >
         <h3 id="participants-heading">Người tham dự / Participants</h3>
         {currentParticipants.length ? (
           <ol className="interview-participant-list">
             {currentParticipants.map((participant, index) => (
               <li key={participant.interviewParticipantId}>
                 <div>
-                  <strong>{index + 1}. {participant.name}</strong>
-                  <span>{participant.email}{participant.jobTitle ? ` · ${participant.jobTitle}` : ""}</span>
+                  <strong>
+                    {index + 1}. {participant.name}
+                  </strong>
+                  <span>
+                    {participant.email}
+                    {participant.jobTitle ? ` · ${participant.jobTitle}` : ""}
+                  </span>
                 </div>
                 {permissions.canManageParticipants ? (
                   <div className="interview-participant-actions">
-                    <Button variant="ghost" disabled={pending || index === 0} aria-label={`Đưa ${participant.name} lên`} onClick={() => moveParticipant(index, -1)}>↑</Button>
-                    <Button variant="ghost" disabled={pending || index === currentParticipants.length - 1} aria-label={`Đưa ${participant.name} xuống`} onClick={() => moveParticipant(index, 1)}>↓</Button>
-                    <Button variant="danger" disabled={pending} onClick={() => onRemoveParticipant(participant)}>Xóa</Button>
+                    <Button
+                      variant="ghost"
+                      disabled={pending || index === 0}
+                      aria-label={`Đưa ${participant.name} lên`}
+                      onClick={() => moveParticipant(index, -1)}
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      disabled={
+                        pending || index === currentParticipants.length - 1
+                      }
+                      aria-label={`Đưa ${participant.name} xuống`}
+                      onClick={() => moveParticipant(index, 1)}
+                    >
+                      ↓
+                    </Button>
+                    <Button
+                      variant="danger"
+                      disabled={pending}
+                      onClick={() => onRemoveParticipant(participant)}
+                    >
+                      Xóa
+                    </Button>
                   </div>
                 ) : null}
               </li>
             ))}
           </ol>
-        ) : <p>Chưa có người tham dự.</p>}
+        ) : (
+          <p>Chưa có người tham dự.</p>
+        )}
         {permissions.canManageParticipants ? (
           <div className="interview-add-participant">
             <label>
+              Tìm người tham dự
+              <input
+                type="search"
+                value={participantQuery}
+                onChange={(event) => setParticipantQuery(event.target.value)}
+                autoComplete="off"
+              />
+            </label>
+            <label>
               Thêm người đang hoạt động
-              <select value={participantUserId} onChange={(event) => setParticipantUserId(event.target.value)}>
+              <select
+                value={participantUserId}
+                onChange={(event) => setParticipantUserId(event.target.value)}
+              >
                 <option value="">Chọn người dùng</option>
                 {selectableUsers.map((user) => (
-                  <option key={user.id} value={user.id}>{user.name} — {user.email}</option>
+                  <option key={user.id} value={user.id}>
+                    {user.name} — {user.email}
+                  </option>
                 ))}
               </select>
             </label>
@@ -343,14 +466,35 @@ export function InterviewDrawer({
           <div className="interview-removed-participants">
             <h4>Đã gỡ khỏi vòng</h4>
             {removedParticipants.map((participant) => (
-              <div key={participant.interviewParticipantId} className="interview-removed-row">
+              <div
+                key={participant.interviewParticipantId}
+                className="interview-removed-row"
+              >
                 <div>
                   <strong>{participant.name}</strong>
-                  <span>{participant.hasReportHistory ? "Có lịch sử report — chọn cách khôi phục." : "Đã gỡ khỏi danh sách hiện tại."}</span>
+                  <span>
+                    {participant.hasReportHistory
+                      ? "Có lịch sử report — chọn cách khôi phục."
+                      : "Đã gỡ khỏi danh sách hiện tại."}
+                  </span>
                 </div>
                 <div>
-                  <Button pending={pending} onClick={() => onReaddParticipant(participant, "RESTORE_OLD_REPORT")}>Restore old report</Button>
-                  <Button pending={pending} onClick={() => onReaddParticipant(participant, "CREATE_NEW_REPORT")}>Create new report</Button>
+                  <Button
+                    pending={pending}
+                    onClick={() =>
+                      onReaddParticipant(participant, "RESTORE_OLD_REPORT")
+                    }
+                  >
+                    Restore old report
+                  </Button>
+                  <Button
+                    pending={pending}
+                    onClick={() =>
+                      onReaddParticipant(participant, "CREATE_NEW_REPORT")
+                    }
+                  >
+                    Create new report
+                  </Button>
                 </div>
               </div>
             ))}

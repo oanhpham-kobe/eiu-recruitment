@@ -7,6 +7,7 @@ import { DEFAULT_NAV_ITEMS } from "./Sidebar";
 interface MobileNavigationProps {
   open: boolean;
   currentPath: string;
+  showInterviews?: boolean;
   onClose: () => void;
 }
 
@@ -16,6 +17,7 @@ const FOCUSABLE =
 export function MobileNavigation({
   open,
   currentPath,
+  showInterviews = true,
   onClose,
 }: MobileNavigationProps) {
   const panelRef = useRef<HTMLElement>(null);
@@ -92,7 +94,9 @@ export function MobileNavigation({
         </div>
         <nav aria-label="Menu chức năng / Navigation menu">
           <ul className="mobile-nav-list">
-            {DEFAULT_NAV_ITEMS.map((item) => (
+            {DEFAULT_NAV_ITEMS.filter(
+              (item) => item.href !== "/interviews" || showInterviews,
+            ).map((item) => (
               <li key={item.href}>
                 <a
                   href={item.href}

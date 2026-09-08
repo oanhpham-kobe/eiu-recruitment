@@ -5,6 +5,7 @@ import { loadAssignmentOptions } from "@/lib/application-inbox/submission-detail
 import { createOrUpdateApplication } from "@/lib/commands/application-lifecycle";
 import {
   addInterviewParticipant,
+  type CopyInterviewScheduleInput,
   changeInterviewScheduleStatus,
   copyInterviewSchedule,
   createNextInterviewRound,
@@ -16,9 +17,8 @@ import {
   removeInterviewParticipant,
   reorderInterviewParticipants,
   rescheduleConfirmedInterview,
-  saveInterviewSchedule,
-  type CopyInterviewScheduleInput,
   type SaveInterviewScheduleInput,
+  saveInterviewSchedule,
 } from "@/lib/commands/interview-lifecycle";
 import type { InterviewPageFilters } from "@/lib/interview/model";
 import {
@@ -41,17 +41,29 @@ export async function queryInterviewPageAction(input: {
 
 export async function searchSubmissionOptionsAction(query: string) {
   try {
-    return { success: true as const, data: await searchSubmissionOptions(query) };
+    return {
+      success: true as const,
+      data: await searchSubmissionOptions(query),
+    };
   } catch {
-    return { success: false as const, error: "Không thể tải danh sách Phiếu ứng tuyển." };
+    return {
+      success: false as const,
+      error: "Không thể tải danh sách Phiếu ứng tuyển.",
+    };
   }
 }
 
 export async function searchApplicationOptionsAction(query: string) {
   try {
-    return { success: true as const, data: await searchApplicationOptions(query) };
+    return {
+      success: true as const,
+      data: await searchApplicationOptions(query),
+    };
   } catch {
-    return { success: false as const, error: "Không thể tải danh sách Application." };
+    return {
+      success: false as const,
+      error: "Không thể tải danh sách Application.",
+    };
   }
 }
 
@@ -59,7 +71,10 @@ export async function getInterviewAssignmentOptionsAction() {
   try {
     return { success: true as const, data: await loadAssignmentOptions() };
   } catch {
-    return { success: false as const, error: "Không thể tải danh mục phân công Application." };
+    return {
+      success: false as const,
+      error: "Không thể tải danh mục phân công Application.",
+    };
   }
 }
 
@@ -82,7 +97,11 @@ export async function createInterviewApplicationAction(input: {
     confirmDuplicate: input.confirmDuplicate,
   });
   if (!result.success)
-    return { success: false as const, error: result.error.message, code: result.error.code };
+    return {
+      success: false as const,
+      error: result.error.message,
+      code: result.error.code,
+    };
   revalidatePath("/interviews");
   return { success: true as const, data: result.data };
 }
@@ -94,7 +113,9 @@ export async function createNextRoundAction(input: {
   return refreshOnSuccess(await createNextInterviewRound(input));
 }
 
-export async function saveInterviewScheduleAction(input: SaveInterviewScheduleInput) {
+export async function saveInterviewScheduleAction(
+  input: SaveInterviewScheduleInput,
+) {
   return refreshOnSuccess(await saveInterviewSchedule(input));
 }
 
@@ -112,7 +133,9 @@ export async function rescheduleConfirmedAction(
   return refreshOnSuccess(await rescheduleConfirmedInterview(input));
 }
 
-export async function copyInterviewScheduleAction(input: CopyInterviewScheduleInput) {
+export async function copyInterviewScheduleAction(
+  input: CopyInterviewScheduleInput,
+) {
   return refreshOnSuccess(await copyInterviewSchedule(input));
 }
 
@@ -123,7 +146,9 @@ export async function reactivateApplicationAction(input: {
   return refreshOnSuccess(await reactivateApplication(input));
 }
 
-export async function deleteOrInactivateApplicationAction(applicationId: string) {
+export async function deleteOrInactivateApplicationAction(
+  applicationId: string,
+) {
   return refreshOnSuccess(await deleteOrInactivateApplication(applicationId));
 }
 

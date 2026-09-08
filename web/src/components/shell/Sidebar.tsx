@@ -13,12 +13,17 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
 export interface SidebarProps {
   currentPath?: string;
   navItems?: NavItem[];
+  showInterviews?: boolean;
 }
 
 export function Sidebar({
   currentPath = "/",
   navItems = DEFAULT_NAV_ITEMS,
+  showInterviews = true,
 }: SidebarProps) {
+  const visibleNavItems = navItems.filter(
+    (item) => item.href !== "/interviews" || showInterviews,
+  );
   return (
     <aside
       className="sidebar"
@@ -41,7 +46,7 @@ export function Sidebar({
         aria-label="Menu chức năng / Navigation menu"
       >
         <ul className="nav-list">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isCurrent = currentPath === item.href;
             return (
               <li key={item.href} className="nav-item">

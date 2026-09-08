@@ -1,15 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AppSession } from "@/lib/auth/session";
 import {
   addInterviewParticipant,
   copyInterviewSchedule,
   createNextInterviewRound,
   reactivateApplication,
+  readdInterviewParticipant,
+  removeInterviewParticipant,
   reorderInterviewParticipants,
   saveInterviewSchedule,
 } from "@/lib/commands/interview-lifecycle";
-import type { AppSession } from "@/lib/auth/session";
 
 const ids = {
   application: "11111111-1111-4111-8111-111111111111",
@@ -118,7 +120,11 @@ test("copy schedule remains one atomic trusted RPC with optimistic tokens", asyn
       participantAppUserIds: [ids.user],
       idempotencyKey: ids.key,
     },
-    { client, resolveSession: async () => session(["interviews.manage"]) },
+    {
+      client,
+      resolveSession: async () =>
+        session(["interviews.manage", "interviews.view"]),
+    },
   );
   assert.equal(calls.length, 1);
   assert.equal(calls[0]?.name, "copy_interview_schedule");
@@ -135,7 +141,11 @@ test("participant add and reorder use repaired S04-005 public signatures", async
   const resolveSession = async () =>
     session(["interviews.view", "interviews.participants"]);
   await addInterviewParticipant(
-    { interviewId: ids.interview, appUserId: ids.user, idempotencyKey: ids.key },
+    {
+      interviewId: ids.interview,
+      appUserId: ids.user,
+      idempotencyKey: ids.key,
+    },
     { client, resolveSession },
   );
   await reorderInterviewParticipants(
@@ -185,4 +195,108 @@ test("Application Reactivate is permission-bound and distinct from Interview lif
       p_expected_version: 6,
     },
   });
+});
+
+test("same intended retry keeps the same caller-owned key for create-next and Save Copy", async () => {
+  const { client, calls } = rpcRecorder();
+  const manage = async () => session(["interviews.manage", "interviews.view"]);
+  const createInput = {
+    applicationId: ids.application,
+    idempotencyKey: ids.key,
+  };
+  await createNextInterviewRound(createInput, {
+    client,
+    resolveSession: manage,
+  });
+  await createNextInterviewRound(createInput, {
+    client,
+    resolveSession: manage,
+  });
+  assert.equal(calls[0]?.args.p_idempotency_key, ids.key);
+  assert.equal(calls[1]?.args.p_idempotency_key, ids.key);
+
+  const copyInput = {
+    sourceInterviewId: ids.interview,
+    targetApplicationId: ids.application,
+    expectedSourceVersion: 5,
+    expectedTargetApplicationVersion: 7,
+    expectedTargetRoundId: ids.targetRound,
+    expectedTargetRoundVersion: 3,
+    startAt: null,
+    endAt: null,
+    interviewFormatId: null,
+    roomId: null,
+    meetingLink: null,
+    interviewNote: null,
+    participantAppUserIds: [ids.user],
+    idempotencyKey: ids.key,
+  };
+  await copyInterviewSchedule(copyInput, { client, resolveSession: manage });
+  await copyInterviewSchedule(copyInput, { client, resolveSession: manage });
+  assert.equal(calls[2]?.args.p_idempotency_key, ids.key);
+  assert.equal(calls[3]?.args.p_idempotency_key, ids.key);
+});
+
+test("remove and re-add forward the repaired S04-005 arguments exactly", async () => {
+  const { client, calls } = rpcRecorder();
+  const resolveSession = async () =>
+    session(["interviews.view", "interviews.participants"]);
+  await removeInterviewParticipant(
+    { interviewParticipantId: ids.participant, expectedVersion: 8 },
+    { client, resolveSession },
+  );
+  await readdInterviewParticipant(
+    {
+      interviewParticipantId: ids.participant,
+      restoreMode: "RESTORE_OLD_REPORT",
+      idempotencyKey: ids.key,
+    },
+    { client, resolveSession },
+  );
+  assert.deepEqual(calls[0], {
+    name: "remove_interview_participant",
+    args: {
+      p_interview_participant_id: ids.participant,
+      p_expected_version: 8,
+    },
+  });
+  assert.deepEqual(calls[1], {
+    name: "readd_interview_participant",
+    args: {
+      p_interview_participant_id: ids.participant,
+      p_restore_mode: "RESTORE_OLD_REPORT",
+      p_idempotency_key: ids.key,
+    },
+  });
+});
+
+test("Application Reactivate exposes stable structured owner, participant and conflict errors", async () => {
+  const codes = [
+    "STALE_VERSION",
+    "ACTIVE_APPLICATION_OWNER_REASSIGN_REQUIRED",
+    "CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED",
+    "SCHEDULE_CONFLICT_CANDIDATE",
+    "SCHEDULE_CONFLICT_ROOM",
+    "SCHEDULE_CONFLICT_INTERVIEWER",
+  ];
+  for (const code of codes) {
+    const client = {
+      rpc: async () => ({
+        data: { success: false, error_code: code },
+        error: null,
+      }),
+    } as unknown as SupabaseClient;
+    const result = await reactivateApplication(
+      { applicationId: ids.application, expectedVersion: 6 },
+      { client, resolveSession: async () => session(["applications.manage"]) },
+    );
+    assert.equal(result.success, false);
+    if (!result.success) {
+      assert.equal(result.error.code, code);
+      assert.doesNotMatch(
+        result.error.message,
+        /sql|postgres|function public/i,
+      );
+    }
+  }
 });
