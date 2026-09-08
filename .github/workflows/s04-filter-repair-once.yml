@@ -6,6 +6,7 @@ on:
       - oanhpham-kobe/TASK-S04-004-interview-scheduling-ui-v2
     paths:
       - .github/s04_filter_patch.py
+      - .github/s04_filter_type_fix.py
       - .github/workflows/s04-filter-repair-once.yml
 
 permissions:
@@ -25,7 +26,9 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - name: Apply canonical filter repair
-        run: python .github/s04_filter_patch.py
+        run: |
+          python .github/s04_filter_patch.py
+          python .github/s04_filter_type_fix.py
       - name: Install web dependencies
         working-directory: web
         run: npm ci
@@ -50,7 +53,7 @@ jobs:
           git add -f .github/s04-typecheck.log
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore(s04): capture filter typecheck diagnostic"
+          git commit -m "chore(s04): refresh filter typecheck diagnostic"
           git push origin HEAD:oanhpham-kobe/TASK-S04-004-interview-scheduling-ui-v2
       - name: Stop after diagnostic failure
         if: steps.typecheck.outputs.exit_code != '0'
@@ -65,6 +68,7 @@ jobs:
         run: |
           rm .github/workflows/s04-filter-repair-once.yml
           rm .github/s04_filter_patch.py
+          rm .github/s04_filter_type_fix.py
           rm -f .github/s04-typecheck.log
           git add -A
           git diff --cached --check
