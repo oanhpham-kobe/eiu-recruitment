@@ -6,6 +6,7 @@ import React from "react";
 
 import Loading from "@/app/loading";
 import { Header } from "@/components/shell/Header";
+import { DEFAULT_NAV_ITEMS } from "@/components/shell/navigation";
 import { Sidebar } from "@/components/shell/Sidebar";
 import { SkipLink } from "@/components/shell/SkipLink";
 
@@ -93,8 +94,11 @@ test("AppShell composes the required semantic landmark-bearing shell", () => {
   // browser test; this static contract keeps composition explicit without
   // illegally invoking Hooks outside React rendering.
   assert.match(source, /<SkipLink\s*\/>/);
-  assert.match(source, /<Sidebar\s+currentPath=\{currentPath\}\s*\/>/);
-  assert.match(source, /<MobileNavigation[\s\S]*?open=\{mobileNavOpen\}/);
+  assert.match(
+    source,
+    /<Sidebar\s+currentPath=\{currentPath\}\s+navItems=\{navItems\}\s*\/>/,
+  );
+  assert.match(source, /<MobileNavigation[\s\S]*?navItems=\{navItems\}/);
   assert.match(source, /<Header[\s\S]*?mobileNavOpen=\{mobileNavOpen\}/);
   assert.match(
     source,
@@ -116,7 +120,10 @@ test("SkipLink renders an accessible skip link targeting #main-content", () => {
 
 test("Sidebar renders brand header, navigation active state, and user card", () => {
   const tree = expand(
-    React.createElement(Sidebar, { currentPath: "#applications" }),
+    React.createElement(Sidebar, {
+      currentPath: "/",
+      navItems: DEFAULT_NAV_ITEMS,
+    }),
   );
 
   const brandLogos = findElements(
@@ -130,13 +137,13 @@ test("Sidebar renders brand header, navigation active state, and user card", () 
     (el) => el.props?.["aria-current"] === "page",
   );
   assert.equal(activeLinks.length, 1);
-  assert.equal(activeLinks[0].props.href, "#applications");
+  assert.equal(activeLinks[0].props.href, "/");
 
   const inactiveLinks = findElements(
     tree,
     (el) => el.type === "a" && el.props?.["aria-current"] !== "page",
   );
-  assert.equal(inactiveLinks.length, 3);
+  assert.equal(inactiveLinks.length, 2);
 
   const avatars = findElements(
     tree,
