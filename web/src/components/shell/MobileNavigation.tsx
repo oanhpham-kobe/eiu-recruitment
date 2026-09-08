@@ -3,11 +3,12 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useAppLocale } from "./LocaleProvider";
-import { DEFAULT_NAV_ITEMS } from "./Sidebar";
+import type { NavItem } from "./navigation";
 
 interface MobileNavigationProps {
   open: boolean;
   currentPath: string;
+  navItems: readonly NavItem[];
   onClose: () => void;
 }
 
@@ -17,6 +18,7 @@ const FOCUSABLE =
 export function MobileNavigation({
   open,
   currentPath,
+  navItems,
   onClose,
 }: MobileNavigationProps) {
   const { locale } = useAppLocale();
@@ -101,7 +103,7 @@ export function MobileNavigation({
           aria-label={locale === "vi" ? "Menu chức năng" : "Navigation menu"}
         >
           <ul className="mobile-nav-list">
-            {DEFAULT_NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <li key={item.href}>
                 <a
                   href={item.href}
@@ -115,7 +117,9 @@ export function MobileNavigation({
           </ul>
         </nav>
         <div className="mobile-nav-user">
-          <strong>{locale === "vi" ? "Người dùng nội bộ" : "Internal User"}</strong>
+          <strong>
+            {locale === "vi" ? "Người dùng nội bộ" : "Internal User"}
+          </strong>
           <span>EIU Recruitment</span>
         </div>
       </aside>
