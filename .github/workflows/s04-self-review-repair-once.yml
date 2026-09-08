@@ -1,0 +1,57 @@
+name: S04 Self Review Repair Once
+
+on:
+  push:
+    branches:
+      - oanhpham-kobe/TASK-S04-004-interview-scheduling-ui-v2
+    paths:
+      - project_control/tools/s04_self_review_repair.py
+      - .github/workflows/s04-self-review-repair-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Apply deterministic self-review repair
+        run: python project_control/tools/s04_self_review_repair.py
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+      - name: Focused Interview regression tests
+        working-directory: web
+        run: node --conditions react-server --test --import tsx src/__tests__/interview-commands.test.ts src/__tests__/interview-model.test.ts
+      - name: Design contract check
+        working-directory: web
+        run: npm run design:check
+      - name: Lint directly affected files
+        working-directory: web
+        run: npx biome check src/lib/commands/interview-lifecycle.ts src/components/interview/InterviewDrawer.tsx src/components/interview/InterviewDialogs.tsx src/components/interview/InterviewPage.tsx src/__tests__/interview-commands.test.ts
+      - name: Typecheck
+        working-directory: web
+        run: npm run typecheck
+      - name: Production build
+        working-directory: web
+        run: npm run build
+      - name: Commit verified repair and remove staging helpers
+        shell: bash
+        run: |
+          rm .github/workflows/s04-self-review-repair-once.yml
+          rm project_control/tools/s04_self_review_repair.py
+          git add -A
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(s04): enforce inactive and copy scheduling guards"
+          git push origin HEAD:oanhpham-kobe/TASK-S04-004-interview-scheduling-ui-v2
