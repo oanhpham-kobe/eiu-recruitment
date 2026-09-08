@@ -1,83 +1,4 @@
-from pathlib import Path
-
-
-def replace_once(path: str, old: str, new: str) -> None:
-    file = Path(path)
-    text = file.read_text(encoding="utf-8")
-    count = text.count(old)
-    if count != 1:
-        raise RuntimeError(
-            f"{path}: expected exactly one match, found {count}: {old[:120]!r}"
-        )
-    file.write_text(text.replace(old, new, 1), encoding="utf-8")
-
-
-server_path = "web/src/lib/interview/server.ts"
-replace_once(
-    server_path,
-    '''async function matchingSubmissionIds(
-  client: SupabaseClient,
-  rawQuery: string,
-): Promise<string[] | null> {
-  const query = safeSearchTerm(rawQuery);
-  if (!query) return null;
-  const pattern = `%${query}%`;
-  const { data, error } = await client
-    .from("submissions")
-    .select("submission_id")
-    .or(
-      `full_name.ilike.${pattern},email_snapshot.ilike.${pattern},phone.ilike.${pattern}`,
-    )
-    .limit(250);
-  if (error) throw new InterviewReadError();
-  return (Array.isArray(data) ? data : [])
-    .map((row) =>
-      stringValue((row as { submission_id?: unknown }).submission_id),
-    )
-    .filter((id): id is string => id !== null);
-}
-
-''',
-    '',
-)
-replace_once(
-    server_path,
-    '''  const ids = await matchingSubmissionIds(client, rawQuery);
-  if (ids?.length === 0) return [];
-  let appBuilder = client
-    .from("applications")
-    .select(
-      "application_id,submission_id,version_no,unit_id,department_team_id,position_id",
-    )
-    .eq("is_active", true)
-    .order("updated_at", { ascending: false })
-    .limit(50);
-  if (ids) appBuilder = appBuilder.in("submission_id", ids);
-''',
-    '''  const query = safeSearchTerm(rawQuery);
-  const submissionEmbed = query
-    ? ",filtered_submission:submissions!inner(submission_id,full_name,email_snapshot,phone)"
-    : "";
-  let appBuilder = client
-    .from("applications")
-    .select(
-      `application_id,submission_id,version_no,unit_id,department_team_id,position_id${submissionEmbed}`,
-    )
-    .eq("is_active", true)
-    .order("updated_at", { ascending: false })
-    .limit(50);
-  if (query) {
-    const pattern = `%${query}%`;
-    appBuilder = appBuilder.or(
-      `full_name.ilike.${pattern},email_snapshot.ilike.${pattern},phone.ilike.${pattern}`,
-      { referencedTable: "filtered_submission" },
-    );
-  }
-''',
-)
-
-Path("web/src/__tests__/interview-search-contract.test.ts").write_text(
-    '''import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppSession } from "@/lib/auth/session";
@@ -126,8 +47,11 @@ class MockBuilder implements PromiseLike<QueryResult> {
     return this.record("in", column, values);
   }
 
+  // biome-ignore lint/suspicious/noThenProperty: Supabase query builders are intentionally awaitable in this test double.
   then<TResult1 = QueryResult, TResult2 = never>(
-    onfulfilled?: ((value: QueryResult) => TResult1 | PromiseLike<TResult1>) | null,
+    onfulfilled?:
+      | ((value: QueryResult) => TResult1 | PromiseLike<TResult1>)
+      | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
   ): PromiseLike<TResult1 | TResult2> {
     return Promise.resolve(this.result).then(onfulfilled, onrejected);
@@ -252,13 +176,8 @@ test("Copy-target PII search filters Applications through the Submission relatio
     "Application query must not depend on a pre-truncated Submission ID list",
   );
   assert.equal(
-    calls.some(
-      (call) => call.operation === "limit" && call.args[0] === 250,
-    ),
+    calls.some((call) => call.operation === "limit" && call.args[0] === 250),
     false,
     "The rejected 250-row PII pre-match cap must not return",
   );
 });
-''',
-    encoding="utf-8",
-)

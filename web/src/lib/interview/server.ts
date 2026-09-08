@@ -117,28 +117,6 @@ function hasInterviewFilters(filters: InterviewPageFilters): boolean {
   );
 }
 
-async function matchingSubmissionIds(
-  client: SupabaseClient,
-  rawQuery: string,
-): Promise<string[] | null> {
-  const query = safeSearchTerm(rawQuery);
-  if (!query) return null;
-  const pattern = `%${query}%`;
-  const { data, error } = await client
-    .from("submissions")
-    .select("submission_id")
-    .or(
-      `full_name.ilike.${pattern},email_snapshot.ilike.${pattern},phone.ilike.${pattern}`,
-    )
-    .limit(250);
-  if (error) throw new InterviewReadError();
-  return (Array.isArray(data) ? data : [])
-    .map((row) =>
-      stringValue((row as { submission_id?: unknown }).submission_id),
-    )
-    .filter((id): id is string => id !== null);
-}
-
 export async function loadInterviewPage(
   deps: InterviewReadDeps = {},
 ): Promise<InterviewPageData> {
@@ -673,20 +651,27 @@ export async function searchApplicationOptions(
     ["interviews.view"],
     deps.resolveSession ?? getServerSession,
   );
-  const ids = await matchingSubmissionIds(client, rawQuery);
-  if (ids?.length === 0) return [];
+  const query = safeSearchTerm(rawQuery);
+  const submissionEmbed = query
+    ? ",filtered_submission:submissions!inner(submission_id,full_name,email_snapshot,phone)"
+    : "";
+  const applicationSelect: string = `application_id,submission_id,version_no,unit_id,department_team_id,position_id${submissionEmbed}`;
   let appBuilder = client
     .from("applications")
-    .select(
-      "application_id,submission_id,version_no,unit_id,department_team_id,position_id",
-    )
+    .select(applicationSelect)
     .eq("is_active", true)
     .order("updated_at", { ascending: false })
     .limit(50);
-  if (ids) appBuilder = appBuilder.in("submission_id", ids);
+  if (query) {
+    const pattern = `%${query}%`;
+    appBuilder = appBuilder.or(
+      `full_name.ilike.${pattern},email_snapshot.ilike.${pattern},phone.ilike.${pattern}`,
+      { referencedTable: "filtered_submission" },
+    );
+  }
   const { data: apps, error: appError } = await appBuilder;
   if (appError || !Array.isArray(apps)) throw new InterviewReadError();
-  const appRows = apps as Array<Record<string, unknown>>;
+  const appRows = apps as unknown as Array<Record<string, unknown>>;
   const applicationIds = appRows
     .map((row) => stringValue(row.application_id))
     .filter((id): id is string => Boolean(id));
