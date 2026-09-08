@@ -1,33 +1,14 @@
 "use client";
 
+import type { NavItem } from "./navigation";
 import { useAppLocale } from "./LocaleProvider";
-
-export interface NavItem {
-  href: string;
-  labelVi: string;
-  labelEn: string;
-}
-
-export const DEFAULT_NAV_ITEMS: NavItem[] = [
-  { href: "/", labelVi: "Tổng quan", labelEn: "Overview" },
-  {
-    href: "#applications",
-    labelVi: "Hồ sơ ứng tuyển",
-    labelEn: "Applications",
-  },
-  { href: "/interviews", labelVi: "Lịch phỏng vấn", labelEn: "Interviews" },
-  { href: "/reports", labelVi: "Báo cáo phỏng vấn", labelEn: "Interview Reports" },
-];
 
 export interface SidebarProps {
   currentPath?: string;
-  navItems?: NavItem[];
+  navItems: readonly NavItem[];
 }
 
-export function Sidebar({
-  currentPath = "/",
-  navItems = DEFAULT_NAV_ITEMS,
-}: SidebarProps) {
+export function Sidebar({ currentPath = "/", navItems }: SidebarProps) {
   const { locale } = useAppLocale();
 
   return (
@@ -82,9 +63,7 @@ export function Sidebar({
           <span className="user-name">
             {locale === "vi" ? "Người dùng nội bộ" : "Internal User"}
           </span>
-          <span className="user-role">
-            EIU Recruitment
-          </span>
+          <span className="user-role">EIU Recruitment</span>
         </div>
       </div>
     </aside>
