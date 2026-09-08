@@ -84,6 +84,15 @@ replace_once(
 path = "web/src/__tests__/fixtures/interview-browser-acceptance-harness.tsx"
 replace_once(
     path,
+    '''                {INTERVIEW_COLUMNS.map((width, index) => (
+                  <col key={`${width}-${index}`} style={{ width }} />
+                ))}''',
+    '''                {INTERVIEW_COLUMNS.map((width) => (
+                  <col key={width} style={{ width }} />
+                ))}''',
+)
+replace_once(
+    path,
     '''          <div className="interview-detail-grid">
             <dt>Thời gian phỏng vấn</dt>
             <dd>14:00 – 15:30 · 20/05/2025</dd>
