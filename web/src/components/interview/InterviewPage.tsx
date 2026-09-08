@@ -74,6 +74,20 @@ function latestRound(group: InterviewApplicationGroup): InterviewRound | null {
   return [...group.rounds].sort((a, b) => b.roundNo - a.roundNo)[0] ?? null;
 }
 
+function canCreateNextRound(group: InterviewApplicationGroup): boolean {
+  const latest = latestRound(group);
+  return Boolean(
+    group.isActive && latest?.isActive && latest.reportStatus !== "HIRED",
+  );
+}
+
+function isLatestRound(
+  group: InterviewApplicationGroup,
+  round: InterviewRound,
+): boolean {
+  return latestRound(group)?.interviewId === round.interviewId;
+}
+
 export function InterviewPage({
   initialData,
   initialActivity = "ACTIVE",
@@ -290,8 +304,8 @@ export function InterviewPage({
     [],
   );
 
-  const renderStatus = (round: InterviewRound) =>
-    data.permissions.canChangeStatus ? (
+  const renderStatus = (round: InterviewRound, interactive = true) =>
+    interactive && data.permissions.canChangeStatus ? (
       <div
         className={`interview-status-menu interview-status-menu--${round.scheduleStatus.toLowerCase()}`}
       >
@@ -372,13 +386,17 @@ export function InterviewPage({
         </Button>
         {data.permissions.canManage && selected ? (
           <Button
-            disabled={busy || !selected.application.isActive}
+            disabled={busy || !canCreateNextRound(selected.application)}
             onClick={() => requestCreateNextRound(selected.application)}
           >
             Tạo vòng tiếp theo
           </Button>
         ) : null}
-        {data.permissions.canManage && selected ? (
+        {data.permissions.canManage &&
+        selected &&
+        selected.application.isActive &&
+        selected.round.isActive &&
+        isLatestRound(selected.application, selected.round) ? (
           <Button
             variant="danger"
             disabled={busy}
@@ -387,7 +405,10 @@ export function InterviewPage({
             Xóa
           </Button>
         ) : null}
-        {data.permissions.canChangeStatus && selected ? (
+        {data.permissions.canChangeStatus &&
+        selected &&
+        selected.application.isActive &&
+        selected.round.isActive ? (
           <StatusMenu
             label={`Đổi status: ${INTERVIEW_STATUS_LABEL[selected.round.scheduleStatus]}`}
             currentValue={selected.round.scheduleStatus}
@@ -832,7 +853,10 @@ function ApplicationRows({
   canManage: boolean;
   canReactivateApplication: boolean;
   canDeleteApplication: boolean;
-  renderStatus: (round: InterviewRound) => React.ReactNode;
+  renderStatus: (
+    round: InterviewRound,
+    interactive?: boolean,
+  ) => React.ReactNode;
   locationText: (round: InterviewRound) => string;
   onToggle: () => void;
   onSelect: (id: string | null) => void;
@@ -891,7 +915,11 @@ function ApplicationRows({
           {latest ? formatInterviewTime(latest.startAt, latest.endAt) : "—"}
         </td>
         <td data-label="Địa điểm">{latest ? locationText(latest) : "—"}</td>
-        <td data-label="Trạng thái">{latest ? renderStatus(latest) : "—"}</td>
+        <td data-label="Trạng thái">
+          {latest
+            ? renderStatus(latest, application.isActive && latest.isActive)
+            : "—"}
+        </td>
         <td data-label="Ghi chú">{latest?.interviewNote ?? "—"}</td>
         <td data-label="Action">
           <div className="interview-row-actions">
@@ -903,7 +931,7 @@ function ApplicationRows({
                 Mở
               </Button>
             ) : null}
-            {canManage && application.isActive ? (
+            {canManage && canCreateNextRound(application) ? (
               <Button variant="ghost" disabled={busy} onClick={onCreateNext}>
                 + Vòng
               </Button>
@@ -955,7 +983,9 @@ function ApplicationRows({
                 {formatInterviewTime(round.startAt, round.endAt)}
               </td>
               <td data-label="Địa điểm">{locationText(round)}</td>
-              <td data-label="Trạng thái">{renderStatus(round)}</td>
+              <td data-label="Trạng thái">
+                {renderStatus(round, application.isActive && round.isActive)}
+              </td>
               <td data-label="Ghi chú">{round.interviewNote ?? "—"}</td>
               <td data-label="Action">
                 <div className="interview-row-actions">
@@ -965,7 +995,7 @@ function ApplicationRows({
                   >
                     Chi tiết
                   </Button>
-                  {canManage ? (
+                  {canManage && application.isActive && round.isActive ? (
                     <Button
                       variant="ghost"
                       onClick={() => onCopy(round.interviewId)}

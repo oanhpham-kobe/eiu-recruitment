@@ -290,9 +290,14 @@ export function CopyScheduleDialog({
   const [note, setNote] = useState(sourceRound.interviewNote ?? "");
   const [participantIds, setParticipantIds] = useState<string[]>(
     sourceRound.participants
-      .filter((p) => p.isCurrent)
+      .filter(
+        (p) => p.isCurrent && users.some((user) => user.id === p.appUserId),
+      )
       .sort((a, b) => a.order - b.order)
       .map((p) => p.appUserId),
+  );
+  const [normalizationNotice, setNormalizationNotice] = useState<string | null>(
+    null,
   );
 
   useEffect(() => {
@@ -317,9 +322,15 @@ export function CopyScheduleDialog({
   const activeRooms = rooms.filter((room) => room.isActive);
   const startIso = startAt ? vietnamLocalToIso(startAt) : null;
   const endIso = endAt ? vietnamLocalToIso(endAt) : null;
-  const canSubmit = Boolean(
-    target &&
-      (!startAt || (startIso && endIso && startIso < endIso && formatId)),
+  const scheduleEmpty = !startAt && !endAt;
+  const scheduleComplete = Boolean(
+    startAt && endAt && startIso && endIso && startIso < endIso && formatId,
+  );
+  const canSubmit = Boolean(target && (scheduleEmpty || scheduleComplete));
+  const inactivePrefillParticipants = sourceRound.participants.filter(
+    (participant) =>
+      participant.isCurrent &&
+      !users.some((user) => user.id === participant.appUserId),
   );
   const orderedSelectedUsers = useMemo(
     () =>
@@ -373,6 +384,7 @@ export function CopyScheduleDialog({
             />
           </label>
           <Button
+            disabled={pending}
             onClick={async () => setTargets(await onSearchApplications(query))}
           >
             Tìm
@@ -417,8 +429,20 @@ export function CopyScheduleDialog({
                 const value = event.target.value;
                 setFormatId(value);
                 const format = formats.find((item) => item.id === value);
-                if (!format?.requiresRoom) setRoomId("");
-                if (!format?.requiresMeetingLink) setMeetingLink("");
+                const cleared: string[] = [];
+                if (!format?.requiresRoom && roomId) {
+                  setRoomId("");
+                  cleared.push("Phòng");
+                }
+                if (!format?.requiresMeetingLink && meetingLink) {
+                  setMeetingLink("");
+                  cleared.push("Meeting Link");
+                }
+                setNormalizationNotice(
+                  cleared.length
+                    ? `${cleared.join(" và ")} đã được xóa vì không áp dụng cho hình thức mới.`
+                    : null,
+                );
               }}
             >
               <option value="">Chọn hình thức</option>
@@ -429,6 +453,15 @@ export function CopyScheduleDialog({
               ))}
             </select>
           </label>
+          {normalizationNotice ? (
+            <p
+              className="interview-field-hint interview-form-span"
+              role="status"
+              aria-live="polite"
+            >
+              {normalizationNotice}
+            </p>
+          ) : null}
           {selectedFormat?.requiresRoom ? (
             <label>
               Phòng
@@ -464,6 +497,15 @@ export function CopyScheduleDialog({
             />
           </label>
         </div>
+        {inactivePrefillParticipants.length ? (
+          <div className="ui-alert ui-alert--warning" role="status">
+            {inactivePrefillParticipants
+              .map((participant) => participant.name)
+              .join(", ")}{" "}
+            không còn Active nên không được prefill vào Copy. Hãy chọn
+            Participant Active thay thế nếu cần.
+          </div>
+        ) : null}
         <fieldset className="interview-copy-participants">
           <legend>Participants prefill — có thể chỉnh trước Save Copy</legend>
           {users.map((user) => (

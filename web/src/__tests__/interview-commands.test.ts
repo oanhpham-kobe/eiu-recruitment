@@ -4,12 +4,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppSession } from "@/lib/auth/session";
 import {
   addInterviewParticipant,
+  changeInterviewScheduleStatus,
   copyInterviewSchedule,
   createNextInterviewRound,
   reactivateApplication,
   readdInterviewParticipant,
   removeInterviewParticipant,
   reorderInterviewParticipants,
+  rescheduleConfirmedInterview,
   saveInterviewSchedule,
 } from "@/lib/commands/interview-lifecycle";
 
@@ -299,4 +301,55 @@ test("Application Reactivate exposes stable structured owner, participant and co
       );
     }
   }
+});
+
+test("public server seam rejects malformed status and half-filled copy interval before RPC", async () => {
+  const { client, calls } = rpcRecorder();
+  const resolveSession = async () =>
+    session(["interviews.view", "interviews.status", "interviews.manage"]);
+  const badStatus = await changeInterviewScheduleStatus(
+    { interviewId: ids.interview, status: "NOT_A_STATUS", expectedVersion: 2 },
+    { client, resolveSession },
+  );
+  assert.equal(badStatus.success, false);
+  const halfCopy = await copyInterviewSchedule(
+    {
+      sourceInterviewId: ids.interview,
+      targetApplicationId: ids.application,
+      expectedSourceVersion: 5,
+      expectedTargetApplicationVersion: 7,
+      expectedTargetRoundId: ids.targetRound,
+      expectedTargetRoundVersion: 3,
+      startAt: "2026-05-20T07:00:00.000Z",
+      endAt: null,
+      interviewFormatId: ids.format,
+      roomId: null,
+      meetingLink: null,
+      interviewNote: null,
+      participantAppUserIds: [ids.user],
+      idempotencyKey: ids.key,
+    },
+    { client, resolveSession },
+  );
+  assert.equal(halfCopy.success, false);
+  assert.equal(calls.length, 0);
+});
+
+test("confirmed reschedule rejects non-UUID format identifiers before RPC", async () => {
+  const { client, calls } = rpcRecorder();
+  const result = await rescheduleConfirmedInterview(
+    {
+      interviewId: ids.interview,
+      startAt: "2026-05-20T07:00:00.000Z",
+      endAt: "2026-05-20T08:30:00.000Z",
+      interviewFormatId: "not-a-uuid",
+      roomId: null,
+      meetingLink: null,
+      expectedVersion: 2,
+      idempotencyKey: ids.key,
+    },
+    { client, resolveSession: async () => session(["interviews.manage"]) },
+  );
+  assert.equal(result.success, false);
+  assert.equal(calls.length, 0);
 });

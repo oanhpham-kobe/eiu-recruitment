@@ -5,6 +5,17 @@ import { type AppSession, getServerSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SCHEDULE_STATUSES = new Set([
+  "AVAILABLE",
+  "SCHEDULED",
+  "AWAITING",
+  "CONFIRMED",
+  "CANCELLED",
+]);
+
+function optionalUuid(value: string | null): boolean {
+  return value === null || UUID.test(value);
+}
 
 export type InterviewCommandError = { code: string; message: string };
 export type InterviewCommandResult<T = Record<string, unknown>> =
@@ -195,8 +206,12 @@ export async function changeInterviewScheduleStatus(
   input: { interviewId: string; status: string; expectedVersion: number },
   deps: InterviewCommandDeps = {},
 ) {
-  if (!UUID.test(input.interviewId) || !positiveVersion(input.expectedVersion))
-    return invalid("Interview hoặc version không hợp lệ.");
+  if (
+    !UUID.test(input.interviewId) ||
+    !positiveVersion(input.expectedVersion) ||
+    !SCHEDULE_STATUSES.has(input.status)
+  )
+    return invalid("Interview, version hoặc trạng thái không hợp lệ.");
   return withPermission(deps, ["interviews.status", "interviews.view"], (ctx) =>
     executeRpc(ctx, "change_interview_schedule_status", {
       p_interview_id: input.interviewId,
@@ -216,7 +231,9 @@ export async function rescheduleConfirmedInterview(
     !UUID.test(input.idempotencyKey) ||
     !input.startAt ||
     !input.endAt ||
-    !input.interviewFormatId
+    !input.interviewFormatId ||
+    !UUID.test(input.interviewFormatId) ||
+    !optionalUuid(input.roomId)
   )
     return invalid("Thông tin xếp lại lịch chưa hợp lệ.");
   return withPermission(deps, ["interviews.manage"], (ctx) =>
@@ -264,7 +281,11 @@ export async function copyInterviewSchedule(
     !positiveVersion(input.expectedSourceVersion) ||
     !positiveVersion(input.expectedTargetApplicationVersion) ||
     !positiveVersion(input.expectedTargetRoundVersion) ||
-    !input.participantAppUserIds.every((id) => UUID.test(id))
+    !input.participantAppUserIds.every((id) => UUID.test(id)) ||
+    !optionalUuid(input.interviewFormatId) ||
+    !optionalUuid(input.roomId) ||
+    (input.startAt === null) !== (input.endAt === null) ||
+    (input.startAt !== null && input.interviewFormatId === null)
   )
     return invalid("Copy payload không hợp lệ.");
   return withPermission(deps, ["interviews.manage", "interviews.view"], (ctx) =>

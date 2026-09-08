@@ -119,6 +119,9 @@ export function InterviewDrawer({
   const [note, setNote] = useState(round.interviewNote ?? "");
   const [participantUserId, setParticipantUserId] = useState("");
   const [participantQuery, setParticipantQuery] = useState("");
+  const [normalizationNotice, setNormalizationNotice] = useState<string | null>(
+    null,
+  );
 
   const currentParticipants = useMemo(
     () =>
@@ -168,6 +171,8 @@ export function InterviewDrawer({
   const scheduleValid =
     (!startAt && !endAt) ||
     Boolean(startIso && endIso && startIso < endIso && formatId);
+  const roundOperational = application.isActive && round.isActive;
+  const confirmed = round.scheduleStatus === "CONFIRMED";
 
   return (
     <Drawer
@@ -175,7 +180,7 @@ export function InterviewDrawer({
       title={`${application.candidateName} — Vòng ${round.roundNo}`}
       onClose={onClose}
       footer={
-        permissions.canManage ? (
+        permissions.canManage && roundOperational ? (
           <div className="interview-drawer-actions">
             <Button
               variant="primary"
@@ -256,7 +261,7 @@ export function InterviewDrawer({
         aria-labelledby="interview-status-heading"
       >
         <h3 id="interview-status-heading">Trạng thái lịch</h3>
-        {permissions.canChangeStatus ? (
+        {permissions.canChangeStatus && roundOperational ? (
           <StatusMenu
             label={INTERVIEW_STATUS_LABEL[round.scheduleStatus]}
             currentValue={round.scheduleStatus}
@@ -268,7 +273,7 @@ export function InterviewDrawer({
         )}
       </section>
 
-      {!round.isActive && permissions.canManage ? (
+      {!round.isActive && application.isActive && permissions.canManage ? (
         <section className="interview-drawer-section">
           <h3>Vòng không hoạt động</h3>
           <p>
@@ -282,7 +287,7 @@ export function InterviewDrawer({
 
       <fieldset
         className="interview-form-grid"
-        disabled={!permissions.canManage || pending}
+        disabled={!permissions.canManage || pending || !roundOperational}
       >
         <legend>Lịch / Logistics</legend>
         <label>
@@ -309,8 +314,20 @@ export function InterviewDrawer({
               const next = event.target.value;
               setFormatId(next);
               const format = formats.find((item) => item.id === next);
-              if (!format?.requiresRoom) setRoomId("");
-              if (!format?.requiresMeetingLink) setMeetingLink("");
+              const cleared: string[] = [];
+              if (!format?.requiresRoom && roomId) {
+                setRoomId("");
+                cleared.push("Phòng");
+              }
+              if (!format?.requiresMeetingLink && meetingLink) {
+                setMeetingLink("");
+                cleared.push("Meeting Link");
+              }
+              setNormalizationNotice(
+                cleared.length
+                  ? `${cleared.join(" và ")} đã được xóa vì không áp dụng cho hình thức mới.`
+                  : null,
+              );
             }}
           >
             <option value="">Chọn hình thức</option>
@@ -326,6 +343,15 @@ export function InterviewDrawer({
             ))}
           </select>
         </label>
+        {normalizationNotice ? (
+          <p
+            className="interview-field-hint interview-form-span"
+            role="status"
+            aria-live="polite"
+          >
+            {normalizationNotice}
+          </p>
+        ) : null}
         {selectedFormat?.requiresRoom ? (
           <label>
             Phòng
@@ -359,6 +385,7 @@ export function InterviewDrawer({
             value={demoTopic}
             onChange={(event) => setDemoTopic(event.target.value)}
             rows={2}
+            disabled={confirmed}
           />
         </label>
         <label className="interview-form-span">
@@ -367,9 +394,27 @@ export function InterviewDrawer({
             value={note}
             onChange={(event) => setNote(event.target.value)}
             rows={3}
+            disabled={confirmed}
           />
         </label>
+        {confirmed ? (
+          <p className="interview-field-hint interview-form-span">
+            Lịch đã xác nhận chỉ cho phép xếp lại logistics bằng lệnh
+            Reschedule. Đổi status khác trước khi sửa Demo Topic hoặc Interview
+            Note.
+          </p>
+        ) : null}
       </fieldset>
+
+      {!application.isActive ? (
+        <section className="interview-drawer-section">
+          <h3>Application không hoạt động</h3>
+          <p>
+            Reactivate Application từ dòng Application trước khi thực hiện
+            mutation trên Interview.
+          </p>
+        </section>
+      ) : null}
 
       <section
         className="interview-drawer-section"
@@ -389,7 +434,7 @@ export function InterviewDrawer({
                     {participant.jobTitle ? ` · ${participant.jobTitle}` : ""}
                   </span>
                 </div>
-                {permissions.canManageParticipants ? (
+                {permissions.canManageParticipants && roundOperational ? (
                   <div className="interview-participant-actions">
                     <Button
                       variant="ghost"
@@ -424,7 +469,7 @@ export function InterviewDrawer({
         ) : (
           <p>Chưa có người tham dự.</p>
         )}
-        {permissions.canManageParticipants ? (
+        {permissions.canManageParticipants && roundOperational ? (
           <div className="interview-add-participant">
             <label>
               Tìm người tham dự
@@ -462,7 +507,9 @@ export function InterviewDrawer({
             </Button>
           </div>
         ) : null}
-        {removedParticipants.length && permissions.canManageParticipants ? (
+        {removedParticipants.length &&
+        permissions.canManageParticipants &&
+        roundOperational ? (
           <div className="interview-removed-participants">
             <h4>Đã gỡ khỏi vòng</h4>
             {removedParticipants.map((participant) => (
