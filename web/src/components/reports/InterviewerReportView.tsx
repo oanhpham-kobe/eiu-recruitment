@@ -64,6 +64,7 @@ export function InterviewerReportView({
     : null;
 
   function selectRound(nextRound: InterviewerReportRound, nextMode: ReportMode) {
+    if (pending) return;
     setSelectedId(nextRound.interviewId);
     setMode(nextMode);
     setBase(cloneReportFields(nextRound.ownReport));
@@ -72,6 +73,7 @@ export function InterviewerReportView({
   }
 
   function closeDrawer() {
+    if (pending) return;
     setSelectedId(null);
     setMode("view");
     setFeedback(null);
@@ -90,7 +92,7 @@ export function InterviewerReportView({
   }
 
   async function saveReport() {
-    if (!round?.canEdit) return;
+    if (!round?.canEdit || pending) return;
 
     const changed = changedReportFields(base, draft);
     if (Object.keys(changed.patches).length === 0) {
@@ -138,7 +140,9 @@ export function InterviewerReportView({
     ? mode === "edit"
       ? (
           <div className="interviewer-report__drawer-actions">
-            <Button onClick={() => setMode("view")}>{t("Hủy", "Cancel")}</Button>
+            <Button disabled={pending} onClick={() => setMode("view")}>
+              {t("Hủy", "Cancel")}
+            </Button>
             <Button variant="primary" pending={pending} onClick={saveReport}>
               {t("Lưu báo cáo", "Save report")}
             </Button>
@@ -160,6 +164,7 @@ export function InterviewerReportView({
     <section
       className="interviewer-report"
       aria-labelledby="interviewer-report-title"
+      aria-busy={pending || undefined}
     >
       <div className="interviewer-report__heading">
         <div>
@@ -278,9 +283,11 @@ export function InterviewerReportView({
               locale={locale}
               mode={mode}
               draft={draft}
-              onDraftChange={(key: ReportFieldKey, value: string) =>
-                setDraft((current) => ({ ...current, [key]: value }))
-              }
+              pending={pending}
+              onDraftChange={(key: ReportFieldKey, value: string) => {
+                if (pending) return;
+                setDraft((current) => ({ ...current, [key]: value }));
+              }}
               onSelectRound={(item) => selectRound(item, "view")}
             />
           </>
