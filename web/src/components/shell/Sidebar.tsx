@@ -6,7 +6,7 @@ interface NavItem {
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Tổng quan / Overview" },
   { href: "#applications", label: "Hồ sơ ứng tuyển / Applications" },
-  { href: "#interviews", label: "Lịch phỏng vấn / Interviews" },
+  { href: "/interviews", label: "Lịch phỏng vấn / Interviews" },
   { href: "#reports", label: "Báo cáo / Reports" },
 ];
 
