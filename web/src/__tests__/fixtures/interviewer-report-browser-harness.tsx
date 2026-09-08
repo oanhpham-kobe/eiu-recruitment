@@ -66,7 +66,6 @@ function initialData(): InterviewerReportPageData {
             expectedRecruitmentTime: null,
           },
         },
-        updatedAt: "2026-09-08T03:00:00Z",
       },
       {
         applicationId: "11111111-1111-4111-8111-111111111111",
@@ -93,7 +92,6 @@ function initialData(): InterviewerReportPageData {
           conclusion: "Historical conclusion",
         },
         preview: null,
-        updatedAt: "2026-08-20T03:00:00Z",
       },
     ],
   };
@@ -163,9 +161,9 @@ function LocaleHarnessContent() {
   const { setLocale } = useAppLocale();
   return (
     <>
-      {/* Test-only controls outside #app-root let the browser test change the
-          same production LocaleProvider while Drawer keeps the real background
-          inert. */}
+      {/* Test-only control outside #app-root. It lets the browser test change
+          the same production LocaleProvider while Drawer correctly keeps the
+          real background inert. */}
       <button
         type="button"
         data-testid="test-switch-en"
