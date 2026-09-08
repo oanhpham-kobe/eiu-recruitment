@@ -34,23 +34,20 @@ jobs:
           from pathlib import Path
           path = Path("web/src/lib/interview/server.ts")
           text = path.read_text(encoding="utf-8")
-          old = '''  const submissionEmbed = query
-            ? ",filtered_submission:submissions!inner(submission_id,full_name,email_snapshot,phone)"
-            : "";
-          let appBuilder = client
-            .from("applications")
-            .select(
-              `application_id,submission_id,version_no,unit_id,department_team_id,position_id${submissionEmbed}`,
-            )
-          '''
-          new = '''  const submissionEmbed = query
-            ? ",filtered_submission:submissions!inner(submission_id,full_name,email_snapshot,phone)"
-            : "";
-          const applicationSelect: string = `application_id,submission_id,version_no,unit_id,department_team_id,position_id${submissionEmbed}`;
-          let appBuilder = client
-            .from("applications")
-            .select(applicationSelect)
-          '''
+          old = (
+              '  let appBuilder = client\n'
+              '    .from("applications")\n'
+              '    .select(\n'
+              '      `application_id,submission_id,version_no,unit_id,department_team_id,position_id${submissionEmbed}`,\n'
+              '    )'
+          )
+          new = (
+              '  const applicationSelect: string =\n'
+              '    `application_id,submission_id,version_no,unit_id,department_team_id,position_id${submissionEmbed}`;\n'
+              '  let appBuilder = client\n'
+              '    .from("applications")\n'
+              '    .select(applicationSelect)'
+          )
           count = text.count(old)
           if count != 1:
               raise RuntimeError(f"expected one dynamic Application select, found {count}")
