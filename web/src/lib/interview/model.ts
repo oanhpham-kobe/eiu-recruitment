@@ -123,9 +123,34 @@ export interface InterviewPermissions {
   canDeleteApplication: boolean;
 }
 
+export interface InterviewFilterUnitOption {
+  id: string;
+  name: string;
+}
+
+export interface InterviewFilterTeamOption extends InterviewFilterUnitOption {
+  unitId: string;
+}
+
+export interface InterviewFilterPositionOption
+  extends InterviewFilterUnitOption {
+  unitId: string;
+  departmentTeamId: string | null;
+}
+
 export interface InterviewPageFilters {
   query: string;
   activity: InterviewActivityFilter;
+  unitId: string;
+  departmentTeamId: string;
+  positionId: string;
+  scheduleStatus: InterviewScheduleStatus | "";
+  dateFrom: string;
+  dateTo: string;
+  location: string;
+  interviewFormatId: string;
+  participantAppUserId: string;
+  hrOwnerId: string;
 }
 
 export interface InterviewPageData {
@@ -135,13 +160,46 @@ export interface InterviewPageData {
   formats: InterviewFormatOption[];
   rooms: InterviewRoomOption[];
   participantUsers: InterviewUserOption[];
+  filterUnits: InterviewFilterUnitOption[];
+  filterTeams: InterviewFilterTeamOption[];
+  filterPositions: InterviewFilterPositionOption[];
+  filterHrOwners: InterviewUserOption[];
   permissions: InterviewPermissions;
 }
 
 export const INITIAL_INTERVIEW_FILTERS: InterviewPageFilters = {
   query: "",
   activity: "ACTIVE",
+  unitId: "",
+  departmentTeamId: "",
+  positionId: "",
+  scheduleStatus: "",
+  dateFrom: "",
+  dateTo: "",
+  location: "",
+  interviewFormatId: "",
+  participantAppUserId: "",
+  hrOwnerId: "",
 };
+
+const FILTER_UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const FILTER_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const FILTER_STATUSES = new Set<InterviewScheduleStatus>([
+  "AVAILABLE",
+  "SCHEDULED",
+  "AWAITING",
+  "CONFIRMED",
+  "CANCELLED",
+]);
+
+function normalizedUuid(value: unknown): string {
+  return typeof value === "string" && FILTER_UUID.test(value) ? value : "";
+}
+
+function normalizedDate(value: unknown): string {
+  return typeof value === "string" && FILTER_DATE.test(value) ? value : "";
+}
 
 export function normalizeInterviewFilters(
   value: Partial<InterviewPageFilters> | undefined,
@@ -150,10 +208,31 @@ export function normalizeInterviewFilters(
     value?.activity === "INACTIVE" || value?.activity === "ALL"
       ? value.activity
       : "ACTIVE";
+  const scheduleStatus =
+    typeof value?.scheduleStatus === "string" &&
+    FILTER_STATUSES.has(value.scheduleStatus as InterviewScheduleStatus)
+      ? (value.scheduleStatus as InterviewScheduleStatus)
+      : "";
+  const rawLocation = typeof value?.location === "string" ? value.location : "";
+  const location =
+    rawLocation === "ONLINE" ||
+    (rawLocation.startsWith("ROOM:") && FILTER_UUID.test(rawLocation.slice(5)))
+      ? rawLocation
+      : "";
   return {
     query:
       typeof value?.query === "string" ? value.query.trim().slice(0, 256) : "",
     activity,
+    unitId: normalizedUuid(value?.unitId),
+    departmentTeamId: normalizedUuid(value?.departmentTeamId),
+    positionId: normalizedUuid(value?.positionId),
+    scheduleStatus,
+    dateFrom: normalizedDate(value?.dateFrom),
+    dateTo: normalizedDate(value?.dateTo),
+    location,
+    interviewFormatId: normalizedUuid(value?.interviewFormatId),
+    participantAppUserId: normalizedUuid(value?.participantAppUserId),
+    hrOwnerId: normalizedUuid(value?.hrOwnerId),
   };
 }
 

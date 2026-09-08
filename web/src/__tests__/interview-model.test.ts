@@ -31,7 +31,52 @@ test("Interview filters keep PII query as bounded client/server state", () => {
   assert.deepEqual(normalizeInterviewFilters({ activity: "ACTIVE" }), {
     query: "",
     activity: "ACTIVE",
+    unitId: "",
+    departmentTeamId: "",
+    positionId: "",
+    scheduleStatus: "",
+    dateFrom: "",
+    dateTo: "",
+    location: "",
+    interviewFormatId: "",
+    participantAppUserId: "",
+    hrOwnerId: "",
   });
+});
+
+test("Interview canonical filters normalize UUIDs, status, dates and location safely", () => {
+  const uuid = "11111111-1111-4111-8111-111111111111";
+  const normalized = normalizeInterviewFilters({
+    unitId: uuid,
+    departmentTeamId: "not-a-uuid",
+    positionId: uuid,
+    scheduleStatus: "CONFIRMED",
+    dateFrom: "2026-09-08",
+    dateTo: "bad-date",
+    location: `ROOM:${uuid}`,
+    interviewFormatId: uuid,
+    participantAppUserId: uuid,
+    hrOwnerId: uuid,
+  });
+  assert.equal(normalized.unitId, uuid);
+  assert.equal(normalized.departmentTeamId, "");
+  assert.equal(normalized.positionId, uuid);
+  assert.equal(normalized.scheduleStatus, "CONFIRMED");
+  assert.equal(normalized.dateFrom, "2026-09-08");
+  assert.equal(normalized.dateTo, "");
+  assert.equal(normalized.location, `ROOM:${uuid}`);
+  assert.equal(normalized.interviewFormatId, uuid);
+  assert.equal(normalized.participantAppUserId, uuid);
+  assert.equal(normalized.hrOwnerId, uuid);
+  assert.equal(
+    normalizeInterviewFilters({ scheduleStatus: "INVALID" as never })
+      .scheduleStatus,
+    "",
+  );
+  assert.equal(
+    normalizeInterviewFilters({ location: "javascript:bad" }).location,
+    "",
+  );
 });
 
 test("Interview time renders time first and date second in Vietnam timezone", () => {

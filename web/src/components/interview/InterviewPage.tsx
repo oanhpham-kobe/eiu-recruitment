@@ -216,6 +216,13 @@ export function InterviewPage({
   );
 
   const applyFilters = async (next: InterviewPageFilters) => {
+    if (next.dateFrom && next.dateTo && next.dateFrom > next.dateTo) {
+      setFeedback({
+        kind: "warning",
+        message: "Từ ngày không được sau Đến ngày.",
+      });
+      return;
+    }
     setFilters(next);
     setBusy(true);
     try {
@@ -445,27 +452,228 @@ export function InterviewPage({
           Hiển thị
           <select
             value={filters.activity}
-            onChange={(event) => {
-              const activity = event.target
-                .value as InterviewPageFilters["activity"];
-              const next = { ...filters, activity };
-              void applyFilters(next);
-            }}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                activity: event.target
+                  .value as InterviewPageFilters["activity"],
+              }))
+            }
           >
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
             <option value="ALL">All</option>
           </select>
         </label>
+        <label>
+          Khoa / Phòng
+          <select
+            value={filters.unitId}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                unitId: event.target.value,
+                departmentTeamId: "",
+                positionId: "",
+              }))
+            }
+          >
+            <option value="">Tất cả</option>
+            {data.filterUnits.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Ngành / Tổ
+          <select
+            value={filters.departmentTeamId}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                departmentTeamId: event.target.value,
+                positionId: "",
+              }))
+            }
+          >
+            <option value="">Tất cả</option>
+            {data.filterTeams
+              .filter(
+                (option) => !filters.unitId || option.unitId === filters.unitId,
+              )
+              .map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label>
+          Vị trí
+          <select
+            value={filters.positionId}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                positionId: event.target.value,
+              }))
+            }
+          >
+            <option value="">Tất cả</option>
+            {data.filterPositions
+              .filter(
+                (option) =>
+                  (!filters.unitId || option.unitId === filters.unitId) &&
+                  (!filters.departmentTeamId ||
+                    option.departmentTeamId === filters.departmentTeamId),
+              )
+              .map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label>
+          Schedule Status
+          <select
+            value={filters.scheduleStatus}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                scheduleStatus: event.target
+                  .value as InterviewPageFilters["scheduleStatus"],
+              }))
+            }
+          >
+            <option value="">Tất cả</option>
+            {STATUS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Từ ngày
+          <input
+            type="date"
+            value={filters.dateFrom}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                dateFrom: event.target.value,
+              }))
+            }
+          />
+        </label>
+        <label>
+          Đến ngày
+          <input
+            type="date"
+            min={filters.dateFrom || undefined}
+            value={filters.dateTo}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                dateTo: event.target.value,
+              }))
+            }
+          />
+        </label>
+        <label>
+          Địa điểm
+          <select
+            value={filters.location}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                location: event.target.value,
+              }))
+            }
+          >
+            <option value="">Tất cả</option>
+            <option value="ONLINE">Online / Meeting Link</option>
+            {data.rooms.map((room) => (
+              <option key={room.id} value={`ROOM:${room.id}`}>
+                {room.name}
+                {room.building ? ` — ${room.building}` : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Hình thức
+          <select
+            value={filters.interviewFormatId}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                interviewFormatId: event.target.value,
+              }))
+            }
+          >
+            <option value="">Tất cả</option>
+            {data.formats.map((format) => (
+              <option key={format.id} value={format.id}>
+                {format.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Participant
+          <select
+            value={filters.participantAppUserId}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                participantAppUserId: event.target.value,
+              }))
+            }
+          >
+            <option value="">Tất cả</option>
+            {data.participantUsers.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name} — {user.email}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          HR phụ trách
+          <select
+            value={filters.hrOwnerId}
+            onChange={(event) =>
+              setFilters((current) => ({
+                ...current,
+                hrOwnerId: event.target.value,
+              }))
+            }
+          >
+            <option value="">Tất cả</option>
+            {data.filterHrOwners.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name} — {user.email}
+              </option>
+            ))}
+          </select>
+        </label>
         <Button pending={busy} onClick={() => void applyFilters(filters)}>
-          Tìm
+          Áp dụng
         </Button>
         <Button
           variant="ghost"
           disabled={busy}
           onClick={() => {
-            setFilters(INITIAL_INTERVIEW_FILTERS);
-            void applyFilters(INITIAL_INTERVIEW_FILTERS);
+            const reset = {
+              ...INITIAL_INTERVIEW_FILTERS,
+              activity: initialActivity,
+            };
+            setFilters(reset);
+            void applyFilters(reset);
           }}
         >
           Xóa lọc

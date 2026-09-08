@@ -6,6 +6,9 @@ import { createServerClient } from "@/lib/supabase/server";
 import {
   type ApplicationSelectorOption,
   type InterviewApplicationGroup,
+  type InterviewFilterPositionOption,
+  type InterviewFilterTeamOption,
+  type InterviewFilterUnitOption,
   type InterviewFormatOption,
   type InterviewPageData,
   type InterviewPageFilters,
@@ -94,6 +97,26 @@ function safeSearchTerm(value: string): string {
     .trim();
 }
 
+function vietnamDateBoundaryIso(value: string, addDays = 0): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+  const [, year, month, day] = match;
+  return new Date(
+    Date.UTC(Number(year), Number(month) - 1, Number(day) + addDays, -7, 0, 0),
+  ).toISOString();
+}
+
+function hasInterviewFilters(filters: InterviewPageFilters): boolean {
+  return Boolean(
+    filters.scheduleStatus ||
+      filters.dateFrom ||
+      filters.dateTo ||
+      filters.location ||
+      filters.interviewFormatId ||
+      filters.participantAppUserId,
+  );
+}
+
 async function matchingSubmissionIds(
   client: SupabaseClient,
   rawQuery: string,
@@ -149,12 +172,16 @@ export async function loadInterviewPage(
     };
   }
 
+  const interviewFiltersActive = hasInterviewFilters(filters);
+  const participantEmbed = filters.participantAppUserId
+    ? ",filtered_participants:interview_participants!inner(app_user_id,is_current)"
+    : "";
+  const applicationSelect = interviewFiltersActive
+    ? `application_id,submission_id,unit_id,department_team_id,position_id,hr_owner_id,is_active,version_no,updated_at,filtered_interviews:interviews!inner(interview_id,schedule_status_code,start_at,room_id,meeting_link,interview_format_id${participantEmbed})`
+    : "application_id,submission_id,unit_id,department_team_id,position_id,hr_owner_id,is_active,version_no,updated_at";
   let applicationQuery = client
     .from("applications")
-    .select(
-      "application_id,submission_id,unit_id,department_team_id,position_id,hr_owner_id,is_active,version_no,updated_at",
-      { count: "exact" },
-    )
+    .select(applicationSelect, { count: "exact" })
     .order("updated_at", { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1);
   if (filters.activity === "ACTIVE")
@@ -166,6 +193,62 @@ export async function loadInterviewPage(
       "submission_id",
       matchedSubmissionIds,
     );
+  if (filters.unitId)
+    applicationQuery = applicationQuery.eq("unit_id", filters.unitId);
+  if (filters.departmentTeamId)
+    applicationQuery = applicationQuery.eq(
+      "department_team_id",
+      filters.departmentTeamId,
+    );
+  if (filters.positionId)
+    applicationQuery = applicationQuery.eq("position_id", filters.positionId);
+  if (filters.hrOwnerId)
+    applicationQuery = applicationQuery.eq("hr_owner_id", filters.hrOwnerId);
+  if (filters.scheduleStatus)
+    applicationQuery = applicationQuery.eq(
+      "filtered_interviews.schedule_status_code",
+      filters.scheduleStatus,
+    );
+  const dateFrom = filters.dateFrom
+    ? vietnamDateBoundaryIso(filters.dateFrom)
+    : null;
+  const dateToExclusive = filters.dateTo
+    ? vietnamDateBoundaryIso(filters.dateTo, 1)
+    : null;
+  if (dateFrom)
+    applicationQuery = applicationQuery.gte(
+      "filtered_interviews.start_at",
+      dateFrom,
+    );
+  if (dateToExclusive)
+    applicationQuery = applicationQuery.lt(
+      "filtered_interviews.start_at",
+      dateToExclusive,
+    );
+  if (filters.interviewFormatId)
+    applicationQuery = applicationQuery.eq(
+      "filtered_interviews.interview_format_id",
+      filters.interviewFormatId,
+    );
+  if (filters.location === "ONLINE")
+    applicationQuery = applicationQuery.not(
+      "filtered_interviews.meeting_link",
+      "is",
+      null,
+    );
+  if (filters.location.startsWith("ROOM:"))
+    applicationQuery = applicationQuery.eq(
+      "filtered_interviews.room_id",
+      filters.location.slice(5),
+    );
+  if (filters.participantAppUserId) {
+    applicationQuery = applicationQuery
+      .eq(
+        "filtered_interviews.filtered_participants.app_user_id",
+        filters.participantAppUserId,
+      )
+      .eq("filtered_interviews.filtered_participants.is_current", true);
+  }
 
   const {
     data: applicationData,
@@ -175,7 +258,9 @@ export async function loadInterviewPage(
   if (applicationError || !Array.isArray(applicationData))
     throw new InterviewReadError();
 
-  const applications = applicationData as Array<Record<string, unknown>>;
+  const applications = applicationData as unknown as Array<
+    Record<string, unknown>
+  >;
   const applicationIds = applications
     .map((row) => stringValue(row.application_id))
     .filter((id): id is string => id !== null);
@@ -183,15 +268,7 @@ export async function loadInterviewPage(
     .map((row) => stringValue(row.submission_id))
     .filter((id): id is string => id !== null);
 
-  const [
-    submissionsResult,
-    unitsResult,
-    teamsResult,
-    positionsResult,
-    ownersResult,
-    interviewsResult,
-    reference,
-  ] = await Promise.all([
+  const [submissionsResult, interviewsResult, reference] = await Promise.all([
     submissionIds.length
       ? client
           .from("submissions")
@@ -200,12 +277,6 @@ export async function loadInterviewPage(
           )
           .in("submission_id", submissionIds)
       : Promise.resolve({ data: [], error: null }),
-    client.from("organizational_units").select("unit_id,name_vi"),
-    client.from("department_teams").select("department_team_id,name_vi"),
-    client.from("positions").select("position_id,name_vi"),
-    client
-      .from("app_users")
-      .select("app_user_id,full_name,email,job_title,is_active"),
     applicationIds.length
       ? client
           .from("interviews")
@@ -218,14 +289,7 @@ export async function loadInterviewPage(
     loadReferenceOptions(client),
   ]);
 
-  const requiredResults = [
-    submissionsResult,
-    unitsResult,
-    teamsResult,
-    positionsResult,
-    ownersResult,
-    interviewsResult,
-  ];
+  const requiredResults = [submissionsResult, interviewsResult];
   if (requiredResults.some((result) => result.error))
     throw new InterviewReadError();
 
@@ -266,16 +330,6 @@ export async function loadInterviewPage(
     }
   }
 
-  const mapBy = (rows: unknown, key: string, label: string) => {
-    const map = new Map<string, string>();
-    for (const row of Array.isArray(rows) ? rows : []) {
-      const record = row as Record<string, unknown>;
-      const id = stringValue(record[key]);
-      const name = stringValue(record[label]);
-      if (id && name) map.set(id, name);
-    }
-    return map;
-  };
   const submissions = new Map<string, Record<string, unknown>>();
   for (const row of Array.isArray(submissionsResult.data)
     ? submissionsResult.data
@@ -284,10 +338,18 @@ export async function loadInterviewPage(
     const id = stringValue(record.submission_id);
     if (id) submissions.set(id, record);
   }
-  const units = mapBy(unitsResult.data, "unit_id", "name_vi");
-  const teams = mapBy(teamsResult.data, "department_team_id", "name_vi");
-  const positions = mapBy(positionsResult.data, "position_id", "name_vi");
-  const owners = mapBy(ownersResult.data, "app_user_id", "full_name");
+  const units = new Map(
+    reference.filterUnits.map((item) => [item.id, item.name]),
+  );
+  const teams = new Map(
+    reference.filterTeams.map((item) => [item.id, item.name]),
+  );
+  const positions = new Map(
+    reference.filterPositions.map((item) => [item.id, item.name]),
+  );
+  const owners = new Map(
+    reference.filterHrOwners.map((item) => [item.id, item.name]),
+  );
 
   const participantsByInterview = new Map<string, InterviewParticipant[]>();
   for (const row of participantRows) {
@@ -402,8 +464,12 @@ async function loadReferenceOptions(client: SupabaseClient): Promise<{
   formats: InterviewFormatOption[];
   rooms: InterviewRoomOption[];
   participantUsers: InterviewUserOption[];
+  filterUnits: InterviewFilterUnitOption[];
+  filterTeams: InterviewFilterTeamOption[];
+  filterPositions: InterviewFilterPositionOption[];
+  filterHrOwners: InterviewUserOption[];
 }> {
-  const [formats, rooms, users] = await Promise.all([
+  const [formats, rooms, users, units, teams, positions] = await Promise.all([
     client
       .from("interview_formats")
       .select(
@@ -417,10 +483,28 @@ async function loadReferenceOptions(client: SupabaseClient): Promise<{
     client
       .from("app_users")
       .select("app_user_id,full_name,email,job_title,is_active")
-      .eq("is_active", true)
       .order("full_name"),
+    client
+      .from("organizational_units")
+      .select("unit_id,name_vi")
+      .order("name_vi"),
+    client
+      .from("department_teams")
+      .select("department_team_id,unit_id,name_vi")
+      .order("name_vi"),
+    client
+      .from("positions")
+      .select("position_id,unit_id,department_team_id,name_vi")
+      .order("name_vi"),
   ]);
-  if (formats.error || rooms.error || users.error)
+  if (
+    formats.error ||
+    rooms.error ||
+    users.error ||
+    units.error ||
+    teams.error ||
+    positions.error
+  )
     throw new InterviewReadError();
   return {
     formats: (Array.isArray(formats.data) ? formats.data : []).flatMap(
@@ -463,8 +547,55 @@ async function loadReferenceOptions(client: SupabaseClient): Promise<{
         const id = stringValue(row.app_user_id);
         const name = stringValue(row.full_name);
         const email = stringValue(row.email);
-        if (!id || !name || !email) return [];
+        if (!id || !name || !email || row.is_active !== true) return [];
         return [{ id, name, email, jobTitle: stringValue(row.job_title) }];
+      },
+    ),
+    filterUnits: (Array.isArray(units.data) ? units.data : []).flatMap(
+      (raw) => {
+        const row = raw as Record<string, unknown>;
+        const id = stringValue(row.unit_id);
+        const name = stringValue(row.name_vi);
+        return id && name ? [{ id, name }] : [];
+      },
+    ),
+    filterTeams: (Array.isArray(teams.data) ? teams.data : []).flatMap(
+      (raw) => {
+        const row = raw as Record<string, unknown>;
+        const id = stringValue(row.department_team_id);
+        const unitId = stringValue(row.unit_id);
+        const name = stringValue(row.name_vi);
+        return id && unitId && name ? [{ id, unitId, name }] : [];
+      },
+    ),
+    filterPositions: (Array.isArray(positions.data)
+      ? positions.data
+      : []
+    ).flatMap((raw) => {
+      const row = raw as Record<string, unknown>;
+      const id = stringValue(row.position_id);
+      const unitId = stringValue(row.unit_id);
+      const name = stringValue(row.name_vi);
+      return id && unitId && name
+        ? [
+            {
+              id,
+              unitId,
+              departmentTeamId: stringValue(row.department_team_id),
+              name,
+            },
+          ]
+        : [];
+    }),
+    filterHrOwners: (Array.isArray(users.data) ? users.data : []).flatMap(
+      (raw) => {
+        const row = raw as Record<string, unknown>;
+        const id = stringValue(row.app_user_id);
+        const name = stringValue(row.full_name);
+        const email = stringValue(row.email);
+        return id && name && email
+          ? [{ id, name, email, jobTitle: stringValue(row.job_title) }]
+          : [];
       },
     ),
   };
