@@ -150,6 +150,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Test affected web domain acceptance set
         run: npm run test
 
