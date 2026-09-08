@@ -157,28 +157,18 @@ export async function loadInterviewPage(
     Number.isSafeInteger(deps.page) && (deps.page ?? 0) > 0
       ? (deps.page as number)
       : 1;
-  const matchedSubmissionIds = await matchingSubmissionIds(
-    client,
-    filters.query,
-  );
-  if (matchedSubmissionIds?.length === 0) {
-    const reference = await loadReferenceOptions(client);
-    return {
-      groups: [],
-      page: 1,
-      pageCount: 1,
-      permissions: actorPermissions,
-      ...reference,
-    };
-  }
-
+  const submissionSearch = safeSearchTerm(filters.query);
   const interviewFiltersActive = hasInterviewFilters(filters);
   const participantEmbed = filters.participantAppUserId
     ? ",filtered_participants:interview_participants!inner(app_user_id,is_current)"
     : "";
-  const applicationSelect = interviewFiltersActive
-    ? `application_id,submission_id,unit_id,department_team_id,position_id,hr_owner_id,is_active,version_no,updated_at,filtered_interviews:interviews!inner(interview_id,schedule_status_code,start_at,room_id,meeting_link,interview_format_id${participantEmbed})`
-    : "application_id,submission_id,unit_id,department_team_id,position_id,hr_owner_id,is_active,version_no,updated_at";
+  const submissionEmbed = submissionSearch
+    ? ",filtered_submission:submissions!inner(submission_id,full_name,email_snapshot,phone)"
+    : "";
+  const interviewEmbed = interviewFiltersActive
+    ? `,filtered_interviews:interviews!inner(interview_id,schedule_status_code,start_at,room_id,meeting_link,interview_format_id${participantEmbed})`
+    : "";
+  const applicationSelect = `application_id,submission_id,unit_id,department_team_id,position_id,hr_owner_id,is_active,version_no,updated_at${submissionEmbed}${interviewEmbed}`;
   let applicationQuery = client
     .from("applications")
     .select(applicationSelect, { count: "exact" })
@@ -188,11 +178,13 @@ export async function loadInterviewPage(
     applicationQuery = applicationQuery.eq("is_active", true);
   if (filters.activity === "INACTIVE")
     applicationQuery = applicationQuery.eq("is_active", false);
-  if (matchedSubmissionIds)
-    applicationQuery = applicationQuery.in(
-      "submission_id",
-      matchedSubmissionIds,
+  if (submissionSearch) {
+    const pattern = `%${submissionSearch}%`;
+    applicationQuery = applicationQuery.or(
+      `full_name.ilike.${pattern},email_snapshot.ilike.${pattern},phone.ilike.${pattern}`,
+      { referencedTable: "filtered_submission" },
     );
+  }
   if (filters.unitId)
     applicationQuery = applicationQuery.eq("unit_id", filters.unitId);
   if (filters.departmentTeamId)
