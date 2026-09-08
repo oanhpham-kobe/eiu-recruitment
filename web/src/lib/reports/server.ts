@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
+import { isOwnWritableParticipant } from "./authorization";
 import {
   parseInterviewerReportPageRpc,
   REPORT_FIELD_KEYS,
@@ -180,6 +181,29 @@ export async function saveOwnInterviewerReport(
       error: {
         code: "VALIDATION_ERROR",
         message: "Each patched field requires its base value",
+      },
+    };
+  }
+
+  let page: InterviewerReportPageData;
+  try {
+    page = await loadInterviewerReportPage(supabase);
+  } catch {
+    return {
+      success: false,
+      error: {
+        code: "FORBIDDEN",
+        message: "Own current writable report context required",
+      },
+    };
+  }
+
+  if (!isOwnWritableParticipant(page.rounds, input.interviewParticipantId)) {
+    return {
+      success: false,
+      error: {
+        code: "FORBIDDEN",
+        message: "Own current writable report context required",
       },
     };
   }
