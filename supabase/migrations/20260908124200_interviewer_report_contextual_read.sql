@@ -49,6 +49,8 @@ begin
     );
   end if;
 
+  -- Reuse the accepted Slice-04 authorities for Current Round and Final
+  -- Decision Source rather than re-deriving those contracts in Slice-05.
   with accessible_rounds as (
     select
       a.application_id,
@@ -67,18 +69,11 @@ begin
       f.name_vi as format_name_vi,
       f.name_en as format_name_en,
       rm.display_name as room_name,
-      (
-        i.interview_id = (
-          select i_current.interview_id
-          from public.interviews i_current
-          where i_current.application_id = a.application_id
-            and i_current.is_active = true
-          order by
-            i_current.round_no desc,
-            i_current.created_at desc,
-            i_current.interview_id desc
-          limit 1
-        )
+      exists (
+        select 1
+        from private.application_current_interview ci
+        where ci.application_id = a.application_id
+          and ci.interview_id = i.interview_id
       ) as is_current_round,
       case i.report_status_code
         when 'FOLLOW_UP' then 'REPORT_SUBMITTED'
@@ -87,16 +82,11 @@ begin
         else i.report_status_code
       end as display_report_status,
       (
-        i.interview_id = (
-          select i_current.interview_id
-          from public.interviews i_current
-          where i_current.application_id = a.application_id
-            and i_current.is_active = true
-          order by
-            i_current.round_no desc,
-            i_current.created_at desc,
-            i_current.interview_id desc
-          limit 1
+        exists (
+          select 1
+          from private.application_current_interview ci
+          where ci.application_id = a.application_id
+            and ci.interview_id = i.interview_id
         )
         and i.report_status_code not in ('HIRED', 'REJECTED')
       ) as can_edit,
@@ -216,30 +206,13 @@ begin
                 coalesce(
                   (
                     select jsonb_build_object(
-                      'conclusion', final_report.conclusion,
-                      'expected_specific_job_assigned', final_report.expected_specific_job_assigned,
-                      'expected_recruitment_time', final_report.expected_recruitment_time
+                      'conclusion', fd.conclusion,
+                      'expected_specific_job_assigned', fd.expected_specific_job_assigned,
+                      'expected_recruitment_time', fd.expected_recruitment_time
                     )
-                    from (
-                      select r.*
-                      from public.interview_reports r
-                      join public.interview_participants ip
-                        on ip.interview_participant_id = r.interview_participant_id
-                      where ip.interview_id = ar.interview_id
-                        and ip.is_current = true
-                        and ip.removed_at is null
-                        and r.is_active = true
-                        and r.is_archived = false
-                        and (
-                          nullif(btrim(r.conclusion), '') is not null
-                          or nullif(btrim(r.expected_specific_job_assigned), '') is not null
-                          or nullif(btrim(r.expected_recruitment_time), '') is not null
-                        )
-                      order by
-                        r.decision_updated_at desc nulls last,
-                        r.interview_report_id desc
-                      limit 1
-                    ) final_report
+                    from private.interview_final_decision_source fd
+                    where fd.application_id = ar.application_id
+                      and fd.interview_id = ar.interview_id
                   ),
                   jsonb_build_object(
                     'conclusion', null,
