@@ -25,6 +25,7 @@ import { InterviewerReportDrawerContent } from "./InterviewerReportDrawerContent
 import {
   cloneReportFields,
   formatReportTime,
+  reportFeedbackMessage,
   reportPosition,
   reportStatusTone,
   type ReportFeedback,
@@ -94,13 +95,7 @@ export function InterviewerReportView({
     const changed = changedReportFields(base, draft);
     if (Object.keys(changed.patches).length === 0) {
       if (round.hasOwnReport) {
-        setFeedback({
-          kind: "warning",
-          message: t(
-            "Không có thay đổi để lưu.",
-            "There are no changes to save.",
-          ),
-        });
+        setFeedback({ kind: "warning", code: "NO_CHANGES" });
         return;
       }
       changed.patches.professional_knowledge = "";
@@ -120,12 +115,7 @@ export function InterviewerReportView({
         const stale = result.error.code === "STALE_VERSION";
         setFeedback({
           kind: stale ? "warning" : "error",
-          message: stale
-            ? t(
-                "Báo cáo đã thay đổi ở nơi khác. Dữ liệu đã được tải lại.",
-                "This report changed elsewhere. Fresh data has been loaded.",
-              )
-            : t("Không thể lưu báo cáo.", "The report could not be saved."),
+          code: stale ? "STALE_RELOADED" : "SAVE_FAILED",
         });
         if (stale) {
           await refreshSelected(round.interviewId);
@@ -136,18 +126,9 @@ export function InterviewerReportView({
 
       await refreshSelected(round.interviewId);
       setMode("view");
-      setFeedback({
-        kind: "success",
-        message: t("Đã lưu báo cáo.", "Report saved."),
-      });
+      setFeedback({ kind: "success", code: "SAVE_SUCCEEDED" });
     } catch {
-      setFeedback({
-        kind: "error",
-        message: t(
-          "Không thể hoàn tất thao tác. Vui lòng thử lại.",
-          "The action could not be completed. Please try again.",
-        ),
-      });
+      setFeedback({ kind: "error", code: "ACTION_FAILED" });
     } finally {
       setPending(false);
     }
@@ -195,7 +176,9 @@ export function InterviewerReportView({
       </div>
 
       {!round && feedback ? (
-        <AsyncStatus kind={feedback.kind}>{feedback.message}</AsyncStatus>
+        <AsyncStatus kind={feedback.kind}>
+          {reportFeedbackMessage(feedback, locale)}
+        </AsyncStatus>
       ) : null}
 
       {groups.length === 0 ? (
@@ -285,7 +268,9 @@ export function InterviewerReportView({
         {round ? (
           <>
             {feedback ? (
-              <AsyncStatus kind={feedback.kind}>{feedback.message}</AsyncStatus>
+              <AsyncStatus kind={feedback.kind}>
+                {reportFeedbackMessage(feedback, locale)}
+              </AsyncStatus>
             ) : null}
             <InterviewerReportDrawerContent
               round={round}

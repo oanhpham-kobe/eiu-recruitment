@@ -163,15 +163,22 @@ function LocaleHarnessContent() {
   const { setLocale } = useAppLocale();
   return (
     <>
-      {/* Test-only control outside #app-root. It lets the browser test change
-          the same production LocaleProvider while Drawer correctly keeps the
-          real background inert. */}
+      {/* Test-only controls outside #app-root let the browser test change the
+          same production LocaleProvider while Drawer keeps the real background
+          inert. */}
       <button
         type="button"
         data-testid="test-switch-en"
         onClick={() => setLocale("en")}
       >
         Test switch EN
+      </button>
+      <button
+        type="button"
+        data-testid="test-switch-vi"
+        onClick={() => setLocale("vi")}
+      >
+        Test switch VI
       </button>
       <div id="app-root" data-harness-ready="locale">
         <ReportSurface />

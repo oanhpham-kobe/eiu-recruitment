@@ -1,11 +1,23 @@
 import type { ReactNode } from "react";
-import { REPORT_FIELD_KEYS, type InterviewerReportRound, type ReportFieldKey, type ReportFields } from "@/lib/reports/model";
+import {
+  REPORT_FIELD_KEYS,
+  type InterviewerReportRound,
+  type ReportFieldKey,
+  type ReportFields,
+} from "@/lib/reports/model";
 
 export type ReportLocale = "vi" | "en";
 export type ReportMode = "view" | "edit";
+export type ReportFeedbackCode =
+  | "NO_CHANGES"
+  | "STALE_RELOADED"
+  | "SAVE_FAILED"
+  | "SAVE_SUCCEEDED"
+  | "ACTION_FAILED";
+
 export type ReportFeedback = {
   kind: "success" | "error" | "warning";
-  message: string;
+  code: ReportFeedbackCode;
 } | null;
 
 export const REPORT_FIELD_LABELS: Record<
@@ -41,6 +53,26 @@ export const REPORT_FIELD_LABELS: Record<
     "decision",
   ],
 };
+
+export function reportFeedbackMessage(
+  feedback: Exclude<ReportFeedback, null>,
+  locale: ReportLocale,
+): string {
+  const labels: Record<ReportFeedbackCode, [string, string]> = {
+    NO_CHANGES: ["Không có thay đổi để lưu.", "There are no changes to save."],
+    STALE_RELOADED: [
+      "Báo cáo đã thay đổi ở nơi khác. Dữ liệu đã được tải lại.",
+      "This report changed elsewhere. Fresh data has been loaded.",
+    ],
+    SAVE_FAILED: ["Không thể lưu báo cáo.", "The report could not be saved."],
+    SAVE_SUCCEEDED: ["Đã lưu báo cáo.", "Report saved."],
+    ACTION_FAILED: [
+      "Không thể hoàn tất thao tác. Vui lòng thử lại.",
+      "The action could not be completed. Please try again.",
+    ],
+  };
+  return labels[feedback.code][locale === "vi" ? 0 : 1];
+}
 
 export function cloneReportFields(value: ReportFields): ReportFields {
   return Object.fromEntries(
