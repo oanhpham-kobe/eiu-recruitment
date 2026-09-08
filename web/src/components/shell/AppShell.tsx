@@ -11,24 +11,21 @@ export interface AppShellProps {
   children: React.ReactNode;
   title?: React.ReactNode;
   currentPath?: string;
-  showInterviews?: boolean;
 }
 
 export function AppShell({
   children,
   title,
   currentPath = "/",
-  showInterviews = true,
 }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   return (
     <div className="shell">
       <SkipLink />
-      <Sidebar currentPath={currentPath} showInterviews={showInterviews} />
+      <Sidebar currentPath={currentPath} />
       <MobileNavigation
         open={mobileNavOpen}
         currentPath={currentPath}
-        showInterviews={showInterviews}
         onClose={() => setMobileNavOpen(false)}
       />
       <div className="shell-main">
