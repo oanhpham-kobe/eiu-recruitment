@@ -24,13 +24,18 @@ text = text.replace(stop, "")
 
 once(
     '<div className="interview-toolbar" aria-label="Thao tác Interview">',
-    '<div className="interview-toolbar" role="group" aria-label="Thao tác Interview">',
+    '<fieldset className="interview-toolbar"><legend className="sr-only">Thao tác Interview</legend>',
     "toolbar semantics",
 )
 once(
-    '<div className="interview-filters" aria-label="Bộ lọc Interview">',
-    '<div className="interview-filters" role="group" aria-label="Bộ lọc Interview">',
-    "filter semantics",
+    '</div>\n\n      <div className="interview-filters" aria-label="Bộ lọc Interview">',
+    '</fieldset>\n\n      <fieldset className="interview-filters"><legend className="sr-only">Bộ lọc Interview</legend>',
+    "toolbar close and filter semantics",
+)
+once(
+    '</div>\n\n      {feedback ? <AsyncStatus',
+    '</fieldset>\n\n      {feedback ? <AsyncStatus',
+    "filter close",
 )
 once(
     'INTERVIEW_COLUMNS.map((width, index) => <col key={`${width}-${index}`} style={{ width }} />)',
@@ -49,6 +54,20 @@ once(
       >''',
     "row event delegation",
 )
-
 P.write_text(text.rstrip() + "\n", encoding="utf-8")
+
+CSS = ROOT / "web/src/styles/interview.css"
+css = CSS.read_text(encoding="utf-8")
+anchor = ".interview-toolbar {\n  position: sticky;"
+replacement = ".interview-toolbar {\n  margin: 0;\n  border: 0;\n  min-width: 0;\n  position: sticky;"
+if css.count(anchor) != 1:
+    raise SystemExit(f"toolbar css anchor: expected one, found {css.count(anchor)}")
+css = css.replace(anchor, replacement, 1)
+anchor = ".interview-filters {\n  display: flex;"
+replacement = ".interview-filters {\n  margin: 0;\n  padding: 0;\n  border: 0;\n  min-width: 0;\n  display: flex;"
+if css.count(anchor) != 1:
+    raise SystemExit(f"filter css anchor: expected one, found {css.count(anchor)}")
+css = css.replace(anchor, replacement, 1)
+CSS.write_text(css.rstrip() + "\n", encoding="utf-8")
+
 print("S04 lint blockers repaired")
