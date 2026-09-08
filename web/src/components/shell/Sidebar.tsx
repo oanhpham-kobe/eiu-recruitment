@@ -1,13 +1,22 @@
-interface NavItem {
+"use client";
+
+import { useAppLocale } from "./LocaleProvider";
+
+export interface NavItem {
   href: string;
-  label: string;
+  labelVi: string;
+  labelEn: string;
 }
 
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Tổng quan / Overview" },
-  { href: "#applications", label: "Hồ sơ ứng tuyển / Applications" },
-  { href: "/interviews", label: "Lịch phỏng vấn / Interviews" },
-  { href: "#reports", label: "Báo cáo / Reports" },
+  { href: "/", labelVi: "Tổng quan", labelEn: "Overview" },
+  {
+    href: "#applications",
+    labelVi: "Hồ sơ ứng tuyển",
+    labelEn: "Applications",
+  },
+  { href: "/interviews", labelVi: "Lịch phỏng vấn", labelEn: "Interviews" },
+  { href: "/reports", labelVi: "Báo cáo phỏng vấn", labelEn: "Interview Reports" },
 ];
 
 export interface SidebarProps {
@@ -19,10 +28,12 @@ export function Sidebar({
   currentPath = "/",
   navItems = DEFAULT_NAV_ITEMS,
 }: SidebarProps) {
+  const { locale } = useAppLocale();
+
   return (
     <aside
       className="sidebar"
-      aria-label="Thanh điều hướng chính / Main sidebar"
+      aria-label={locale === "vi" ? "Thanh điều hướng chính" : "Main sidebar"}
     >
       <div className="sidebar-brand">
         <div className="brand-logo">
@@ -33,12 +44,14 @@ export function Sidebar({
             <i />
           </span>
         </div>
-        <div className="brand-sub">Tuyển dụng / Recruitment</div>
+        <div className="brand-sub">
+          {locale === "vi" ? "Tuyển dụng" : "Recruitment"}
+        </div>
       </div>
 
       <nav
         className="sidebar-nav"
-        aria-label="Menu chức năng / Navigation menu"
+        aria-label={locale === "vi" ? "Menu chức năng" : "Navigation menu"}
       >
         <ul className="nav-list">
           {navItems.map((item) => {
@@ -49,7 +62,7 @@ export function Sidebar({
                   href={item.href}
                   aria-current={isCurrent ? "page" : undefined}
                 >
-                  {item.label}
+                  {locale === "vi" ? item.labelVi : item.labelEn}
                 </a>
               </li>
             );
@@ -61,13 +74,17 @@ export function Sidebar({
         <div
           className="user-avatar"
           role="img"
-          aria-label="Ảnh đại diện người dùng / User avatar"
+          aria-label={locale === "vi" ? "Ảnh đại diện người dùng" : "User avatar"}
         >
-          HR
+          IU
         </div>
         <div className="user-info">
-          <span className="user-name">Quản trị viên / Admin</span>
-          <span className="user-role">Phòng Nhân sự / HR Department</span>
+          <span className="user-name">
+            {locale === "vi" ? "Người dùng nội bộ" : "Internal User"}
+          </span>
+          <span className="user-role">
+            EIU Recruitment
+          </span>
         </div>
       </div>
     </aside>

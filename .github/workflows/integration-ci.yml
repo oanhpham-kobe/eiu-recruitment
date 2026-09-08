@@ -181,6 +181,10 @@ jobs:
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
 
+      - name: Execute TASK-S05-001 Interviewer Report Contextual Read Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/interviewer_report_contextual_read_test.sql
+
       - name: Stop local Supabase
         if: always()
         run: supabase stop

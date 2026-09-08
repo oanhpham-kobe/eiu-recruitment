@@ -1,4 +1,7 @@
+"use client";
+
 import type React from "react";
+import { useAppLocale } from "./LocaleProvider";
 
 export interface HeaderProps {
   title?: React.ReactNode;
@@ -7,17 +10,21 @@ export interface HeaderProps {
 }
 
 export function Header({
-  title = "Hệ thống Tuyển dụng EIU / EIU Recruitment",
+  title,
   mobileNavOpen = false,
   onOpenNavigation,
 }: HeaderProps) {
+  const { locale, setLocale } = useAppLocale();
+  const defaultTitle =
+    locale === "vi" ? "Hệ thống Tuyển dụng EIU" : "EIU Recruitment";
+
   return (
     <header className="topbar">
       <button
         id="internal-nav-trigger"
         type="button"
         className="internal-nav-trigger"
-        aria-label="Mở menu / Open navigation"
+        aria-label={locale === "vi" ? "Mở menu" : "Open navigation"}
         aria-expanded={mobileNavOpen}
         aria-controls="mobile-internal-navigation"
         onClick={onOpenNavigation}
@@ -25,16 +32,27 @@ export function Header({
         <span aria-hidden="true">☰</span>
       </button>
       <div className="topbar-title">
-        {typeof title === "string" ? <h1>{title}</h1> : title}
+        {typeof title === "string" ? (
+          <h1>{title}</h1>
+        ) : title ? (
+          title
+        ) : (
+          <h1>{defaultTitle}</h1>
+        )}
       </div>
       <div className="topbar-utility">
         <fieldset className="language-switcher">
-          <legend className="sr-only">Chọn ngôn ngữ / Choose language</legend>
+          <legend className="sr-only">
+            {locale === "vi" ? "Chọn ngôn ngữ" : "Choose language"}
+          </legend>
           <button
             type="button"
-            className="lang-btn active"
-            aria-pressed="true"
-            aria-label="Tiếng Việt (Đang chọn / Selected)"
+            className={`lang-btn ${locale === "vi" ? "active" : ""}`.trim()}
+            aria-pressed={locale === "vi"}
+            aria-label={
+              locale === "vi" ? "Tiếng Việt, đang chọn" : "Vietnamese"
+            }
+            onClick={() => setLocale("vi")}
           >
             VI
           </button>
@@ -43,9 +61,12 @@ export function Header({
           </span>
           <button
             type="button"
-            className="lang-btn"
-            aria-pressed="false"
-            aria-label="English"
+            className={`lang-btn ${locale === "en" ? "active" : ""}`.trim()}
+            aria-pressed={locale === "en"}
+            aria-label={
+              locale === "en" ? "English, selected" : "Tiếng Anh"
+            }
+            onClick={() => setLocale("en")}
           >
             EN
           </button>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useAppLocale } from "./LocaleProvider";
 import { DEFAULT_NAV_ITEMS } from "./Sidebar";
 
 interface MobileNavigationProps {
@@ -18,6 +19,7 @@ export function MobileNavigation({
   currentPath,
   onClose,
 }: MobileNavigationProps) {
+  const { locale } = useAppLocale();
   const panelRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -68,15 +70,18 @@ export function MobileNavigation({
       <button
         type="button"
         className="mobile-nav-backdrop"
-        aria-label="Đóng menu / Close menu"
+        aria-label={locale === "vi" ? "Đóng menu" : "Close menu"}
         onClick={onClose}
       />
       <aside
+        id="mobile-internal-navigation"
         ref={panelRef}
         className="mobile-nav-panel"
         role="dialog"
         aria-modal="true"
-        aria-label="Điều hướng nội bộ / Internal navigation"
+        aria-label={
+          locale === "vi" ? "Điều hướng nội bộ" : "Internal navigation"
+        }
       >
         <div className="mobile-nav-header">
           <strong>EIU Recruitment</strong>
@@ -87,10 +92,14 @@ export function MobileNavigation({
             onClick={onClose}
           >
             <span aria-hidden="true">×</span>
-            <span className="sr-only">Đóng menu / Close menu</span>
+            <span className="sr-only">
+              {locale === "vi" ? "Đóng menu" : "Close menu"}
+            </span>
           </button>
         </div>
-        <nav aria-label="Menu chức năng / Navigation menu">
+        <nav
+          aria-label={locale === "vi" ? "Menu chức năng" : "Navigation menu"}
+        >
           <ul className="mobile-nav-list">
             {DEFAULT_NAV_ITEMS.map((item) => (
               <li key={item.href}>
@@ -99,15 +108,15 @@ export function MobileNavigation({
                   aria-current={currentPath === item.href ? "page" : undefined}
                   onClick={onClose}
                 >
-                  {item.label}
+                  {locale === "vi" ? item.labelVi : item.labelEn}
                 </a>
               </li>
             ))}
           </ul>
         </nav>
         <div className="mobile-nav-user">
-          <strong>Quản trị viên / Admin</strong>
-          <span>Phòng Nhân sự / HR Department</span>
+          <strong>{locale === "vi" ? "Người dùng nội bộ" : "Internal User"}</strong>
+          <span>EIU Recruitment</span>
         </div>
       </aside>
     </div>,
