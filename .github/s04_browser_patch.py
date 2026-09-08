@@ -84,6 +84,14 @@ replace_once(
 path = "web/src/__tests__/fixtures/interview-browser-acceptance-harness.tsx"
 replace_once(
     path,
+    '''import "@/app/globals.css";
+''',
+    '''import "@/app/globals.css";
+import "@/styles/interview.css";
+''',
+)
+replace_once(
+    path,
     '''                {INTERVIEW_COLUMNS.map((width, index) => (
                   <col key={`${width}-${index}`} style={{ width }} />
                 ))}''',
