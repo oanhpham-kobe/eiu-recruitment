@@ -106,3 +106,50 @@ replace_once(
             <dd>Phòng A1.01</dd>
           </dl>''',
 )
+
+path = "web/src/__tests__/interview-browser-acceptance.test.ts"
+replace_once(
+    path,
+    '''async function assertNoPageOverflow(page: Page, label: string) {
+  const dimensions = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  assert.ok(
+    dimensions.scrollWidth <= dimensions.clientWidth + 1,
+    `${label}: unexpected page overflow ${dimensions.scrollWidth} > ${dimensions.clientWidth}`,
+  );
+}
+''',
+    '''async function assertNoPageOverflow(page: Page, label: string) {
+  const dimensions = await page.evaluate(() => {
+    const clientWidth = document.documentElement.clientWidth;
+    const offenders = Array.from(document.querySelectorAll<HTMLElement>("body *"))
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          tag: element.tagName.toLowerCase(),
+          id: element.id,
+          className: element.className,
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+          width: Math.round(rect.width),
+          scrollWidth: element.scrollWidth,
+        };
+      })
+      .filter((item) => item.left < -1 || item.right > clientWidth + 1)
+      .sort((a, b) => b.right - a.right)
+      .slice(0, 8);
+    return {
+      clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+      offenders,
+    };
+  });
+  assert.ok(
+    dimensions.scrollWidth <= dimensions.clientWidth + 1,
+    `${label}: unexpected page overflow ${dimensions.scrollWidth} > ${dimensions.clientWidth}; offenders=${JSON.stringify(dimensions.offenders)}`,
+  );
+}
+''',
+)
