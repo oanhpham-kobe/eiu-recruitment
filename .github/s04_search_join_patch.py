@@ -3,33 +3,6 @@ from pathlib import Path
 path = Path("web/src/lib/interview/server.ts")
 text = path.read_text(encoding="utf-8")
 
-old = '''async function matchingSubmissionIds(
-  client: SupabaseClient,
-  rawQuery: string,
-): Promise<string[] | null> {
-  const query = safeSearchTerm(rawQuery);
-  if (!query) return null;
-  const pattern = `%${query}%`;
-  const { data, error } = await client
-    .from("submissions")
-    .select("submission_id")
-    .or(
-      `full_name.ilike.${pattern},email_snapshot.ilike.${pattern},phone.ilike.${pattern}`,
-    )
-    .limit(250);
-  if (error) throw new InterviewReadError();
-  return (Array.isArray(data) ? data : [])
-    .map((row) =>
-      stringValue((row as { submission_id?: unknown }).submission_id),
-    )
-    .filter((id): id is string => id !== null);
-}
-
-'''
-if text.count(old) != 1:
-    raise RuntimeError("matchingSubmissionIds block not found exactly once")
-text = text.replace(old, "", 1)
-
 old = '''  const matchedSubmissionIds = await matchingSubmissionIds(
     client,
     filters.query,
