@@ -31,6 +31,8 @@ jobs:
         run: npm ci
       - name: Apply known pre-verification fixes
         run: python project_control/tools/s04_candidate_fix.py
+      - name: Apply focused lint repairs
+        run: python project_control/tools/s04_lint_fix.py
       - name: Format changed S04 scope
         working-directory: web
         run: >-
