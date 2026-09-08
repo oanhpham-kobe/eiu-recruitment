@@ -41,9 +41,11 @@ A proposed first prompt now exists at `project_control/prompts/SLICE-05_TASK-001
 
 Execution hold: independent OMP prompt review of `SLICE-05_TASK-001_v1.md`.
 
+The governance handoff contract now requires the Coordinator to provide the Owner a complete copy-ready OMP review package before yielding for any externally transported OMP review. A bare `OMP review required` message is not a valid handoff. The Owner transports the package to OMP and returns the complete verdict/evidence; the Owner is not expected to author the review instructions.
+
 ## Next action
 
-Run independent OMP prompt/source reconciliation review. If PASS, materialize `TASK-S05-001`, transition `SLICE-05` into execution state, recompute the safe frontier, validate governance, and dispatch the task. If the review returns `BLOCKING_REPAIR`, repair only the prompt/source reconciliation findings and re-review. If it returns `OWNER_DECISION_REQUIRED`, stop for Owner.
+Run independent OMP prompt/source reconciliation review using the Coordinator-supplied copy-ready review package. If PASS, materialize `TASK-S05-001`, transition `SLICE-05` into execution state, recompute the safe frontier, validate governance, and dispatch the task. If the review returns `BLOCKING_REPAIR`, repair only the prompt/source reconciliation findings and generate a narrowed re-review package. If it returns `OWNER_DECISION_REQUIRED`, stop for Owner.
 
 ## Do not redo / do not cross
 

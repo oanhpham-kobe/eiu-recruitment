@@ -1,5 +1,5 @@
 # EIU Recruitment — Continuous Autonomy & Parallel Execution Governance
-## Document Version: 2.2
+## Document Version: 2.3
 ## Status: MODED_EXECUTION_POLICY
 
 ---
@@ -252,6 +252,52 @@ The evidence branch MUST NOT move or mutate the reviewed candidate ref. The file
 A repair that changes the candidate SHA invalidates acceptance of the old SHA. The new SHA receives producer re-review plus targeted OMP re-review before acceptance.
 
 Serialized integration may preserve the candidate SHA (fast-forward) or produce a new integration SHA (for example by cherry-pick/merge). If the SHA changes, OMP MUST perform a targeted exact-SHA final acceptance re-review/equivalence check on the integration SHA before acceptance CI. The targeted review verifies that the independently reviewed implementation delta is preserved, integration introduced no unauthorized behavioral drift, and all blocking findings remain closed. If the exact SHA is preserved, the candidate review may serve as the final acceptance review.
+
+#### External OMP review handoff contract
+
+When an independent OMP review is required but the reviewer is not directly invokable from the Coordinator's current runtime, the Coordinator MUST NOT yield with only a bare statement such as `OMP review required`.
+
+This handoff contract applies to every externally transported OMP gate, including prompt/source reconciliation review, initial implementation review, targeted repair re-review, final exact-SHA equivalence/acceptance review, and slice-closing composition review.
+
+Before yielding for external OMP review, the Coordinator MUST:
+
+1. finish the current atomic mutation and resolve the exact repository, branch, HEAD/candidate SHA, review target, and current verification state;
+2. persist a truthful `WAITING_EXTERNAL_REVIEW`/equivalent runtime state where the live-state authority requires it, including the review type, target, and resume condition;
+3. emit in the Owner-visible response a complete copy-ready OMP review package so the Owner can transport it without authoring or reconstructing review instructions;
+4. include at minimum in that package:
+   - repository and integration/task branch as applicable;
+   - exact 40-character reviewed SHA or exact target artifact on a fixed baseline SHA;
+   - review type and work ID;
+   - canonical source authorities and accepted prerequisites relevant to the gate;
+   - exact review scope and risk/invariant areas to inspect;
+   - required structured verdict (`PASS | BLOCKING_REPAIR | OWNER_DECISION_REQUIRED`) and `SOURCE_REOPEN_REQUIRED` where applicable;
+   - evidence-persistence expectations when GitHub-visible review evidence is required; and
+   - explicit do-not-cross boundaries such as no implementation mutation, no integration advancement, no `main` mutation, no deployment, and no connected-environment migration unless separately authorized;
+5. explicitly tell the Owner to send the package to OMP and return the complete verdict/evidence, rather than asking the Owner to invent the reviewer prompt;
+6. for a re-review, narrow the package to unresolved blocking findings, the repair delta, directly crossed invariants/dependencies, and any area reopened by concrete evidence; previously passed areas remain closed under the normal verification-economy rule;
+7. invalidate and regenerate the handoff package whenever the reviewed SHA, target artifact, canonical source baseline, or materially relevant dependency changes before review;
+8. treat the handoff prompt itself as transport material only, never as OMP review evidence or acceptance; and
+9. on receipt of the OMP verdict, verify that the verdict actually covers the exact requested SHA/target before routing the lifecycle:
+   - `PASS` → persist evidence/state and continue AUTONOMOUS execution;
+   - `BLOCKING_REPAIR` → perform the smallest authorized repair, verify affected surfaces, generate the required re-review package or directly re-invoke the reviewer, and continue the review lifecycle;
+   - `OWNER_DECISION_REQUIRED` → persist the decision boundary and stop for Owner resolution.
+
+If the independent OMP reviewer is directly invokable from the Coordinator's current runtime, the Coordinator SHOULD invoke it directly and continue the lifecycle instead of unnecessarily routing the review through the Owner.
+
+`WAITING_EXTERNAL_REVIEW` is an external-operation waiting yield under the outer-loop rule. It is not itself `OWNER_DECISION_REQUIRED`, `NO_SAFE_FRONTIER`, task completion, or AUTONOMOUS run completion.
+
+Therefore:
+
+```text
+OMP_REVIEW_REQUIRED
+→ DIRECT_REVIEW_AVAILABLE? invoke reviewer and continue
+→ otherwise resolve exact review identity
+→ persist truthful external-review wait state
+→ emit copy-ready Owner handoff package
+→ yield only after package delivery
+→ receive exact-target verdict
+→ PASS | BLOCKING_REPAIR | OWNER_DECISION_REQUIRED routing
+```
 
 #### Review waves, dependency gating, and immutable checkpoints
 

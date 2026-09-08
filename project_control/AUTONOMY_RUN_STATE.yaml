@@ -133,6 +133,7 @@ slice_05_planning:
     - TASK-S04-004
     - TASK-DS-006
   source_reopen_required: false
+  external_review_transport: "If OMP is not directly invokable from the Coordinator runtime, Coordinator must emit a complete copy-ready Owner handoff package before yielding; Owner transports it and returns the complete verdict/evidence."
   owner_asset_gap:
     id: ASSET-001
     blocking_now: false
@@ -147,6 +148,8 @@ stop_gate:
   status: WAITING_EXTERNAL_REVIEW
   type: OMP_PROMPT_REVIEW
   target: project_control/prompts/SLICE-05_TASK-001_v1.md
+  handoff_package_requirement: COPY_READY_OWNER_TRANSPORT_BEFORE_YIELD
+  owner_role: "Transport the Coordinator-supplied review package to OMP and return the complete verdict/evidence; do not author the review instructions."
   resume_on: "OMP verdict PASS or BLOCKING_REPAIR/OWNER_DECISION_REQUIRED handoff"
 
-next_action: "Run independent OMP prompt/source reconciliation review for project_control/prompts/SLICE-05_TASK-001_v1.md. On PASS, materialize TASK-S05-001 in TASK_REGISTRY, set SLICE-05 IN_PROGRESS/READY as appropriate, recompute safe frontier, validate control plane, and dispatch."
+next_action: "Coordinator supplies the copy-ready independent OMP prompt/source reconciliation review package for project_control/prompts/SLICE-05_TASK-001_v1.md. Owner transports that package to OMP and returns the complete verdict/evidence. On PASS, materialize TASK-S05-001 in TASK_REGISTRY, set SLICE-05 IN_PROGRESS/READY as appropriate, recompute safe frontier, validate control plane, and dispatch."
