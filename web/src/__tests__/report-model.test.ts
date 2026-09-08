@@ -44,7 +44,7 @@ test("Interviewer DTO parser fails closed on HR/private metadata", () => {
           ],
         },
       }),
-    /Unsafe Interviewer report DTO key/,
+    /Unexpected Interviewer report DTO key/,
   );
 
   assert.throws(
@@ -59,7 +59,22 @@ test("Interviewer DTO parser fails closed on HR/private metadata", () => {
           ],
         },
       }),
-    /Unsafe Interviewer report DTO key/,
+    /Unexpected Interviewer report DTO key/,
+  );
+
+  assert.throws(
+    () =>
+      parseInterviewerReportPageRpc({
+        success: true,
+        data: {
+          rounds: [
+            {
+              unexpected_private_field: "future backend drift",
+            },
+          ],
+        },
+      }),
+    /Unexpected Interviewer report DTO key/,
   );
 });
 
@@ -105,7 +120,6 @@ test("Interviewer DTO accepts safe current and historical rounds", () => {
         expected_recruitment_time: null,
       },
     },
-    updated_at: "2026-09-08T03:00:00Z",
   };
 
   const parsed = parseInterviewerReportPageRpc({
