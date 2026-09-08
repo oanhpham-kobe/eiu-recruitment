@@ -59,9 +59,6 @@ begin
       i.start_at,
       i.end_at,
       i.meeting_link,
-      i.interview_format_id,
-      i.room_id,
-      i.updated_at,
       actor_ip.interview_participant_id,
       s.full_name as candidate_name,
       p.name_vi as position_name_vi,
@@ -222,8 +219,7 @@ begin
                 )
             )
             else null
-          end,
-        'updated_at', ar.updated_at
+          end
       )
       order by
         ar.candidate_name,
