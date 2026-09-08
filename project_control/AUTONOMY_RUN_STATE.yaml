@@ -12,7 +12,7 @@ autonomy_policy_activation:
   max_active_implementation_tasks: 2
 
 slice_04_execution:
-  status: RELEASED_FOR_AUTONOMOUS_EXECUTION
+  status: TASKS_ACCEPTED_SLICE_CLOSURE_PENDING
   rule: "SLICE-04 execution is Owner-authorized under active AUTONOMOUS governance. Safe-frontier tasks may be dispatched subject to DAG, capacity, parallel eligibility, security, review, serialized integration, and exact-SHA CI gates."
 
 canonical_baseline:
@@ -23,8 +23,8 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "8819d9fec1143e94aea7721e47ae84a8abcd82b9"
-  last_verified_application_ci_run: "34039979411"
+  last_verified_application_checkpoint: "7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
+  last_verified_application_ci_run: "34196505808"
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
   sha256: "f8b0809b96115b53486105af9b57cc55089dcd15e6e9f7c954825e7311b0426a"
@@ -43,7 +43,7 @@ plan_reconciliation:
   baseline_branch: governance/omp-native-reconstruction-001
   baseline_head: "3c3073b52a4f83a8a5318376125e94913792fdf3"
   review_head: "a4d85a9033b3b54195265a893710d08a626ef9bb"
-  accepted_implementation_through: TASK-S04-005
+  accepted_implementation_through: TASK-S04-004
   canonical_source_reopen_required: false
   prompt: project_control/prompts/SLICE-04_TASK-004_v3.md
   prompt_sha256: "ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce"
@@ -151,17 +151,20 @@ worker_settled_history:
     settled_at: "2026-09-06T15:00:00Z"
     review_blockers: NONE
 last_accepted_task:
-  id: TASK-S04-005
-  commit: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"
+  id: TASK-S04-004
+  commit: "7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
   evidence:
-    - "APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001: VERIFIED"
-    - "prompt_reviewed: PASS"
-    - "supabase db reset --local: PASS"
-    - "application_reactivation_and_participant_contract_repair_test.sql: PASS"
-    - "Slice-04 regression suites: PASS"
-    - "implementation_reviewed: PASS (agent://TaskS04005ExactReReview; blockers: NONE)"
-    - "github_ci: VERIFIED (Integration CI run 34039979411; integration checkpoint 8819d9fec1143e94aea7721e47ae84a8abcd82b9; PASS — fast verification + database integration)"
+    - "product_candidate_sha: cb118cae60cbb0d6a684d7729388d3269fb7fcf2"
+    - "implementation_re-review: PASS (review/S04-004-IMPLEMENTATION-cb118ca-v2; evidence commit 04af512386e476c7250d4f936459f997ec71a0ec)"
+    - "final_exact_sha_acceptance_review: PASS (review/S04-004-FINAL-ACCEPTANCE-7fa6f58-v1; evidence commit 8ebcc13b98ab4ae4b64ed634cf64f36341bf8478)"
+    - "github_ci: VERIFIED (Integration CI run 34196505808; Governance CI run 34196505793; final SHA 7fa6f5805d4c17c0d92889a3786ae03a577a5ae8; PASS)"
+    - "accepted_checkpoint: checkpoint/S04-004-accepted-001 @ 7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
 previous_accepted_tasks:
+  TASK-S04-005:
+    commit: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"
+    evidence:
+      - "APPLICATION-REACTIVATION-PARTICIPANT-REPAIR-001: VERIFIED"
+      - "github_ci: VERIFIED (Integration CI run 34039979411; integration checkpoint 8819d9fec1143e94aea7721e47ae84a8abcd82b9; PASS)"
   TASK-S04-003:
     commit: "919e4a428dcd2d76730947ca1c4c174441bdfb63"
     evidence:
@@ -193,7 +196,7 @@ historical_mcp_governance_maintenance:
   ci_run_id: "33943629020"
   ci_result: PASS
 safe_frontier:
-  eligible_tasks:
-    - TASK-S04-004
+  eligible_tasks: []
   skipped_due_to_dependency: []
-next_action: "Dispatch TASK-S04-004 from checkpoint/design-system-production-ready-001 on a fresh task branch. Preserve accepted backend contracts and stop at the ChatGPT-reviewed exact candidate SHA for independent OMP review."
+  execution_hold: "SLICE-04 composition review and broader slice-closing regression gate pending"
+next_action: "Run the Slice-04 composition review and explicit broader [full-ci] regression gate on the current integration line; only after that gate passes, mark SLICE-04 DONE and materialize the next source-backed frontier."

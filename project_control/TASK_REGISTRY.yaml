@@ -1002,7 +1002,7 @@ tasks:
   TASK-S04-004:
     title: "HR Interview scheduling UI over accepted trusted commands"
     slice: SLICE-04
-    status: READY
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-S04-005
@@ -1010,7 +1010,18 @@ tasks:
     prompt: project_control/prompts/SLICE-04_TASK-004_v3.md
     prompt_sha256: ae622650bd9d79af28c30a870f2c84d15aeac764ab4393cd5f7b343040b9c7ce
     prompt_review_status: "PASS (ChatGPT exact-source reconciliation re-review @ a4d85a9033b3b54195265a893710d08a626ef9bb; blockers: NONE)"
-    notes: "TASK-S04-005 remains satisfied and CI-verified. Owner sequencing decision 2026-09-08 requires Production Design-System Hardening (TASK-DS-001..006) before S04-004 implementation so Interview desktop/responsive UI consumes a converged production design foundation. This is planning/implementation sequencing only; no Product/Business/Design source reopening is required. Release S04-004 only after TASK-DS-006 is DONE and checkpoint/design-system-production-ready-001 exists."
+    product_candidate_sha: "cb118cae60cbb0d6a684d7729388d3269fb7fcf2"
+    implementation_sha: "7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
+    review_status: "PASS (OMP final exact-SHA acceptance review @ 7fa6f5805d4c17c0d92889a3786ae03a577a5ae8; blockers: NONE; source reopen: NO)"
+    github_ci: "VERIFIED (Integration CI run 34196505808; Governance CI run 34196505793; final integration SHA 7fa6f5805d4c17c0d92889a3786ae03a577a5ae8; PASS)"
+    accepted_checkpoint: "checkpoint/S04-004-accepted-001"
+    notes: "Accepted Interview scheduling UI over the previously accepted S04 trusted-command chain. Initial independent review found the Copy-target PII pre-match cap; repaired candidate cb118cae removed it. Serialized integration required a CI-only Playwright Chromium installation repair; final exact-SHA equivalence review passed on 7fa6f580. No Product/Business/Design source reopening, deployment, or connected-dev migration application occurred."
+    acceptance:
+      - "S04-004 implementation independent re-review: PASS @ cb118cae60cbb0d6a684d7729388d3269fb7fcf2"
+      - "S04-004 final exact-SHA acceptance review: PASS @ 7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
+      - "Integration CI 34196505808: PASS"
+      - "Governance CI 34196505793: PASS"
+      - "checkpoint/S04-004-accepted-001 @ 7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
 
   TASK-S04-005:
     title: "Application reactivation and participant command contract repair"

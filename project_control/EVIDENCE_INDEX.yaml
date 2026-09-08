@@ -1071,3 +1071,23 @@ implementation_evidence:
     checkpoint: "checkpoint/design-system-production-ready-001 @ cb42f0fe301fba70cdc32704d605872b05d12515"
     final_web_acceptance_run: "34172591716 PASS"
     final_governance_ci_run: "34172664420 PASS"
+  INTERVIEW-UI-ACCEPTANCE-001:
+    task: TASK-S04-004
+    operation: HR_INTERVIEW_SCHEDULING_UI_ACCEPTANCE
+    status: VERIFIED
+    source_reopen_required: false
+    pre_task_checkpoint: "checkpoint/pre-S04-004-002 @ 052a82841ab158a9dea29063de9e1601e65fe9bc"
+    product_candidate_sha: "cb118cae60cbb0d6a684d7729388d3269fb7fcf2"
+    final_acceptance_sha: "7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
+    implementation_review: "PASS (review/S04-004-IMPLEMENTATION-cb118ca-v2; artifact project_control/reviews/S04_004_IMPLEMENTATION_REVIEW_cb118ca_v2.md)"
+    final_exact_sha_review: "PASS (review/S04-004-FINAL-ACCEPTANCE-7fa6f58-v1; artifact project_control/reviews/S04_004_FINAL_ACCEPTANCE_REVIEW_7fa6f58_v1.md)"
+    integration_ci: "34196505808 PASS"
+    governance_ci: "34196505793 PASS"
+    accepted_checkpoint: "checkpoint/S04-004-accepted-001 @ 7fa6f5805d4c17c0d92889a3786ae03a577a5ae8"
+    product_equivalence: "PASS (cb118cae...7fa6f580 changed only .github/workflows/integration-ci.yml to install Playwright Chromium before browser-backed tests)"
+    supabase: "PASS (local migration replay from zero + PRE-S04 DB regression assertions in exact-SHA CI; connected DEV migration application remains a later authorized UAT/deployment action)"
+    vercel: "PASS (Next.js typecheck/build on Node 24.20.0; no deployment performed)"
+    follow_up_non_blockers:
+      - "typeahead 25/50 result windows may later add refinement/more-results feedback"
+      - "database-backed UAT should include >250 matching Submission search scenario"
+      - "apply accepted Slice-04 migrations to target DEV before manual UAT under appropriate authorization"

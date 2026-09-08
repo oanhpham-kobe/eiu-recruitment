@@ -167,3 +167,13 @@ This compact backfill records accepted checkpoints that were already present in 
 - Exact Phase-A Governance CI `34172664420`: PASS.
 - Created immutable `checkpoint/design-system-production-ready-001` at `cb42f0fe301fba70cdc32704d605872b05d12515`.
 - Released `TASK-S04-004` to READY as the sole safe-frontier task. No canonical source, SQL, RLS, migration, or accepted RPC behavior was changed by this release.
+
+## 2026-09-08 — TASK-S04-004 exact-SHA acceptance
+
+- Accepted the production HR Interview scheduling UI after producer self-review, independent OMP review, bounded repair/re-review, serialized integration, and final exact-SHA equivalence review.
+- Product candidate `cb118cae60cbb0d6a684d7729388d3269fb7fcf2`: OMP implementation re-review PASS; Copy-target PII pre-match cap blocker resolved.
+- Final integration/acceptance SHA `7fa6f5805d4c17c0d92889a3786ae03a577a5ae8` differs only by the CI-only Playwright Chromium installation step required for browser-backed tests.
+- Integration CI `34196505808`: PASS; Governance CI `34196505793`: PASS.
+- Immutable `checkpoint/S04-004-accepted-001` points exactly to `7fa6f5805d4c17c0d92889a3786ae03a577a5ae8`; final OMP acceptance review SHA = CI SHA = accepted checkpoint SHA.
+- No main mutation, Vercel deployment, or connected Supabase migration application was performed.
+- Slice-04 remains IN_PROGRESS until its composition review and one broader slice-closing regression gate pass.
