@@ -27,9 +27,35 @@ jobs:
       - name: Apply reviewed search-cap repair
         run: python .github/s04_004_search_cap_repair.py
       - name: Normalize focused test and dynamic select typing
+        shell: bash
         run: |
           sed -i '/^  then<TResult1/ i\  // biome-ignore lint/suspicious/noThenProperty: Supabase query builders are intentionally awaitable in this test double.' web/src/__tests__/interview-search-contract.test.ts
-          sed -i 's/^  const submissionEmbed = query$/  const submissionEmbed: string = query/' web/src/lib/interview/server.ts
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("web/src/lib/interview/server.ts")
+          text = path.read_text(encoding="utf-8")
+          old = '''  const submissionEmbed = query
+            ? ",filtered_submission:submissions!inner(submission_id,full_name,email_snapshot,phone)"
+            : "";
+          let appBuilder = client
+            .from("applications")
+            .select(
+              `application_id,submission_id,version_no,unit_id,department_team_id,position_id${submissionEmbed}`,
+            )
+          '''
+          new = '''  const submissionEmbed = query
+            ? ",filtered_submission:submissions!inner(submission_id,full_name,email_snapshot,phone)"
+            : "";
+          const applicationSelect: string = `application_id,submission_id,version_no,unit_id,department_team_id,position_id${submissionEmbed}`;
+          let appBuilder = client
+            .from("applications")
+            .select(applicationSelect)
+          '''
+          count = text.count(old)
+          if count != 1:
+              raise RuntimeError(f"expected one dynamic Application select, found {count}")
+          path.write_text(text.replace(old, new, 1), encoding="utf-8")
+          PY
       - name: Install web dependencies
         working-directory: web
         run: npm ci
