@@ -1,8 +1,10 @@
 "use client";
+
 import type { ReactNode } from "react";
 import { useRef } from "react";
 import { createPortal } from "react-dom";
 import { useOverlayFocus } from "./overlay";
+
 export function Drawer({
   open,
   title,
@@ -18,7 +20,9 @@ export function Drawer({
 }) {
   const ref = useRef<HTMLElement>(null);
   useOverlayFocus(open, ref, onClose);
+
   if (!open || typeof document === "undefined") return null;
+
   return createPortal(
     <div className="ui-overlay ui-overlay--drawer">
       <button
