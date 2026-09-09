@@ -76,11 +76,10 @@ export function InterviewerReportDrawerContent({
       </fieldset>
 
       {mode === "view" && group && group.rounds.length > 1 ? (
-        <div
-          className="interviewer-report__round-switcher"
-          role="group"
-          aria-label={t("Chọn vòng phỏng vấn", "Choose interview round")}
-        >
+        <fieldset className="interviewer-report__round-switcher">
+          <legend className="sr-only">
+            {t("Chọn vòng phỏng vấn", "Choose interview round")}
+          </legend>
           {group.rounds.map((item) => (
             <Button
               key={item.interviewId}
@@ -93,7 +92,7 @@ export function InterviewerReportDrawerContent({
               {t("Vòng", "Round")} {item.roundNo}
             </Button>
           ))}
-        </div>
+        </fieldset>
       ) : null}
 
       <section
