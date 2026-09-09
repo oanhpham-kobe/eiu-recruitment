@@ -3,13 +3,12 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
-import { isOwnWritableParticipant } from "./authorization";
 import {
   parseInterviewerReportPageRpc,
   REPORT_FIELD_KEYS,
-  type ReportFields,
-  type ReportFieldKey,
   type InterviewerReportPageData,
+  type ReportFieldKey,
+  type ReportFields,
 } from "./model";
 
 export class InterviewerReportAccessError extends Error {
@@ -185,30 +184,7 @@ export async function saveOwnInterviewerReport(
     };
   }
 
-  let page: InterviewerReportPageData;
-  try {
-    page = await loadInterviewerReportPage(supabase);
-  } catch {
-    return {
-      success: false,
-      error: {
-        code: "FORBIDDEN",
-        message: "Own current writable report context required",
-      },
-    };
-  }
-
-  if (!isOwnWritableParticipant(page.rounds, input.interviewParticipantId)) {
-    return {
-      success: false,
-      error: {
-        code: "FORBIDDEN",
-        message: "Own current writable report context required",
-      },
-    };
-  }
-
-  const { data, error } = await supabase.rpc("save_interviewer_report", {
+  const { data, error } = await supabase.rpc("save_own_interviewer_report", {
     p_interview_participant_id: input.interviewParticipantId,
     p_field_patches: patches,
     p_expected_version_no: input.expectedVersionNo,
