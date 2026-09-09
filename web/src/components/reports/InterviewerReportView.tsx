@@ -43,7 +43,7 @@ export function InterviewerReportView({
   ) => Promise<SaveInterviewerReportResult>;
   onRefresh: () => Promise<InterviewerReportPageData>;
 }) {
-  const { locale } = useAppLocale();
+  const { locale, setLocale } = useAppLocale();
   const t = (vi: string, en: string) => (locale === "vi" ? vi : en);
   const [data, setData] = useState(initialData);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -289,6 +289,7 @@ export function InterviewerReportView({
                 setDraft((current) => ({ ...current, [key]: value }));
               }}
               onSelectRound={(item) => selectRound(item, "view")}
+              onLocaleChange={setLocale}
             />
           </>
         ) : null}
