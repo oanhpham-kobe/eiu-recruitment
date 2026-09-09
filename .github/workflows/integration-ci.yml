@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - autonomy/continuous-integration-20260905-01
+      - oanhpham-kobe/TASK-S05-001-interviewer-report-experience-skills
   workflow_dispatch:
     inputs:
       full_verification:
