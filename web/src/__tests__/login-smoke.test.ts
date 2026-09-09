@@ -58,6 +58,7 @@ test("production login page renders with dynamic nonce CSP, zero violations, and
         env: {
           ...process.env,
           NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test-publishable-key",
         },
         stdio: "ignore",
       },

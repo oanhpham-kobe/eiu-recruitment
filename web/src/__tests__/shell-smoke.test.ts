@@ -7,7 +7,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import { type Browser, chromium } from "playwright";
 
-const port = 3003;
+const port = 3004;
 const baseUrl = `http://127.0.0.1:${port}`;
 
 async function waitForServer(): Promise<void> {
@@ -28,7 +28,7 @@ async function waitForServer(): Promise<void> {
     await sleep(250);
   }
 
-  throw lastError ?? new Error("Next.js server did not start on port 3003");
+  throw lastError ?? new Error("Next.js server did not start on port 3004");
 }
 
 test("production shell renders cleanly with semantic landmarks and zero CSP violations", {
@@ -46,6 +46,7 @@ test("production shell renders cleanly with semantic landmarks and zero CSP viol
       env: {
         ...process.env,
         NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "test-publishable-key",
       },
       stdio: "ignore",
     },
@@ -95,11 +96,11 @@ test("production shell renders cleanly with semantic landmarks and zero CSP viol
 
     // Semantic <aside> sidebar
     assert.match(html, /<aside\b[^>]*class="[^"]*sidebar[^"]*"/);
-    assert.match(html, /aria-label="Thanh điều hướng chính \/ Main sidebar"/);
+    assert.match(html, /aria-label="Thanh điều hướng chính"/);
 
     // Semantic <nav> navigation
     assert.match(html, /<nav\b[^>]*class="[^"]*sidebar-nav[^"]*"/);
-    assert.match(html, /aria-label="Menu chức năng \/ Navigation menu"/);
+    assert.match(html, /aria-label="Menu chức năng"/);
 
     // Semantic <header> topbar
     assert.match(html, /<header\b[^>]*class="[^"]*topbar[^"]*"/);
