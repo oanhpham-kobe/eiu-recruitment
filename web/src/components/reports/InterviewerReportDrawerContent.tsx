@@ -28,6 +28,7 @@ export function InterviewerReportDrawerContent({
   pending,
   onDraftChange,
   onSelectRound,
+  onLocaleChange,
 }: {
   round: InterviewerReportRound;
   group: ReportApplicationGroup | null;
@@ -37,12 +38,43 @@ export function InterviewerReportDrawerContent({
   pending: boolean;
   onDraftChange: (key: (typeof REPORT_FIELD_KEYS)[number], value: string) => void;
   onSelectRound: (round: InterviewerReportRound) => void;
+  onLocaleChange: (locale: ReportLocale) => void;
 }) {
   const t = (vi: string, en: string) => (locale === "vi" ? vi : en);
   const meetingHref = safeMeetingHref(round.meetingLink);
 
   return (
     <div className="interviewer-report__drawer">
+      <fieldset
+        className="language-switcher interviewer-report__drawer-locale"
+        disabled={pending}
+      >
+        <legend className="sr-only">
+          {t("Chọn ngôn ngữ", "Choose language")}
+        </legend>
+        <button
+          type="button"
+          className={`lang-btn ${locale === "vi" ? "active" : ""}`.trim()}
+          aria-pressed={locale === "vi"}
+          aria-label={locale === "vi" ? "Tiếng Việt, đang chọn" : "Vietnamese"}
+          onClick={() => onLocaleChange("vi")}
+        >
+          VI
+        </button>
+        <span className="lang-divider" aria-hidden="true">
+          |
+        </span>
+        <button
+          type="button"
+          className={`lang-btn ${locale === "en" ? "active" : ""}`.trim()}
+          aria-pressed={locale === "en"}
+          aria-label={locale === "en" ? "English, selected" : "Tiếng Anh"}
+          onClick={() => onLocaleChange("en")}
+        >
+          EN
+        </button>
+      </fieldset>
+
       {mode === "view" && group && group.rounds.length > 1 ? (
         <div
           className="interviewer-report__round-switcher"
@@ -56,7 +88,6 @@ export function InterviewerReportDrawerContent({
                 item.interviewId === round.interviewId ? "primary" : "secondary"
               }
               aria-pressed={item.interviewId === round.interviewId}
-              disabled={pending}
               onClick={() => onSelectRound(item)}
             >
               {t("Vòng", "Round")} {item.roundNo}
@@ -140,7 +171,6 @@ export function InterviewerReportDrawerContent({
                       name={key}
                       rows={3}
                       value={draft[key] ?? ""}
-                      disabled={pending}
                       onChange={(event) => onDraftChange(key, event.target.value)}
                     />
                   </label>
