@@ -240,7 +240,12 @@ const mode = document.body.dataset.harness;
 data = initialData();
 releasePendingSave = null;
 
-createRoot(document.getElementById("root")!).render(
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Report browser harness root is missing");
+}
+
+createRoot(rootElement).render(
   mode === "locale" ? (
     <LocaleHarness />
   ) : mode === "pending" ? (
