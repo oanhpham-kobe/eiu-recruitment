@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { AppShell } from "@/components/shell/AppShell";
 import { CandidateShell } from "@/components/shell/CandidateShell";
-import { resolveInternalNavItems } from "@/components/shell/navigation";
+import {
+  resolveInternalNavItems,
+  type NavItem,
+} from "@/components/shell/navigation";
 import { getServerSession } from "@/lib/auth/session";
 import "./globals.css";
 
@@ -36,7 +39,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const pathname = reqHeaders.get("x-pathname") ?? "";
   const shellKind = resolveShellKind(pathname);
 
-  let internalNavItems = [];
+  let internalNavItems: readonly NavItem[] = [];
   if (shellKind === "internal") {
     const session = await getServerSession();
     internalNavItems = resolveInternalNavItems(
