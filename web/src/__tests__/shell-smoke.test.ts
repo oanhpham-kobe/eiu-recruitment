@@ -96,11 +96,11 @@ test("production shell renders cleanly with semantic landmarks and zero CSP viol
 
     // Semantic <aside> sidebar
     assert.match(html, /<aside\b[^>]*class="[^"]*sidebar[^"]*"/);
-    assert.match(html, /aria-label="Thanh điều hướng chính \/ Main sidebar"/);
+    assert.match(html, /aria-label="Thanh điều hướng chính"/);
 
     // Semantic <nav> navigation
     assert.match(html, /<nav\b[^>]*class="[^"]*sidebar-nav[^"]*"/);
-    assert.match(html, /aria-label="Menu chức năng \/ Navigation menu"/);
+    assert.match(html, /aria-label="Menu chức năng"/);
 
     // Semantic <header> topbar
     assert.match(html, /<header\b[^>]*class="[^"]*topbar[^"]*"/);
