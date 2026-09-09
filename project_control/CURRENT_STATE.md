@@ -37,21 +37,15 @@ Accepted prerequisites remain `TASK-S04-002`, `TASK-S04-005`, `TASK-S04-004`, an
 
 ## R4 independent implementation review
 
-External independent OMP R4 accepted exact candidate:
+External independent OMP R4 accepted exact candidate `d9dd223394aed08555a6a71157d3cf821a7a31aa` with `SOURCE_REOPEN_REQUIRED: NO` and no new P0/P1 finding.
 
-- WORK_ID: `S05-001-IMPLEMENTATION-REVIEW-001-R4`.
-- Reviewed SHA: `d9dd223394aed08555a6a71157d3cf821a7a31aa`.
-- Result: PASS.
-- Source reopen required: NO.
-- R1/R2/R3/R4: CLOSED.
-- No new P0/P1 finding.
-- Real persisted evidence branch: `review/S05-001-IMPL-d9dd223-v4`.
-- Real persisted evidence commit: `3c533f6981f99bd7d6c86ecbae4ef69323376c4b`.
-- Evidence artifact: `project_control/reviews/S05_001_IMPLEMENTATION_REVIEW_d9dd223_v4.md`.
+Real persisted R4 evidence:
 
-The reviewer-reported evidence commit transported by Owner was not present in the repository; the Coordinator persisted the supplied verdict truthfully without altering candidate `d9dd223`.
+- Branch: `review/S05-001-IMPL-d9dd223-v4`.
+- Commit: `3c533f6981f99bd7d6c86ecbae4ef69323376c4b`.
+- Artifact: `project_control/reviews/S05_001_IMPLEMENTATION_REVIEW_d9dd223_v4.md`.
 
-## Exact-SHA acceptance CI attempt
+## Exact-SHA acceptance CI attempt on R4 candidate
 
 Integration was fast-forwarded without SHA change to `d9dd223394aed08555a6a71157d3cf821a7a31aa`.
 
@@ -61,49 +55,69 @@ Integration was fast-forwarded without SHA change to `d9dd223394aed08555a6a71157
   - Database integration: PASS, including clean migration replay, PRE-S04 regressions, and TASK-S05-001 contextual-read assertions;
   - Web dependency audit/design/lint/typecheck/build: PASS;
   - all four TASK-S05-001 report browser tests: PASS;
-  - overall web test step: FAIL at 287/291 because of exactly four pre-existing harness failures.
+  - overall web test step: FAIL at 287/291 because of exactly four harness failures.
 
-The four CI blockers are test-infrastructure failures, not new S05 product regressions:
+Because exact-SHA CI was red, `d9dd223` was not accepted/checkpointed.
 
-1. CSP browser smoke child server lacked the required public Supabase publishable-key test env and never became reachable on port 3104.
-2. Login smoke child server had the same missing test env on port 3003.
-3. Shell a11y imported client LocaleProvider/Header under the global `react-server` test condition, causing `createContext is not a function` before assertions.
-4. Shell smoke had the same missing test env and also shared port 3003 with login smoke under concurrent Node tests.
+## R5 targeted harness review
 
-Because exact-SHA CI is red, `d9dd223` is NOT an accepted checkpoint despite R4 product acceptance.
+Exact R5 review candidate: `b7900411b136144d9de9a238f331918bcfaa3ef7`.
 
-## Bounded CI-harness repair
+Independent OMP R5 result:
 
-Repair source SHA: `b33d957ea26ee5436c56a569b97edc3d1c3c5ced` on branch `oanhpham-kobe/TASK-S05-001-interviewer-report-experience-skills`.
+- WORK_ID: `S05-001-IMPLEMENTATION-REVIEW-001-R5`.
+- RESULT: `BLOCKING_REPAIR`.
+- SOURCE_REOPEN_REQUIRED: `NO`.
+- Product/Supabase non-regression: PASS.
+- Browser startup env repair: PASS.
+- Port isolation: PASS.
+- Shell-a11y react-server-safe repair: PASS.
+- No test suppression: PASS.
+- Blocking findings:
+  1. stale shell smoke expectation incorrectly required bilingual concatenated `aria-label` instead of selected-VI rendering;
+  2. all four changed harness files failed Biome formatting.
 
-Exact delta from `d9dd223` is four test-harness files only:
+The reviewer-reported evidence branch/commit did not exist when checked live. The transported verdict was therefore persisted truthfully by the Coordinator:
+
+- Branch: `review/S05-001-IMPL-b790041-v5`.
+- Commit: `e68ac33219330e92c132e8ddeb7b624568f22c34`.
+- Artifact: `project_control/reviews/S05_001_IMPLEMENTATION_REVIEW_b790041_v5.md`.
+- Reviewer-reported missing commit retained only as audit metadata: `51921d725a0c51835b9910afcbfbc99754e8a7d1`.
+
+## R6 blocker-only repair candidate
+
+Exact candidate: `63bb2f9eff9e36c11c704748c3ccf334cbcfc4ce` on branch `oanhpham-kobe/TASK-S05-001-interviewer-report-experience-skills`.
+
+Exact delta from R5 candidate `b790041...` contains only these four harness files:
 
 - `web/src/__tests__/csp-browser-smoke.test.ts`
 - `web/src/__tests__/login-smoke.test.ts`
-- `web/src/__tests__/shell-smoke.test.ts`
 - `web/src/__tests__/shell-a11y.test.ts`
+- `web/src/__tests__/shell-smoke.test.ts`
 
-Repair behavior:
+Repair scope:
 
-- browser smoke child servers receive a non-secret test-only `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in addition to the existing fake public URL;
-- shell smoke moves to port 3004, eliminating the login/shell port race;
-- shell a11y no longer imports/invokes stateful client Hook components under `react-server`; it asserts their semantic source contracts while runtime shell behavior remains covered by production browser acceptance tests;
-- no test is skipped, muted, or converted into an unconditional pass;
-- no report product code or Supabase file changed.
+- shell smoke now asserts selected Vietnamese locale labels: `Thanh điều hướng chính` and `Menu chức năng`, matching production behavior;
+- the four harness files were normalized for repository formatting/final-newline expectations;
+- no production report code changed;
+- no other production web code changed;
+- no Supabase file changed;
+- no workflow changed;
+- no test was skipped, muted, or converted to allow-failure.
 
-Producer exact-delta self-review: PASS.
+The task candidate cannot run Integration CI directly because the unchanged workflow triggers push CI only on `autonomy/continuous-integration-20260905-01`; integrating the candidate before independent review would violate the lifecycle. Fresh exact-SHA web verification is therefore delegated to independent OMP R6 before serialization.
 
 ## Current safe frontier / external review boundary
 
-`safe_frontier.eligible_tasks = []` while TASK-S05-001 is waiting for the required independent targeted re-review caused by the repair SHA change.
+`safe_frontier.eligible_tasks = []` while TASK-S05-001 waits for independent targeted R6 re-review.
 
-Runtime state is `WAITING_EXTERNAL_REVIEW` for targeted OMP review of the exact assembled CI-harness repair candidate.
+Runtime state is `WAITING_EXTERNAL_REVIEW` with exact target `63bb2f9eff9e36c11c704748c3ccf334cbcfc4ce`.
 
 ## Next action
 
-Assemble the review candidate from the four-file repair and this persisted wait-state, send the complete exact-SHA OMP R5 handoff package through Owner transport, and wait only for that independent verdict.
+Send the exact-SHA OMP R6 handoff package through Owner transport and wait only for the independent verdict.
 
-- PASS → fast-forward integration to the exact reviewed SHA, require exact-SHA Integration CI + Governance CI PASS, create immutable `checkpoint/S05-001-accepted-001`, persist acceptance, then execute POST-CI continuation.
+- PASS → serialize integration. Because current integration contains the R6 wait-state control commit and exact candidate is on the task branch, integration may create a different SHA; if so, perform the required targeted final exact-SHA equivalence/acceptance review before acceptance CI. Then require exact-SHA Integration CI + Governance CI PASS, create immutable `checkpoint/S05-001-accepted-001`, persist acceptance, and execute POST-CI continuation.
 - BLOCKING_REPAIR → repair only the cited blocker and exact-SHA re-review.
 - SOURCE_REOPEN_REQUIRED / Owner decision → stop at the canonical boundary.
 
