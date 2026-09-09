@@ -13,14 +13,14 @@ export interface AppShellProps {
   children: React.ReactNode;
   title?: React.ReactNode;
   currentPath?: string;
-  navItems: readonly NavItem[];
+  navItems?: readonly NavItem[];
 }
 
 function AppShellContent({
   children,
   title,
   currentPath = "/",
-  navItems,
+  navItems = [],
 }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
