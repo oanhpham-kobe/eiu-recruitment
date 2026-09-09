@@ -4,7 +4,7 @@ import { build } from "esbuild";
 import { type Browser, chromium, type Page } from "playwright";
 
 const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
-type HarnessMode = "production" | "locale";
+type HarnessMode = "production" | "locale" | "pending" | "error";
 
 async function bundleHarness() {
   const bundle = await build({
@@ -224,6 +224,85 @@ test(
       await page.getByTestId("test-switch-vi").click();
       assert.ok(await page.getByText("Đã lưu báo cáo.").isVisible());
       assert.deepEqual(errors, [], "locale/draft browser errors");
+      await page.close();
+    } finally {
+      await browser?.close();
+    }
+  },
+);
+
+test(
+  "pending save freezes drawer selection and draft until the originating save completes",
+  { timeout: 60_000 },
+  async () => {
+    const assets = await bundleHarness();
+    let browser: Browser | undefined;
+    try {
+      browser = await chromium.launch();
+      const { page, errors } = await openHarness(
+        browser,
+        assets,
+        "pending",
+        390,
+      );
+      await page.getByRole("button", { name: "Báo cáo PV" }).click();
+      const drawer = page.locator(".ui-drawer");
+      const field = page.getByLabel("Kiến thức chuyên môn");
+      await field.fill("Pending save draft");
+      await page.getByRole("button", { name: "Lưu báo cáo" }).click();
+
+      assert.equal(await field.isDisabled(), true);
+      assert.equal(await page.getByRole("button", { name: "Hủy" }).isDisabled(), true);
+      await page.keyboard.press("Escape");
+      assert.equal(await drawer.isVisible(), true);
+      assert.equal(await page.locator("#app-root").getAttribute("inert"), "");
+      assert.equal(await field.inputValue(), "Pending save draft");
+
+      await page.getByTestId("release-save").click();
+      await page.getByText("Đã lưu báo cáo.").waitFor({ state: "visible" });
+      assert.ok(await page.getByText("Pending save draft").isVisible());
+      assert.deepEqual(errors, [], "pending-save browser errors");
+      await page.close();
+    } finally {
+      await browser?.close();
+    }
+  },
+);
+
+test(
+  "report access error follows selected VI/EN locale without exposing details",
+  { timeout: 60_000 },
+  async () => {
+    const assets = await bundleHarness();
+    let browser: Browser | undefined;
+    try {
+      browser = await chromium.launch();
+      const { page, errors } = await openHarness(
+        browser,
+        assets,
+        "error",
+        390,
+      );
+
+      assert.ok(await page.getByRole("heading", { name: "Báo cáo phỏng vấn" }).isVisible());
+      assert.ok(
+        await page
+          .getByText("Bạn không có quyền xem Báo cáo phỏng vấn.")
+          .isVisible(),
+      );
+
+      await page.getByTestId("error-switch-en").click();
+      assert.ok(await page.getByRole("heading", { name: "Interview Reports" }).isVisible());
+      assert.ok(
+        await page
+          .getByText("You do not have access to Interview Reports.")
+          .isVisible(),
+      );
+      assert.equal(
+        await page.evaluate(() => document.documentElement.lang),
+        "en",
+      );
+      assert.deepEqual(errors, [], "localized error browser errors");
       await page.close();
     } finally {
       await browser?.close();
