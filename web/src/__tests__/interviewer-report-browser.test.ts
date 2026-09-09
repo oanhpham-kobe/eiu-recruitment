@@ -192,7 +192,7 @@ test(
 );
 
 test(
-  "Interviewer report draft and feedback survive production locale-context changes",
+  "Interviewer report draft and feedback survive reachable locale changes",
   { timeout: 60_000 },
   async () => {
     const assets = await bundleHarness();
@@ -209,7 +209,7 @@ test(
       const field = page.getByLabel("Kiến thức chuyên môn");
       await field.fill("Draft survives locale switch");
 
-      await page.getByTestId("test-switch-en").click();
+      await page.getByRole("button", { name: "Tiếng Anh" }).click();
       assert.equal(await field.inputValue(), "Draft survives locale switch");
       assert.ok(await page.getByLabel("Professional Knowledge").isVisible());
       assert.equal(
@@ -221,7 +221,7 @@ test(
       assert.ok(await page.getByText("Draft survives locale switch").isVisible());
       assert.ok(await page.getByText("Report saved.").isVisible());
 
-      await page.getByTestId("test-switch-vi").click();
+      await page.getByRole("button", { name: "Vietnamese" }).click();
       assert.ok(await page.getByText("Đã lưu báo cáo.").isVisible());
       assert.deepEqual(errors, [], "locale/draft browser errors");
       await page.close();
@@ -232,7 +232,7 @@ test(
 );
 
 test(
-  "pending save freezes drawer selection and draft until the originating save completes",
+  "pending save freezes drawer state until programmatic completion",
   { timeout: 60_000 },
   async () => {
     const assets = await bundleHarness();
@@ -245,22 +245,43 @@ test(
         "pending",
         390,
       );
-      await page.getByRole("button", { name: "Báo cáo PV" }).click();
+      const trigger = page.getByRole("button", { name: "Báo cáo PV" });
+      await trigger.click();
       const drawer = page.locator(".ui-drawer");
       const field = page.getByLabel("Kiến thức chuyên môn");
       await field.fill("Pending save draft");
       await page.getByRole("button", { name: "Lưu báo cáo" }).click();
 
       assert.equal(await field.isDisabled(), true);
-      assert.equal(await page.getByRole("button", { name: "Hủy" }).isDisabled(), true);
+      assert.equal(
+        await page.getByRole("button", { name: "Hủy" }).isDisabled(),
+        true,
+      );
+      assert.equal(
+        await page.getByRole("button", { name: "Tiếng Anh" }).isDisabled(),
+        true,
+      );
       await page.keyboard.press("Escape");
       assert.equal(await drawer.isVisible(), true);
       assert.equal(await page.locator("#app-root").getAttribute("inert"), "");
       assert.equal(await field.inputValue(), "Pending save draft");
 
-      await page.getByTestId("release-save").click();
+      await page.evaluate(() => {
+        const release = Reflect.get(globalThis, "__releasePendingReportSave");
+        if (typeof release !== "function") {
+          throw new Error("Pending save resolver is unavailable");
+        }
+        release();
+      });
+
       await page.getByText("Đã lưu báo cáo.").waitFor({ state: "visible" });
       assert.ok(await page.getByText("Pending save draft").isVisible());
+      await page.keyboard.press("Escape");
+      await drawer.waitFor({ state: "detached" });
+      assert.equal(
+        await trigger.evaluate((element) => document.activeElement === element),
+        true,
+      );
       assert.deepEqual(errors, [], "pending-save browser errors");
       await page.close();
     } finally {
@@ -284,7 +305,11 @@ test(
         390,
       );
 
-      assert.ok(await page.getByRole("heading", { name: "Báo cáo phỏng vấn" }).isVisible());
+      assert.ok(
+        await page
+          .getByRole("heading", { name: "Báo cáo phỏng vấn" })
+          .isVisible(),
+      );
       assert.ok(
         await page
           .getByText("Bạn không có quyền xem Báo cáo phỏng vấn.")
@@ -292,7 +317,9 @@ test(
       );
 
       await page.getByTestId("error-switch-en").click();
-      assert.ok(await page.getByRole("heading", { name: "Interview Reports" }).isVisible());
+      assert.ok(
+        await page.getByRole("heading", { name: "Interview Reports" }).isVisible(),
+      );
       assert.ok(
         await page
           .getByText("You do not have access to Interview Reports.")
