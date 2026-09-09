@@ -243,7 +243,17 @@ begin
   )
   returning public.interview_participants.interview_participant_id into current_p2;
 
+  -- The accepted decision trigger uses transaction-stable now(). Seed ordered
+  -- UUIDs so equal timestamps deterministically exercise the UUID tie-break.
+  report1 := (
+    '10000000-0000-4000-8000-' || substr(md5(s || ':decision-source'), 1, 12)
+  )::uuid;
+  report2 := (
+    '20000000-0000-4000-8000-' || substr(md5(s || ':decision-source'), 1, 12)
+  )::uuid;
+
   insert into public.interview_reports(
+    interview_report_id,
     interview_participant_id,
     professional_knowledge,
     conclusion,
@@ -251,17 +261,16 @@ begin
     updated_by
   )
   values (
+    report1,
     current_p1,
     'Strong domain knowledge',
     'Primary decision',
     i1,
     i1
-  )
-  returning public.interview_reports.interview_report_id into report1;
-
-  perform pg_sleep(0.01);
+  );
 
   insert into public.interview_reports(
+    interview_report_id,
     interview_participant_id,
     necessary_skills,
     expected_specific_job_assigned,
@@ -269,13 +278,13 @@ begin
     updated_by
   )
   values (
+    report2,
     current_p2,
     'Strong communication',
-    'Newest decision job',
+    'Tie-break decision job',
     i2,
     i2
-  )
-  returning public.interview_reports.interview_report_id into report2;
+  );
 
   -- Anonymous request has no authenticated identity even when called by the
   -- test owner role.
@@ -394,8 +403,34 @@ begin
   assert (
     r->'data'->'rounds'->0->'preview'->'final_decision'
       ->>'expected_specific_job_assigned'
-  ) = 'Newest decision job',
-    'Final Decision Source selects the latest eligible report as one block';
+  ) = 'Tie-break decision job',
+    'equal decision timestamps use deterministic interview_report_id DESC tie-break';
+
+  -- Controlled test metadata isolates timestamp ordering without changing the
+  -- production trigger semantics. Newer timestamp must outrank a higher UUID.
+  update public.interview_reports
+  set decision_updated_at = clock_timestamp() + interval '1 second'
+  where public.interview_reports.interview_report_id = test.report1;
+
+  r := public.get_interviewer_report_page();
+  assert (
+    r->'data'->'rounds'->0->'preview'->'final_decision'->>'conclusion'
+  ) = 'Primary decision',
+    'newer decision timestamp outranks UUID tie-break';
+
+  update public.interview_reports
+  set decision_updated_at = clock_timestamp() - interval '1 second'
+  where public.interview_reports.interview_report_id = test.report1;
+  update public.interview_reports
+  set decision_updated_at = clock_timestamp()
+  where public.interview_reports.interview_report_id = test.report2;
+
+  r := public.get_interviewer_report_page();
+  assert (
+    r->'data'->'rounds'->0->'preview'->'final_decision'
+      ->>'expected_specific_job_assigned'
+  ) = 'Tie-break decision job',
+    'controlled timestamp fixture restores report two as latest source';
 
   select decision_updated_at into ts
   from public.interview_reports
