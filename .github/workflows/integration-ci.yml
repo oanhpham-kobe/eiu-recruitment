@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - autonomy/continuous-integration-20260905-01
-      - oanhpham-kobe/TASK-S05-001-interviewer-report-experience-skills
   workflow_dispatch:
     inputs:
       full_verification:
@@ -141,40 +140,6 @@ jobs:
 
       - name: Validate production design contract
         run: npm run design:check
-
-      - name: Auto-fix S05 candidate files with Biome
-        run: |
-          npx biome check --write --unsafe \
-            src/__tests__/fixtures/interviewer-report-browser-harness.tsx \
-            src/__tests__/interviewer-report-browser.test.ts \
-            src/__tests__/report-model.test.ts \
-            src/__tests__/shell-a11y.test.ts \
-            src/__tests__/shell-navigation.test.ts \
-            src/app/layout.tsx \
-            src/app/reports/actions.ts \
-            src/app/reports/page.tsx \
-            src/components/reports/InterviewerReportDrawerContent.tsx \
-            src/components/reports/InterviewerReportErrorState.tsx \
-            src/components/reports/InterviewerReportPage.tsx \
-            src/components/reports/InterviewerReportView.tsx \
-            src/components/reports/reportUi.tsx \
-            src/components/shell/AppShell.tsx \
-            src/components/shell/Header.tsx \
-            src/components/shell/LocaleProvider.tsx \
-            src/components/shell/MobileNavigation.tsx \
-            src/components/shell/Sidebar.tsx \
-            src/components/shell/navigation.ts \
-            src/components/ui/Drawer.tsx \
-            src/lib/reports/model.ts \
-            src/lib/reports/server.ts \
-            src/styles/reports.css
-
-      - name: Upload Biome-fixed S05 source snapshot
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: s05-biome-fixed
-          path: web/src
-          retention-days: 1
 
       - name: Lint
         run: npm run lint
