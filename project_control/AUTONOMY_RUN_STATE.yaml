@@ -45,6 +45,11 @@ integration:
   last_verified_control_plane_sha: "54a1f450b27bf8470e683cf66791fba7b7f62791"
   last_verified_control_plane_integration_ci_run: "34211382997"
   last_verified_control_plane_governance_ci_run: "34211383102"
+  last_task_acceptance_attempt_sha: "d9dd223394aed08555a6a71157d3cf821a7a31aa"
+  last_task_acceptance_integration_ci_run: "34354129765"
+  last_task_acceptance_integration_ci_result: "FAIL_WEB_HARNESS"
+  last_task_acceptance_governance_ci_run: "34354129770"
+  last_task_acceptance_governance_ci_result: PASS
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -93,18 +98,18 @@ active_workers:
   - task_id: TASK-S05-001
     lane: LANE_A
     role: EXECUTOR
-    branch: oanhpham-kobe/TASK-S05-001-interviewer-report-experience
+    branch: oanhpham-kobe/TASK-S05-001-interviewer-report-experience-skills
     worktree: REMOTE_GITHUB_BRANCH
-    exact_sha: null
-    state: STARTING
+    exact_sha: "b33d957ea26ee5436c56a569b97edc3d1c3c5ced"
+    state: WAITING
     started_at: "2026-09-08T10:24:12Z"
-    last_observed_at: "2026-09-08T10:24:12Z"
+    last_observed_at: "2026-09-09T13:15:00Z"
 
 active_task:
   id: TASK-S05-001
   slice: SLICE-05
-  phase: IMPLEMENTATION
-  reviewer_status: NOT_STARTED
+  phase: IMPLEMENTATION_RE_REVIEW
+  reviewer_status: WAITING_EXTERNAL_REVIEW
 
 last_accepted_task:
   id: TASK-S04-004
@@ -139,7 +144,7 @@ historical_mcp_governance_maintenance:
   ci_result: PASS
 
 slice_05_planning:
-  status: IMPLEMENTATION_STARTING
+  status: IMPLEMENTATION_RE_REVIEW_REQUIRED
   proposed_first_task: TASK-S05-001
   materialized_task: TASK-S05-001
   prompt: project_control/prompts/SLICE-05_TASK-001_v1.md
@@ -182,8 +187,42 @@ slice_05_planning:
     blocking_now: false
     scope: "official PDF pixel-perfect template integration only"
 
+s05_001_acceptance:
+  r4_review:
+    work_id: S05-001-IMPLEMENTATION-REVIEW-001-R4
+    reviewed_sha: "d9dd223394aed08555a6a71157d3cf821a7a31aa"
+    result: PASS
+    source_reopen_required: false
+    evidence_branch: "review/S05-001-IMPL-d9dd223-v4"
+    evidence_commit: "3c533f6981f99bd7d6c86ecbae4ef69323376c4b"
+    evidence_path: "project_control/reviews/S05_001_IMPLEMENTATION_REVIEW_d9dd223_v4.md"
+  exact_sha_ci_attempt:
+    sha: "d9dd223394aed08555a6a71157d3cf821a7a31aa"
+    integration_ci_run: "34354129765"
+    governance_ci_run: "34354129770"
+    governance_result: PASS
+    database_result: PASS
+    web_compile_gates: PASS
+    web_test_result: "FAIL — 287/291; exactly four known harness failures; all TASK-S05-001 report browser tests PASS"
+    acceptance_result: BLOCKED
+  repair_source:
+    sha: "b33d957ea26ee5436c56a569b97edc3d1c3c5ced"
+    branch: oanhpham-kobe/TASK-S05-001-interviewer-report-experience-skills
+    scope: "test harness only: three browser smoke startup/port fixes plus shell-a11y react-server-safe static contract assertions"
+    product_code_changed: false
+    supabase_changed: false
+    source_reopen_required: false
+    producer_self_review: PASS
+    independent_review_required: true
+
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
 
-next_action: "After exact-SHA control-plane CI passes, create immutable pre-task recovery checkpoint and task branch from that verified SHA, transition the task Executor to RUNNING, implement TASK-S05-001, perform focused verification and producer self-review, then stop at the independent OMP implementation-review boundary with an exact candidate SHA and copy-ready review package."
+stop_gate:
+  status: WAITING_EXTERNAL_REVIEW
+  type: OMP_TARGETED_IMPLEMENTATION_REVIEW
+  target: "TASK-S05-001 CI-harness repair candidate assembled from repair source b33d957ea26ee5436c56a569b97edc3d1c3c5ced"
+  resume_condition: "Independent OMP PASS on the exact assembled candidate; then fast-forward integration, require exact-SHA Integration/Governance CI PASS, create immutable accepted checkpoint, and continue POST-CI."
+
+next_action: "Assemble the exact review candidate from the test-harness repair and this persisted wait-state, emit the copy-ready targeted OMP R5 package, and yield only for the external independent review. On PASS, continue acceptance/integration autonomously; on BLOCKING_REPAIR, repair only the reported blocker and re-review."

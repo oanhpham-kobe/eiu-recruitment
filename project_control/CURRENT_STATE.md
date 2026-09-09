@@ -25,51 +25,94 @@
 - Evidence commit: `ce82b8369f042bba9f4519ada7274cc47875e40e`.
 - Evidence artifact: `project_control/reviews/SLICE_04_CLOSING_REVIEW_e3daa69_v1.md`.
 
-All materialized Slice-04 tasks remain individually accepted: `TASK-S04-001`, `TASK-S04-002`, `TASK-S04-003`, `TASK-S04-005`, and `TASK-S04-004`.
+## Slice-05 task state
 
-## Slice-05 prompt gate
+`TASK-S05-001 — Interviewer Report Experience over Accepted Report Contracts` remains the current Slice-05 task.
 
-The first OMP prompt review returned `BLOCKING_REPAIR` at `458b3856eafc812d8c8edca0b74c205fbfcd2f43`; findings F1–F4 were repaired in the prompt-only/control-state commit `54a1f450b27bf8470e683cf66791fba7b7f62791`.
+The approved task prompt is still byte-bound by SHA-256 `6dd884c22c4d58ac6120cfae133e9e27efb48ada228d3f7be1b790be37ad59c5` and is not reopened.
 
-Targeted OMP re-review is now PASS:
+Accepted prerequisites remain `TASK-S04-002`, `TASK-S04-005`, `TASK-S04-004`, and `TASK-DS-006`. Accepted Slice-04 mutation contracts continue to be consumed rather than recreated.
 
-- WORK_ID: `S05-001-PROMPT-REVIEW-001-R2`.
-- Reviewed SHA: `54a1f450b27bf8470e683cf66791fba7b7f62791`.
-- Result: `PASS`.
-- Source reopen required: `NO`.
-- Findings F1–F4: CLOSED.
-- New blocking findings: NONE.
-- Evidence branch: `review/S05-001-PROMPT-54a1f45-v2`.
-- Evidence commit: `36b5df1af4564853fb299af24696f0c8796228d0`.
-- Evidence artifact: `project_control/reviews/S05_001_PROMPT_REVIEW_54a1f45_v2.md`.
-- Final release decision: `PROMPT APPROVED FOR TASK MATERIALIZATION AND IMPLEMENTATION`.
+`ASSET-001` remains non-blocking and applies only to official pixel-perfect PDF-template integration.
 
-The reviewed prompt remains byte-bound by SHA-256 `6dd884c22c4d58ac6120cfae133e9e27efb48ada228d3f7be1b790be37ad59c5`; it must not be edited after this PASS without another prompt review.
+## R4 independent implementation review
 
-## Slice-05 execution start
+External independent OMP R4 accepted exact candidate:
 
-`TASK-S05-001` is materialized as the current Slice-05 task and is entering Lane A implementation on branch `oanhpham-kobe/TASK-S05-001-interviewer-report-experience`.
+- WORK_ID: `S05-001-IMPLEMENTATION-REVIEW-001-R4`.
+- Reviewed SHA: `d9dd223394aed08555a6a71157d3cf821a7a31aa`.
+- Result: PASS.
+- Source reopen required: NO.
+- R1/R2/R3/R4: CLOSED.
+- No new P0/P1 finding.
+- Real persisted evidence branch: `review/S05-001-IMPL-d9dd223-v4`.
+- Real persisted evidence commit: `3c533f6981f99bd7d6c86ecbae4ef69323376c4b`.
+- Evidence artifact: `project_control/reviews/S05_001_IMPLEMENTATION_REVIEW_d9dd223_v4.md`.
 
-This control-plane transition itself must pass exact-SHA Integration CI and Governance CI before implementation writes begin. After that verification the Coordinator creates an immutable pre-task recovery checkpoint from the verified control-plane SHA, creates the task branch from that same SHA, and begins implementation.
+The reviewer-reported evidence commit transported by Owner was not present in the repository; the Coordinator persisted the supplied verdict truthfully without altering candidate `d9dd223`.
 
-Accepted prerequisites remain `TASK-S04-002`, `TASK-S04-005`, `TASK-S04-004`, and `TASK-DS-006`; accepted Slice-04 mutation contracts are consumed rather than recreated.
+## Exact-SHA acceptance CI attempt
 
-`ASSET-001` remains non-blocking for this task and blocks only official pixel-perfect PDF-template integration.
+Integration was fast-forwarded without SHA change to `d9dd223394aed08555a6a71157d3cf821a7a31aa`.
 
-## Current safe frontier
+- Governance CI `34354129770`: PASS.
+- Integration CI `34354129765`:
+  - impact resolution: PASS;
+  - Database integration: PASS, including clean migration replay, PRE-S04 regressions, and TASK-S05-001 contextual-read assertions;
+  - Web dependency audit/design/lint/typecheck/build: PASS;
+  - all four TASK-S05-001 report browser tests: PASS;
+  - overall web test step: FAIL at 287/291 because of exactly four pre-existing harness failures.
 
-`safe_frontier.eligible_tasks = []` because `TASK-S05-001` owns Lane A in `STARTING` state rather than remaining a frontier candidate.
+The four CI blockers are test-infrastructure failures, not new S05 product regressions:
+
+1. CSP browser smoke child server lacked the required public Supabase publishable-key test env and never became reachable on port 3104.
+2. Login smoke child server had the same missing test env on port 3003.
+3. Shell a11y imported client LocaleProvider/Header under the global `react-server` test condition, causing `createContext is not a function` before assertions.
+4. Shell smoke had the same missing test env and also shared port 3003 with login smoke under concurrent Node tests.
+
+Because exact-SHA CI is red, `d9dd223` is NOT an accepted checkpoint despite R4 product acceptance.
+
+## Bounded CI-harness repair
+
+Repair source SHA: `b33d957ea26ee5436c56a569b97edc3d1c3c5ced` on branch `oanhpham-kobe/TASK-S05-001-interviewer-report-experience-skills`.
+
+Exact delta from `d9dd223` is four test-harness files only:
+
+- `web/src/__tests__/csp-browser-smoke.test.ts`
+- `web/src/__tests__/login-smoke.test.ts`
+- `web/src/__tests__/shell-smoke.test.ts`
+- `web/src/__tests__/shell-a11y.test.ts`
+
+Repair behavior:
+
+- browser smoke child servers receive a non-secret test-only `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in addition to the existing fake public URL;
+- shell smoke moves to port 3004, eliminating the login/shell port race;
+- shell a11y no longer imports/invokes stateful client Hook components under `react-server`; it asserts their semantic source contracts while runtime shell behavior remains covered by production browser acceptance tests;
+- no test is skipped, muted, or converted into an unconditional pass;
+- no report product code or Supabase file changed.
+
+Producer exact-delta self-review: PASS.
+
+## Current safe frontier / external review boundary
+
+`safe_frontier.eligible_tasks = []` while TASK-S05-001 is waiting for the required independent targeted re-review caused by the repair SHA change.
+
+Runtime state is `WAITING_EXTERNAL_REVIEW` for targeted OMP review of the exact assembled CI-harness repair candidate.
 
 ## Next action
 
-Validate this exact materialization/control-plane SHA through GitHub Actions. On PASS, create `checkpoint/pre-S05-001-001` and the task branch from that verified SHA, transition implementation to RUNNING, implement the reviewed task, run focused verification and producer self-review, then hand the exact candidate SHA to independent OMP implementation review using the required copy-ready Owner transport package.
+Assemble the review candidate from the four-file repair and this persisted wait-state, send the complete exact-SHA OMP R5 handoff package through Owner transport, and wait only for that independent verdict.
+
+- PASS → fast-forward integration to the exact reviewed SHA, require exact-SHA Integration CI + Governance CI PASS, create immutable `checkpoint/S05-001-accepted-001`, persist acceptance, then execute POST-CI continuation.
+- BLOCKING_REPAIR → repair only the cited blocker and exact-SHA re-review.
+- SOURCE_REOPEN_REQUIRED / Owner decision → stop at the canonical boundary.
 
 ## Do not redo / do not cross
 
-- Do not edit the OMP-approved `SLICE-05_TASK-001_v1.md` without reopening prompt review.
+- Do not edit the OMP-approved task prompt without reopening prompt review.
 - Do not reopen accepted Slice-04 tasks without concrete regression/source evidence.
 - Do not recreate accepted Slice-04 report mutation primitives.
 - Do not broaden Interviewer access with HR permission codes.
 - Do not invent the official final PDF layout while `ASSET-001` is unresolved.
-- Do not integrate an implementation candidate before independent OMP implementation review PASS.
+- Do not create an accepted checkpoint while exact-SHA CI is red.
 - Do not merge/push `main`, create/merge PRs, deploy Vercel, or apply connected Supabase migrations without the explicit Owner boundary required for those actions.
