@@ -4,9 +4,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import {
+  type InterviewerReportPageData,
   parseInterviewerReportPageRpc,
   REPORT_FIELD_KEYS,
-  type InterviewerReportPageData,
   type ReportFieldKey,
   type ReportFields,
 } from "./model";
@@ -171,10 +171,7 @@ export async function saveOwnInterviewerReport(
   }
 
   const patchKeys = Object.keys(patches) as ReportFieldKey[];
-  if (
-    patchKeys.length === 0 ||
-    patchKeys.some((key) => !(key in baseValues))
-  ) {
+  if (patchKeys.length === 0 || patchKeys.some((key) => !(key in baseValues))) {
     return {
       success: false,
       error: {

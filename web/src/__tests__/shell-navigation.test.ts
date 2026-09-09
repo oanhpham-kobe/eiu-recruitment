@@ -3,7 +3,9 @@ import test from "node:test";
 import { resolveInternalNavItems } from "@/components/shell/navigation";
 
 function hrefs(roles: string[], permissions: string[]): string[] {
-  return resolveInternalNavItems({ roles, permissions }).map((item) => item.href);
+  return resolveInternalNavItems({ roles, permissions }).map(
+    (item) => item.href,
+  );
 }
 
 test("Interviewer navigation exposes only the contextual report module", () => {

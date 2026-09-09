@@ -11,9 +11,9 @@ import {
   changedReportFields,
   EMPTY_REPORT_FIELDS,
   groupInterviewerReportRounds,
-  REPORT_STATUS_LABELS,
   type InterviewerReportPageData,
   type InterviewerReportRound,
+  REPORT_STATUS_LABELS,
   type ReportFieldKey,
   type ReportFields,
 } from "@/lib/reports/model";
@@ -25,11 +25,11 @@ import { InterviewerReportDrawerContent } from "./InterviewerReportDrawerContent
 import {
   cloneReportFields,
   formatReportTime,
+  type ReportFeedback,
+  type ReportMode,
   reportFeedbackMessage,
   reportPosition,
   reportStatusTone,
-  type ReportFeedback,
-  type ReportMode,
 } from "./reportUi";
 
 export function InterviewerReportView({
@@ -57,13 +57,17 @@ export function InterviewerReportView({
     [data.rounds],
   );
   const round = selectedId
-    ? data.rounds.find((item) => item.interviewId === selectedId) ?? null
+    ? (data.rounds.find((item) => item.interviewId === selectedId) ?? null)
     : null;
   const group = round
-    ? groups.find((item) => item.applicationId === round.applicationId) ?? null
+    ? (groups.find((item) => item.applicationId === round.applicationId) ??
+      null)
     : null;
 
-  function selectRound(nextRound: InterviewerReportRound, nextMode: ReportMode) {
+  function selectRound(
+    nextRound: InterviewerReportRound,
+    nextMode: ReportMode,
+  ) {
     if (pending) return;
     setSelectedId(nextRound.interviewId);
     setMode(nextMode);
@@ -136,29 +140,22 @@ export function InterviewerReportView({
     }
   }
 
-  const drawerFooter = round
-    ? mode === "edit"
-      ? (
-          <div className="interviewer-report__drawer-actions">
-            <Button disabled={pending} onClick={() => setMode("view")}>
-              {t("Hủy", "Cancel")}
-            </Button>
-            <Button variant="primary" pending={pending} onClick={saveReport}>
-              {t("Lưu báo cáo", "Save report")}
-            </Button>
-          </div>
-        )
-      : round.canEdit
-        ? (
-            <Button
-              variant="primary"
-              onClick={() => selectRound(round, "edit")}
-            >
-              {round.hasOwnReport ? t("Sửa", "Edit") : t("Báo cáo PV", "Report")}
-            </Button>
-          )
-        : undefined
-    : undefined;
+  const drawerFooter = round ? (
+    mode === "edit" ? (
+      <div className="interviewer-report__drawer-actions">
+        <Button disabled={pending} onClick={() => setMode("view")}>
+          {t("Hủy", "Cancel")}
+        </Button>
+        <Button variant="primary" pending={pending} onClick={saveReport}>
+          {t("Lưu báo cáo", "Save report")}
+        </Button>
+      </div>
+    ) : round.canEdit ? (
+      <Button variant="primary" onClick={() => selectRound(round, "edit")}>
+        {round.hasOwnReport ? t("Sửa", "Edit") : t("Báo cáo PV", "Report")}
+      </Button>
+    ) : undefined
+  ) : undefined;
 
   return (
     <section
@@ -188,7 +185,9 @@ export function InterviewerReportView({
 
       {groups.length === 0 ? (
         <div className="interviewer-report__empty" role="status">
-          <strong>{t("Chưa có báo cáo khả dụng.", "No reports available.")}</strong>
+          <strong>
+            {t("Chưa có báo cáo khả dụng.", "No reports available.")}
+          </strong>
         </div>
       ) : (
         <TableScrollContainer className="interviewer-report__table-scroll">
@@ -236,7 +235,11 @@ export function InterviewerReportView({
                         tone={reportStatusTone(primary.displayReportStatus)}
                         className="interviewer-report__status-badge"
                       >
-                        {REPORT_STATUS_LABELS[primary.displayReportStatus][locale]}
+                        {
+                          REPORT_STATUS_LABELS[primary.displayReportStatus][
+                            locale
+                          ]
+                        }
                       </StatusBadge>
                     </td>
                     <td data-label={t("Thao tác", "Actions")}>

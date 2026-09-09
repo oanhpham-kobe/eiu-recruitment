@@ -63,9 +63,7 @@ export function Header({
             type="button"
             className={`lang-btn ${locale === "en" ? "active" : ""}`.trim()}
             aria-pressed={locale === "en"}
-            aria-label={
-              locale === "en" ? "English, selected" : "Tiếng Anh"
-            }
+            aria-label={locale === "en" ? "English, selected" : "Tiếng Anh"}
             onClick={() => setLocale("en")}
           >
             EN

@@ -138,7 +138,9 @@ export function groupInterviewerReportRounds(
 
   return [...grouped.entries()]
     .map(([applicationId, applicationRounds]) => {
-      const sorted = [...applicationRounds].sort((a, b) => b.roundNo - a.roundNo);
+      const sorted = [...applicationRounds].sort(
+        (a, b) => b.roundNo - a.roundNo,
+      );
       const primaryRound =
         sorted.find((round) => round.isCurrentRound) ?? sorted[0];
       return {
@@ -322,11 +324,17 @@ function roundValue(value: unknown): InterviewerReportRound {
   assertExactKeys(value, ROUND_DTO_KEYS, "round");
 
   return {
-    applicationId: stringValue(value.application_id, "application_id") as string,
+    applicationId: stringValue(
+      value.application_id,
+      "application_id",
+    ) as string,
     interviewId: stringValue(value.interview_id, "interview_id") as string,
     roundNo: numberValue(value.round_no, "round_no"),
     isCurrentRound: booleanValue(value.is_current_round, "is_current_round"),
-    candidateName: stringValue(value.candidate_name, "candidate_name") as string,
+    candidateName: stringValue(
+      value.candidate_name,
+      "candidate_name",
+    ) as string,
     positionNameVi: stringValue(
       value.position_name_vi,
       "position_name_vi",
@@ -358,7 +366,8 @@ function roundValue(value: unknown): InterviewerReportRound {
 export function parseInterviewerReportPageRpc(
   value: unknown,
 ): InterviewerReportPageData {
-  if (!isRecord(value)) throw new Error("Invalid Interviewer report RPC response");
+  if (!isRecord(value))
+    throw new Error("Invalid Interviewer report RPC response");
 
   if (value.success !== true) {
     assertExactKeys(

@@ -2,21 +2,21 @@
 
 import { Button } from "@/components/ui/Button";
 import {
-  REPORT_FIELD_KEYS,
-  safeMeetingHref,
   type InterviewerReportRound,
+  REPORT_FIELD_KEYS,
   type ReportApplicationGroup,
   type ReportFields,
+  safeMeetingHref,
 } from "@/lib/reports/model";
 import {
   displayReportText,
   formatReportTime,
-  reportFormatName,
   REPORT_FIELD_LABELS,
   ReportFieldValues,
-  reportPosition,
   type ReportLocale,
   type ReportMode,
+  reportFormatName,
+  reportPosition,
 } from "./reportUi";
 
 export function InterviewerReportDrawerContent({
@@ -36,7 +36,10 @@ export function InterviewerReportDrawerContent({
   mode: ReportMode;
   draft: ReportFields;
   pending: boolean;
-  onDraftChange: (key: (typeof REPORT_FIELD_KEYS)[number], value: string) => void;
+  onDraftChange: (
+    key: (typeof REPORT_FIELD_KEYS)[number],
+    value: string,
+  ) => void;
   onSelectRound: (round: InterviewerReportRound) => void;
   onLocaleChange: (locale: ReportLocale) => void;
 }) {
@@ -115,9 +118,7 @@ export function InterviewerReportDrawerContent({
             <dt>{t("Vòng", "Round")}</dt>
             <dd>
               {round.roundNo}
-              {!round.isCurrentRound
-                ? ` · ${t("Lịch sử", "Historical")}`
-                : ""}
+              {!round.isCurrentRound ? ` · ${t("Lịch sử", "Historical")}` : ""}
             </dd>
           </div>
           <div>
@@ -170,7 +171,9 @@ export function InterviewerReportDrawerContent({
                       name={key}
                       rows={3}
                       value={draft[key] ?? ""}
-                      onChange={(event) => onDraftChange(key, event.target.value)}
+                      onChange={(event) =>
+                        onDraftChange(key, event.target.value)
+                      }
                     />
                   </label>
                 ))}
@@ -221,7 +224,9 @@ export function InterviewerReportDrawerContent({
                 <dt>
                   {REPORT_FIELD_LABELS.conclusion[locale === "vi" ? 0 : 1]}
                 </dt>
-                <dd>{displayReportText(round.preview.finalDecision.conclusion)}</dd>
+                <dd>
+                  {displayReportText(round.preview.finalDecision.conclusion)}
+                </dd>
               </div>
               <div>
                 <dt>

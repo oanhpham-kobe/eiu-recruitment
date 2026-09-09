@@ -129,7 +129,7 @@ async function save(
   const current = data.rounds.find(
     (round) => round.interviewParticipantId === input.interviewParticipantId,
   );
-  if (!current || !current.canEdit) {
+  if (!current?.canEdit) {
     return {
       success: false,
       error: { code: "FORBIDDEN", message: "Read only" },

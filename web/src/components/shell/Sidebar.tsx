@@ -1,7 +1,7 @@
 "use client";
 
-import type { NavItem } from "./navigation";
 import { useAppLocale } from "./LocaleProvider";
+import type { NavItem } from "./navigation";
 
 export interface SidebarProps {
   currentPath?: string;
@@ -55,7 +55,9 @@ export function Sidebar({ currentPath = "/", navItems }: SidebarProps) {
         <div
           className="user-avatar"
           role="img"
-          aria-label={locale === "vi" ? "Ảnh đại diện người dùng" : "User avatar"}
+          aria-label={
+            locale === "vi" ? "Ảnh đại diện người dùng" : "User avatar"
+          }
         >
           IU
         </div>

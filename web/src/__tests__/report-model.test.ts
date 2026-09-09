@@ -6,8 +6,8 @@ import {
   groupInterviewerReportRounds,
   parseInterviewerReportPageRpc,
   projectInterviewerReportStatus,
-  safeMeetingHref,
   type RawReportStatus,
+  safeMeetingHref,
 } from "@/lib/reports/model";
 
 test("Interviewer status projection masks HR-only decision stages", () => {

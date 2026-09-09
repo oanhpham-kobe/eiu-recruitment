@@ -3,8 +3,8 @@ import { headers } from "next/headers";
 import { AppShell } from "@/components/shell/AppShell";
 import { CandidateShell } from "@/components/shell/CandidateShell";
 import {
-  resolveInternalNavItems,
   type NavItem,
+  resolveInternalNavItems,
 } from "@/components/shell/navigation";
 import { getServerSession } from "@/lib/auth/session";
 import "./globals.css";
