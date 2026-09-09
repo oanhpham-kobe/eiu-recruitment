@@ -31,10 +31,7 @@ test("SkipLink source keeps an accessible skip link targeting #main-content", ()
   const source = readSource("src/components/shell/SkipLink.tsx");
 
   assert.match(source, /<a href="#main-content" className="skip-link">/);
-  assert.match(
-    source,
-    /Chuyển đến nội dung chính \/ Skip to main content/,
-  );
+  assert.match(source, /Chuyển đến nội dung chính \/ Skip to main content/);
 });
 
 test("Sidebar source keeps semantic navigation, active state, and user identity contracts", () => {
@@ -72,7 +69,10 @@ test("Header source keeps title and semantic locale controls", () => {
 test("loading boundary source conforms to accessible status semantics", () => {
   const source = readSource("src/app/loading.tsx");
 
-  assert.match(source, /<div role="status" aria-live="polite" className="loading-indicator">/);
+  assert.match(
+    source,
+    /<div role="status" aria-live="polite" className="loading-indicator">/,
+  );
   assert.match(source, /Đang tải\.\.\. \/ Loading\.\.\./);
 });
 
