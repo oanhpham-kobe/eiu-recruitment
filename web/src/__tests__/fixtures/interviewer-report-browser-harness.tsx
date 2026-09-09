@@ -29,6 +29,14 @@ const REPORT_NAV_ITEMS = [
 
 let releasePendingSave: (() => void) | null = null;
 
+Object.defineProperty(globalThis, "__releasePendingReportSave", {
+  configurable: true,
+  value: () => {
+    releasePendingSave?.();
+    releasePendingSave = null;
+  },
+});
+
 function initialData(): InterviewerReportPageData {
   return {
     rounds: [
@@ -127,6 +135,7 @@ async function save(
       error: { code: "FORBIDDEN", message: "Read only" },
     };
   }
+
   const nextReport = { ...current.ownReport, ...input.patches };
   data = {
     rounds: data.rounds.map((round) =>
@@ -140,6 +149,7 @@ async function save(
         : round,
     ),
   };
+
   return {
     success: true,
     data: {
@@ -175,55 +185,20 @@ function ProductionHarness() {
 
 function PendingHarness() {
   return (
-    <>
-      <button
-        type="button"
-        data-testid="release-save"
-        onClick={() => {
-          releasePendingSave?.();
-          releasePendingSave = null;
-        }}
-      >
-        Release save
-      </button>
-      <div id="app-root" data-harness-ready="pending">
-        <AppShell currentPath="/reports" navItems={REPORT_NAV_ITEMS}>
-          <ReportSurface />
-        </AppShell>
-      </div>
-    </>
-  );
-}
-
-function LocaleHarnessContent() {
-  const { setLocale } = useAppLocale();
-  return (
-    <>
-      <button
-        type="button"
-        data-testid="test-switch-en"
-        onClick={() => setLocale("en")}
-      >
-        Test switch EN
-      </button>
-      <button
-        type="button"
-        data-testid="test-switch-vi"
-        onClick={() => setLocale("vi")}
-      >
-        Test switch VI
-      </button>
-      <div id="app-root" data-harness-ready="locale">
+    <div id="app-root" data-harness-ready="pending">
+      <AppShell currentPath="/reports" navItems={REPORT_NAV_ITEMS}>
         <ReportSurface />
-      </div>
-    </>
+      </AppShell>
+    </div>
   );
 }
 
 function LocaleHarness() {
   return (
     <LocaleProvider>
-      <LocaleHarnessContent />
+      <div id="app-root" data-harness-ready="locale">
+        <ReportSurface />
+      </div>
     </LocaleProvider>
   );
 }
@@ -264,6 +239,7 @@ function ErrorHarness() {
 const mode = document.body.dataset.harness;
 data = initialData();
 releasePendingSave = null;
+
 createRoot(document.getElementById("root")!).render(
   mode === "locale" ? (
     <LocaleHarness />
