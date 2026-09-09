@@ -206,12 +206,13 @@ test(
         390,
       );
       await page.getByRole("button", { name: "Báo cáo PV" }).click();
-      const field = page.getByLabel("Kiến thức chuyên môn");
-      await field.fill("Draft survives locale switch");
+      const fieldVi = page.getByLabel("Kiến thức chuyên môn");
+      await fieldVi.fill("Draft survives locale switch");
 
       await page.getByRole("button", { name: "Tiếng Anh" }).click();
-      assert.equal(await field.inputValue(), "Draft survives locale switch");
-      assert.ok(await page.getByLabel("Professional Knowledge").isVisible());
+      const fieldEn = page.getByLabel("Professional Knowledge");
+      assert.equal(await fieldEn.inputValue(), "Draft survives locale switch");
+      assert.ok(await fieldEn.isVisible());
       assert.equal(
         await page.evaluate(() => document.documentElement.lang),
         "en",
@@ -245,8 +246,7 @@ test(
         "pending",
         390,
       );
-      const trigger = page.getByRole("button", { name: "Báo cáo PV" });
-      await trigger.click();
+      await page.getByRole("button", { name: "Báo cáo PV" }).click();
       const drawer = page.locator(".ui-drawer");
       const field = page.getByLabel("Kiến thức chuyên môn");
       await field.fill("Pending save draft");
@@ -278,8 +278,11 @@ test(
       assert.ok(await page.getByText("Pending save draft").isVisible());
       await page.keyboard.press("Escape");
       await drawer.waitFor({ state: "detached" });
+      const savedTrigger = page.getByRole("button", { name: "Sửa" });
       assert.equal(
-        await trigger.evaluate((element) => document.activeElement === element),
+        await savedTrigger.evaluate(
+          (element) => document.activeElement === element,
+        ),
         true,
       );
       assert.deepEqual(errors, [], "pending-save browser errors");
