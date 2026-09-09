@@ -1,10 +1,11 @@
 import { createRoot } from "react-dom/client";
+import { InterviewerReportErrorState } from "@/components/reports/InterviewerReportErrorState";
+import { InterviewerReportView } from "@/components/reports/InterviewerReportView";
 import { AppShell } from "@/components/shell/AppShell";
 import {
   LocaleProvider,
   useAppLocale,
 } from "@/components/shell/LocaleProvider";
-import { InterviewerReportView } from "@/components/reports/InterviewerReportView";
 import {
   EMPTY_REPORT_FIELDS,
   type InterviewerReportPageData,
@@ -18,6 +19,15 @@ import "@/styles/reports.css";
 
 const CURRENT_INTERVIEW = "22222222-2222-4222-8222-222222222222";
 const CURRENT_PARTICIPANT = "33333333-3333-4333-8333-333333333333";
+const REPORT_NAV_ITEMS = [
+  {
+    href: "/reports",
+    labelVi: "Báo cáo phỏng vấn",
+    labelEn: "Interview Reports",
+  },
+] as const;
+
+let releasePendingSave: (() => void) | null = null;
 
 function initialData(): InterviewerReportPageData {
   return {
@@ -102,6 +112,12 @@ let data = initialData();
 async function save(
   input: SaveInterviewerReportInput,
 ): Promise<SaveInterviewerReportResult> {
+  if (document.body.dataset.harness === "pending") {
+    await new Promise<void>((resolve) => {
+      releasePendingSave = resolve;
+    });
+  }
+
   const current = data.rounds.find(
     (round) => round.interviewParticipantId === input.interviewParticipantId,
   );
@@ -150,10 +166,32 @@ function ReportSurface() {
 function ProductionHarness() {
   return (
     <div id="app-root" data-harness-ready="production">
-      <AppShell currentPath="/reports">
+      <AppShell currentPath="/reports" navItems={REPORT_NAV_ITEMS}>
         <ReportSurface />
       </AppShell>
     </div>
+  );
+}
+
+function PendingHarness() {
+  return (
+    <>
+      <button
+        type="button"
+        data-testid="release-save"
+        onClick={() => {
+          releasePendingSave?.();
+          releasePendingSave = null;
+        }}
+      >
+        Release save
+      </button>
+      <div id="app-root" data-harness-ready="pending">
+        <AppShell currentPath="/reports" navItems={REPORT_NAV_ITEMS}>
+          <ReportSurface />
+        </AppShell>
+      </div>
+    </>
   );
 }
 
@@ -161,9 +199,6 @@ function LocaleHarnessContent() {
   const { setLocale } = useAppLocale();
   return (
     <>
-      {/* Test-only control outside #app-root. It lets the browser test change
-          the same production LocaleProvider while Drawer correctly keeps the
-          real background inert. */}
       <button
         type="button"
         data-testid="test-switch-en"
@@ -193,8 +228,50 @@ function LocaleHarness() {
   );
 }
 
+function ErrorHarnessContent() {
+  const { setLocale } = useAppLocale();
+  return (
+    <>
+      <button
+        type="button"
+        data-testid="error-switch-en"
+        onClick={() => setLocale("en")}
+      >
+        Error switch EN
+      </button>
+      <button
+        type="button"
+        data-testid="error-switch-vi"
+        onClick={() => setLocale("vi")}
+      >
+        Error switch VI
+      </button>
+      <div id="app-root" data-harness-ready="error">
+        <InterviewerReportErrorState kind="access" />
+      </div>
+    </>
+  );
+}
+
+function ErrorHarness() {
+  return (
+    <LocaleProvider>
+      <ErrorHarnessContent />
+    </LocaleProvider>
+  );
+}
+
 const mode = document.body.dataset.harness;
 data = initialData();
+releasePendingSave = null;
 createRoot(document.getElementById("root")!).render(
-  mode === "locale" ? <LocaleHarness /> : <ProductionHarness />,
+  mode === "locale" ? (
+    <LocaleHarness />
+  ) : mode === "pending" ? (
+    <PendingHarness />
+  ) : mode === "error" ? (
+    <ErrorHarness />
+  ) : (
+    <ProductionHarness />
+  ),
 );
