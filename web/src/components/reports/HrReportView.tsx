@@ -43,6 +43,8 @@ type Feedback = {
   en: string;
 } | null;
 
+type SavedDraft = "note" | "participant";
+
 interface HrReportViewProps {
   initialData: HrReportPageData;
   onRefresh: (filters?: Partial<HrReportFilters>) => Promise<HrReportPageData>;
@@ -66,6 +68,21 @@ function cloneFields(fields: ReportFields): ReportFields {
   return Object.fromEntries(
     REPORT_FIELD_KEYS.map((key) => [key, fields[key]]),
   ) as ReportFields;
+}
+
+function mergeReportDraftWithFresh(
+  base: ReportFields,
+  draft: ReportFields,
+  fresh: ReportFields,
+): { base: ReportFields; draft: ReportFields } {
+  const dirtyFields = Object.keys(changedReportFields(base, draft).patches) as ReportFieldKey[];
+  const nextBase = cloneFields(fresh);
+  const nextDraft = cloneFields(fresh);
+  for (const key of dirtyFields) {
+    nextBase[key] = base[key];
+    nextDraft[key] = draft[key];
+  }
+  return { base: nextBase, draft: nextDraft };
 }
 
 function displayText(value: string | null): string {
@@ -168,9 +185,12 @@ export function HrReportView({
   });
   const [searchDraft, setSearchDraft] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [drawerInterviewId, setDrawerInterviewId] = useState<string | null>(null);
+  const [drawerRow, setDrawerRow] = useState<HrReportRow | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [noteBase, setNoteBase] = useState("");
+  const [noteExpectedVersionNo, setNoteExpectedVersionNo] = useState<number | null>(
+    null,
+  );
   const [editingParticipantId, setEditingParticipantId] = useState<string | null>(
     null,
   );
@@ -182,9 +202,8 @@ export function HrReportView({
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
 
-  const selectedRow = drawerInterviewId
-    ? data.rows.find((row) => row.interviewId === drawerInterviewId) ?? null
-    : null;
+  const selectedRow = drawerRow;
+  const drawerInterviewId = drawerRow?.interviewId ?? null;
 
   const currentEditingParticipant = useMemo(
     () =>
@@ -223,26 +242,24 @@ export function HrReportView({
   }
 
   function hydrateDrawer(row: HrReportRow) {
-    if (
-      drawerInterviewId &&
-      drawerInterviewId !== row.interviewId &&
-      hasUnsaved
-    ) {
+    if (drawerInterviewId && drawerInterviewId !== row.interviewId && hasUnsaved) {
       warnUnsaved();
       return;
     }
     const note = row.hrReportNote ?? "";
-    setDrawerInterviewId(row.interviewId);
+    setDrawerRow(row);
     setNoteDraft(note);
     setNoteBase(note);
+    setNoteExpectedVersionNo(row.interviewVersionNo);
     resetEditing();
     setFeedback(null);
   }
 
   function closeDrawerNow() {
-    setDrawerInterviewId(null);
+    setDrawerRow(null);
     setNoteDraft("");
     setNoteBase("");
+    setNoteExpectedVersionNo(null);
     resetEditing();
     setFeedback(null);
     setDiscardOpen(false);
@@ -259,14 +276,15 @@ export function HrReportView({
 
   async function refresh(
     nextFilters: HrReportFilters,
-    options?: { preserveDrawer?: string | null },
+    options?: { preserveDrawer?: string | null; savedDraft?: SavedDraft },
   ) {
-    const noteWasDirty = noteDirty;
+    const previousRow = selectedRow;
+    const previousBase = reportBase;
+    const previousDraft = reportDraft;
+    const noteWasDirty = noteDirty && options?.savedDraft !== "note";
+    const participantWasDirty =
+      participantDirty && options?.savedDraft !== "participant";
     const editingId = editingParticipantId;
-    const participantPatches =
-      reportDraft && reportBase
-        ? changedReportFields(reportBase, reportDraft).patches
-        : null;
     const next = await onRefresh(nextFilters);
     setData(next);
     setFilters({
@@ -275,35 +293,62 @@ export function HrReportView({
       pageSize: next.pageSize,
     });
     setSelectedIds(new Set());
-    const preserveId = options?.preserveDrawer ?? null;
-    if (preserveId) {
-      const fresh = next.rows.find((row) => row.interviewId === preserveId);
-      if (fresh) {
-        const freshNote = fresh.hrReportNote ?? "";
-        setDrawerInterviewId(fresh.interviewId);
-        setNoteBase(freshNote);
-        if (!noteWasDirty) setNoteDraft(freshNote);
 
-        if (editingId) {
-          const freshParticipant = fresh.drawer.participants.find(
-            (participant) => participant.interviewParticipantId === editingId,
-          );
-          if (freshParticipant) {
-            const freshFields = cloneFields(freshParticipant.report);
-            setReportBase(freshFields);
-            setReportDraft(
-              participantPatches
-                ? { ...freshFields, ...participantPatches }
-                : cloneFields(freshFields),
-            );
-          } else {
-            resetEditing();
-          }
+    const preserveId = options?.preserveDrawer ?? drawerInterviewId;
+    if (!preserveId) return next;
+
+    const fresh = next.rows.find((row) => row.interviewId === preserveId);
+    if (!fresh) {
+      if (previousRow && (noteWasDirty || participantWasDirty)) {
+        setDrawerRow(
+          options?.savedDraft === "note"
+            ? { ...previousRow, hrReportNote: noteDraft }
+            : previousRow,
+        );
+        if (options?.savedDraft === "note") {
+          setNoteBase(noteDraft);
+        }
+        if (options?.savedDraft === "participant") {
+          resetEditing();
         }
       } else {
         closeDrawerNow();
       }
+      return next;
     }
+
+    setDrawerRow(fresh);
+    const freshNote = fresh.hrReportNote ?? "";
+    if (options?.savedDraft === "note" || !noteWasDirty) {
+      setNoteBase(freshNote);
+      setNoteDraft(freshNote);
+      setNoteExpectedVersionNo(fresh.interviewVersionNo);
+    }
+
+    if (options?.savedDraft === "participant") {
+      resetEditing();
+      return next;
+    }
+
+    if (editingId && previousBase && previousDraft) {
+      const freshParticipant = fresh.drawer.participants.find(
+        (participant) => participant.interviewParticipantId === editingId,
+      );
+      if (freshParticipant) {
+        const merged = mergeReportDraftWithFresh(
+          previousBase,
+          previousDraft,
+          freshParticipant.report,
+        );
+        setReportBase(merged.base);
+        setReportDraft(merged.draft);
+      } else if (participantWasDirty && previousRow) {
+        setDrawerRow(previousRow);
+      } else {
+        resetEditing();
+      }
+    }
+
     return next;
   }
 
@@ -429,12 +474,15 @@ export function HrReportView({
       const result = await onNote({
         interviewId: row.interviewId,
         note: noteDraft.trim() ? noteDraft : null,
-        expectedVersionNo: row.interviewVersionNo,
+        expectedVersionNo: noteExpectedVersionNo ?? row.interviewVersionNo,
       });
       setFeedback(
         commandFeedback(result, "Đã lưu ghi chú HR.", "HR note saved."),
       );
-      await refresh(filters, { preserveDrawer: row.interviewId });
+      await refresh(filters, {
+        preserveDrawer: row.interviewId,
+        savedDraft: result.success ? "note" : undefined,
+      });
     } catch {
       setFeedback({
         kind: "error",
@@ -448,8 +496,7 @@ export function HrReportView({
 
   function requestParticipantEdit(participant: HrReportParticipant) {
     if (!data.permissions.editInterviewer || pending) return;
-    const editingSame =
-      participant.interviewParticipantId === editingParticipantId;
+    const editingSame = participant.interviewParticipantId === editingParticipantId;
     if (participantDirty) {
       warnUnsaved();
       return;
@@ -503,7 +550,10 @@ export function HrReportView({
           "Interviewer report saved.",
         ),
       );
-      await refresh(filters, { preserveDrawer: row.interviewId });
+      await refresh(filters, {
+        preserveDrawer: row.interviewId,
+        savedDraft: result.success ? "participant" : undefined,
+      });
     } catch {
       setFeedback({
         kind: "error",
@@ -614,6 +664,7 @@ export function HrReportView({
 
       <div
         className={styles.toolbar}
+        role="toolbar"
         aria-label={t("Công cụ báo cáo", "Report tools")}
       >
         <div className={styles.searchGroup}>
@@ -893,7 +944,7 @@ export function HrReportView({
         </TableScrollContainer>
       )}
 
-      <div
+      <nav
         className={styles.pagination}
         aria-label={t("Phân trang", "Pagination")}
       >
@@ -919,7 +970,7 @@ export function HrReportView({
         >
           {t("Sau", "Next")}
         </Button>
-      </div>
+      </nav>
 
       <Drawer
         open={Boolean(selectedRow)}
@@ -1025,8 +1076,7 @@ export function HrReportView({
                 ) : (
                   selectedRow.drawer.participants.map((participant) => {
                     const editing =
-                      participant.interviewParticipantId ===
-                      editingParticipantId;
+                      participant.interviewParticipantId === editingParticipantId;
                     return (
                       <article
                         className={styles.participantCard}
@@ -1041,28 +1091,20 @@ export function HrReportView({
                             {data.permissions.editInterviewer ? (
                               <Button
                                 disabled={pending}
-                                onClick={() =>
-                                  requestParticipantEdit(participant)
-                                }
+                                onClick={() => requestParticipantEdit(participant)}
                               >
                                 {editing
                                   ? t("Hủy sửa", "Cancel edit")
                                   : t("Sửa", "Edit")}
                               </Button>
                             ) : null}
-                            {data.permissions.delete &&
-                            participant.interviewReportId ? (
+                            {data.permissions.delete && participant.interviewReportId ? (
                               <Button
                                 variant="danger"
                                 disabled={pending}
-                                onClick={() =>
-                                  setDeleteParticipant(participant)
-                                }
+                                onClick={() => setDeleteParticipant(participant)}
                               >
-                                {t(
-                                  "Xóa / Inactive",
-                                  "Delete / Inactivate",
-                                )}
+                                {t("Xóa / Inactive", "Delete / Inactivate")}
                               </Button>
                             ) : null}
                           </div>
@@ -1072,11 +1114,7 @@ export function HrReportView({
                           <div className={styles.reportEditor}>
                             {REPORT_FIELD_KEYS.map((key) => (
                               <label key={key}>
-                                {
-                                  REPORT_FIELD_LABELS[key][
-                                    locale === "vi" ? 0 : 1
-                                  ]
-                                }
+                                {REPORT_FIELD_LABELS[key][locale === "vi" ? 0 : 1]}
                                 <textarea
                                   value={reportDraft[key] ?? ""}
                                   disabled={pending}
@@ -1098,9 +1136,7 @@ export function HrReportView({
                                 disabled={pending}
                                 onClick={() =>
                                   currentEditingParticipant
-                                    ? requestParticipantEdit(
-                                        currentEditingParticipant,
-                                      )
+                                    ? requestParticipantEdit(currentEditingParticipant)
                                     : resetEditing()
                                 }
                               >
@@ -1109,9 +1145,7 @@ export function HrReportView({
                               <Button
                                 variant="primary"
                                 pending={pending}
-                                onClick={() =>
-                                  void saveParticipantReport(selectedRow)
-                                }
+                                onClick={() => void saveParticipantReport(selectedRow)}
                               >
                                 {t("Lưu báo cáo", "Save report")}
                               </Button>
@@ -1122,11 +1156,7 @@ export function HrReportView({
                             {REPORT_FIELD_KEYS.map((key) => (
                               <div key={key}>
                                 <dt>
-                                  {
-                                    REPORT_FIELD_LABELS[key][
-                                      locale === "vi" ? 0 : 1
-                                    ]
-                                  }
+                                  {REPORT_FIELD_LABELS[key][locale === "vi" ? 0 : 1]}
                                 </dt>
                                 <dd>{displayText(participant.report[key])}</dd>
                               </div>
@@ -1157,8 +1187,7 @@ export function HrReportView({
                   <dt>{t("Công việc dự kiến", "Expected assignment")}</dt>
                   <dd>
                     {displayText(
-                      selectedRow.drawer.finalDecision
-                        .expectedSpecificJobAssigned,
+                      selectedRow.drawer.finalDecision.expectedSpecificJobAssigned,
                     )}
                   </dd>
                   <dt>
@@ -1166,8 +1195,7 @@ export function HrReportView({
                   </dt>
                   <dd>
                     {displayText(
-                      selectedRow.drawer.finalDecision
-                        .expectedRecruitmentTime,
+                      selectedRow.drawer.finalDecision.expectedRecruitmentTime,
                     )}
                   </dd>
                   <dt>{t("Cập nhật quyết định", "Decision updated")}</dt>
