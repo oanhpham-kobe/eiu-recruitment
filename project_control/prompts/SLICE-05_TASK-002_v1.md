@@ -1,7 +1,7 @@
 # TASK-S05-002 — HR Report Management Experience over Accepted Report Contracts
 
 ## Status
-STAGED FOR PRODUCER/SOURCE RECONCILIATION AND INDEPENDENT OMP PROMPT REVIEW / TASK NOT YET MATERIALIZED OR DISPATCHED
+REPAIRED AFTER PRODUCER/SOURCE RECONCILIATION / REQUIRES INDEPENDENT OMP PROMPT REVIEW BEFORE TASK MATERIALIZATION OR DISPATCH
 
 ## Objective
 Implement the Slice-05 HR Report Management vertical slice over the already accepted Interview/Report contracts. The HR experience must present one operational row per Application using the authoritative Current Round, expose the canonical HR-only Report drawer and controls, and route every mutation through trusted server/database commands.
@@ -15,9 +15,12 @@ Read and reconcile at minimum:
 - `recruitment_webapp/START_HERE.txt`
 - `recruitment_webapp/review_pack/06_INTERVIEW_REPORT_HR_AND_INTERVIEWER.md`
 - `recruitment_webapp/review_pack/02_ROLES_PERMISSIONS_AND_NAVIGATION.md`
+- `recruitment_webapp/review_pack/07_STATUS_AND_BUSINESS_RULES.md`
 - `recruitment_webapp/review_pack/37_BACKEND_COMMAND_CONTRACTS.md`
 - `recruitment_webapp/review_pack/39_SECURITY_RLS_MATRIX.md`
 - `recruitment_webapp/review_pack/55_COMMAND_COVERAGE_MATRIX.md`
+- `recruitment_webapp/review_pack/63_BATCH_OPERATION_SEMANTICS.md`
+- `recruitment_webapp/review_pack/73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md`
 - `recruitment_webapp/review_pack/100_TECHNICAL_PRECODE_GATE_V1_18.md`
 - Full Handover v1.18 / Business Logic Core v1.2 FROZEN / Technical Architecture v1.18 FROZEN.
 
@@ -63,6 +66,9 @@ Visibility changes access only; they do not delete participants, reports, histor
 Canonical authority requires a visible HR bulk Report Status action:
 - selected entities are exact Current-Round Interview IDs with aligned expected versions;
 - each selected record requires `reports.manage_status + reports.view` (Root implicit through permission dependency rules);
+- input is bounded to at most **100 selected items**; larger requests fail with `VALIDATION_ERROR`;
+- target IDs are sorted deterministically (`ORDER BY id ASC` or equivalent stable ascending UUID ordering) before row-lock acquisition;
+- re-resolve and revalidate Current Round + expected version for the full selected set under lock;
 - semantics are the same authoritative semantics as `change_report_status`;
 - one invalid/ineligible/stale/unauthorized selected item aborts the whole batch;
 - every affected parent Submission is recalculated before commit;
@@ -92,8 +98,10 @@ The HR read contract must be server-authoritative and minimum-safe:
 - authenticated active internal actor;
 - Root OR `reports.view` for page/read access;
 - one main row per **Application**;
-- include only Applications with at least one Interview Session under the canonical Report-page rule;
-- row derives from the authoritative Current Active Latest Interview Round / accepted Current Round authority, never a client-side `max(round_no)` guess;
+- the row exists only when the accepted authoritative Current Round resolves for that Application; Current Round is the highest `round_no` among `access_active` Interviews (`Application.is_active AND Interview.is_active`);
+- the Report page must **never fall back to an inactive historical Interview** merely because the Application has Interview history; historical rounds remain history/detail only;
+- the source rule that an Application needs Interview history is necessary but does not authorize fabricating a Current Round when no `access_active` Interview exists;
+- row derives from the accepted Current Round authority, never a client-side `max(round_no)` guess;
 - server-side pagination is by Application group, not raw Interview/report rows;
 - stable sorting includes a deterministic ID tie-breaker;
 - row DTO supports the canonical table fields: Candidate name, Position, Interview time, Location, current Report Status, HR Report Note and row/action identity/version data required for safe interaction;
@@ -108,7 +116,7 @@ If implemented as a database RPC / privileged helper, follow the accepted securi
 ## Required HR product behavior
 
 ### Main table
-The HR Report page shows exactly one main row per Application, using the Current Round. Historical rounds remain history/detail data; they do not become duplicate main rows.
+The HR Report page shows exactly one main row per Application with an authoritative Current Round. Historical rounds remain history/detail data; they do not become duplicate main rows or fallback aggregate rows.
 
 Canonical columns and order come from Design System `TABLE_LAYOUT.md`:
 
@@ -188,7 +196,7 @@ For HR Report responsive behavior:
 - Escape restores focus to the trigger;
 - the toolbar and row entry points must converge on the same business semantics, not separate mutation implementations.
 
-Bulk selection shows a selected-count state and must report blocking records/errors without implying partial success when the backend transaction aborts.
+Bulk selection shows a selected-count state and must report blocking records/errors without implying partial success when the backend transaction aborts. UI selection must respect the canonical 100-item server batch bound rather than silently chunking one user intent into multiple independently committed transactions.
 
 ### HR Report Note
 Reuse `update_hr_report_note` and its accepted optimistic trusted-command behavior. HR Note is HR-only and must never leak into the Interviewer DTO/UI. Status and note remain separate mutations.
@@ -289,7 +297,7 @@ Locale switch:
 - Permission dependencies are backend-enforced, not only UI-disabled.
 - Minimum-safe DTOs prevent accidental cross-module data exposure.
 - Optimistic/field-aware concurrency remains authoritative.
-- Multi-row/bulk commands use deterministic locking and atomic rollback.
+- Multi-row/bulk commands use deterministic locking, bounded input and atomic rollback.
 - Audit/security audit records reflect the actual actor/action/entity and do not log unnecessary sensitive business content.
 
 ## PDF boundary / ASSET-001
@@ -316,10 +324,10 @@ The current Report/PDF concept remains Current-Round-only. An on-screen Download
 Use impact-selected focused verification first, then normal changed-domain acceptance gates. At minimum prove:
 
 1. HR read projection: anonymous/Candidate/Interviewer/unauthorized/internal-inactive denial; Root and `reports.view` positive path; minimum-safe DTO and no unrelated cross-module leakage.
-2. Grouping: one main row per Application, only Applications with Interview history per source rule, authoritative Current Round data, no duplicate historical-round rows, stable deterministic pagination by Application.
+2. Grouping: one main row per Application with an authoritative Current Round; no fallback to inactive historical rounds; no duplicate historical-round rows; stable deterministic pagination by Application.
 3. HR table/design contract: exact columns/order/1610px min-width/colgroup, sticky Select + Name, horizontal-scroll containment, 16px operational typography, wrapping and loading/empty geometry.
 4. Report Status single mutation: all eight raw HR states, manual/flexible transition behavior, Current Round restriction, optimistic stale rejection, parent Submission recalculation and audit.
-5. `bulk_change_report_status`: exact Current-Round IDs + expected versions, `reports.manage_status + reports.view` for all, deterministic locks, ALL_OR_NOTHING rollback, no partial derived-status changes, affected Submission recalculation, adversarial stale/unauthorized/mixed-validity/race cases.
+5. `bulk_change_report_status`: exact Current-Round IDs + expected versions, maximum 100 items, deterministic ascending target locking, full-set Current Round re-resolution, `reports.manage_status + reports.view` for all, ALL_OR_NOTHING rollback, no partial derived-status changes, affected Submission recalculation, adversarial stale/unauthorized/mixed-validity/race cases.
 6. `set_report_visibility`: exact Current Round target, `reports.visibility + reports.view`, optimistic concurrency, audit, hide revokes eligible Interviewer contextual access, show restores it, and no unrelated status/note/report/outcome mutation.
 7. `delete_or_inactivate_report` permission repair: `reports.delete + reports.view`; prove `reports.manage_status` alone is insufficient; preserve report-specific lifecycle semantics and aggregate drawer has no Delete.
 8. HR Report Note: separate note-only command, `reports.manage_status + reports.view`, HR-only confidentiality, no status/outcome side effect.
