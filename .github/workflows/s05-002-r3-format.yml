@@ -1,4 +1,4 @@
-name: S05-002 R3 Fixture Repair
+name: S05-002 R3 Fixture Scope Repair
 
 on:
   push:
@@ -9,64 +9,35 @@ permissions:
   contents: write
 
 jobs:
-  repair-fixture:
-    if: ${{ !contains(github.event.head_commit.message, 'fixture-format-repair') }}
+  repair-fixture-scope:
+    if: ${{ !contains(github.event.head_commit.message, 'fixture-scope-repair') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
-      - name: Seed a valid interview format in the HR regression fixture
+      - name: Scope HR fixture read away from prior regression data
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
           path = Path('supabase/tests/hr_report_management_test.sql')
           text = path.read_text()
-
-          old = "  v_position_2 uuid;\n  v_submission uuid;"
-          new = "  v_position_2 uuid;\n  v_format uuid;\n  v_submission uuid;"
+          old = """  perform set_config(\n    'request.jwt.claims',\n    jsonb_build_object('sub', v_hr_auth::text)::text,\n    true\n  );\n  v_result := public.get_hr_report_page(1, 20, null, 'ALL', null, 'CANDIDATE_ASC');\n"""
+          new = """  perform set_config(\n    'request.jwt.claims',\n    jsonb_build_object('sub', v_hr_auth::text)::text,\n    true\n  );\n  v_result := public.get_hr_report_page(\n    1, 20, null, 'ALL', 'S05-002 Candidate', 'CANDIDATE_ASC'\n  );\n"""
           if old not in text:
-              raise SystemExit('format variable insertion point not found')
-          text = text.replace(old, new, 1)
-
-          old = """  insert into public.positions(unit_id, position_group_id, code, name_vi, name_en)\n  values (v_unit, v_group, 'S05002_P2_' || v_suffix, 'Giảng viên B', 'Lecturer B')\n  returning position_id into v_position_2;\n"""
-          new = old + """\n  insert into public.interview_formats(\n    code, name_vi, name_en, requires_room, requires_meeting_link, is_active\n  ) values (\n    'S05002_FMT_' || v_suffix, 'Khác', 'Other', false, false, true\n  ) returning interview_format_id into v_format;\n"""
-          if old not in text:
-              raise SystemExit('format seed insertion point not found')
-          text = text.replace(old, new, 1)
-
-          column_pattern = (
-              "    application_id, round_no, start_at, end_at,\n"
-              "    schedule_status_code, report_status_code,"
-          )
-          column_replacement = (
-              "    application_id, round_no, start_at, end_at, interview_format_id,\n"
-              "    schedule_status_code, report_status_code,"
-          )
-          if text.count(column_pattern) != 3:
-              raise SystemExit(f'expected 3 timed interview column blocks, found {text.count(column_pattern)}')
-          text = text.replace(column_pattern, column_replacement)
-
-          value_pattern = re.compile(
-              r"(timestamptz '[^']+', timestamptz '[^']+',\n)(    'CONFIRMED')"
-          )
-          text, count = value_pattern.subn(r"\1    v_format,\n\2", text)
-          if count != 3:
-              raise SystemExit(f'expected 3 timed interview value blocks, found {count}')
-
-          path.write_text(text)
+              raise SystemExit('authorized HR read block not found')
+          path.write_text(text.replace(old, new, 1))
           PY
           git diff --check
-      - name: Commit fixture repair
+      - name: Commit fixture scope repair
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add supabase/tests/hr_report_management_test.sql
           git diff --cached --check
           if ! git diff --cached --quiet; then
-            git commit -m "test(s05-002): fixture-format-repair"
+            git commit -m "test(s05-002): fixture-scope-repair"
             git push
           fi
