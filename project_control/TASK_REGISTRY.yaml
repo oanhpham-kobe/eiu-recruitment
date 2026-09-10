@@ -1174,8 +1174,8 @@ tasks:
     depends_on:
       - TASK-S05-002
     prompt: project_control/prompts/SLICE-06_TASK-001_v1.md
-    prompt_review_status: PENDING
-    prompt_review_evidence: PENDING
+    prompt_review_status: "WAITING_EXTERNAL_REVIEW (S06-001-PROMPT-REVIEW-001 @ 5abbb5181405e0f5a468176edd93db8226a3efd5)"
+    prompt_review_evidence: project_control/reviews/S06_001_PROMPT_REVIEW_GATE_5abbb51_v1.md
     pre_task_checkpoint: PENDING_AFTER_PROMPT_REVIEW
     branch: PENDING_AFTER_PROMPT_REVIEW
     notes: "Shared-contract backend prerequisite for Phase-1 business Master Data. Scope is limited to the 11 physical business masters and canonical create_master_item/update_master_item/delete_or_inactivate_master_item lifecycle/history contracts. Internal User directory, HR roles/permissions, bound identity, Root break-glass, and management UI are explicitly deferred to later Slice-06 tasks."
