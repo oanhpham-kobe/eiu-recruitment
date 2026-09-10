@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-05
-current_task: TASK-S05-001
+current_task: TASK-S05-002
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1133,3 +1133,24 @@ tasks:
       - "Governance CI 34386549725: PASS"
       - "checkpoint/S05-001-accepted-001 @ ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
     notes: "Accepted Interviewer Report experience. R4 product review passed; R5/R6 repaired only CI harness defects; final exact integration equivalence review passed. No deployment or connected Supabase migration application occurred. ASSET-001 official pixel-perfect PDF template remains deferred."
+
+  TASK-S05-002:
+    title: "HR Report Management Experience over Accepted Report Contracts"
+    slice: SLICE-05
+    status: READY
+    lane: LANE_A
+    branch: oanhpham-kobe/TASK-S05-002-hr-report-management
+    depends_on:
+      - TASK-S04-002
+      - TASK-S04-005
+      - TASK-S04-004
+      - TASK-DS-006
+      - TASK-S05-001
+    prompt: project_control/prompts/SLICE-05_TASK-002_v1.md
+    prompt_review_status: "PASS (S05-002-PROMPT-REVIEW-001 @ 1f831a767906e4322e0fc2370d593b5c51e323d5; eiu-reviewer; source reopen: NO)"
+    prompt_review_evidence:
+      branch: review/S05-002-PROMPT-1f831a7-v1
+      commit: "128859aecc2e8cefc7acc71cf5e2252c43dd5af9"
+      artifact: project_control/reviews/S05_002_PROMPT_REVIEW_1f831a7_v1.md
+    pre_task_checkpoint: checkpoint/pre-S05-002-001
+    notes: "Materialized after exact-source eiu-reviewer prompt PASS. Scope: HR Report management over accepted report contracts; add missing set_report_visibility and bulk_change_report_status, repair delete permission to reports.delete + reports.view, preserve dedicated minimum-safe HR read projection, accepted Current Round/Final Decision/concurrency semantics, Design System v1.8, and no deployment or connected Supabase migration application."

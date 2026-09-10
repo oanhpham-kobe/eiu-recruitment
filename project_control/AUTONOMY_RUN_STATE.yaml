@@ -130,11 +130,11 @@ historical_mcp_governance_maintenance:
   ci_result: PASS
 
 slice_05_planning:
-  status: WAITING_EXTERNAL_REVIEW
+  status: READY_FOR_IMPLEMENTATION
   proposed_first_task: TASK-S05-001
   proposed_next_task: TASK-S05-002
-  materialized_task: TASK-S05-001
-  materialization_frontier: TASK-S05-002
+  materialized_task: TASK-S05-002
+  materialization_frontier: NONE
   prompt: project_control/prompts/SLICE-05_TASK-002_v1.md
   prompt_review_target_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
   canonical_sources:
@@ -179,11 +179,16 @@ slice_05_planning:
       - dedicated_hr_report_read_projection_required
   independent_prompt_review:
     work_id: S05-002-PROMPT-REVIEW-001
-    status: WAITING_EXTERNAL_REVIEW
+    reviewer: eiu-reviewer
+    status: VERIFIED
     reviewed_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
-    result: PENDING
-    source_reopen_required: PENDING
-  external_review_transport: "OMP is not directly invokable from the Coordinator runtime; Coordinator must emit a complete copy-ready Owner handoff package, and Owner returns the complete exact-target verdict/evidence."
+    result: PASS
+    source_reopen_required: false
+    blocking_findings: NONE
+    evidence_branch: review/S05-002-PROMPT-1f831a7-v1
+    evidence_commit: "128859aecc2e8cefc7acc71cf5e2252c43dd5af9"
+    evidence_path: project_control/reviews/S05_002_PROMPT_REVIEW_1f831a7_v1.md
+  external_review_transport: "Verified Owner-transported eiu-reviewer evidence. Runtime has no direct OMP reviewer invoker; future external review gates must use exact-SHA copy-ready transport and direct evidence verification."
   owner_asset_gap:
     id: ASSET-001
     blocking_now: false
@@ -210,21 +215,27 @@ s05_001_acceptance:
   source_reopen_required: false
 
 safe_frontier:
-  eligible_tasks: []
-  skipped_due_to_dependency: []
-  materialization_frontier:
+  eligible_tasks:
     - TASK-S05-002
-  execution_hold: "Independent OMP prompt/source reconciliation review must PASS for exact prompt target 1f831a767906e4322e0fc2370d593b5c51e323d5 before TASK-S05-002 is materialized or dispatched."
+  skipped_due_to_dependency: []
+  materialization_frontier: []
+  execution_hold: null
 
 stop_gate:
-  status: WAITING_EXTERNAL_REVIEW
-  type: OMP_PROMPT_REVIEW
+  status: CLEARED
+  type: NONE
   work_id: S05-002-PROMPT-REVIEW-001
   target: project_control/prompts/SLICE-05_TASK-002_v1.md
   reviewed_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
+  reviewer: eiu-reviewer
+  verdict: PASS
+  source_reopen_required: false
+  evidence_branch: review/S05-002-PROMPT-1f831a7-v1
+  evidence_commit: "128859aecc2e8cefc7acc71cf5e2252c43dd5af9"
+  evidence_path: project_control/reviews/S05_002_PROMPT_REVIEW_1f831a7_v1.md
   previous_owner_handoff_gate: CLEARED_BY_NEW_SESSION
-  handoff_package_requirement: COPY_READY_OWNER_TRANSPORT_BEFORE_YIELD
-  owner_role: "Transport the Coordinator-supplied review package to independent OMP and return the complete verdict/evidence; do not author or reconstruct the review instructions."
-  resume_on: "Exact-target OMP verdict PASS or BLOCKING_REPAIR/OWNER_DECISION_REQUIRED handoff"
+  handoff_package_requirement: SATISFIED
+  owner_role: "Transport completed; no further Owner action required for the S05-002 pre-implementation prompt gate."
+  resume_on: NONE
 
-next_action: "Owner transports the Coordinator-supplied copy-ready independent OMP prompt/source reconciliation package for S05-002 exact target 1f831a767906e4322e0fc2370d593b5c51e323d5 and returns the complete verdict/evidence. On PASS with SOURCE_REOPEN_REQUIRED=false, materialize TASK-S05-002 in TASK_REGISTRY, advance SLICE-05 current task, create the task/recovery branch/checkpoint as governed, and dispatch implementation."
+next_action: "Create immutable checkpoint/pre-S05-002-001 and task branch oanhpham-kobe/TASK-S05-002-hr-report-management from the exact S05-002 materialization commit, then load task-relevant skills and begin implementation. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
