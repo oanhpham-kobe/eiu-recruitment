@@ -26,28 +26,27 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
-      - name: Apply safe Biome fixes to S05-002-owned files only
+      - name: Repair the exact Drawer close selector
         run: |
-          npx biome check --write \
-            src/__tests__/fixtures/hr-report-browser-harness.tsx \
-            src/__tests__/hr-report-browser.test.ts \
-            src/__tests__/hr-report-model.test.ts \
-            src/__tests__/hr-report-server-adapter.test.ts \
-            src/app/reports/actions.ts \
-            src/app/reports/page.tsx \
-            src/components/reports/HrReportPage.tsx \
-            src/components/reports/HrReportView.tsx \
-            src/components/ui/StatusMenu.tsx \
-            src/lib/reports/hr-model.ts \
-            src/lib/reports/hr-server.ts
-      - name: Commit safe formatting fixes
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/__tests__/hr-report-browser.test.ts')
+          text = path.read_text()
+          old = 'drawer.getByRole("button", { name: "Đóng" }).click()'
+          new = 'drawer.getByRole("button", { name: "Đóng", exact: true }).click()'
+          if old not in text:
+              raise SystemExit('expected close selector not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          npx biome check --write src/__tests__/hr-report-browser.test.ts
+      - name: Commit exact test repair
         working-directory: .
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web
+          git add web/src/__tests__/hr-report-browser.test.ts
           git diff --cached --check
           if ! git diff --cached --quiet; then
-            git commit -m "chore(s05-002): biome-format verify candidate"
+            git commit -m "chore(s05-002): biome-format exact close selector"
             git push
           fi
