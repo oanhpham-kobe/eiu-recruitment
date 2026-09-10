@@ -1,0 +1,45 @@
+name: SLICE-05 Closing Gate Patch
+
+on:
+  push:
+    branches:
+      - control/SLICE-05-closing-gate-60e1f42
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Patch closing gate state
+        run: python .github/scripts/s05_closing_gate_patch.py
+      - name: Validate YAML
+        run: |
+          python - <<'PY'
+          import yaml
+          for path in [
+              'project_control/AUTONOMY_RUN_STATE.yaml',
+              'project_control/TASK_REGISTRY.yaml',
+              'project_control/EVIDENCE_INDEX.yaml',
+              'project_control/SLICE_REGISTRY.yaml',
+          ]:
+              with open(path, encoding='utf-8') as f:
+                  yaml.safe_load(f)
+              print('PARSE PASS', path)
+          PY
+      - name: Commit closing gate state
+        run: |
+          if git diff --quiet -- project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md; then
+            echo 'No closing-gate state changes to commit.'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md
+          git diff --cached --check
+          git commit -m "chore(state): materialize SLICE-05 closing review gate"
+          git push origin HEAD
