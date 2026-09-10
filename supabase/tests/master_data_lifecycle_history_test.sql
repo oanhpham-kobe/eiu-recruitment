@@ -81,9 +81,23 @@ begin
   values (v_no_perm_auth, 's06001_none_' || v_suffix || '@eiu.edu.vn', 'S06-001 No Permission', true)
   returning app_user_id into v_no_perm;
 
-  insert into public.app_users(auth_user_id, email, full_name, is_active, is_root_admin)
-  values (v_root_auth, 's06001_root_' || v_suffix || '@eiu.edu.vn', 'S06-001 Root', true, true)
-  returning app_user_id into v_root;
+  select u.app_user_id, u.auth_user_id
+    into v_root, v_root_auth
+  from public.app_users u
+  where u.is_root_admin = true
+    and u.is_active = true
+  limit 1;
+
+  if v_root is null then
+    insert into public.app_users(auth_user_id, email, full_name, is_active, is_root_admin)
+    values (v_root_auth, 's06001_root_' || v_suffix || '@eiu.edu.vn', 'S06-001 Root', true, true)
+    returning app_user_id into v_root;
+  elsif v_root_auth is null then
+    v_root_auth := gen_random_uuid();
+    update public.app_users
+    set auth_user_id = v_root_auth
+    where app_user_id = v_root;
+  end if;
 
   insert into public.app_user_permissions(app_user_id, permission_code)
   values
