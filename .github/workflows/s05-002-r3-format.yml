@@ -1,4 +1,4 @@
-name: S05-002 R3 Format
+name: S05-002 R3 Fixture Repair
 
 on:
   push:
@@ -9,44 +9,64 @@ permissions:
   contents: write
 
 jobs:
-  format:
-    if: ${{ !contains(github.event.head_commit.message, 'biome-format') }}
+  repair-fixture:
+    if: ${{ !contains(github.event.head_commit.message, 'fixture-format-repair') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: web
     steps:
       - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4.4.0
-        with:
-          node-version: 24.20.0
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - run: npm ci
-      - name: Repair the exact Drawer close selector
+      - name: Seed a valid interview format in the HR regression fixture
         run: |
           python - <<'PY'
           from pathlib import Path
-          path = Path('src/__tests__/hr-report-browser.test.ts')
+          import re
+
+          path = Path('supabase/tests/hr_report_management_test.sql')
           text = path.read_text()
-          old = 'drawer.getByRole("button", { name: "Đóng" }).click()'
-          new = 'drawer.getByRole("button", { name: "Đóng", exact: true }).click()'
+
+          old = "  v_position_2 uuid;\n  v_submission uuid;"
+          new = "  v_position_2 uuid;\n  v_format uuid;\n  v_submission uuid;"
           if old not in text:
-              raise SystemExit('expected close selector not found')
-          path.write_text(text.replace(old, new, 1))
+              raise SystemExit('format variable insertion point not found')
+          text = text.replace(old, new, 1)
+
+          old = """  insert into public.positions(unit_id, position_group_id, code, name_vi, name_en)\n  values (v_unit, v_group, 'S05002_P2_' || v_suffix, 'Giảng viên B', 'Lecturer B')\n  returning position_id into v_position_2;\n"""
+          new = old + """\n  insert into public.interview_formats(\n    code, name_vi, name_en, requires_room, requires_meeting_link, is_active\n  ) values (\n    'S05002_FMT_' || v_suffix, 'Khác', 'Other', false, false, true\n  ) returning interview_format_id into v_format;\n"""
+          if old not in text:
+              raise SystemExit('format seed insertion point not found')
+          text = text.replace(old, new, 1)
+
+          column_pattern = (
+              "    application_id, round_no, start_at, end_at,\n"
+              "    schedule_status_code, report_status_code,"
+          )
+          column_replacement = (
+              "    application_id, round_no, start_at, end_at, interview_format_id,\n"
+              "    schedule_status_code, report_status_code,"
+          )
+          if text.count(column_pattern) != 3:
+              raise SystemExit(f'expected 3 timed interview column blocks, found {text.count(column_pattern)}')
+          text = text.replace(column_pattern, column_replacement)
+
+          value_pattern = re.compile(
+              r"(timestamptz '[^']+', timestamptz '[^']+',\n)(    'CONFIRMED')"
+          )
+          text, count = value_pattern.subn(r"\1    v_format,\n\2", text)
+          if count != 3:
+              raise SystemExit(f'expected 3 timed interview value blocks, found {count}')
+
+          path.write_text(text)
           PY
-          npx biome check --write src/__tests__/hr-report-browser.test.ts
-      - name: Commit exact test repair
-        working-directory: .
+          git diff --check
+      - name: Commit fixture repair
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/src/__tests__/hr-report-browser.test.ts
+          git add supabase/tests/hr_report_management_test.sql
           git diff --cached --check
           if ! git diff --cached --quiet; then
-            git commit -m "chore(s05-002): biome-format exact close selector"
+            git commit -m "test(s05-002): fixture-format-repair"
             git push
           fi
