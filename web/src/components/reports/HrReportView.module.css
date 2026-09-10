@@ -1,6 +1,6 @@
 .root {
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
   min-width: 0;
   font-size: 16px;
 }
@@ -9,7 +9,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .heading h1 {
@@ -18,27 +18,27 @@
 
 .heading p {
   margin: 6px 0 0;
-  color: var(--color-text-muted);
+  color: var(--ink-600);
 }
 
 .toolbar {
   position: sticky;
-  top: var(--internal-header-height, 64px);
+  top: var(--header-height);
   z-index: 8;
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
 }
 
 .searchGroup,
 .filterGroup {
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
   min-width: 180px;
 }
 
@@ -53,40 +53,37 @@
 }
 
 .toolbar label {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .toolbar input,
 .toolbar select,
 .noteEditor textarea,
 .reportEditor textarea {
-  min-height: 44px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text);
+  min-height: var(--height-control);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink-950);
   font: inherit;
 }
 
 .toolbar input,
 .toolbar select {
-  padding: 0 12px;
+  padding: 0 var(--space-3);
 }
 
 .selectionSummary {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
+  min-height: var(--height-control);
   margin-left: auto;
   white-space: nowrap;
 }
 
 .tableScroll {
   max-width: 100%;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
 }
 
 .table {
@@ -100,9 +97,9 @@
 .table th,
 .table td {
   min-height: 52px;
-  padding: 12px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
   text-align: left;
   vertical-align: top;
   overflow-wrap: anywhere;
@@ -112,8 +109,8 @@
   position: sticky;
   top: 0;
   z-index: 3;
-  background: var(--color-surface-subtle, var(--color-surface));
-  font-weight: 700;
+  background: var(--canvas);
+  font-weight: var(--font-weight-bold);
 }
 
 .table th:first-child,
@@ -121,7 +118,7 @@
   position: sticky;
   left: 0;
   z-index: 5;
-  padding: 4px 2px;
+  padding: var(--space-1) 2px;
   text-align: center;
 }
 
@@ -130,7 +127,7 @@
   position: sticky;
   left: 48px;
   z-index: 4;
-  box-shadow: 1px 0 0 var(--color-border);
+  box-shadow: 1px 0 0 var(--line);
 }
 
 .table th:first-child,
@@ -141,8 +138,8 @@
 .checkboxTarget {
   display: inline-grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: var(--height-control);
+  height: var(--height-control);
   cursor: pointer;
 }
 
@@ -152,15 +149,15 @@
 }
 
 .statusTrigger {
-  min-width: 144px;
-  min-height: 44px;
+  min-width: var(--badge-width-interview-operational);
+  min-height: var(--height-control);
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
 }
 
 .statusBadge {
-  width: 144px;
+  width: var(--badge-width-interview-operational);
   min-height: 36px;
   justify-content: center;
   white-space: normal;
@@ -181,8 +178,8 @@
 
 .empty {
   padding: 28px;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-lg);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-card);
   text-align: center;
 }
 
@@ -201,9 +198,9 @@
 .drawerSection {
   display: grid;
   gap: 10px;
-  padding: 16px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
 }
 
 .drawerSection h3,
@@ -214,13 +211,13 @@
 .metaGrid {
   display: grid;
   grid-template-columns: minmax(140px, 0.4fr) minmax(0, 1fr);
-  gap: 8px 16px;
+  gap: var(--space-2) var(--space-4);
   margin: 0;
 }
 
 .metaGrid dt {
-  color: var(--color-text-muted);
-  font-weight: 600;
+  color: var(--ink-600);
+  font-weight: var(--font-weight-semibold);
 }
 
 .metaGrid dd {
@@ -230,14 +227,14 @@
 .noteEditor,
 .reportEditor {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .noteEditor textarea,
 .reportEditor textarea {
   width: 100%;
   min-height: 112px;
-  padding: 10px 12px;
+  padding: 10px var(--space-3);
   resize: vertical;
 }
 
@@ -245,44 +242,44 @@
 .participantActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
   justify-content: flex-end;
 }
 
 .participantList {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .participantCard {
   display: grid;
   gap: 10px;
   padding: 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
 }
 
 .participantHeading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .reportFields {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
 }
 
 .reportFields > div {
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .reportFields dt {
-  color: var(--color-text-muted);
-  font-weight: 600;
+  color: var(--ink-600);
+  font-weight: var(--font-weight-semibold);
 }
 
 .reportFields dd {
@@ -292,7 +289,7 @@
 
 .finalDecision {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .visibilityRow {
@@ -306,7 +303,7 @@
 .dialogActions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 @media (max-width: 1024px) {
