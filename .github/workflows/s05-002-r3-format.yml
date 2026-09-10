@@ -1,0 +1,53 @@
+name: S05-002 R3 Format
+
+on:
+  push:
+    branches:
+      - verify/S05-002-R3-5883680
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: ${{ !contains(github.event.head_commit.message, 'biome-format') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Apply safe Biome fixes to S05-002-owned files only
+        run: |
+          npx biome check --write \
+            src/__tests__/fixtures/hr-report-browser-harness.tsx \
+            src/__tests__/hr-report-browser.test.ts \
+            src/__tests__/hr-report-model.test.ts \
+            src/__tests__/hr-report-server-adapter.test.ts \
+            src/app/reports/actions.ts \
+            src/app/reports/page.tsx \
+            src/components/reports/HrReportPage.tsx \
+            src/components/reports/HrReportView.tsx \
+            src/components/ui/StatusMenu.tsx \
+            src/lib/reports/hr-model.ts \
+            src/lib/reports/hr-server.ts
+      - name: Commit safe formatting fixes
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(s05-002): biome-format verify candidate"
+            git push
+          fi
