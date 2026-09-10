@@ -56,3 +56,5 @@ jobs:
       - name: Stop local Supabase
         if: always()
         run: supabase stop
+
+# verification rerun after safe Biome formatting
