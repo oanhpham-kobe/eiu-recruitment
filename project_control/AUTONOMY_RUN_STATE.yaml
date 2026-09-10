@@ -42,9 +42,9 @@ integration:
   last_verified_application_ci_run: "34461727271"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
-  last_verified_control_plane_sha: "16bf76c5ad306b1144d3ef6c76f832463c32c62b"
-  last_verified_control_plane_integration_ci_run: "34429901224"
-  last_verified_control_plane_governance_ci_run: "34429901220"
+  last_verified_control_plane_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
+  last_verified_control_plane_integration_ci_run: "34463405935"
+  last_verified_control_plane_governance_ci_run: "34463405902"
   last_task_acceptance_attempt_sha: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"
   last_task_acceptance_integration_ci_run: "34461727271"
   last_task_acceptance_integration_ci_result: PASS
@@ -131,7 +131,7 @@ historical_mcp_governance_maintenance:
   ci_result: PASS
 
 slice_05_planning:
-  status: TASKS_ACCEPTED_PENDING_SLICE_CLOSURE
+  status: WAITING_EXTERNAL_REVIEW
   proposed_first_task: TASK-S05-001
   proposed_next_task: TASK-S05-002
   materialized_task: TASK-S05-002
@@ -287,21 +287,44 @@ s05_002_acceptance:
   connected_supabase_migration_applied: false
   vercel_deployment_performed: false
 
+slice_05_closing_review:
+  work_id: SLICE-05-CLOSING-REVIEW-001
+  reviewer: eiu-reviewer
+  status: WAITING_EXTERNAL_REVIEW
+  reviewed_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
+  accepted_tasks:
+    TASK-S05-001: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
+    TASK-S05-002: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"
+  broader_integration_ci_run: "34463405935"
+  broader_integration_ci_result: PASS
+  governance_ci_run: "34463405902"
+  governance_ci_result: PASS
+  source_reopen_required: PENDING
+  verdict: PENDING
+  evidence_branch: PENDING
+  evidence_commit: PENDING
+  evidence_path: PENDING
+  handoff_package: project_control/reviews/SLICE_05_CLOSING_REVIEW_GATE_60e1f42_v1.md
+
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "SLICE-05 closing composition review and broader regression gate"
+  execution_hold: "SLICE-05 independent closing composition review"
 
 stop_gate:
-  status: PREPARING_SLICE_CLOSING
-  type: SLICE_CLOSING_PREPARATION
-  slice: SLICE-05
-  accepted_tasks: [TASK-S05-001, TASK-S05-002]
-  latest_task_acceptance_sha: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"
-  broader_regression_required: true
-  composition_review_required: true
-  source_reopen_required: false
-  resume_on: "fresh [full-ci] PASS on acceptance-bookkeeping integration SHA, then independent slice-closing composition review"
+  status: WAITING_EXTERNAL_REVIEW
+  type: OMP_SLICE_CLOSING_REVIEW
+  work_id: SLICE-05-CLOSING-REVIEW-001
+  target: "autonomy/continuous-integration-20260905-01 @ 60e1f425d920ed9d76de68b49347188187054bd4"
+  reviewed_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
+  reviewer: eiu-reviewer
+  verdict: PENDING
+  source_reopen_required: PENDING
+  broader_integration_ci_run: "34463405935 PASS"
+  governance_ci_run: "34463405902 PASS"
+  handoff_package_requirement: SATISFIED
+  handoff_package: project_control/reviews/SLICE_05_CLOSING_REVIEW_GATE_60e1f42_v1.md
+  resume_on: "PASS + SOURCE_REOPEN_REQUIRED=false for exact SLICE-05 closing target"
 
-next_action: "Run the SLICE-05 broader [full-ci] regression on the acceptance-bookkeeping integration head. If PASS, persist exact-SHA SLICE-05 closing-review handoff and obtain independent composition verdict before marking SLICE-05 DONE or materializing SLICE-06 work. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Transport project_control/reviews/SLICE_05_CLOSING_REVIEW_GATE_60e1f42_v1.md to independent OMP eiu-reviewer for exact Slice-05 composition target 60e1f425d920ed9d76de68b49347188187054bd4. On PASS + SOURCE_REOPEN_REQUIRED=false, mark SLICE-05 DONE, persist closure evidence/state, recompute frontier, and inspect/materialize SLICE-06 source-backed work. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."

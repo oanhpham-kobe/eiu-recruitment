@@ -6,32 +6,36 @@
 > DAG/task/slice authority: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.
 > Exact code/history authority: Git.
 
-## TASK-S05-001 — DONE / ACCEPTED
+## SLICE-05 — WAITING INDEPENDENT CLOSING REVIEW
 
-- Final exact acceptance SHA: `ef0bd9e534dec0cc85ef6503fbe0369eda56d555`
-- Immutable checkpoint: `checkpoint/S05-001-accepted-001`
+Both constituent tasks are individually accepted:
 
-## TASK-S05-002 — DONE / ACCEPTED
+- TASK-S05-001: `ef0bd9e534dec0cc85ef6503fbe0369eda56d555`, checkpoint `checkpoint/S05-001-accepted-001`.
+- TASK-S05-002: `fe556dda76ebeda7107bcb9310cbaf338b30fc29`, checkpoint `checkpoint/S05-002-accepted-001`.
 
-- Reviewed candidate: `f4e1a04b59aef92aa55245c451386e0c0cfe3813`
-- Final integration / acceptance SHA: `fe556dda76ebeda7107bcb9310cbaf338b30fc29`
-- Final integration-equivalence review: PASS
-- Source reopen required: NO
-- Integration CI `34461727271`: PASS (web + database)
-- Governance CI `34461727266`: PASS
-- Immutable checkpoint: `checkpoint/S05-002-accepted-001 @ fe556dda76ebeda7107bcb9310cbaf338b30fc29`
-- Connected Supabase migration application: NOT PERFORMED
-- Vercel deployment: NOT PERFORMED
+Exact Slice-05 composition review target:
 
-## SLICE-05 — PENDING CLOSING GATE
+`60e1f425d920ed9d76de68b49347188187054bd4`
 
-Both Slice-05 tasks are individually accepted. Governance requires a slice-closing composition review and broader regression before SLICE-05 may be marked DONE.
+Fresh broader closing regression on that SHA:
 
-Next action: commit this bookkeeping with `[full-ci]`, require fresh web + database CI, then obtain independent exact-SHA Slice-05 composition review. Only after that PASS may the outer loop inspect/materialize SLICE-06.
+- Integration CI `34463405935`: PASS — forced web + database via `[full-ci]`.
+- Governance CI `34463405902`: PASS.
+- Acceptance-bookkeeping delta from TASK-S05-002 acceptance SHA changes only five project_control/derived files; no product drift.
+
+Independent closing review:
+
+- work ID: `SLICE-05-CLOSING-REVIEW-001`
+- reviewer: `eiu-reviewer`
+- handoff: `project_control/reviews/SLICE_05_CLOSING_REVIEW_GATE_60e1f42_v1.md`
+- verdict: PENDING
+- source reopen: PENDING
+
+SLICE-05 remains `IN_PROGRESS` until this composition review passes. Slice-06 must not be materialized before the closing verdict.
 
 ## Do not cross
 
-- Do not mark SLICE-05 DONE before the closing gate passes.
+- Do not mark SLICE-05 DONE before closing review PASS.
 - Do not merge/push `main`.
 - Do not deploy Vercel.
 - Do not apply migrations to connected Supabase DEV/production without explicit Owner authorization.
