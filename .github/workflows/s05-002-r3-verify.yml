@@ -57,4 +57,4 @@ jobs:
         if: always()
         run: supabase stop
 
-# final rerun after exact Drawer close selector repair
+# final verification for product-equivalent R3 candidate tree
