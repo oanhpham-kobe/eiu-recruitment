@@ -49,6 +49,35 @@ jobs:
         run: supabase db reset
       - name: S05-001 contextual read regression
         run: docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/interviewer_report_contextual_read_test.sql
+      - name: Diagnose HR aggregate count
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source = Path('supabase/tests/hr_report_management_test.sql').read_text()
+          needle = "  assert (v_result->'data'->>'total')::integer = 2,\n    'one aggregate row is returned for each Application with a Current Round';"
+          diagnostic = """  raise notice 'DEBUG HR result=%', v_result;
+          raise notice 'DEBUG HR current_map=%', (
+            select coalesce(
+              jsonb_agg(
+                jsonb_build_object(
+                  'application_id', ci.application_id,
+                  'interview_id', ci.interview_id,
+                  'round_no', ci.round_no
+                )
+                order by ci.application_id
+              ),
+              '[]'::jsonb
+            )
+            from private.application_current_interview ci
+            where ci.application_id in (v_application_1, v_application_2)
+          );
+          """ + needle
+          if needle not in source:
+              raise SystemExit('expected HR total assertion not found')
+          Path('/tmp/hr_report_management_debug.sql').write_text(source.replace(needle, diagnostic, 1))
+          PY
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < /tmp/hr_report_management_debug.sql
       - name: S05-002 HR management regression
         run: docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/hr_report_management_test.sql
       - name: S05-002 HR DTO privacy regression
@@ -57,4 +86,4 @@ jobs:
         if: always()
         run: supabase stop
 
-# final verification for product-equivalent R3 candidate tree
+# verify-only diagnostics; never transplant workflow changes to task branch
