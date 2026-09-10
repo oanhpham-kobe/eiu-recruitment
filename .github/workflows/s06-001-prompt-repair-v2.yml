@@ -1,0 +1,54 @@
+name: S06-001 Prompt v2 Repair
+
+on:
+  push:
+    branches:
+      - control/S06-001-prompt-repair-v2
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'materialize S06-001 prompt v2 repair') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Build repaired prompt and control state
+        run: python project_control/tmp_s06_prompt_repair_v2.py
+      - name: Validate YAML and bounded prompt repair
+        run: |
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
+          for path in [
+              'project_control/AUTONOMY_RUN_STATE.yaml',
+              'project_control/TASK_REGISTRY.yaml',
+              'project_control/EVIDENCE_INDEX.yaml',
+          ]:
+              with open(path, encoding='utf-8') as f:
+                  yaml.safe_load(f)
+              print('YAML OK:', path)
+          p = Path('project_control/prompts/SLICE-06_TASK-001_v2.md').read_text()
+          required = [
+              '## Idempotency / retry-replay contract',
+              'expected_version_no',
+              'STALE_VERSION',
+              'concurrent duplicate requests',
+              'different fingerprint',
+              'no new anonymous Master Data management surface',
+          ]
+          for token in required:
+              assert token in p, token
+          print('PROMPT V2 REPAIR TOKENS: PASS')
+          PY
+          git diff --check
+      - name: Commit bounded repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/prompts/SLICE-06_TASK-001_v2.md project_control/AUTONOMY_RUN_STATE.yaml project_control/TASK_REGISTRY.yaml project_control/EVIDENCE_INDEX.yaml project_control/CURRENT_STATE.md
+          git commit -m 'chore(state): materialize S06-001 prompt v2 repair'
+          git push origin HEAD:control/S06-001-prompt-repair-v2
