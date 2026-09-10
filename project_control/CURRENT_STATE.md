@@ -18,52 +18,58 @@
 - Immutable checkpoint: `checkpoint/S05-001-accepted-001 @ ef0bd9e534dec0cc85ef6503fbe0369eda56d555`
 - Source reopen required: NO
 
-## TASK-S05-002 — MATERIALIZED / READY
+## TASK-S05-002 — IMPLEMENTED CANDIDATE / WAITING INDEPENDENT REVIEW
 
-`TASK-S05-002 — HR Report Management Experience over Accepted Report Contracts` is now the current Slice-05 task and is eligible for governed implementation.
+`TASK-S05-002 — HR Report Management Experience over Accepted Report Contracts` has a bounded implementation candidate and is stopped at the mandatory independent OMP implementation-review gate.
+
+### Exact implementation candidate
+
+- materialization baseline: `fdf5fd27d27f6e6d587aab034cce0f54df425cfc`
+- candidate branch: `oanhpham-kobe/TASK-S05-002-hr-report-management`
+- exact candidate SHA: `b711bebcb9da15ea4ea8a22f7f8594f49cc6c971`
+- review work ID: `S05-002-IMPLEMENTATION-REVIEW-001`
+- required reviewer: `eiu-reviewer`
+- review package: `project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_GATE_b711beb_v1.md`
 
 ### Independent pre-implementation prompt review
 
-The Owner-transported `eiu-reviewer` result was independently verified against GitHub before the gate was released:
+The Owner-transported `eiu-reviewer` result was independently verified against GitHub before implementation was released:
 
 - work ID: `S05-002-PROMPT-REVIEW-001`
 - reviewed prompt SHA: `1f831a767906e4322e0fc2370d593b5c51e323d5`
-- target: `project_control/prompts/SLICE-05_TASK-002_v1.md`
 - verdict: `PASS`
 - `SOURCE_REOPEN_REQUIRED=false`
-- blocking findings: NONE
 - evidence branch: `review/S05-002-PROMPT-1f831a7-v1`
 - evidence commit: `128859aecc2e8cefc7acc71cf5e2252c43dd5af9`
 - evidence path: `project_control/reviews/S05_002_PROMPT_REVIEW_1f831a7_v1.md`
 
-The evidence branch points to the supplied evidence commit; that commit directly descends from the exact reviewed prompt SHA and contains the persisted PASS review.
+### Candidate implementation scope
 
-### Accepted-tree reconciliations carried into implementation
+The exact candidate adds the dedicated HR Report read projection, `set_report_visibility`, atomic `bulk_change_report_status`, canonical `delete_or_inactivate_report` permission repair, HR server/actions/view, strict DTO model, database regression, production-component Playwright harness/tests, and only the minimal shared `StatusMenu` extension needed by the accepted design.
 
-- add the missing trusted `set_report_visibility` command with canonical `reports.visibility + reports.view` authorization;
-- add the missing atomic `bulk_change_report_status` command with ALL_OR_NOTHING semantics, maximum 100 targets, deterministic ascending lock order, full-set Current Round/version revalidation, and in-transaction Submission recalculation;
-- repair accepted `delete_or_inactivate_report` authorization from `reports.manage_status` to canonical `reports.delete + reports.view` rather than duplicating the command;
-- implement a dedicated minimum-safe HR Report read projection and do not widen the accepted Interviewer contextual read RPC;
-- reuse accepted `save_interviewer_report` field-aware concurrency for HR edit-other-interviewer behavior;
-- reuse canonical Current Round and Final Decision Source helpers and preserve the accepted qualitative-only report schema.
+It preserves the accepted S05-001 Interviewer RPC/page path and does not widen Interviewer-private DTOs.
+
+### Verification status
+
+Executable DB/model/browser verification artifacts are committed. The Coordinator runtime cannot run the repository locally and cannot invoke OMP directly; therefore no local PASS is claimed. Independent `eiu-reviewer` review must run applicable verification before returning a verdict. Exact-SHA Integration CI + Governance CI remain mandatory after an accepted candidate is serialized to integration.
 
 ### Design System contract
 
-Implementation remains bound to Design System v1.8 CURRENT, including the HR Report semantic `<table>` / `<colgroup>` contract, exact `1610px` desktop minimum width and column widths `48 | 240 | 300 | 240 | 200 | 190 | 300 | 92`, sticky Select + Họ và tên columns, the 144px report-status benchmark, shared trigger-bound status menu behavior, aggregate-drawer no-generic-Delete rule, responsive QA widths `360/390/430/768/1024/desktop`, constrained-height overlays, VI/EN state preservation, and accessibility/focus/zoom/reflow requirements.
+Candidate remains bound to Design System v1.8 CURRENT: semantic table/colgroup, exact `1610px` width and `48 | 240 | 300 | 240 | 200 | 190 | 300 | 92` columns, sticky Select + Họ và tên, 144px status benchmark, shared anchored Status menu behavior, report-only aggregate drawer with report-specific destructive action, responsive horizontal containment, VI/EN preservation, and overlay/focus/a11y requirements.
 
 ## Current execution state
 
 - Slice-05: `IN_PROGRESS`
 - current task: `TASK-S05-002`
-- task state: `READY`
-- prompt stop gate: `CLEARED`
-- independent reviewer name: `eiu-reviewer`
-- safe frontier: `TASK-S05-002`
-- active implementation workers: none at the materialization point
-- next governed step: create immutable `checkpoint/pre-S05-002-001` and task branch `oanhpham-kobe/TASK-S05-002-hr-report-management` from the exact materialization commit, then load task-relevant skills and begin implementation.
+- task state: `WAITING_EXTERNAL_REVIEW`
+- independent reviewer: `eiu-reviewer`
+- exact review target: `b711bebcb9da15ea4ea8a22f7f8594f49cc6c971`
+- safe implementation frontier: none while the gate is active
+- next governed step: Owner transports the persisted review package to independent OMP `eiu-reviewer` and returns the full verdict plus durable evidence coordinates. Coordinator then verifies that evidence directly in GitHub before any repair or integration advancement.
 
 ## Do not cross
 
+- Do not integrate/accept TASK-S05-002 before independent exact-SHA review PASS with `SOURCE_REOPEN_REQUIRED=false`.
 - Do not redo or reopen TASK-S05-001 without new concrete evidence.
 - Do not merge/push `main`.
 - Do not deploy Vercel.
