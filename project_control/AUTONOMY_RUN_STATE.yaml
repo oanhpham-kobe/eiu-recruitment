@@ -130,7 +130,7 @@ historical_mcp_governance_maintenance:
   ci_result: PASS
 
 slice_05_planning:
-  status: READY_FOR_IMPLEMENTATION
+  status: WAITING_EXTERNAL_REVIEW
   proposed_first_task: TASK-S05-001
   proposed_next_task: TASK-S05-002
   materialized_task: TASK-S05-002
@@ -188,7 +188,25 @@ slice_05_planning:
     evidence_branch: review/S05-002-PROMPT-1f831a7-v1
     evidence_commit: "128859aecc2e8cefc7acc71cf5e2252c43dd5af9"
     evidence_path: project_control/reviews/S05_002_PROMPT_REVIEW_1f831a7_v1.md
-  external_review_transport: "Verified Owner-transported eiu-reviewer evidence. Runtime has no direct OMP reviewer invoker; future external review gates must use exact-SHA copy-ready transport and direct evidence verification."
+  implementation_candidate:
+    branch: oanhpham-kobe/TASK-S05-002-hr-report-management
+    baseline_sha: "fdf5fd27d27f6e6d587aab034cce0f54df425cfc"
+    candidate_sha: "b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
+    producer_review: COMPLETE
+    producer_completion_claim: HELD_PENDING_INDEPENDENT_REVIEW_AND_EXECUTED_VERIFICATION
+    review_package: project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_GATE_b711beb_v1.md
+  independent_implementation_review:
+    work_id: S05-002-IMPLEMENTATION-REVIEW-001
+    reviewer: eiu-reviewer
+    status: WAITING_EXTERNAL_REVIEW
+    reviewed_sha: "b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
+    result: PENDING
+    source_reopen_required: PENDING
+    blocking_findings: PENDING
+    evidence_branch: PENDING
+    evidence_commit: PENDING
+    evidence_path: PENDING
+  external_review_transport: "Coordinator runtime has no direct OMP/subagent invoker or OMP CLI. Exact-SHA Owner transport is required; returned review text is transport only until durable evidence is verified directly in GitHub."
   owner_asset_gap:
     id: ASSET-001
     blocking_now: false
@@ -215,27 +233,27 @@ s05_001_acceptance:
   source_reopen_required: false
 
 safe_frontier:
-  eligible_tasks:
-    - TASK-S05-002
+  eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: null
+  execution_hold: "TASK-S05-002 independent implementation review"
 
 stop_gate:
-  status: CLEARED
-  type: NONE
-  work_id: S05-002-PROMPT-REVIEW-001
-  target: project_control/prompts/SLICE-05_TASK-002_v1.md
-  reviewed_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
+  status: WAITING_EXTERNAL_REVIEW
+  type: OMP_IMPLEMENTATION_REVIEW
+  work_id: S05-002-IMPLEMENTATION-REVIEW-001
+  target: "oanhpham-kobe/TASK-S05-002-hr-report-management @ b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
+  reviewed_sha: "b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
   reviewer: eiu-reviewer
-  verdict: PASS
-  source_reopen_required: false
-  evidence_branch: review/S05-002-PROMPT-1f831a7-v1
-  evidence_commit: "128859aecc2e8cefc7acc71cf5e2252c43dd5af9"
-  evidence_path: project_control/reviews/S05_002_PROMPT_REVIEW_1f831a7_v1.md
+  verdict: PENDING
+  source_reopen_required: PENDING
+  evidence_branch: PENDING
+  evidence_commit: PENDING
+  evidence_path: PENDING
   previous_owner_handoff_gate: CLEARED_BY_NEW_SESSION
   handoff_package_requirement: SATISFIED
-  owner_role: "Transport completed; no further Owner action required for the S05-002 pre-implementation prompt gate."
-  resume_on: NONE
+  handoff_package: project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_GATE_b711beb_v1.md
+  owner_role: "Transport the persisted exact-SHA package to independent OMP eiu-reviewer and return the complete verdict plus durable evidence coordinates."
+  resume_on: "PASS + SOURCE_REOPEN_REQUIRED=false after direct GitHub evidence verification"
 
-next_action: "Create immutable checkpoint/pre-S05-002-001 and task branch oanhpham-kobe/TASK-S05-002-hr-report-management from the exact S05-002 materialization commit, then load task-relevant skills and begin implementation. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Owner transports project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_GATE_b711beb_v1.md to independent OMP eiu-reviewer for exact candidate b711bebcb9da15ea4ea8a22f7f8594f49cc6c971 and returns the full verdict plus durable evidence branch/commit/path. Coordinator verifies evidence in GitHub before any repair or integration advancement. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
