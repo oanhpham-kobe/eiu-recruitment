@@ -1,0 +1,41 @@
+name: Slice-05 Closure and S06 Planning Patch
+
+on:
+  push:
+    branches:
+      - control/S05-close-S06-001-plan
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'materialize Slice-05 closure and S06-001 planning') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Patch authorities and derived state
+        run: python project_control/tmp_s05_close_s06_plan.py
+      - name: Validate YAML
+        run: |
+          python - <<'PY'
+          import yaml
+          for path in [
+              'project_control/AUTONOMY_RUN_STATE.yaml',
+              'project_control/TASK_REGISTRY.yaml',
+              'project_control/SLICE_REGISTRY.yaml',
+              'project_control/EVIDENCE_INDEX.yaml',
+          ]:
+              with open(path, encoding='utf-8') as f:
+                  yaml.safe_load(f)
+              print('YAML OK:', path)
+          PY
+      - name: Commit planning state
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/TASK_REGISTRY.yaml project_control/SLICE_REGISTRY.yaml project_control/EVIDENCE_INDEX.yaml project_control/CURRENT_STATE.md
+          git commit -m 'chore(state): materialize Slice-05 closure and S06-001 planning'
+          git push origin HEAD:control/S05-close-S06-001-plan
