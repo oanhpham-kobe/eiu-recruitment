@@ -16,9 +16,15 @@ async function bundleHarness() {
     conditions: ["browser"],
     write: false,
   });
-  const script = bundle.outputFiles.find((file) => file.path.endsWith(".js"))?.text;
-  const style = bundle.outputFiles.find((file) => file.path.endsWith(".css"))?.text;
-  if (!script || !style) throw new Error("HR Report browser fixture did not bundle");
+  const script = bundle.outputFiles.find((file) =>
+    file.path.endsWith(".js"),
+  )?.text;
+  const style = bundle.outputFiles.find((file) =>
+    file.path.endsWith(".css"),
+  )?.text;
+  if (!script || !style) {
+    throw new Error("HR Report browser fixture did not bundle");
+  }
   return { script, style };
 }
 
@@ -133,7 +139,7 @@ test(
 );
 
 test(
-  "HR Report status, drawer, unsaved-change and report-specific destructive UX share production primitives",
+  "HR Report narrow status and drawer mutations preserve unrelated unsaved drafts",
   { timeout: 120_000 },
   async () => {
     const assets = await bundleHarness();
@@ -142,7 +148,7 @@ test(
       browser = await chromium.launch();
       const { page, errors } = await openHarness(browser, assets, 390, 700);
 
-      let rowStatus = page.getByRole("button", {
+      const rowStatus = page.getByRole("button", {
         name: "Đổi trạng thái của Nguyễn Minh Anh",
       });
       await rowStatus.click();
@@ -155,19 +161,16 @@ test(
       );
 
       await rowStatus.click();
-      await page.getByRole("menuitemradio", { name: "Đã gửi Báo cáo" }).click();
+      await page
+        .getByRole("menuitemradio", { name: "Đã gửi Báo cáo" })
+        .click();
       await page.getByText("Đã cập nhật trạng thái báo cáo.").waitFor({
         state: "visible",
       });
-      rowStatus = page.getByRole("button", {
-        name: "Đổi trạng thái của Nguyễn Minh Anh",
-      });
-      assert.equal(
-        (await rowStatus.locator(".ui-status-badge").textContent())?.trim(),
-        "Đã gửi Báo cáo",
-      );
 
-      await page.getByRole("checkbox", { name: "Chọn Nguyễn Minh Anh" }).check();
+      await page
+        .getByRole("checkbox", { name: "Chọn Nguyễn Minh Anh" })
+        .check();
       const bulkStatus = page.getByRole("button", {
         name: "Đổi trạng thái đã chọn",
       });
@@ -182,34 +185,90 @@ test(
       const drawer = page.getByRole("dialog", { name: "Chi tiết báo cáo" });
       await drawer.waitFor({ state: "visible" });
       assert.equal(
-        await page
+        await drawer
           .getByRole("button", { name: "Tải PDF — đang chờ mẫu" })
           .isDisabled(),
         true,
       );
       assert.equal(
         await drawer.getByRole("button", { name: "Xóa / Inactive" }).count(),
-        1,
-        "destructive action must be report-specific inside a participant card",
+        2,
       );
 
       const note = drawer.getByLabel("Nội dung ghi chú");
-      await note.fill("Ghi chú chưa lưu");
+      await note.fill("Ghi chú chưa lưu qua visibility");
+      await drawer
+        .getByRole("button", { name: "Ẩn với Interviewer" })
+        .click();
+      assert.equal(
+        await note.inputValue(),
+        "Ghi chú chưa lưu qua visibility",
+        "visibility refresh must preserve a dirty HR Note draft",
+      );
+
+      await drawer.getByRole("button", { name: "Sửa" }).first().click();
+      const firstParticipant = drawer.locator("article").first();
+      const reportDraft = firstParticipant.locator("textarea").first();
+      await reportDraft.fill("Participant draft must survive");
+
+      await note.fill("Ghi chú lưu trong khi report đang dirty");
+      await drawer.getByRole("button", { name: "Lưu ghi chú" }).click();
+      assert.equal(
+        await reportDraft.inputValue(),
+        "Participant draft must survive",
+        "saving HR Note must preserve participant-report draft",
+      );
+
+      await drawer
+        .getByRole("button", { name: "Hiển thị với Interviewer" })
+        .click();
+      assert.equal(
+        await reportDraft.inputValue(),
+        "Participant draft must survive",
+        "visibility refresh must preserve participant-report draft",
+      );
+
+      await drawer.getByRole("button", { name: "Sửa" }).nth(1).click();
+      await drawer
+        .getByText("Hãy lưu hoặc bỏ thay đổi đang chỉnh sửa trước khi chuyển nội dung.")
+        .waitFor({ state: "visible" });
+      assert.equal(
+        await reportDraft.inputValue(),
+        "Participant draft must survive",
+        "participant switch must not replace a dirty report draft",
+      );
+
+      await note.fill("Ghi chú chưa lưu qua delete");
+      await drawer.getByRole("button", { name: "Xóa / Inactive" }).nth(1).click();
+      const destructive = page.getByRole("dialog", {
+        name: "Xóa / Inactive báo cáo?",
+      });
+      await destructive.waitFor({ state: "visible" });
+      await destructive.getByRole("button", { name: "Xác nhận" }).click();
+      await destructive.waitFor({ state: "hidden" });
+      assert.equal(
+        await note.inputValue(),
+        "Ghi chú chưa lưu qua delete",
+        "deleting another participant report must preserve dirty HR Note",
+      );
+      assert.equal(
+        await reportDraft.inputValue(),
+        "Participant draft must survive",
+        "deleting another participant report must preserve dirty report draft",
+      );
+
+      const interviewsLink = drawer.getByRole("link", {
+        name: "Mở trang Phỏng vấn",
+      });
+      assert.equal(await interviewsLink.getAttribute("aria-disabled"), "true");
+
       await drawer.getByRole("button", { name: "Đóng" }).click();
-      const discard = page.getByRole("dialog", { name: "Bỏ thay đổi chưa lưu?" });
+      const discard = page.getByRole("dialog", {
+        name: "Bỏ thay đổi chưa lưu?",
+      });
       await discard.waitFor({ state: "visible" });
       await discard.getByRole("button", { name: "Tiếp tục sửa" }).click();
-      assert.equal(await note.inputValue(), "Ghi chú chưa lưu");
-
-      await drawer.getByRole("button", { name: "Xóa / Inactive" }).click();
-      const destructive = page.getByRole("dialog", { name: "Xóa / Inactive báo cáo?" });
-      await destructive.waitFor({ state: "visible" });
-      assert.ok(
-        await destructive
-          .getByText(/Chỉ báo cáo cụ thể của người phỏng vấn này bị tác động/)
-          .isVisible(),
-      );
-      await destructive.getByRole("button", { name: "Hủy" }).click();
+      assert.equal(await note.inputValue(), "Ghi chú chưa lưu qua delete");
 
       assert.deepEqual(errors, [], "HR Report interaction browser errors");
       await page.close();

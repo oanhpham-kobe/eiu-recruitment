@@ -115,14 +115,11 @@ function formatInterviewTime(
 
 function locationLabel(row: HrReportRow, locale: "vi" | "en"): string {
   if (row.roomName) return row.roomName;
-  if (row.meetingLink) {
-    const format =
-      locale === "en"
-        ? row.formatNameEn || row.formatNameVi
-        : row.formatNameVi || row.formatNameEn;
-    return format || (locale === "vi" ? "Trực tuyến" : "Online");
-  }
-  return "—";
+  const format =
+    locale === "en"
+      ? row.formatNameEn || row.formatNameVi
+      : row.formatNameVi || row.formatNameEn;
+  return format || "—";
 }
 
 function positionLabel(row: HrReportRow, locale: "vi" | "en"): string {
@@ -217,7 +214,23 @@ export function HrReportView({
     setReportBase(null);
   }
 
+  function warnUnsaved() {
+    setFeedback({
+      kind: "warning",
+      vi: "Hãy lưu hoặc bỏ thay đổi đang chỉnh sửa trước khi chuyển nội dung.",
+      en: "Save or discard the current edits before switching content.",
+    });
+  }
+
   function hydrateDrawer(row: HrReportRow) {
+    if (
+      drawerInterviewId &&
+      drawerInterviewId !== row.interviewId &&
+      hasUnsaved
+    ) {
+      warnUnsaved();
+      return;
+    }
     const note = row.hrReportNote ?? "";
     setDrawerInterviewId(row.interviewId);
     setNoteDraft(note);
@@ -248,6 +261,12 @@ export function HrReportView({
     nextFilters: HrReportFilters,
     options?: { preserveDrawer?: string | null },
   ) {
+    const noteWasDirty = noteDirty;
+    const editingId = editingParticipantId;
+    const participantPatches =
+      reportDraft && reportBase
+        ? changedReportFields(reportBase, reportDraft).patches
+        : null;
     const next = await onRefresh(nextFilters);
     setData(next);
     setFilters({
@@ -260,11 +279,27 @@ export function HrReportView({
     if (preserveId) {
       const fresh = next.rows.find((row) => row.interviewId === preserveId);
       if (fresh) {
-        const note = fresh.hrReportNote ?? "";
+        const freshNote = fresh.hrReportNote ?? "";
         setDrawerInterviewId(fresh.interviewId);
-        setNoteDraft(note);
-        setNoteBase(note);
-        resetEditing();
+        setNoteBase(freshNote);
+        if (!noteWasDirty) setNoteDraft(freshNote);
+
+        if (editingId) {
+          const freshParticipant = fresh.drawer.participants.find(
+            (participant) => participant.interviewParticipantId === editingId,
+          );
+          if (freshParticipant) {
+            const freshFields = cloneFields(freshParticipant.report);
+            setReportBase(freshFields);
+            setReportDraft(
+              participantPatches
+                ? { ...freshFields, ...participantPatches }
+                : cloneFields(freshFields),
+            );
+          } else {
+            resetEditing();
+          }
+        }
       } else {
         closeDrawerNow();
       }
@@ -411,8 +446,18 @@ export function HrReportView({
     }
   }
 
-  function startParticipantEdit(participant: HrReportParticipant) {
+  function requestParticipantEdit(participant: HrReportParticipant) {
     if (!data.permissions.editInterviewer || pending) return;
+    const editingSame =
+      participant.interviewParticipantId === editingParticipantId;
+    if (participantDirty) {
+      warnUnsaved();
+      return;
+    }
+    if (editingSame) {
+      resetEditing();
+      return;
+    }
     setEditingParticipantId(participant.interviewParticipantId);
     setReportBase(cloneFields(participant.report));
     setReportDraft(cloneFields(participant.report));
@@ -478,6 +523,15 @@ export function HrReportView({
     ) {
       return;
     }
+    if (
+      participantDirty &&
+      deleteParticipant.interviewParticipantId === editingParticipantId
+    ) {
+      setDeleteParticipant(null);
+      warnUnsaved();
+      return;
+    }
+    const deletedParticipantId = deleteParticipant.interviewParticipantId;
     setPending(true);
     setFeedback(null);
     try {
@@ -493,6 +547,9 @@ export function HrReportView({
           "The participant report was deleted or inactivated according to its history.",
         ),
       );
+      if (result.success && deletedParticipantId === editingParticipantId) {
+        resetEditing();
+      }
       await refresh(filters, { preserveDrawer: row.interviewId });
     } catch {
       setFeedback({
@@ -507,10 +564,26 @@ export function HrReportView({
 
   const drawerFooter = selectedRow ? (
     <div className={styles.drawerActions}>
-      <a className="ui-button ui-button--secondary" href="/interviews">
+      <a
+        className="ui-button ui-button--secondary"
+        href="/interviews"
+        aria-disabled={hasUnsaved || pending || undefined}
+        onClick={(event) => {
+          if (hasUnsaved || pending) {
+            event.preventDefault();
+            warnUnsaved();
+          }
+        }}
+      >
         {t("Mở trang Phỏng vấn", "Open Interviews")}
       </a>
-      <Button disabled title={t("Đang chờ mẫu PDF chính thức", "Official PDF template pending")}>
+      <Button
+        disabled
+        title={t(
+          "Đang chờ mẫu PDF chính thức",
+          "Official PDF template pending",
+        )}
+      >
         {t("Tải PDF — đang chờ mẫu", "Download PDF — template pending")}
       </Button>
       <Button onClick={requestCloseDrawer} disabled={pending}>
@@ -520,10 +593,16 @@ export function HrReportView({
   ) : undefined;
 
   return (
-    <section className={styles.root} aria-labelledby="hr-report-title" aria-busy={pending || undefined}>
+    <section
+      className={styles.root}
+      aria-labelledby="hr-report-title"
+      aria-busy={pending || undefined}
+    >
       <div className={styles.heading}>
         <div>
-          <h1 id="hr-report-title">{t("Báo cáo phỏng vấn", "Interview Reports")}</h1>
+          <h1 id="hr-report-title">
+            {t("Báo cáo phỏng vấn", "Interview Reports")}
+          </h1>
           <p>
             {t(
               "Mỗi dòng là một Application tại vòng phỏng vấn hiện hành.",
@@ -533,7 +612,10 @@ export function HrReportView({
         </div>
       </div>
 
-      <div className={styles.toolbar} aria-label={t("Công cụ báo cáo", "Report tools")}>
+      <div
+        className={styles.toolbar}
+        aria-label={t("Công cụ báo cáo", "Report tools")}
+      >
         <div className={styles.searchGroup}>
           <label htmlFor="hr-report-search">{t("Tìm kiếm", "Search")}</label>
           <input
@@ -568,7 +650,9 @@ export function HrReportView({
         </div>
 
         <div className={styles.filterGroup}>
-          <label htmlFor="hr-report-status-filter">{t("Trạng thái", "Status")}</label>
+          <label htmlFor="hr-report-status-filter">
+            {t("Trạng thái", "Status")}
+          </label>
           <select
             id="hr-report-status-filter"
             value={filters.status ?? ""}
@@ -593,7 +677,9 @@ export function HrReportView({
         </div>
 
         <div className={styles.filterGroup}>
-          <label htmlFor="hr-report-visibility-filter">{t("Hiển thị", "Visibility")}</label>
+          <label htmlFor="hr-report-visibility-filter">
+            {t("Hiển thị", "Visibility")}
+          </label>
           <select
             id="hr-report-visibility-filter"
             value={filters.visibility}
@@ -626,32 +712,48 @@ export function HrReportView({
               })
             }
           >
-            <option value="CANDIDATE_ASC">{t("Tên A–Z", "Name A–Z")}</option>
-            <option value="CANDIDATE_DESC">{t("Tên Z–A", "Name Z–A")}</option>
-            <option value="UPDATED_DESC">{t("Mới cập nhật", "Recently updated")}</option>
+            <option value="CANDIDATE_ASC">
+              {t("Tên A–Z", "Name A–Z")}
+            </option>
+            <option value="CANDIDATE_DESC">
+              {t("Tên Z–A", "Name Z–A")}
+            </option>
+            <option value="UPDATED_DESC">
+              {t("Mới cập nhật", "Recently updated")}
+            </option>
           </select>
         </div>
 
-        <div className={styles.selectionSummary} role="status" aria-live="polite">
+        <div
+          className={styles.selectionSummary}
+          role="status"
+          aria-live="polite"
+        >
           <span>
             {t("Đã chọn", "Selected")}: {selectedIds.size}
           </span>
           <StatusMenu
             label={t("Đổi trạng thái đã chọn", "Change selected status")}
             options={statusOptions}
-            disabled={pending || !data.permissions.manageStatus || selectedIds.size === 0}
+            disabled={
+              pending || !data.permissions.manageStatus || selectedIds.size === 0
+            }
             onSelect={(value) => void runBulkStatus(value)}
           />
         </div>
       </div>
 
       {feedback ? (
-        <AsyncStatus kind={feedback.kind}>{locale === "vi" ? feedback.vi : feedback.en}</AsyncStatus>
+        <AsyncStatus kind={feedback.kind}>
+          {locale === "vi" ? feedback.vi : feedback.en}
+        </AsyncStatus>
       ) : null}
 
       {data.rows.length === 0 ? (
         <div className={styles.empty} role="status">
-          <strong>{t("Không có báo cáo phù hợp.", "No matching reports.")}</strong>
+          <strong>
+            {t("Không có báo cáo phù hợp.", "No matching reports.")}
+          </strong>
         </div>
       ) : (
         <TableScrollContainer className={styles.tableScroll}>
@@ -670,7 +772,9 @@ export function HrReportView({
               <tr>
                 <th scope="col">
                   <label className={styles.checkboxTarget}>
-                    <span className="sr-only">{t("Chọn tất cả", "Select all")}</span>
+                    <span className="sr-only">
+                      {t("Chọn tất cả", "Select all")}
+                    </span>
                     <input
                       type="checkbox"
                       checked={allVisibleSelected}
@@ -687,7 +791,9 @@ export function HrReportView({
                 </th>
                 <th scope="col">{t("Họ và tên", "Full name")}</th>
                 <th scope="col">{t("Vị trí", "Position")}</th>
-                <th scope="col">{t("Thời gian phỏng vấn", "Interview time")}</th>
+                <th scope="col">
+                  {t("Thời gian phỏng vấn", "Interview time")}
+                </th>
                 <th scope="col">{t("Địa điểm", "Location")}</th>
                 <th scope="col">{t("Trạng thái", "Status")}</th>
                 <th scope="col">{t("Ghi chú", "Note")}</th>
@@ -696,13 +802,17 @@ export function HrReportView({
             </thead>
             <tbody>
               {data.rows.map((row) => {
-                const statusLabel = HR_REPORT_STATUS_LABELS[row.reportStatus][locale];
+                const statusLabel =
+                  HR_REPORT_STATUS_LABELS[row.reportStatus][locale];
                 return (
                   <tr key={row.applicationId}>
                     <td>
                       <label className={styles.checkboxTarget}>
                         <span className="sr-only">
-                          {t(`Chọn ${row.candidateName}`, `Select ${row.candidateName}`)}
+                          {t(
+                            `Chọn ${row.candidateName}`,
+                            `Select ${row.candidateName}`,
+                          )}
                         </span>
                         <input
                           type="checkbox"
@@ -714,8 +824,11 @@ export function HrReportView({
                           onChange={(event) => {
                             setSelectedIds((current) => {
                               const next = new Set(current);
-                              if (event.target.checked) next.add(row.interviewId);
-                              else next.delete(row.interviewId);
+                              if (event.target.checked) {
+                                next.add(row.interviewId);
+                              } else {
+                                next.delete(row.interviewId);
+                              }
                               return next;
                             });
                           }}
@@ -761,11 +874,15 @@ export function HrReportView({
                       )}
                     </td>
                     <td>
-                      <span className={styles.noteCell}>{displayText(row.hrReportNote)}</span>
+                      <span className={styles.noteCell}>
+                        {displayText(row.hrReportNote)}
+                      </span>
                     </td>
                     <td>
                       <div className={styles.actionCell}>
-                        <Button onClick={() => hydrateDrawer(row)}>{t("Xem", "View")}</Button>
+                        <Button onClick={() => hydrateDrawer(row)}>
+                          {t("Xem", "View")}
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -776,19 +893,29 @@ export function HrReportView({
         </TableScrollContainer>
       )}
 
-      <div className={styles.pagination} aria-label={t("Phân trang", "Pagination")}>
+      <div
+        className={styles.pagination}
+        aria-label={t("Phân trang", "Pagination")}
+      >
         <Button
           disabled={pending || data.page <= 1}
-          onClick={() => void applyFilters({ ...filters, page: Math.max(1, data.page - 1) })}
+          onClick={() =>
+            void applyFilters({ ...filters, page: Math.max(1, data.page - 1) })
+          }
         >
           {t("Trước", "Previous")}
         </Button>
         <span>
-          {t("Trang", "Page")} {data.page} / {Math.max(data.pageCount, 1)} · {data.total}
+          {t("Trang", "Page")} {data.page} / {Math.max(data.pageCount, 1)} ·{" "}
+          {data.total}
         </span>
         <Button
-          disabled={pending || data.pageCount === 0 || data.page >= data.pageCount}
-          onClick={() => void applyFilters({ ...filters, page: data.page + 1 })}
+          disabled={
+            pending || data.pageCount === 0 || data.page >= data.pageCount
+          }
+          onClick={() =>
+            void applyFilters({ ...filters, page: data.page + 1 })
+          }
         >
           {t("Sau", "Next")}
         </Button>
@@ -812,7 +939,9 @@ export function HrReportView({
               <h3>{t("Tổng quan báo cáo", "Report Overview")}</h3>
               <dl className={styles.metaGrid}>
                 <dt>{t("Trạng thái", "Report Status")}</dt>
-                <dd>{HR_REPORT_STATUS_LABELS[selectedRow.reportStatus][locale]}</dd>
+                <dd>
+                  {HR_REPORT_STATUS_LABELS[selectedRow.reportStatus][locale]}
+                </dd>
                 <dt>{t("HR phụ trách", "HR Owner")}</dt>
                 <dd>{displayText(selectedRow.drawer.hrOwnerName)}</dd>
                 <dt>{t("Cập nhật cuối", "Last updated")}</dt>
@@ -825,13 +954,18 @@ export function HrReportView({
               </dl>
               <div className={styles.visibilityRow}>
                 <span>
-                  <strong>{t("Hiển thị Interviewer", "Interviewer visibility")}:</strong>{" "}
+                  <strong>
+                    {t("Hiển thị Interviewer", "Interviewer visibility")}:
+                  </strong>{" "}
                   {selectedRow.visibleToInterviewers
                     ? t("Đang hiển thị", "Visible")
                     : t("Đang ẩn", "Hidden")}
                 </span>
                 {data.permissions.visibility ? (
-                  <Button disabled={pending} onClick={() => void runVisibility(selectedRow)}>
+                  <Button
+                    disabled={pending}
+                    onClick={() => void runVisibility(selectedRow)}
+                  >
                     {selectedRow.visibleToInterviewers
                       ? t("Ẩn với Interviewer", "Hide from Interviewers")
                       : t("Hiển thị với Interviewer", "Show to Interviewers")}
@@ -844,7 +978,9 @@ export function HrReportView({
               <h3>{t("Ghi chú HR", "HR Report Note")}</h3>
               {data.permissions.manageStatus ? (
                 <div className={styles.noteEditor}>
-                  <label htmlFor="hr-report-note">{t("Nội dung ghi chú", "Note content")}</label>
+                  <label htmlFor="hr-report-note">
+                    {t("Nội dung ghi chú", "Note content")}
+                  </label>
                   <textarea
                     id="hr-report-note"
                     value={noteDraft}
@@ -875,15 +1011,27 @@ export function HrReportView({
             </section>
 
             <section className={styles.drawerSection}>
-              <h3>{t("Báo cáo của người phỏng vấn", "Participant Reports")}</h3>
+              <h3>
+                {t("Báo cáo của người phỏng vấn", "Participant Reports")}
+              </h3>
               <div className={styles.participantList}>
                 {selectedRow.drawer.participants.length === 0 ? (
-                  <p>{t("Chưa có người phỏng vấn hiện hành.", "No current participants.")}</p>
+                  <p>
+                    {t(
+                      "Chưa có người phỏng vấn hiện hành.",
+                      "No current participants.",
+                    )}
+                  </p>
                 ) : (
                   selectedRow.drawer.participants.map((participant) => {
-                    const editing = participant.interviewParticipantId === editingParticipantId;
+                    const editing =
+                      participant.interviewParticipantId ===
+                      editingParticipantId;
                     return (
-                      <article className={styles.participantCard} key={participant.interviewParticipantId}>
+                      <article
+                        className={styles.participantCard}
+                        key={participant.interviewParticipantId}
+                      >
                         <div className={styles.participantHeading}>
                           <div>
                             <h4>{participant.name}</h4>
@@ -894,19 +1042,27 @@ export function HrReportView({
                               <Button
                                 disabled={pending}
                                 onClick={() =>
-                                  editing ? resetEditing() : startParticipantEdit(participant)
+                                  requestParticipantEdit(participant)
                                 }
                               >
-                                {editing ? t("Hủy sửa", "Cancel edit") : t("Sửa", "Edit")}
+                                {editing
+                                  ? t("Hủy sửa", "Cancel edit")
+                                  : t("Sửa", "Edit")}
                               </Button>
                             ) : null}
-                            {data.permissions.delete && participant.interviewReportId ? (
+                            {data.permissions.delete &&
+                            participant.interviewReportId ? (
                               <Button
                                 variant="danger"
                                 disabled={pending}
-                                onClick={() => setDeleteParticipant(participant)}
+                                onClick={() =>
+                                  setDeleteParticipant(participant)
+                                }
                               >
-                                {t("Xóa / Inactive", "Delete / Inactivate")}
+                                {t(
+                                  "Xóa / Inactive",
+                                  "Delete / Inactivate",
+                                )}
                               </Button>
                             ) : null}
                           </div>
@@ -916,26 +1072,46 @@ export function HrReportView({
                           <div className={styles.reportEditor}>
                             {REPORT_FIELD_KEYS.map((key) => (
                               <label key={key}>
-                                {REPORT_FIELD_LABELS[key][locale === "vi" ? 0 : 1]}
+                                {
+                                  REPORT_FIELD_LABELS[key][
+                                    locale === "vi" ? 0 : 1
+                                  ]
+                                }
                                 <textarea
                                   value={reportDraft[key] ?? ""}
                                   disabled={pending}
                                   onChange={(event) =>
                                     setReportDraft((current) =>
-                                      current ? { ...current, [key]: event.target.value } : current,
+                                      current
+                                        ? {
+                                            ...current,
+                                            [key]: event.target.value,
+                                          }
+                                        : current,
                                     )
                                   }
                                 />
                               </label>
                             ))}
                             <div className={styles.participantActions}>
-                              <Button disabled={pending} onClick={resetEditing}>
+                              <Button
+                                disabled={pending}
+                                onClick={() =>
+                                  currentEditingParticipant
+                                    ? requestParticipantEdit(
+                                        currentEditingParticipant,
+                                      )
+                                    : resetEditing()
+                                }
+                              >
                                 {t("Hủy", "Cancel")}
                               </Button>
                               <Button
                                 variant="primary"
                                 pending={pending}
-                                onClick={() => void saveParticipantReport(selectedRow)}
+                                onClick={() =>
+                                  void saveParticipantReport(selectedRow)
+                                }
                               >
                                 {t("Lưu báo cáo", "Save report")}
                               </Button>
@@ -945,7 +1121,13 @@ export function HrReportView({
                           <dl className={styles.reportFields}>
                             {REPORT_FIELD_KEYS.map((key) => (
                               <div key={key}>
-                                <dt>{REPORT_FIELD_LABELS[key][locale === "vi" ? 0 : 1]}</dt>
+                                <dt>
+                                  {
+                                    REPORT_FIELD_LABELS[key][
+                                      locale === "vi" ? 0 : 1
+                                    ]
+                                  }
+                                </dt>
                                 <dd>{displayText(participant.report[key])}</dd>
                               </div>
                             ))}
@@ -963,22 +1145,37 @@ export function HrReportView({
               <div className={styles.finalDecision}>
                 <dl className={styles.metaGrid}>
                   <dt>{t("Nguồn", "Source")}</dt>
-                  <dd>{displayText(selectedRow.drawer.finalDecision.sourceParticipantName)}</dd>
+                  <dd>
+                    {displayText(
+                      selectedRow.drawer.finalDecision.sourceParticipantName,
+                    )}
+                  </dd>
                   <dt>{t("Kết luận", "Conclusion")}</dt>
-                  <dd>{displayText(selectedRow.drawer.finalDecision.conclusion)}</dd>
+                  <dd>
+                    {displayText(selectedRow.drawer.finalDecision.conclusion)}
+                  </dd>
                   <dt>{t("Công việc dự kiến", "Expected assignment")}</dt>
                   <dd>
                     {displayText(
-                      selectedRow.drawer.finalDecision.expectedSpecificJobAssigned,
+                      selectedRow.drawer.finalDecision
+                        .expectedSpecificJobAssigned,
                     )}
                   </dd>
-                  <dt>{t("Thời gian tuyển dụng", "Expected recruitment time")}</dt>
+                  <dt>
+                    {t("Thời gian tuyển dụng", "Expected recruitment time")}
+                  </dt>
                   <dd>
-                    {displayText(selectedRow.drawer.finalDecision.expectedRecruitmentTime)}
+                    {displayText(
+                      selectedRow.drawer.finalDecision
+                        .expectedRecruitmentTime,
+                    )}
                   </dd>
                   <dt>{t("Cập nhật quyết định", "Decision updated")}</dt>
                   <dd>
-                    {formatDateTime(selectedRow.drawer.finalDecision.updatedAt, locale)}
+                    {formatDateTime(
+                      selectedRow.drawer.finalDecision.updatedAt,
+                      locale,
+                    )}
                     {selectedRow.drawer.finalDecision.updatedByName
                       ? ` · ${selectedRow.drawer.finalDecision.updatedByName}`
                       : ""}
@@ -996,7 +1193,9 @@ export function HrReportView({
         onClose={() => setDiscardOpen(false)}
         footer={
           <div className={styles.dialogActions}>
-            <Button onClick={() => setDiscardOpen(false)}>{t("Tiếp tục sửa", "Keep editing")}</Button>
+            <Button onClick={() => setDiscardOpen(false)}>
+              {t("Tiếp tục sửa", "Keep editing")}
+            </Button>
             <Button variant="danger" onClick={closeDrawerNow}>
               {t("Bỏ thay đổi", "Discard changes")}
             </Button>
@@ -1020,7 +1219,10 @@ export function HrReportView({
         footer={
           selectedRow ? (
             <div className={styles.dialogActions}>
-              <Button disabled={pending} onClick={() => setDeleteParticipant(null)}>
+              <Button
+                disabled={pending}
+                onClick={() => setDeleteParticipant(null)}
+              >
                 {t("Hủy", "Cancel")}
               </Button>
               <Button

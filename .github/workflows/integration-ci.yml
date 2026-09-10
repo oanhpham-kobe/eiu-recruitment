@@ -189,6 +189,10 @@ jobs:
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/hr_report_management_test.sql
 
+      - name: Execute TASK-S05-002 HR Report DTO Privacy Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/hr_report_dto_privacy_test.sql
+
       - name: Stop local Supabase
         if: always()
         run: supabase stop

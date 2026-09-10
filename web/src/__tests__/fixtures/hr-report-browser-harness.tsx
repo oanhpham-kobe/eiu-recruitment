@@ -53,7 +53,6 @@ function initialData(): HrReportPageData {
         formatNameVi: "Trực tuyến",
         formatNameEn: "Online",
         roomName: null,
-        meetingLink: "https://meet.example.test/hr-1",
         reportStatus: "WAITING_FOR_REPORT",
         hrReportNote: "Ghi chú HR giữ nguyên ngôn ngữ người dùng",
         visibleToInterviewers: true,
@@ -76,6 +75,21 @@ function initialData(): HrReportPageData {
               },
               updatedAt: "2026-09-10T03:00:00Z",
               updatedByName: "Interviewer One",
+            },
+            {
+              interviewParticipantId: PARTICIPANT_2,
+              participantOrder: 2,
+              name: "Interviewer Two",
+              jobTitle: "Professor",
+              interviewReportId: REPORT_2,
+              reportVersionNo: 2,
+              report: {
+                ...EMPTY_REPORT_FIELDS,
+                professional_knowledge: "Strong",
+                conclusion: "Follow up",
+              },
+              updatedAt: "2026-09-10T03:01:00Z",
+              updatedByName: "Interviewer Two",
             },
           ],
           finalDecision: {
@@ -102,7 +116,6 @@ function initialData(): HrReportPageData {
         formatNameVi: "Trực tiếp",
         formatNameEn: "In person",
         roomName: "B1.101",
-        meetingLink: null,
         reportStatus: "FOLLOW_UP",
         hrReportNote: null,
         visibleToInterviewers: false,
@@ -110,31 +123,15 @@ function initialData(): HrReportPageData {
         lastUpdatedByName: "HR Owner",
         drawer: {
           hrOwnerName: "HR Owner",
-          participants: [
-            {
-              interviewParticipantId: PARTICIPANT_2,
-              participantOrder: 1,
-              name: "Interviewer Two",
-              jobTitle: "Professor",
-              interviewReportId: REPORT_2,
-              reportVersionNo: 2,
-              report: {
-                ...EMPTY_REPORT_FIELDS,
-                professional_knowledge: "Strong",
-                conclusion: "Follow up",
-              },
-              updatedAt: "2026-09-09T04:00:00Z",
-              updatedByName: "Interviewer Two",
-            },
-          ],
+          participants: [],
           finalDecision: {
-            sourceInterviewReportId: REPORT_2,
-            sourceParticipantName: "Interviewer Two",
-            conclusion: "Follow up",
+            sourceInterviewReportId: null,
+            sourceParticipantName: null,
+            conclusion: null,
             expectedSpecificJobAssigned: null,
             expectedRecruitmentTime: null,
-            updatedAt: "2026-09-09T04:00:00Z",
-            updatedByName: "Interviewer Two",
+            updatedAt: null,
+            updatedByName: null,
           },
         },
       },
@@ -158,12 +155,20 @@ function success(extra: Record<string, unknown> = {}): HrReportCommandResult {
   return { success: true, data: extra };
 }
 
-async function refresh(filters?: Partial<HrReportFilters>): Promise<HrReportPageData> {
+async function refresh(
+  filters?: Partial<HrReportFilters>,
+): Promise<HrReportPageData> {
   const normalized = { ...INITIAL_HR_REPORT_FILTERS, ...filters };
   let rows = [...data.rows];
-  if (normalized.status) rows = rows.filter((row) => row.reportStatus === normalized.status);
-  if (normalized.visibility === "VISIBLE") rows = rows.filter((row) => row.visibleToInterviewers);
-  if (normalized.visibility === "HIDDEN") rows = rows.filter((row) => !row.visibleToInterviewers);
+  if (normalized.status) {
+    rows = rows.filter((row) => row.reportStatus === normalized.status);
+  }
+  if (normalized.visibility === "VISIBLE") {
+    rows = rows.filter((row) => row.visibleToInterviewers);
+  }
+  if (normalized.visibility === "HIDDEN") {
+    rows = rows.filter((row) => !row.visibleToInterviewers);
+  }
   if (normalized.search) {
     const term = normalized.search.toLocaleLowerCase("vi");
     rows = rows.filter(
@@ -330,5 +335,7 @@ function Harness() {
 
 data = initialData();
 const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error("HR Report browser harness root is missing");
+if (!rootElement) {
+  throw new Error("HR Report browser harness root is missing");
+}
 createRoot(rootElement).render(<Harness />);

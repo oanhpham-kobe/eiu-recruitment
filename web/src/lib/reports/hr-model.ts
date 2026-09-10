@@ -99,7 +99,6 @@ export interface HrReportRow {
   formatNameVi: string | null;
   formatNameEn: string | null;
   roomName: string | null;
-  meetingLink: string | null;
   reportStatus: RawReportStatus;
   hrReportNote: string | null;
   visibleToInterviewers: boolean;
@@ -301,7 +300,6 @@ function row(value: unknown): HrReportRow {
       "format_name_vi",
       "format_name_en",
       "room_name",
-      "meeting_link",
       "report_status_code",
       "hr_report_note",
       "visible_to_interviewers",
@@ -345,7 +343,6 @@ function row(value: unknown): HrReportRow {
     formatNameVi: nullableString(value.format_name_vi, `${context}.format_name_vi`),
     formatNameEn: nullableString(value.format_name_en, `${context}.format_name_en`),
     roomName: nullableString(value.room_name, `${context}.room_name`),
-    meetingLink: nullableString(value.meeting_link, `${context}.meeting_link`),
     reportStatus: reportStatus(value.report_status_code, `${context}.report_status_code`),
     hrReportNote: nullableString(value.hr_report_note, `${context}.hr_report_note`),
     visibleToInterviewers: value.visible_to_interviewers,
@@ -444,7 +441,11 @@ export function hrReportStatusTone(
 ): "success" | "danger" | "warning" | "info" | "neutral" {
   if (status === "HIRED" || status === "REPORT_SUBMITTED") return "success";
   if (status === "REJECTED") return "danger";
-  if (status === "AWAITING_INTERVIEW" || status === "WAITING_FOR_REPORT" || status === "ON_HOLD") {
+  if (
+    status === "AWAITING_INTERVIEW" ||
+    status === "WAITING_FOR_REPORT" ||
+    status === "ON_HOLD"
+  ) {
     return "warning";
   }
   if (status === "INTERVIEW_SCHEDULING" || status === "FOLLOW_UP") return "info";

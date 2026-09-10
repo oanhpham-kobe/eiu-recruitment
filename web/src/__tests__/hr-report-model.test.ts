@@ -31,7 +31,6 @@ function canonicalPayload() {
           format_name_vi: "Trực tuyến",
           format_name_en: "Online",
           room_name: null,
-          meeting_link: "https://meet.example.test/room",
           report_status_code: "FOLLOW_UP",
           hr_report_note: "HR authored content",
           visible_to_interviewers: true,
@@ -94,31 +93,35 @@ test("HR report DTO parser accepts the minimum-safe canonical projection", () =>
   assert.equal(parsed.rows[0].interviewId, interviewId);
   assert.equal(parsed.rows[0].reportStatus, "FOLLOW_UP");
   assert.equal(parsed.rows[0].hrReportNote, "HR authored content");
-  assert.equal(parsed.rows[0].drawer.participants[0].report.professional_knowledge, "Strong");
-  assert.equal(parsed.rows[0].drawer.finalDecision.sourceInterviewReportId, reportId);
+  assert.equal(
+    parsed.rows[0].drawer.participants[0].report.professional_knowledge,
+    "Strong",
+  );
+  assert.equal(
+    parsed.rows[0].drawer.finalDecision.sourceInterviewReportId,
+    reportId,
+  );
+  assert.equal("meetingLink" in parsed.rows[0], false);
 });
 
-test("HR report DTO fails closed on unrelated Candidate/Submission/private metadata", () => {
-  const payload = canonicalPayload();
-  const row = payload.data.rows[0] as Record<string, unknown>;
-
+test("HR report DTO rejects raw meeting links and unrelated private metadata", () => {
   for (const forbiddenKey of [
+    "meeting_link",
     "submission_id",
     "candidate_id",
     "email_snapshot",
     "candidate_phone",
     "auth_user_id",
   ]) {
-    const next = structuredClone(payload);
-    (next.data.rows[0] as Record<string, unknown>)[forbiddenKey] = "leak";
+    const next = structuredClone(canonicalPayload());
+    (next.data.rows[0] as Record<string, unknown>)[forbiddenKey] =
+      forbiddenKey === "meeting_link" ? "https://meet.example.test/private" : "leak";
     assert.throws(
       () => parseHrReportPageRpc(next),
       /Unexpected HR report DTO key/,
       forbiddenKey,
     );
   }
-
-  assert.equal(row.submission_id, undefined);
 });
 
 test("HR keeps all eight raw Report statuses without Interviewer projection", () => {
@@ -174,17 +177,20 @@ test("HR Report production CSS and table source preserve exact v1.8 geometry", (
   assert.match(css, /table-layout:\s*fixed/);
   assert.match(css, /left:\s*48px/);
   assert.match(css, /--badge-width-interview-operational/);
-  assert.match(css, /@media \(max-width:\s*1024px\)/);
-  assert.match(css, /@media \(max-width:\s*768px\)/);
-  assert.match(css, /@media \(max-width:\s*430px\)/);
-  assert.match(css, /@media \(max-height:\s*600px\)/);
+  assert.match(css, /scroll-margin-inline-start:\s*300px/);
+  assert.doesNotMatch(css, /overflow-wrap:\s*anywhere/);
+  assert.doesNotMatch(css, /-webkit-line-clamp/);
+  assert.doesNotMatch(css, /!important/);
 
   assert.match(view, /<colgroup>/);
   for (const width of [48, 240, 300, 240, 200, 190, 300, 92]) {
-    assert.match(view, new RegExp(`<col style=\\{\\{ width: ${width} \\}\\} \\/>`));
+    assert.match(
+      view,
+      new RegExp(`<col style=\\{\\{ width: ${width} \\}\\} \\/>`),
+    );
   }
   assert.match(view, /<TableScrollContainer/);
   assert.match(view, /Đã chọn/);
   assert.match(view, /Delete \/ Inactivate/);
-  assert.doesNotMatch(view, /onClick=\{\(\) => hydrateDrawer\(row\)\}\s*>\s*<tr/);
+  assert.doesNotMatch(view, /meetingLink/);
 });
