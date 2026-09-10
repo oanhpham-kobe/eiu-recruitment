@@ -7,11 +7,15 @@ checkpoint='checkpoint/pre-S06-001-001'
 # TASK_REGISTRY
 p=Path('project_control/TASK_REGISTRY.yaml')
 s=p.read_text()
-s=s.replace('  TASK-S06-001:\n    title: Master Data Lifecycle & Historical Semantics Trusted Contracts\n    slice: SLICE-06\n    status: PLANNED\n', '  TASK-S06-001:\n    title: Master Data Lifecycle & Historical Semantics Trusted Contracts\n    slice: SLICE-06\n    status: READY\n',1)
-s=s.replace(f'    prompt_review_status: "WAITING_EXTERNAL_REVIEW (S06-001-PROMPT-REVIEW-002 @ {reviewed})"\n', f'    prompt_review_status: "PASS (S06-001-PROMPT-REVIEW-002 @ {reviewed}; eiu-reviewer; source reopen: NO)"\n',1)
-s=s.replace('    prompt_review_evidence: project_control/reviews/S06_001_PROMPT_R2_REVIEW_GATE_68d96b3_v1.md\n', '    prompt_review_evidence: "Owner transport PASS; reviewer-reported review/S06-001-PROMPT-68d96b3-v2 @ 28af23929fa0d99d9132f1c779fc722b12c8c1e1 was not GitHub-visible when Coordinator checked"\n',1)
-s=s.replace('    pre_task_checkpoint: PENDING_AFTER_PROMPT_REVIEW\n', f'    pre_task_checkpoint: {checkpoint}\n    branch: {branch}\n',1)
-p.write_text(s)
+anchor='  TASK-S06-001:\n'
+start=s.index(anchor)
+head=s[:start]
+block=s[start:]
+block=block.replace('    status: PLANNED\n','    status: READY\n',1)
+block=block.replace(f'    prompt_review_status: "WAITING_EXTERNAL_REVIEW (S06-001-PROMPT-REVIEW-002 @ {reviewed})"\n', f'    prompt_review_status: "PASS (S06-001-PROMPT-REVIEW-002 @ {reviewed}; eiu-reviewer; source reopen: NO)"\n',1)
+block=block.replace('    prompt_review_evidence: project_control/reviews/S06_001_PROMPT_R2_REVIEW_GATE_68d96b3_v1.md\n', '    prompt_review_evidence: "Owner transport PASS; reviewer-reported review/S06-001-PROMPT-68d96b3-v2 @ 28af23929fa0d99d9132f1c779fc722b12c8c1e1 was not GitHub-visible when Coordinator checked"\n',1)
+block=block.replace('    pre_task_checkpoint: PENDING_AFTER_PROMPT_REVIEW\n', f'    pre_task_checkpoint: {checkpoint}\n    branch: {branch}\n',1)
+p.write_text(head+block)
 
 # AUTONOMY_RUN_STATE
 p=Path('project_control/AUTONOMY_RUN_STATE.yaml')
@@ -19,12 +23,12 @@ s=p.read_text()
 s=s.replace('slice_06_planning:\n  status: WAITING_EXTERNAL_REVIEW\n', 'slice_06_planning:\n  status: IMPLEMENTATION_MATERIALIZATION\n',1)
 s=s.replace('  task_status: PLANNED\n', '  task_status: READY\n',1)
 s=s.replace('    status: WAITING_EXTERNAL_REVIEW\n    reviewed_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"\n    result: PENDING\n    source_reopen_required: PENDING\n', '    status: VERIFIED_FROM_OWNER_TRANSPORT\n    reviewed_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"\n    result: PASS\n    source_reopen_required: false\n    blocking_findings: NONE\n    evidence_persistence: "Reviewer-reported review/S06-001-PROMPT-68d96b3-v2 @ 28af23929fa0d99d9132f1c779fc722b12c8c1e1 and project_control/reviews/S06_001_PROMPT_REVIEW_68d96b3_v2.md were not GitHub-visible when checked; verdict accepted from Owner transport without durable-verification claim."\n',1)
-old='''safe_frontier:\n  eligible_tasks: []\n  skipped_due_to_dependency: []\n  materialization_frontier: []\n  execution_hold: "TASK-S06-001 independent exact-SHA prompt rereview R2"\n\nstop_gate:\n  status: WAITING_EXTERNAL_REVIEW\n  type: OMP_PROMPT_REREVIEW\n  work_id: S06-001-PROMPT-REVIEW-002\n  target: "project_control/prompts/SLICE-06_TASK-001_v2.md @ 68d96b39e309ee6f1edbe6cf4031c10a583b0269"\n  reviewed_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"\n  reviewer: eiu-reviewer\n  verdict: PENDING\n  source_reopen_required: PENDING\n  handoff_package_requirement: SATISFIED\n  handoff_package: project_control/reviews/S06_001_PROMPT_R2_REVIEW_GATE_68d96b3_v1.md\n  materialization_integration_ci: "34491648323 PASS"\n  materialization_governance_ci: "34491648300 PASS"\n  resume_on: "PASS + SOURCE_REOPEN_REQUIRED=false for exact S06-001 v2 prompt target"\n\nnext_action: "Transport project_control/reviews/S06_001_PROMPT_R2_REVIEW_GATE_68d96b3_v1.md to independent OMP eiu-reviewer for exact repaired prompt target 68d96b39e309ee6f1edbe6cf4031c10a583b0269. On PASS + SOURCE_REOPEN_REQUIRED=false, verify returned evidence coordinates if available, create immutable checkpoint/pre-S06-001-001 and isolated implementation branch from the reviewed planning baseline, then execute prompt v2. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."\n'''
-new=f'''implementation_materialization:\n  task: TASK-S06-001\n  prompt_review: "PASS S06-001-PROMPT-REVIEW-002 @ {reviewed}"\n  source_reopen_required: false\n  prompt: project_control/prompts/SLICE-06_TASK-001_v2.md\n  checkpoint: {checkpoint}\n  branch: {branch}\n  baseline_sha: PENDING_THIS_MATERIALIZATION_COMMIT\n  status: PENDING_CONTROL_CI\n\nsafe_frontier:\n  eligible_tasks: [TASK-S06-001]\n  skipped_due_to_dependency: []\n  materialization_frontier: [TASK-S06-001]\n  execution_hold: "TASK-S06-001 implementation materialization must pass exact-SHA Integration/Governance CI before branch execution"\n\nstop_gate:\n  status: PRE_IMPLEMENTATION_MATERIALIZATION_CI\n  type: CONTROL_MATERIALIZATION\n  work_id: S06-001-IMPLEMENTATION-MATERIALIZATION-001\n  target: "TASK-S06-001 reviewed prompt v2 @ {reviewed}"\n  reviewer: eiu-reviewer\n  prompt_verdict: PASS\n  source_reopen_required: false\n  resume_on: "materialization exact-SHA Integration CI PASS + Governance CI PASS, then create immutable checkpoint and isolated task branch"\n\nnext_action: "Validate this materialization commit via Integration/Governance CI. On PASS create {checkpoint} and {branch} at the exact materialization SHA, then implement TASK-S06-001 on the isolated branch with local/CI Supabase only. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."\n'''
-if old not in s:
-    raise SystemExit('expected R2 gate block not found')
-s=s.replace(old,new,1)
-p.write_text(s)
+frontier='safe_frontier:\n'
+if frontier not in s:
+    raise SystemExit('safe_frontier marker missing')
+prefix=s[:s.index(frontier)]
+tail=f'''implementation_materialization:\n  task: TASK-S06-001\n  prompt_review: "PASS S06-001-PROMPT-REVIEW-002 @ {reviewed}"\n  source_reopen_required: false\n  prompt: project_control/prompts/SLICE-06_TASK-001_v2.md\n  checkpoint: {checkpoint}\n  branch: {branch}\n  baseline_sha: PENDING_THIS_MATERIALIZATION_COMMIT\n  status: PENDING_CONTROL_CI\n\nsafe_frontier:\n  eligible_tasks: [TASK-S06-001]\n  skipped_due_to_dependency: []\n  materialization_frontier: [TASK-S06-001]\n  execution_hold: "TASK-S06-001 implementation materialization must pass exact-SHA Integration/Governance CI before branch execution"\n\nstop_gate:\n  status: PRE_IMPLEMENTATION_MATERIALIZATION_CI\n  type: CONTROL_MATERIALIZATION\n  work_id: S06-001-IMPLEMENTATION-MATERIALIZATION-001\n  target: "TASK-S06-001 reviewed prompt v2 @ {reviewed}"\n  reviewer: eiu-reviewer\n  prompt_verdict: PASS\n  source_reopen_required: false\n  resume_on: "materialization exact-SHA Integration CI PASS + Governance CI PASS, then create immutable checkpoint and isolated task branch"\n\nnext_action: "Validate this materialization commit via Integration/Governance CI. On PASS create {checkpoint} and {branch} at the exact materialization SHA, then implement TASK-S06-001 on the isolated branch with local/CI Supabase only. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."\n'''
+p.write_text(prefix+tail)
 
 # EVIDENCE_INDEX
 p=Path('project_control/EVIDENCE_INDEX.yaml')
