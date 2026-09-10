@@ -1,0 +1,39 @@
+name: S06-001 Root Fixture Patch
+
+on:
+  push:
+    branches:
+      - patch/S06-001-root-fixture-reuse
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'reuse existing Root fixture') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Patch Root fixture setup
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('supabase/tests/master_data_lifecycle_history_test.sql')
+          s = p.read_text()
+          old = """  insert into public.app_users(auth_user_id, email, full_name, is_active, is_root_admin)\n  values (v_root_auth, 's06001_root_' || v_suffix || '@eiu.edu.vn', 'S06-001 Root', true, true)\n  returning app_user_id into v_root;\n"""
+          new = """  select u.app_user_id, u.auth_user_id\n    into v_root, v_root_auth\n  from public.app_users u\n  where u.is_root_admin = true\n    and u.is_active = true\n  limit 1;\n\n  if v_root is null then\n    insert into public.app_users(auth_user_id, email, full_name, is_active, is_root_admin)\n    values (v_root_auth, 's06001_root_' || v_suffix || '@eiu.edu.vn', 'S06-001 Root', true, true)\n    returning app_user_id into v_root;\n  elsif v_root_auth is null then\n    v_root_auth := gen_random_uuid();\n    update public.app_users\n    set auth_user_id = v_root_auth\n    where app_user_id = v_root;\n  end if;\n"""
+          if old not in s:
+              raise SystemExit('target Root fixture block not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          git diff --check
+      - name: Commit patched test only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add supabase/tests/master_data_lifecycle_history_test.sql
+          git commit -m 'test(s06-001): reuse existing Root fixture'
+          git push origin HEAD:patch/S06-001-root-fixture-reuse
