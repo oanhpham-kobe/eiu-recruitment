@@ -1137,7 +1137,7 @@ tasks:
   TASK-S05-002:
     title: "HR Report Management Experience over Accepted Report Contracts"
     slice: SLICE-05
-    status: READY
+    status: DONE
     lane: LANE_A
     branch: oanhpham-kobe/TASK-S05-002-hr-report-management
     depends_on:
@@ -1153,4 +1153,15 @@ tasks:
       commit: "128859aecc2e8cefc7acc71cf5e2252c43dd5af9"
       artifact: project_control/reviews/S05_002_PROMPT_REVIEW_1f831a7_v1.md
     pre_task_checkpoint: checkpoint/pre-S05-002-001
-    notes: "Materialized after exact-source eiu-reviewer prompt PASS. Scope: HR Report management over accepted report contracts; add missing set_report_visibility and bulk_change_report_status, repair delete permission to reports.delete + reports.view, preserve dedicated minimum-safe HR read projection, accepted Current Round/Final Decision/concurrency semantics, Design System v1.8, and no deployment or connected Supabase migration application."
+    implementation_candidate_sha: "f4e1a04b59aef92aa55245c451386e0c0cfe3813"
+    implementation_sha: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"
+    review_status: "PASS (S05-002-FINAL-INTEGRATION-EQUIVALENCE-001 @ fe556dda76ebeda7107bcb9310cbaf338b30fc29; source reopen: NO)"
+    github_ci: "VERIFIED (Integration CI run 34461727271; Governance CI run 34461727266; exact SHA fe556dda76ebeda7107bcb9310cbaf338b30fc29; PASS)"
+    accepted_checkpoint: "checkpoint/S05-002-accepted-001"
+    acceptance:
+      - "R3 implementation review: PASS @ f4e1a04b59aef92aa55245c451386e0c0cfe3813"
+      - "Final integration equivalence review: PASS @ fe556dda76ebeda7107bcb9310cbaf338b30fc29"
+      - "Integration CI 34461727271: PASS"
+      - "Governance CI 34461727266: PASS"
+      - "checkpoint/S05-002-accepted-001 @ fe556dda76ebeda7107bcb9310cbaf338b30fc29"
+    notes: "Accepted HR Report management experience. R1/R2 blockers were repaired; R3 implementation review passed; exact integration-equivalence review passed; full web/database exact-SHA CI passed. No Product/Business/Design source reopen, Vercel deployment, main mutation, or connected Supabase migration application occurred. ASSET-001 official pixel-perfect PDF template remains deferred/non-blocking."

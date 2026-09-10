@@ -9,52 +9,29 @@
 ## TASK-S05-001 — DONE / ACCEPTED
 
 - Final exact acceptance SHA: `ef0bd9e534dec0cc85ef6503fbe0369eda56d555`
-- Immutable checkpoint: `checkpoint/S05-001-accepted-001 @ ef0bd9e534dec0cc85ef6503fbe0369eda56d555`
+- Immutable checkpoint: `checkpoint/S05-001-accepted-001`
+
+## TASK-S05-002 — DONE / ACCEPTED
+
+- Reviewed candidate: `f4e1a04b59aef92aa55245c451386e0c0cfe3813`
+- Final integration / acceptance SHA: `fe556dda76ebeda7107bcb9310cbaf338b30fc29`
+- Final integration-equivalence review: PASS
 - Source reopen required: NO
+- Integration CI `34461727271`: PASS (web + database)
+- Governance CI `34461727266`: PASS
+- Immutable checkpoint: `checkpoint/S05-002-accepted-001 @ fe556dda76ebeda7107bcb9310cbaf338b30fc29`
+- Connected Supabase migration application: NOT PERFORMED
+- Vercel deployment: NOT PERFORMED
 
-## TASK-S05-002 — R3 CANDIDATE / WAITING INDEPENDENT REVIEW
+## SLICE-05 — PENDING CLOSING GATE
 
-R2 was independently reviewed by `eiu-reviewer` at exact SHA `436f733224cf9cb3776b5783afd86f577572d542` and returned `BLOCKING_REPAIR`, `SOURCE_REOPEN_REQUIRED=false`.
+Both Slice-05 tasks are individually accepted. Governance requires a slice-closing composition review and broader regression before SLICE-05 may be marked DONE.
 
-### Verified R2 evidence
-
-- work ID: `S05-002-IMPLEMENTATION-REVIEW-001-R2`
-- evidence branch: `review/S05-002-IMPL-436f733-v2`
-- evidence commit: `52ea377baf0e0dd99f2fa32929cdd0cc14c9355a`
-- evidence path: `project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_436f733_v2.md`
-
-### Bounded R2 repairs
-
-The candidate now retains/refetches Drawer state independently of the filtered page, preserves original bases for dirty participant-report fields, uses the accepted `p_expected_version_no` RPC argument, exercises the 390px Status interaction through the horizontal table scroller without changing fixed geometry, and has candidate-owned lint diagnostics resolved. SQL regression fixtures were also repaired to satisfy the canonical Interview format invariant and to isolate S05-002 assertions from prior regression data; these fixture changes do not modify production behavior.
-
-### Exact R3 candidate
-
-- task branch: `oanhpham-kobe/TASK-S05-002-hr-report-management`
-- exact review target: `f4e1a04b59aef92aa55245c451386e0c0cfe3813`
-- R3 work ID: `S05-002-IMPLEMENTATION-REVIEW-001-R3`
-- reviewer: `eiu-reviewer`
-- handoff: `project_control/reviews/S05_002_IMPLEMENTATION_R3_GATE_f4e1a04_v1.md`
-
-### Fresh verification
-
-GitHub Actions run `34435135134` is PASS on `verify/S05-002-R3-final`, whose head is the exact candidate plus one workflow-only commit.
-
-- web: PASS — install, high-severity audit, Design System check, lint, typecheck, build, Chromium installation, full test suite.
-- database: PASS — local Supabase start, zero-state migration replay, S05-001 contextual-read regression, S05-002 HR management regression, S05-002 HR DTO privacy regression, clean stop.
-
-## Current execution state
-
-- Slice-05: `IN_PROGRESS`
-- current task: `TASK-S05-002`
-- state: `WAITING_EXTERNAL_REVIEW`
-- reviewer: `eiu-reviewer`
-- exact review target: `f4e1a04b59aef92aa55245c451386e0c0cfe3813`
-- source reopen required: PENDING R3 verdict
-- safe implementation frontier: none while independent review gate is active
+Next action: commit this bookkeeping with `[full-ci]`, require fresh web + database CI, then obtain independent exact-SHA Slice-05 composition review. Only after that PASS may the outer loop inspect/materialize SLICE-06.
 
 ## Do not cross
 
-- Do not integrate/accept TASK-S05-002 before independent exact-SHA review PASS with `SOURCE_REOPEN_REQUIRED=false`.
+- Do not mark SLICE-05 DONE before the closing gate passes.
 - Do not merge/push `main`.
 - Do not deploy Vercel.
 - Do not apply migrations to connected Supabase DEV/production without explicit Owner authorization.
