@@ -1,0 +1,48 @@
+name: S06-001 Implementation Materialization
+
+on:
+  push:
+    branches:
+      - control/S06-001-implementation-materialization
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: ${{ !contains(github.event.head_commit.message, 'materialize S06-001 implementation lifecycle') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Patch implementation materialization state
+        run: python project_control/tmp_s06_001_impl_materialize.py
+      - name: Validate YAML and state markers
+        run: |
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
+          for path in [
+              'project_control/AUTONOMY_RUN_STATE.yaml',
+              'project_control/TASK_REGISTRY.yaml',
+              'project_control/EVIDENCE_INDEX.yaml',
+          ]:
+              yaml.safe_load(Path(path).read_text())
+              print('YAML OK:', path)
+          task = Path('project_control/TASK_REGISTRY.yaml').read_text()
+          run = Path('project_control/AUTONOMY_RUN_STATE.yaml').read_text()
+          assert 'status: READY' in task[task.index('TASK-S06-001:'):]
+          assert 'checkpoint/pre-S06-001-001' in task
+          assert 'oanhpham-kobe/TASK-S06-001-master-data-lifecycle' in task
+          assert 'S06-001-PROMPT-REVIEW-002' in run and 'result: PASS' in run
+          assert 'PRE_IMPLEMENTATION_MATERIALIZATION_CI' in run
+          PY
+          git diff --check
+      - name: Commit implementation materialization state
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/TASK_REGISTRY.yaml project_control/EVIDENCE_INDEX.yaml project_control/CURRENT_STATE.md
+          git commit -m 'chore(state): materialize S06-001 implementation lifecycle'
+          git push origin HEAD:control/S06-001-implementation-materialization
