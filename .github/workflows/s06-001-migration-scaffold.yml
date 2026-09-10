@@ -1,0 +1,27 @@
+name: S06-001 Migration Scaffold
+
+on:
+  push:
+    branches:
+      - scaffold/S06-001-supabase-migration
+
+permissions:
+  contents: write
+
+jobs:
+  scaffold:
+    if: ${{ !contains(github.event.head_commit.message, 'scaffold S06-001 Supabase migration') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Create migration with pinned Supabase CLI
+        run: npx supabase@2.116.0 migration new master_data_lifecycle_history_contracts
+      - name: Commit migration scaffold
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add supabase/migrations
+          git commit -m 'chore(db): scaffold S06-001 Supabase migration'
+          git push origin HEAD:scaffold/S06-001-supabase-migration
