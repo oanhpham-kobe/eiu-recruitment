@@ -1,6 +1,7 @@
 "use client";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useRef,
@@ -18,6 +19,9 @@ interface StatusMenuProps {
   currentValue?: string;
   options: StatusMenuOption[];
   onSelect: (value: string) => void;
+  triggerContent?: ReactNode;
+  triggerClassName?: string;
+  disabled?: boolean;
 }
 
 type OpenFocus = "current" | "first" | "last";
@@ -27,6 +31,9 @@ export function StatusMenu({
   currentValue,
   options,
   onSelect,
+  triggerContent,
+  triggerClassName,
+  disabled = false,
 }: StatusMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -110,6 +117,7 @@ export function StatusMenu({
   }, [enabledItems, open, positionPanel]);
 
   const openMenu = (focus: OpenFocus) => {
+    if (disabled) return;
     openFocusRef.current = focus;
     setOpen(true);
   };
@@ -144,14 +152,20 @@ export function StatusMenu({
     }
   };
 
+  const triggerClasses = ["ui-status-menu__trigger", triggerClassName]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div ref={rootRef} className="ui-status-menu">
       <button
         ref={triggerRef}
         type="button"
-        className="ui-status-menu__trigger"
+        className={triggerClasses}
+        aria-label={triggerContent ? label : undefined}
         aria-haspopup="menu"
         aria-expanded={open}
+        disabled={disabled}
         onClick={() => {
           if (open) {
             setOpen(false);
@@ -169,7 +183,7 @@ export function StatusMenu({
           }
         }}
       >
-        {label}
+        {triggerContent ?? label}
       </button>
       {open ? (
         <div
