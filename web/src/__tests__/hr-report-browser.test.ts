@@ -273,7 +273,7 @@ test("HR Report narrow status and filtered drawer preserve drafts and conflict b
     });
     assert.equal(await interviewsLink.getAttribute("aria-disabled"), "true");
 
-    await drawer.getByRole("button", { name: "Đóng" }).click();
+    await drawer.getByRole("button", { name: "Đóng", exact: true }).click();
     const discard = page.getByRole("dialog", {
       name: "Bỏ thay đổi chưa lưu?",
     });
