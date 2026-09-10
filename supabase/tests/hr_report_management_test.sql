@@ -16,6 +16,7 @@ declare
   v_group uuid;
   v_position_1 uuid;
   v_position_2 uuid;
+  v_format uuid;
   v_submission uuid;
   v_application_1 uuid;
   v_application_2 uuid;
@@ -74,6 +75,12 @@ begin
   insert into public.positions(unit_id, position_group_id, code, name_vi, name_en)
   values (v_unit, v_group, 'S05002_P2_' || v_suffix, 'Giảng viên B', 'Lecturer B')
   returning position_id into v_position_2;
+
+  insert into public.interview_formats(
+    code, name_vi, name_en, requires_room, requires_meeting_link, is_active
+  ) values (
+    'S05002_FMT_' || v_suffix, 'Khác', 'Other', false, false, true
+  ) returning interview_format_id into v_format;
 
   insert into public.app_users(auth_user_id, full_name, email, is_active)
   values (v_hr_auth, 'S05-002 HR', 's05002_hr_' || v_suffix || '@eiu.edu.vn', true)
@@ -138,22 +145,24 @@ begin
   returning application_id into v_application_2;
 
   insert into public.interviews(
-    application_id, round_no, start_at, end_at,
+    application_id, round_no, start_at, end_at, interview_format_id,
     schedule_status_code, report_status_code,
     hr_report_note, visible_to_interviewers, is_active
   ) values (
     v_application_1, 1,
     timestamptz '2026-09-08 02:00:00+00', timestamptz '2026-09-08 03:00:00+00',
+    v_format,
     'CONFIRMED', 'REPORT_SUBMITTED', 'Historical note', true, true
   ) returning interview_id into v_round_1;
 
   insert into public.interviews(
-    application_id, round_no, start_at, end_at,
+    application_id, round_no, start_at, end_at, interview_format_id,
     schedule_status_code, report_status_code,
     hr_report_note, visible_to_interviewers, is_active
   ) values (
     v_application_1, 2,
     timestamptz '2026-09-09 02:00:00+00', timestamptz '2026-09-09 03:00:00+00',
+    v_format,
     'CONFIRMED', 'WAITING_FOR_REPORT', 'Current HR note', true, true
   ) returning interview_id into v_current_1;
 
@@ -166,12 +175,13 @@ begin
   ) returning interview_id into v_inactive_newer;
 
   insert into public.interviews(
-    application_id, round_no, start_at, end_at,
+    application_id, round_no, start_at, end_at, interview_format_id,
     schedule_status_code, report_status_code,
     hr_report_note, visible_to_interviewers, is_active
   ) values (
     v_application_2, 1,
     timestamptz '2026-09-10 02:00:00+00', timestamptz '2026-09-10 03:00:00+00',
+    v_format,
     'CONFIRMED', 'AWAITING_INTERVIEW', null, false, true
   ) returning interview_id into v_current_2;
 
