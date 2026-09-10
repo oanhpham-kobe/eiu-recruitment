@@ -42,9 +42,9 @@ integration:
   last_verified_application_ci_run: "34386549610"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
-  last_verified_control_plane_sha: "54a1f450b27bf8470e683cf66791fba7b7f62791"
-  last_verified_control_plane_integration_ci_run: "34211382997"
-  last_verified_control_plane_governance_ci_run: "34211383102"
+  last_verified_control_plane_sha: "16bf76c5ad306b1144d3ef6c76f832463c32c62b"
+  last_verified_control_plane_integration_ci_run: "34429901224"
+  last_verified_control_plane_governance_ci_run: "34429901220"
   last_task_acceptance_attempt_sha: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
   last_task_acceptance_integration_ci_run: "34386549610"
   last_task_acceptance_integration_ci_result: PASS
@@ -191,15 +191,29 @@ slice_05_planning:
   implementation_candidate:
     branch: oanhpham-kobe/TASK-S05-002-hr-report-management
     baseline_sha: "fdf5fd27d27f6e6d587aab034cce0f54df425cfc"
-    candidate_sha: "b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
+    prior_candidate_sha: "b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
+    candidate_sha: "436f733224cf9cb3776b5783afd86f577572d542"
     producer_review: COMPLETE
-    producer_completion_claim: HELD_PENDING_INDEPENDENT_REVIEW_AND_EXECUTED_VERIFICATION
-    review_package: project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_GATE_b711beb_v1.md
+    producer_completion_claim: HELD_PENDING_TARGETED_INDEPENDENT_REREVIEW_AND_EXECUTED_VERIFICATION
+    review_package: project_control/reviews/S05_002_IMPLEMENTATION_REREVIEW_GATE_436f733_v1.md
+    prior_independent_review:
+      work_id: S05-002-IMPLEMENTATION-REVIEW-001
+      reviewed_sha: "b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
+      result: BLOCKING_REPAIR
+      source_reopen_required: false
+      evidence_branch: review/S05-002-IMPL-b711beb-v1
+      evidence_commit: "4c4bfe844f887792803691b589964ee0df5c0f5b"
+      evidence_path: project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_b711beb_v1.md
+    repair_scope:
+      - "S05-002-IR-001: strip raw meeting_link at public HR RPC boundary; revoke authenticated direct private-helper access; remove meeting_link from browser DTO; add reports.view-only privacy regression."
+      - "S05-002-IR-002: preserve/rebase unrelated dirty Note/report drafts across refresh; guard participant switch, same-report delete, and external navigation from silent discard."
+      - "S05-002-IR-003: restore normal table wrapping and remove default HR Note line clamp."
+      - "S05-002-IR-004: remove candidate !important declarations, repair narrow status scrolling, and update candidate-owned browser/model tests."
   independent_implementation_review:
-    work_id: S05-002-IMPLEMENTATION-REVIEW-001
+    work_id: S05-002-IMPLEMENTATION-REVIEW-001-R2
     reviewer: eiu-reviewer
     status: WAITING_EXTERNAL_REVIEW
-    reviewed_sha: "b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
+    reviewed_sha: "436f733224cf9cb3776b5783afd86f577572d542"
     result: PENDING
     source_reopen_required: PENDING
     blocking_findings: PENDING
@@ -236,14 +250,14 @@ safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S05-002 independent implementation review"
+  execution_hold: "TASK-S05-002 targeted independent implementation re-review"
 
 stop_gate:
   status: WAITING_EXTERNAL_REVIEW
   type: OMP_IMPLEMENTATION_REVIEW
-  work_id: S05-002-IMPLEMENTATION-REVIEW-001
-  target: "oanhpham-kobe/TASK-S05-002-hr-report-management @ b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
-  reviewed_sha: "b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
+  work_id: S05-002-IMPLEMENTATION-REVIEW-001-R2
+  target: "oanhpham-kobe/TASK-S05-002-hr-report-management @ 436f733224cf9cb3776b5783afd86f577572d542"
+  reviewed_sha: "436f733224cf9cb3776b5783afd86f577572d542"
   reviewer: eiu-reviewer
   verdict: PENDING
   source_reopen_required: PENDING
@@ -252,8 +266,8 @@ stop_gate:
   evidence_path: PENDING
   previous_owner_handoff_gate: CLEARED_BY_NEW_SESSION
   handoff_package_requirement: SATISFIED
-  handoff_package: project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_GATE_b711beb_v1.md
-  owner_role: "Transport the persisted exact-SHA package to independent OMP eiu-reviewer and return the complete verdict plus durable evidence coordinates."
+  handoff_package: project_control/reviews/S05_002_IMPLEMENTATION_REREVIEW_GATE_436f733_v1.md
+  owner_role: "Transport the persisted targeted exact-SHA package to independent OMP eiu-reviewer and return the complete verdict plus durable evidence coordinates."
   resume_on: "PASS + SOURCE_REOPEN_REQUIRED=false after direct GitHub evidence verification"
 
-next_action: "Owner transports project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_GATE_b711beb_v1.md to independent OMP eiu-reviewer for exact candidate b711bebcb9da15ea4ea8a22f7f8594f49cc6c971 and returns the full verdict plus durable evidence branch/commit/path. Coordinator verifies evidence in GitHub before any repair or integration advancement. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Owner transports project_control/reviews/S05_002_IMPLEMENTATION_REREVIEW_GATE_436f733_v1.md to independent OMP eiu-reviewer for exact repaired candidate 436f733224cf9cb3776b5783afd86f577572d542 and returns the full verdict plus durable evidence branch/commit/path. Coordinator verifies evidence in GitHub before any integration advancement. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."

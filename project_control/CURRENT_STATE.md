@@ -18,54 +18,54 @@
 - Immutable checkpoint: `checkpoint/S05-001-accepted-001 @ ef0bd9e534dec0cc85ef6503fbe0369eda56d555`
 - Source reopen required: NO
 
-## TASK-S05-002 — IMPLEMENTED CANDIDATE / WAITING INDEPENDENT REVIEW
+## TASK-S05-002 — REPAIRED CANDIDATE / WAITING TARGETED RE-REVIEW
 
-`TASK-S05-002 — HR Report Management Experience over Accepted Report Contracts` has a bounded implementation candidate and is stopped at the mandatory independent OMP implementation-review gate.
+The first independent implementation review of TASK-S05-002 was verified directly in GitHub and returned `BLOCKING_REPAIR`, `SOURCE_REOPEN_REQUIRED=false` for candidate `b711bebcb9da15ea4ea8a22f7f8594f49cc6c971`.
 
-### Exact implementation candidate
+### Verified R1 evidence
+
+- work ID: `S05-002-IMPLEMENTATION-REVIEW-001`
+- reviewed SHA: `b711bebcb9da15ea4ea8a22f7f8594f49cc6c971`
+- verdict: `BLOCKING_REPAIR`
+- source reopen: NO
+- evidence branch: `review/S05-002-IMPL-b711beb-v1`
+- evidence commit: `4c4bfe844f887792803691b589964ee0df5c0f5b`
+- evidence path: `project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_b711beb_v1.md`
+- evidence commit directly descends from the exact reviewed candidate SHA.
+
+### Bounded R1 repairs
+
+Four findings were repaired without reopening Product/canonical sources:
+
+1. Raw `meeting_link` no longer crosses the HR Report boundary. A new append-only public RPC wrapper strips the field, authenticated direct access to the private HR helper is revoked, the browser DTO no longer models the field, and a `reports.view`-only SQL privacy regression was added.
+2. Drawer refresh now preserves unrelated unsaved HR Note / participant-report edits by rebasing user patches onto fresh data. Participant switching, same-participant delete, and `/interviews` navigation cannot silently discard a dirty draft.
+3. HR table cells use normal wrapping and the default three-line HR Note clamp was removed.
+4. Candidate `!important` overrides were removed; narrow-width status interaction uses scroller padding/trigger scroll margin while preserving exact table geometry and sticky-column z-index. Candidate-owned HR tests/harness were updated for the repaired behavior.
+
+### Exact repaired candidate
 
 - materialization baseline: `fdf5fd27d27f6e6d587aab034cce0f54df425cfc`
-- candidate branch: `oanhpham-kobe/TASK-S05-002-hr-report-management`
-- exact candidate SHA: `b711bebcb9da15ea4ea8a22f7f8594f49cc6c971`
-- review work ID: `S05-002-IMPLEMENTATION-REVIEW-001`
-- required reviewer: `eiu-reviewer`
-- review package: `project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_GATE_b711beb_v1.md`
-
-### Independent pre-implementation prompt review
-
-The Owner-transported `eiu-reviewer` result was independently verified against GitHub before implementation was released:
-
-- work ID: `S05-002-PROMPT-REVIEW-001`
-- reviewed prompt SHA: `1f831a767906e4322e0fc2370d593b5c51e323d5`
-- verdict: `PASS`
-- `SOURCE_REOPEN_REQUIRED=false`
-- evidence branch: `review/S05-002-PROMPT-1f831a7-v1`
-- evidence commit: `128859aecc2e8cefc7acc71cf5e2252c43dd5af9`
-- evidence path: `project_control/reviews/S05_002_PROMPT_REVIEW_1f831a7_v1.md`
-
-### Candidate implementation scope
-
-The exact candidate adds the dedicated HR Report read projection, `set_report_visibility`, atomic `bulk_change_report_status`, canonical `delete_or_inactivate_report` permission repair, HR server/actions/view, strict DTO model, database regression, production-component Playwright harness/tests, and only the minimal shared `StatusMenu` extension needed by the accepted design.
-
-It preserves the accepted S05-001 Interviewer RPC/page path and does not widen Interviewer-private DTOs.
+- task branch: `oanhpham-kobe/TASK-S05-002-hr-report-management`
+- prior candidate: `b711bebcb9da15ea4ea8a22f7f8594f49cc6c971`
+- repaired candidate: `436f733224cf9cb3776b5783afd86f577572d542`
+- targeted re-review work ID: `S05-002-IMPLEMENTATION-REVIEW-001-R2`
+- reviewer: `eiu-reviewer`
+- handoff: `project_control/reviews/S05_002_IMPLEMENTATION_REREVIEW_GATE_436f733_v1.md`
 
 ### Verification status
 
-Executable DB/model/browser verification artifacts are committed. The Coordinator runtime cannot run the repository locally and cannot invoke OMP directly; therefore no local PASS is claimed. Independent `eiu-reviewer` review must run applicable verification before returning a verdict. Exact-SHA Integration CI + Governance CI remain mandatory after an accepted candidate is serialized to integration.
-
-### Design System contract
-
-Candidate remains bound to Design System v1.8 CURRENT: semantic table/colgroup, exact `1610px` width and `48 | 240 | 300 | 240 | 200 | 190 | 300 | 92` columns, sticky Select + Họ và tên, 144px status benchmark, shared anchored Status menu behavior, report-only aggregate drawer with report-specific destructive action, responsive horizontal containment, VI/EN preservation, and overlay/focus/a11y requirements.
+The prior reviewer executed dependency audit, design check, typecheck and build successfully, while lint/test were red on R1 and local Supabase execution was unavailable because Docker Desktop Linux engine was unavailable. The repaired candidate includes regression coverage for all four findings, but the Coordinator runtime still cannot execute the repository locally and therefore does not claim those repaired checks PASS. Targeted `eiu-reviewer` re-review must rerun applicable web verification and SQL replay when its runtime supports them.
 
 ## Current execution state
 
 - Slice-05: `IN_PROGRESS`
 - current task: `TASK-S05-002`
-- task state: `WAITING_EXTERNAL_REVIEW`
-- independent reviewer: `eiu-reviewer`
-- exact review target: `b711bebcb9da15ea4ea8a22f7f8594f49cc6c971`
-- safe implementation frontier: none while the gate is active
-- next governed step: Owner transports the persisted review package to independent OMP `eiu-reviewer` and returns the full verdict plus durable evidence coordinates. Coordinator then verifies that evidence directly in GitHub before any repair or integration advancement.
+- state: `WAITING_EXTERNAL_REVIEW`
+- reviewer: `eiu-reviewer`
+- exact review target: `436f733224cf9cb3776b5783afd86f577572d542`
+- source reopen required: NO
+- safe implementation frontier: none while the review gate is active
+- next governed step: targeted independent re-review of only the repaired candidate, followed by direct GitHub evidence verification before any integration advancement.
 
 ## Do not cross
 
@@ -74,4 +74,4 @@ Candidate remains bound to Design System v1.8 CURRENT: semantic table/colgroup, 
 - Do not merge/push `main`.
 - Do not deploy Vercel.
 - Do not apply migrations to connected Supabase DEV/production without explicit Owner authorization.
-- ASSET-001 official pixel-perfect PDF template remains deferred / non-blocking; do not invent the official template.
+- ASSET-001 official pixel-perfect PDF template remains deferred / non-blocking.
