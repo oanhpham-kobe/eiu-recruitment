@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
-  HR_REPORT_STATUSES,
   HR_REPORT_STATUS_LABELS,
+  HR_REPORT_STATUSES,
   normalizeHrReportFilters,
   parseHrReportPageRpc,
 } from "@/lib/reports/hr-model";
@@ -115,7 +115,9 @@ test("HR report DTO rejects raw meeting links and unrelated private metadata", (
   ]) {
     const next = structuredClone(canonicalPayload());
     (next.data.rows[0] as Record<string, unknown>)[forbiddenKey] =
-      forbiddenKey === "meeting_link" ? "https://meet.example.test/private" : "leak";
+      forbiddenKey === "meeting_link"
+        ? "https://meet.example.test/private"
+        : "leak";
     assert.throws(
       () => parseHrReportPageRpc(next),
       /Unexpected HR report DTO key/,

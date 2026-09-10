@@ -3,9 +3,9 @@ import { HrReportView } from "@/components/reports/HrReportView";
 import { AppShell } from "@/components/shell/AppShell";
 import {
   HR_REPORT_STATUSES,
-  INITIAL_HR_REPORT_FILTERS,
   type HrReportFilters,
   type HrReportPageData,
+  INITIAL_HR_REPORT_FILTERS,
 } from "@/lib/reports/hr-model";
 import type {
   BulkHrReportStatusInput,
@@ -216,7 +216,9 @@ async function refresh(
   };
 }
 
-async function status(input: HrReportStatusInput): Promise<HrReportCommandResult> {
+async function status(
+  input: HrReportStatusInput,
+): Promise<HrReportCommandResult> {
   if (!HR_REPORT_STATUSES.includes(input.status)) {
     return { success: false, error: { code: "VALIDATION_ERROR" } };
   }
@@ -300,7 +302,9 @@ async function saveParticipant(
   if (!currentParticipant) {
     return { success: false, error: { code: "NOT_FOUND" } };
   }
-  for (const key of Object.keys(input.patches) as Array<keyof typeof input.patches>) {
+  for (const key of Object.keys(input.patches) as Array<
+    keyof typeof input.patches
+  >) {
     if (currentParticipant.report[key] !== input.baseValues[key]) {
       return { success: false, error: { code: "STALE_VERSION" } };
     }

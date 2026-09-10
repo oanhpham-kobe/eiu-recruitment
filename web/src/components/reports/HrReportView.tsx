@@ -10,14 +10,14 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { StatusMenu } from "@/components/ui/StatusMenu";
 import { TableScrollContainer } from "@/components/ui/TableScrollContainer";
 import {
-  HR_REPORT_STATUSES,
   HR_REPORT_STATUS_LABELS,
-  hrReportStatusTone,
-  INITIAL_HR_REPORT_FILTERS,
+  HR_REPORT_STATUSES,
   type HrReportFilters,
   type HrReportPageData,
   type HrReportParticipant,
   type HrReportRow,
+  hrReportStatusTone,
+  INITIAL_HR_REPORT_FILTERS,
 } from "@/lib/reports/hr-model";
 import type {
   BulkHrReportStatusInput,
@@ -34,8 +34,8 @@ import {
   type ReportFieldKey,
   type ReportFields,
 } from "@/lib/reports/model";
-import { REPORT_FIELD_LABELS } from "./reportUi";
 import styles from "./HrReportView.module.css";
+import { REPORT_FIELD_LABELS } from "./reportUi";
 
 type Feedback = {
   kind: "success" | "warning" | "error";
@@ -75,7 +75,9 @@ function mergeReportDraftWithFresh(
   draft: ReportFields,
   fresh: ReportFields,
 ): { base: ReportFields; draft: ReportFields } {
-  const dirtyFields = Object.keys(changedReportFields(base, draft).patches) as ReportFieldKey[];
+  const dirtyFields = Object.keys(
+    changedReportFields(base, draft).patches,
+  ) as ReportFieldKey[];
   const nextBase = cloneFields(fresh);
   const nextDraft = cloneFields(fresh);
   for (const key of dirtyFields) {
@@ -89,10 +91,7 @@ function displayText(value: string | null): string {
   return value?.trim() ? value : "—";
 }
 
-function formatDateTime(
-  value: string | null,
-  locale: "vi" | "en",
-): string {
+function formatDateTime(value: string | null, locale: "vi" | "en"): string {
   if (!value || Number.isNaN(new Date(value).getTime())) return "—";
   return new Intl.DateTimeFormat(locale === "vi" ? "vi-VN" : "en-GB", {
     timeZone: "Asia/Ho_Chi_Minh",
@@ -105,10 +104,7 @@ function formatDateTime(
   }).format(new Date(value));
 }
 
-function formatInterviewTime(
-  row: HrReportRow,
-  locale: "vi" | "en",
-): string {
+function formatInterviewTime(row: HrReportRow, locale: "vi" | "en"): string {
   if (!row.startAt) return locale === "vi" ? "Chưa xếp lịch" : "Not scheduled";
   if (!row.endAt) return formatDateTime(row.startAt, locale);
   const start = new Date(row.startAt);
@@ -140,7 +136,9 @@ function locationLabel(row: HrReportRow, locale: "vi" | "en"): string {
 }
 
 function positionLabel(row: HrReportRow, locale: "vi" | "en"): string {
-  return locale === "en" ? row.positionNameEn || row.positionNameVi : row.positionNameVi;
+  return locale === "en"
+    ? row.positionNameEn || row.positionNameVi
+    : row.positionNameVi;
 }
 
 function commandFeedback(
@@ -188,12 +186,12 @@ export function HrReportView({
   const [drawerRow, setDrawerRow] = useState<HrReportRow | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [noteBase, setNoteBase] = useState("");
-  const [noteExpectedVersionNo, setNoteExpectedVersionNo] = useState<number | null>(
-    null,
-  );
-  const [editingParticipantId, setEditingParticipantId] = useState<string | null>(
-    null,
-  );
+  const [noteExpectedVersionNo, setNoteExpectedVersionNo] = useState<
+    number | null
+  >(null);
+  const [editingParticipantId, setEditingParticipantId] = useState<
+    string | null
+  >(null);
   const [reportDraft, setReportDraft] = useState<ReportFields | null>(null);
   const [reportBase, setReportBase] = useState<ReportFields | null>(null);
   const [deleteParticipant, setDeleteParticipant] =
@@ -208,7 +206,8 @@ export function HrReportView({
   const currentEditingParticipant = useMemo(
     () =>
       selectedRow?.drawer.participants.find(
-        (participant) => participant.interviewParticipantId === editingParticipantId,
+        (participant) =>
+          participant.interviewParticipantId === editingParticipantId,
       ) ?? null,
     [editingParticipantId, selectedRow],
   );
@@ -225,7 +224,8 @@ export function HrReportView({
   }));
 
   const allVisibleSelected =
-    data.rows.length > 0 && data.rows.every((row) => selectedIds.has(row.interviewId));
+    data.rows.length > 0 &&
+    data.rows.every((row) => selectedIds.has(row.interviewId));
 
   function resetEditing() {
     setEditingParticipantId(null);
@@ -242,7 +242,11 @@ export function HrReportView({
   }
 
   function hydrateDrawer(row: HrReportRow) {
-    if (drawerInterviewId && drawerInterviewId !== row.interviewId && hasUnsaved) {
+    if (
+      drawerInterviewId &&
+      drawerInterviewId !== row.interviewId &&
+      hasUnsaved
+    ) {
       warnUnsaved();
       return;
     }
@@ -399,7 +403,8 @@ export function HrReportView({
   }
 
   async function runBulkStatus(status: string) {
-    if (pending || !data.permissions.manageStatus || selectedIds.size === 0) return;
+    if (pending || !data.permissions.manageStatus || selectedIds.size === 0)
+      return;
     const targets = data.rows
       .filter((row) => selectedIds.has(row.interviewId))
       .map((row) => ({
@@ -496,7 +501,8 @@ export function HrReportView({
 
   function requestParticipantEdit(participant: HrReportParticipant) {
     if (!data.permissions.editInterviewer || pending) return;
-    const editingSame = participant.interviewParticipantId === editingParticipantId;
+    const editingSame =
+      participant.interviewParticipantId === editingParticipantId;
     if (participantDirty) {
       warnUnsaved();
       return;
@@ -538,7 +544,8 @@ export function HrReportView({
     setFeedback(null);
     try {
       const result = await onSaveParticipantReport({
-        interviewParticipantId: currentEditingParticipant.interviewParticipantId,
+        interviewParticipantId:
+          currentEditingParticipant.interviewParticipantId,
         expectedVersionNo: currentEditingParticipant.reportVersionNo,
         patches: changed.patches,
         baseValues: changed.baseValues,
@@ -763,12 +770,8 @@ export function HrReportView({
               })
             }
           >
-            <option value="CANDIDATE_ASC">
-              {t("Tên A–Z", "Name A–Z")}
-            </option>
-            <option value="CANDIDATE_DESC">
-              {t("Tên Z–A", "Name Z–A")}
-            </option>
+            <option value="CANDIDATE_ASC">{t("Tên A–Z", "Name A–Z")}</option>
+            <option value="CANDIDATE_DESC">{t("Tên Z–A", "Name Z–A")}</option>
             <option value="UPDATED_DESC">
               {t("Mới cập nhật", "Recently updated")}
             </option>
@@ -787,7 +790,9 @@ export function HrReportView({
             label={t("Đổi trạng thái đã chọn", "Change selected status")}
             options={statusOptions}
             disabled={
-              pending || !data.permissions.manageStatus || selectedIds.size === 0
+              pending ||
+              !data.permissions.manageStatus ||
+              selectedIds.size === 0
             }
             onSelect={(value) => void runBulkStatus(value)}
           />
@@ -964,9 +969,7 @@ export function HrReportView({
           disabled={
             pending || data.pageCount === 0 || data.page >= data.pageCount
           }
-          onClick={() =>
-            void applyFilters({ ...filters, page: data.page + 1 })
-          }
+          onClick={() => void applyFilters({ ...filters, page: data.page + 1 })}
         >
           {t("Sau", "Next")}
         </Button>
@@ -1062,9 +1065,7 @@ export function HrReportView({
             </section>
 
             <section className={styles.drawerSection}>
-              <h3>
-                {t("Báo cáo của người phỏng vấn", "Participant Reports")}
-              </h3>
+              <h3>{t("Báo cáo của người phỏng vấn", "Participant Reports")}</h3>
               <div className={styles.participantList}>
                 {selectedRow.drawer.participants.length === 0 ? (
                   <p>
@@ -1076,7 +1077,8 @@ export function HrReportView({
                 ) : (
                   selectedRow.drawer.participants.map((participant) => {
                     const editing =
-                      participant.interviewParticipantId === editingParticipantId;
+                      participant.interviewParticipantId ===
+                      editingParticipantId;
                     return (
                       <article
                         className={styles.participantCard}
@@ -1091,18 +1093,23 @@ export function HrReportView({
                             {data.permissions.editInterviewer ? (
                               <Button
                                 disabled={pending}
-                                onClick={() => requestParticipantEdit(participant)}
+                                onClick={() =>
+                                  requestParticipantEdit(participant)
+                                }
                               >
                                 {editing
                                   ? t("Hủy sửa", "Cancel edit")
                                   : t("Sửa", "Edit")}
                               </Button>
                             ) : null}
-                            {data.permissions.delete && participant.interviewReportId ? (
+                            {data.permissions.delete &&
+                            participant.interviewReportId ? (
                               <Button
                                 variant="danger"
                                 disabled={pending}
-                                onClick={() => setDeleteParticipant(participant)}
+                                onClick={() =>
+                                  setDeleteParticipant(participant)
+                                }
                               >
                                 {t("Xóa / Inactive", "Delete / Inactivate")}
                               </Button>
@@ -1114,7 +1121,11 @@ export function HrReportView({
                           <div className={styles.reportEditor}>
                             {REPORT_FIELD_KEYS.map((key) => (
                               <label key={key}>
-                                {REPORT_FIELD_LABELS[key][locale === "vi" ? 0 : 1]}
+                                {
+                                  REPORT_FIELD_LABELS[key][
+                                    locale === "vi" ? 0 : 1
+                                  ]
+                                }
                                 <textarea
                                   value={reportDraft[key] ?? ""}
                                   disabled={pending}
@@ -1136,7 +1147,9 @@ export function HrReportView({
                                 disabled={pending}
                                 onClick={() =>
                                   currentEditingParticipant
-                                    ? requestParticipantEdit(currentEditingParticipant)
+                                    ? requestParticipantEdit(
+                                        currentEditingParticipant,
+                                      )
                                     : resetEditing()
                                 }
                               >
@@ -1145,7 +1158,9 @@ export function HrReportView({
                               <Button
                                 variant="primary"
                                 pending={pending}
-                                onClick={() => void saveParticipantReport(selectedRow)}
+                                onClick={() =>
+                                  void saveParticipantReport(selectedRow)
+                                }
                               >
                                 {t("Lưu báo cáo", "Save report")}
                               </Button>
@@ -1156,7 +1171,11 @@ export function HrReportView({
                             {REPORT_FIELD_KEYS.map((key) => (
                               <div key={key}>
                                 <dt>
-                                  {REPORT_FIELD_LABELS[key][locale === "vi" ? 0 : 1]}
+                                  {
+                                    REPORT_FIELD_LABELS[key][
+                                      locale === "vi" ? 0 : 1
+                                    ]
+                                  }
                                 </dt>
                                 <dd>{displayText(participant.report[key])}</dd>
                               </div>
@@ -1187,7 +1206,8 @@ export function HrReportView({
                   <dt>{t("Công việc dự kiến", "Expected assignment")}</dt>
                   <dd>
                     {displayText(
-                      selectedRow.drawer.finalDecision.expectedSpecificJobAssigned,
+                      selectedRow.drawer.finalDecision
+                        .expectedSpecificJobAssigned,
                     )}
                   </dd>
                   <dt>
