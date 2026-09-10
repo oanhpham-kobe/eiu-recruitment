@@ -236,7 +236,9 @@ begin
     jsonb_build_object('sub', v_hr_auth::text)::text,
     true
   );
-  v_result := public.get_hr_report_page(1, 20, null, 'ALL', null, 'CANDIDATE_ASC');
+  v_result := public.get_hr_report_page(
+    1, 20, null, 'ALL', 'S05-002 Candidate', 'CANDIDATE_ASC'
+  );
   assert (v_result->>'success')::boolean, 'authorized HR Report read succeeds';
   assert (v_result->'data'->>'total')::integer = 2,
     'one aggregate row is returned for each Application with a Current Round';
