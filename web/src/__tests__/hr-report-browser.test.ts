@@ -77,9 +77,7 @@ test(
           `hr-report@${width}: table must remain 1610px`,
         );
 
-        const headers = await page
-          .getByRole("columnheader")
-          .allTextContents();
+        const headers = await page.getByRole("columnheader").allTextContents();
         assert.deepEqual(headers.map((value) => value.trim()), [
           "Chọn tất cả",
           "Họ và tên",
@@ -102,13 +100,16 @@ test(
           );
         }
 
-        const sticky = await table.locator("tbody tr").first().locator("td").evaluateAll(
-          (cells) =>
+        const sticky = await table
+          .locator("tbody tr")
+          .first()
+          .locator("td")
+          .evaluateAll((cells) =>
             cells.slice(0, 2).map((cell) => ({
               position: getComputedStyle(cell).position,
               left: getComputedStyle(cell).left,
             })),
-        );
+          );
         assert.equal(sticky[0]?.position, "sticky");
         assert.equal(sticky[0]?.left, "0px");
         assert.equal(sticky[1]?.position, "sticky");
@@ -141,7 +142,7 @@ test(
       browser = await chromium.launch();
       const { page, errors } = await openHarness(browser, assets, 390, 700);
 
-      const rowStatus = page.getByRole("button", {
+      let rowStatus = page.getByRole("button", {
         name: "Đổi trạng thái của Nguyễn Minh Anh",
       });
       await rowStatus.click();
@@ -158,7 +159,13 @@ test(
       await page.getByText("Đã cập nhật trạng thái báo cáo.").waitFor({
         state: "visible",
       });
-      assert.ok(await page.getByText("Đã gửi Báo cáo").first().isVisible());
+      rowStatus = page.getByRole("button", {
+        name: "Đổi trạng thái của Nguyễn Minh Anh",
+      });
+      assert.equal(
+        (await rowStatus.locator(".ui-status-badge").textContent())?.trim(),
+        "Đã gửi Báo cáo",
+      );
 
       await page.getByRole("checkbox", { name: "Chọn Nguyễn Minh Anh" }).check();
       const bulkStatus = page.getByRole("button", {
