@@ -155,6 +155,35 @@ function success(extra: Record<string, unknown> = {}): HrReportCommandResult {
   return { success: true, data: extra };
 }
 
+function remoteParticipantEdit(value: string) {
+  data = {
+    ...data,
+    rows: data.rows.map((row) => ({
+      ...row,
+      drawer: {
+        ...row.drawer,
+        participants: row.drawer.participants.map((participant) =>
+          participant.interviewParticipantId === PARTICIPANT_1
+            ? {
+                ...participant,
+                report: {
+                  ...participant.report,
+                  professional_knowledge: value,
+                },
+                reportVersionNo: participant.reportVersionNo + 1,
+              }
+            : participant,
+        ),
+      },
+    })),
+  };
+}
+
+Object.defineProperty(globalThis, "__hrReportRemoteParticipantEdit", {
+  configurable: true,
+  value: remoteParticipantEdit,
+});
+
 async function refresh(
   filters?: Partial<HrReportFilters>,
 ): Promise<HrReportPageData> {
@@ -262,6 +291,21 @@ async function note(input: HrReportNoteInput): Promise<HrReportCommandResult> {
 async function saveParticipant(
   input: SaveHrParticipantReportInput,
 ): Promise<HrReportCommandResult> {
+  const currentParticipant = data.rows
+    .flatMap((row) => row.drawer.participants)
+    .find(
+      (participant) =>
+        participant.interviewParticipantId === input.interviewParticipantId,
+    );
+  if (!currentParticipant) {
+    return { success: false, error: { code: "NOT_FOUND" } };
+  }
+  for (const key of Object.keys(input.patches) as Array<keyof typeof input.patches>) {
+    if (currentParticipant.report[key] !== input.baseValues[key]) {
+      return { success: false, error: { code: "STALE_VERSION" } };
+    }
+  }
+
   data = {
     ...data,
     rows: data.rows.map((row) => ({
