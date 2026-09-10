@@ -1,49 +1,32 @@
 # Current Implementation State — Derived Handoff Snapshot
 
 > **DERIVED / NON-AUTHORITATIVE REPORTING ONLY**
->
 > Runtime authority: `project_control/AUTONOMY_RUN_STATE.yaml`.
 > DAG/task/slice authority: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.
 > Exact code/history authority: Git.
 
 ## SLICE-05 — DONE
 
-TASK-S05-001 and TASK-S05-002 are accepted; Slice-05 closing composition review passed with no source reopen.
+Both Slice-05 tasks and closing composition review are accepted.
 
-## SLICE-06 / TASK-S06-001 — WAITING INDEPENDENT PROMPT R2
+## SLICE-06 / TASK-S06-001 — IMPLEMENTATION MATERIALIZATION
 
-R1 target `5abbb5181405e0f5a468176edd93db8226a3efd5` received `BLOCKING_REPAIR / SOURCE_REOPEN_REQUIRED=false` for two bounded prompt defects:
+Prompt v2 exact review target: `68d96b39e309ee6f1edbe6cf4031c10a583b0269`.
 
-1. missing idempotency/retry-replay contract;
-2. missing expected-version validation for delete/inactivate.
+Independent `eiu-reviewer` R2 result: **PASS**, `SOURCE_REOPEN_REQUIRED=false`, blockers NONE.
 
-Both are repaired in:
+Reviewer-reported durable evidence coordinates were not GitHub-visible when checked; the verdict is accepted from Owner transport without claiming durable evidence verification.
 
-`project_control/prompts/SLICE-06_TASK-001_v2.md`
+Prompt: `project_control/prompts/SLICE-06_TASK-001_v2.md`.
 
-Exact R2 reviewed target:
+Planned immutable checkpoint: `checkpoint/pre-S06-001-001`.
 
-`68d96b39e309ee6f1edbe6cf4031c10a583b0269`
+Planned isolated implementation branch: `oanhpham-kobe/TASK-S06-001-master-data-lifecycle`.
 
-Materialization evidence:
+TASK-S06-001 is now `READY`, but branch execution must not start until this materialization commit passes exact-SHA Integration CI and Governance CI.
 
-- Integration CI `34491648323`: PASS
-- Governance CI `34491648300`: PASS
-- changed scope: control/state + prompt v2 + repair response only; no product code
+## Boundaries
 
-R2 reviewer: `eiu-reviewer`
-
-R2 handoff:
-
-`project_control/reviews/S06_001_PROMPT_R2_REVIEW_GATE_68d96b3_v1.md`
-
-TASK-S06-001 remains `PLANNED`. No implementation branch or pre-task checkpoint exists before R2 PASS.
-
-Reviewer-reported R1 durable evidence coordinates were not GitHub-visible when Coordinator checked; R1 verdict is recorded from Owner transport without a false durable-verification claim.
-
-## Do not cross
-
-- Do not implement S06-001 before exact-SHA R2 independent prompt review PASS.
-- Do not merge/push `main`.
+- Use local/CI Supabase only for implementation verification; do not apply migrations to connected Supabase.
+- Do not push/merge `main`.
 - Do not deploy Vercel.
-- Do not apply migrations to connected Supabase DEV/production without explicit Owner authorization.

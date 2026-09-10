@@ -307,10 +307,10 @@ slice_05_closure:
   closure_transition_governance_ci: "34488858173 PASS"
 
 slice_06_planning:
-  status: WAITING_EXTERNAL_REVIEW
+  status: IMPLEMENTATION_MATERIALIZATION
   proposed_first_task: TASK-S06-001
   materialized_task: TASK-S06-001
-  task_status: PLANNED
+  task_status: READY
   prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
   producer_reconciliation:
     work_id: S06-001-PROMPT-PRODUCER-RECONCILIATION-001
@@ -366,34 +366,41 @@ slice_06_planning:
   independent_prompt_review:
     work_id: S06-001-PROMPT-REVIEW-002
     reviewer: eiu-reviewer
-    status: WAITING_EXTERNAL_REVIEW
+    status: VERIFIED_FROM_OWNER_TRANSPORT
     reviewed_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"
-    result: PENDING
-    source_reopen_required: PENDING
+    result: PASS
+    source_reopen_required: false
+    blocking_findings: NONE
+    evidence_persistence: "Reviewer-reported review/S06-001-PROMPT-68d96b3-v2 @ 28af23929fa0d99d9132f1c779fc722b12c8c1e1 and project_control/reviews/S06_001_PROMPT_REVIEW_68d96b3_v2.md were not GitHub-visible when checked; verdict accepted from Owner transport without durable-verification claim."
     evidence_branch: PENDING
     evidence_commit: PENDING
     evidence_path: PENDING
   reconciliation_note: "Accepted Slice-01 users.directory_read technical helper is intentionally left untouched by S06-001 and must be reconciled in the later User/Identity/RBAC task against current permission-detail visibility rules."
 
+implementation_materialization:
+  task: TASK-S06-001
+  prompt_review: "PASS S06-001-PROMPT-REVIEW-002 @ 68d96b39e309ee6f1edbe6cf4031c10a583b0269"
+  source_reopen_required: false
+  prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
+  checkpoint: checkpoint/pre-S06-001-001
+  branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle
+  baseline_sha: PENDING_THIS_MATERIALIZATION_COMMIT
+  status: PENDING_CONTROL_CI
+
 safe_frontier:
-  eligible_tasks: []
+  eligible_tasks: [TASK-S06-001]
   skipped_due_to_dependency: []
-  materialization_frontier: []
-  execution_hold: "TASK-S06-001 independent exact-SHA prompt rereview R2"
+  materialization_frontier: [TASK-S06-001]
+  execution_hold: "TASK-S06-001 implementation materialization must pass exact-SHA Integration/Governance CI before branch execution"
 
 stop_gate:
-  status: WAITING_EXTERNAL_REVIEW
-  type: OMP_PROMPT_REREVIEW
-  work_id: S06-001-PROMPT-REVIEW-002
-  target: "project_control/prompts/SLICE-06_TASK-001_v2.md @ 68d96b39e309ee6f1edbe6cf4031c10a583b0269"
-  reviewed_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"
+  status: PRE_IMPLEMENTATION_MATERIALIZATION_CI
+  type: CONTROL_MATERIALIZATION
+  work_id: S06-001-IMPLEMENTATION-MATERIALIZATION-001
+  target: "TASK-S06-001 reviewed prompt v2 @ 68d96b39e309ee6f1edbe6cf4031c10a583b0269"
   reviewer: eiu-reviewer
-  verdict: PENDING
-  source_reopen_required: PENDING
-  handoff_package_requirement: SATISFIED
-  handoff_package: project_control/reviews/S06_001_PROMPT_R2_REVIEW_GATE_68d96b3_v1.md
-  materialization_integration_ci: "34491648323 PASS"
-  materialization_governance_ci: "34491648300 PASS"
-  resume_on: "PASS + SOURCE_REOPEN_REQUIRED=false for exact repaired prompt v2 target"
+  prompt_verdict: PASS
+  source_reopen_required: false
+  resume_on: "materialization exact-SHA Integration CI PASS + Governance CI PASS, then create immutable checkpoint and isolated task branch"
 
-next_action: "Transport project_control/reviews/S06_001_PROMPT_R2_REVIEW_GATE_68d96b3_v1.md to independent OMP eiu-reviewer for exact prompt v2 target 68d96b39e309ee6f1edbe6cf4031c10a583b0269. On PASS + SOURCE_REOPEN_REQUIRED=false, verify returned evidence coordinates if available, create immutable pre-S06-001 checkpoint and isolated implementation branch from the accepted reviewed planning baseline, then execute only the reviewed v2 prompt. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Validate this materialization commit via Integration/Governance CI. On PASS create checkpoint/pre-S06-001-001 and oanhpham-kobe/TASK-S06-001-master-data-lifecycle at the exact materialization SHA, then implement TASK-S06-001 on the isolated branch with local/CI Supabase only. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
