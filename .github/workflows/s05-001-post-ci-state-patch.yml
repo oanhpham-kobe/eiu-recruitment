@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   patch-state:
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore(state): persist S05-001 acceptance') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout control branch
@@ -19,22 +18,34 @@ jobs:
           ref: control/S05-001-post-ci-state
           fetch-depth: 0
 
-      - name: Patch authoritative and derived state
-        shell: python
+      - name: Exit after acceptance commit
+        shell: bash
         run: |
+          set -euo pipefail
+          if [ "$(git log -1 --pretty=%s)" = "chore(state): persist S05-001 acceptance" ]; then
+            echo "Acceptance state already persisted; nothing to do."
+            echo "SKIP_PATCH=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Patch authoritative and derived state
+        if: env.SKIP_PATCH != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
           from pathlib import Path
 
           EF0 = "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
           R6 = "63bb2f9eff9e36c11c704748c3ccf334cbcfc4ce"
 
-          # TASK_REGISTRY: preserve every byte before the final S05-001 block.
+          # TASK_REGISTRY: preserve all prior bytes and replace only the final S05-001 block.
           task_path = Path("project_control/TASK_REGISTRY.yaml")
           text = task_path.read_text(encoding="utf-8")
           marker = "  TASK-S05-001:\n"
           if text.count(marker) != 1:
               raise SystemExit("TASK-S05-001 marker must occur exactly once")
           prefix = text.split(marker, 1)[0]
-          block = '''  TASK-S05-001:
+          block = f'''  TASK-S05-001:
             title: "Interviewer Report Experience over Accepted Report Contracts"
             slice: SLICE-05
             status: DONE
@@ -52,27 +63,24 @@ jobs:
               branch: review/S05-001-PROMPT-54a1f45-v2
               commit: "36b5df1af4564853fb299af24696f0c8796228d0"
               artifact: project_control/reviews/S05_001_PROMPT_REVIEW_54a1f45_v2.md
-            implementation_sha: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
-            review_status: "PASS (S05-001-FINAL-INTEGRATION-EQUIVALENCE-001 @ ef0bd9e534dec0cc85ef6503fbe0369eda56d555; source reopen: NO)"
-            github_ci: "VERIFIED (Integration CI run 34386549610; Governance CI run 34386549725; exact SHA ef0bd9e534dec0cc85ef6503fbe0369eda56d555; PASS)"
+            implementation_sha: "{EF0}"
+            review_status: "PASS (S05-001-FINAL-INTEGRATION-EQUIVALENCE-001 @ {EF0}; source reopen: NO)"
+            github_ci: "VERIFIED (Integration CI run 34386549610; Governance CI run 34386549725; exact SHA {EF0}; PASS)"
             accepted_checkpoint: "checkpoint/S05-001-accepted-001"
             acceptance:
-              - "R6 implementation review: PASS @ 63bb2f9eff9e36c11c704748c3ccf334cbcfc4ce"
-              - "Final integration equivalence review: PASS @ ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
+              - "R6 implementation review: PASS @ {R6}"
+              - "Final integration equivalence review: PASS @ {EF0}"
               - "Integration CI 34386549610: PASS"
               - "Governance CI 34386549725: PASS"
-              - "checkpoint/S05-001-accepted-001 @ ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
+              - "checkpoint/S05-001-accepted-001 @ {EF0}"
             notes: "Accepted Interviewer Report experience. R4 product review passed; R5/R6 repaired only CI harness defects; final exact integration equivalence review passed. No deployment or connected Supabase migration application occurred. ASSET-001 official pixel-perfect PDF template remains deferred."
           '''
-          import textwrap
-          block = textwrap.dedent(block)
           task_path.write_text(prefix + block, encoding="utf-8")
 
-          # AUTONOMY_RUN_STATE: replace bounded authority sections only.
           state_path = Path("project_control/AUTONOMY_RUN_STATE.yaml")
           state = state_path.read_text(encoding="utf-8")
 
-          def replace_section(src, start, end, replacement):
+          def replace_section(src: str, start: str, end: str, replacement: str) -> str:
               if src.count(start) != 1 or src.count(end) != 1:
                   raise SystemExit(f"section markers invalid: {start!r} -> {end!r}")
               a = src.index(start)
@@ -99,7 +107,7 @@ jobs:
           state = replace_section(state, "active_task:\n", "last_accepted_task:\n", '''active_task:
             id: TASK-S05-001
             slice: SLICE-05
-            phase: POST_CI_CONTINUATION
+            phase: COMPLETED_HANDOFF
             reviewer_status: PASS''')
           state = replace_section(state, "last_accepted_task:\n", "previous_accepted_tasks:\n", f'''last_accepted_task:
             id: TASK-S05-001
@@ -111,26 +119,17 @@ jobs:
               - "github_ci: VERIFIED (Integration CI 34386549610; Governance CI 34386549725; PASS)"
               - "accepted_checkpoint: checkpoint/S05-001-accepted-001 @ {EF0}"''')
 
-          state = state.replace("  status: IMPLEMENTATION_RE_REVIEW_REQUIRED\n", "  status: POST_CI_CONTINUATION\n", 1)
-          if "  proposed_next_task: TASK-S05-002\n" not in state:
-              state = state.replace("  proposed_first_task: TASK-S05-001\n", "  proposed_first_task: TASK-S05-001\n  proposed_next_task: TASK-S05-002\n", 1)
+          planning_start = "slice_05_planning:\n"
+          planning_end = "s05_001_acceptance:\n"
+          old_planning = state[state.index(planning_start):state.index(planning_end)]
+          new_planning = old_planning.replace("  status: IMPLEMENTATION_RE_REVIEW_REQUIRED\n", "  status: POST_CI_HANDOFF\n", 1)
+          if "  proposed_next_task: TASK-S05-002\n" not in new_planning:
+              new_planning = new_planning.replace("  proposed_first_task: TASK-S05-001\n", "  proposed_first_task: TASK-S05-001\n  proposed_next_task: TASK-S05-002\n", 1)
+          state = state.replace(old_planning, new_planning, 1)
 
           state = replace_section(state, "s05_001_acceptance:\n", "safe_frontier:\n", f'''s05_001_acceptance:
             result: ACCEPTED
-            prompt_review:
-              work_id: S05-001-PROMPT-REVIEW-001-R2
-              result: PASS
-              source_reopen_required: false
-            r4_review:
-              reviewed_sha: "d9dd223394aed08555a6a71157d3cf821a7a31aa"
-              result: PASS
-              evidence_branch: "review/S05-001-IMPL-d9dd223-v4"
-              evidence_commit: "3c533f6981f99bd7d6c86ecbae4ef69323376c4b"
-            r5_review:
-              reviewed_sha: "b7900411b136144d9de9a238f331918bcfaa3ef7"
-              result: BLOCKING_REPAIR
-              evidence_branch: "review/S05-001-IMPL-b790041-v5"
-              evidence_commit: "e68ac33219330e92c132e8ddeb7b624568f22c34"
+            final_acceptance_sha: "{EF0}"
             r6_review:
               reviewed_sha: "{R6}"
               result: PASS
@@ -147,18 +146,21 @@ jobs:
               result: PASS
             accepted_checkpoint: "checkpoint/S05-001-accepted-001 @ {EF0}"
             source_reopen_required: false''')
+
           state = replace_section(state, "safe_frontier:\n", "stop_gate:\n", '''safe_frontier:
             eligible_tasks: []
             skipped_due_to_dependency: []
             materialization_frontier:
               - TASK-S05-002''')
-          state = replace_section(state, "stop_gate:\n", "next_action:", "stop_gate:\n  status: NONE")
-          # replace the remaining next_action scalar to EOF
+          state = replace_section(state, "stop_gate:\n", "next_action:", '''stop_gate:
+            status: OWNER_REQUESTED_HANDOFF
+            type: SESSION_HANDOFF_AFTER_TASK_ACCEPTANCE
+            target: "TASK-S05-001 accepted and checkpointed"
+            resume_condition: "Owner opens a new chat; resume POST-CI by materializing and prompt-reviewing TASK-S05-002 from the accepted integration head."''')
           pos = state.index("next_action:")
-          state = state[:pos] + 'next_action: "POST-CI: materialize TASK-S05-002 HR Report Management prompt from canonical Slice-05 source, run independent prompt review, then dispatch only after prompt PASS."\n'
+          state = state[:pos] + 'next_action: "NEW CHAT: verify accepted integration/control-plane HEAD, then stage TASK-S05-002 HR Report Management prompt and run independent prompt review before implementation."\n'
           state_path.write_text(state, encoding="utf-8")
 
-          # CURRENT_STATE is derived and may be regenerated compactly.
           Path("project_control/CURRENT_STATE.md").write_text(f'''# Current Implementation State — Derived Handoff Snapshot
 
 > **DERIVED / NON-AUTHORITATIVE REPORTING ONLY**
@@ -167,67 +169,54 @@ jobs:
 > DAG/task/slice authority: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.
 > Exact code/history authority: Git.
 
-## Canonical baseline
-
-- Full Handover: v1.18
-- Business Logic Core: v1.2 FROZEN
-- Technical Architecture: v1.18 FROZEN
-- Design System: v1.8 CURRENT / REVIEWED
-- Slice-04: DONE
-
-## TASK-S05-001 acceptance
-
-`TASK-S05-001 — Interviewer Report Experience over Accepted Report Contracts` is **DONE / ACCEPTED**.
+## TASK-S05-001 — DONE / ACCEPTED
 
 - Final exact acceptance SHA: `{EF0}`
 - R6 implementation review: PASS @ `{R6}`
 - Final integration equivalence review: PASS @ `{EF0}`
 - Integration CI `34386549610`: PASS
 - Governance CI `34386549725`: PASS
-- Immutable accepted checkpoint: `checkpoint/S05-001-accepted-001 @ {EF0}`
+- Immutable checkpoint: `checkpoint/S05-001-accepted-001 @ {EF0}`
 - Source reopen required: NO
-- No Vercel deployment performed
-- No connected Supabase migration applied
-- ASSET-001 official pixel-perfect PDF template remains deferred and non-blocking
+- Vercel deployment: NOT PERFORMED
+- Connected Supabase migration application: NOT PERFORMED
+- ASSET-001 official pixel-perfect PDF template: deferred / non-blocking
 
-## POST-CI continuation
+## Slice-05 continuation
 
-Slice-05 remains IN_PROGRESS. Canonical source is sufficient to materialize the next task as `TASK-S05-002 — HR Report Management Experience over Accepted Report Contracts` after prompt review.
+Slice-05 remains IN_PROGRESS. The next source-backed materialization frontier is `TASK-S05-002 — HR Report Management Experience over Accepted Report Contracts`.
 
-Known accepted-tree contract gaps to reconcile explicitly in the S05-002 prompt:
+Known prompt-reconciliation points for S05-002:
 
-- `set_report_visibility` is required by the command coverage matrix but absent from the accepted backend tree.
-- `bulk_change_report_status` is a Phase-1 visible ALL_OR_NOTHING bulk action but absent from the accepted backend tree.
-- `delete_or_inactivate_report` exists but currently authorizes via `reports.manage_status`; canonical permission authority requires `reports.delete + reports.view`.
-- HR Report needs its own safe server read projection; the accepted S05-001 read RPC is Interviewer-contextual and must not be widened into an HR DTO.
+- `set_report_visibility` is required by the canonical command coverage matrix but absent from the accepted backend tree.
+- `bulk_change_report_status` is Phase-1 visible / ALL_OR_NOTHING but absent from the accepted backend tree.
+- `delete_or_inactivate_report` exists but must be reconciled with canonical `reports.delete + reports.view` authority instead of silently preserving `reports.manage_status` if the source requires otherwise.
+- HR Report requires a dedicated safe server read projection; do not widen the accepted S05-001 Interviewer-contextual DTO.
+- Official PDF template integration remains excluded until ASSET-001 is supplied.
 
-Official PDF layout remains excluded until ASSET-001 is supplied; no template may be invented.
+## Handoff boundary
 
-## Next action
-
-Stage `project_control/prompts/SLICE-05_TASK-002_v1.md` from canonical Slice-05 sources, persist an exact prompt-review target, and perform independent OMP prompt review before task materialization/implementation.
+Owner requested a new-chat handoff after TASK-S05-001 completion. Resume by verifying the integration/control-plane HEAD, then stage `project_control/prompts/SLICE-05_TASK-002_v1.md` and perform independent OMP prompt review before implementation.
 ''', encoding="utf-8")
 
-          # EVIDENCE_INDEX: update top receipt and append one compact immutable receipt.
           evidence_path = Path("project_control/EVIDENCE_INDEX.yaml")
           evidence = evidence_path.read_text(encoding="utf-8")
-          old_prefix_start = "implementation_evidence:\n"
-          if evidence.count(old_prefix_start) != 1:
-              raise SystemExit("implementation_evidence marker invalid")
-          i = evidence.index(old_prefix_start) + len(old_prefix_start)
           old_status = "  status: SLICE_04_IN_PROGRESS_TASK_S04_004_READY_PLAN_RECONCILED\n"
           if old_status in evidence:
               evidence = evidence.replace(old_status, "  status: SLICE_05_TASK_S05_001_ACCEPTED\n", 1)
-          note_line_start = evidence.index("  note:", i)
-          note_line_end = evidence.index("\n", note_line_start)
-          evidence = evidence[:note_line_start] + '  note: "TASK-S05-001 accepted at exact SHA ef0bd9e534dec0cc85ef6503fbe0369eda56d555 after final OMP equivalence PASS, Integration CI 34386549610 PASS, Governance CI 34386549725 PASS, and immutable accepted checkpoint; POST-CI frontier is S05-002 prompt materialization."' + evidence[note_line_end:]
-          receipt_key = "  INTERVIEWER-REPORT-ACCEPTANCE-001:\n"
-          if receipt_key not in evidence:
+          anchor = "implementation_evidence:\n"
+          if evidence.count(anchor) != 1:
+              raise SystemExit("implementation_evidence marker invalid")
+          note_start = evidence.index("  note:", evidence.index(anchor))
+          note_end = evidence.index("\n", note_start)
+          note = '  note: "TASK-S05-001 accepted at exact SHA ef0bd9e534dec0cc85ef6503fbe0369eda56d555 after final OMP equivalence PASS, Integration CI 34386549610 PASS, Governance CI 34386549725 PASS, and immutable checkpoint. Owner requested handoff before S05-002 materialization."'
+          evidence = evidence[:note_start] + note + evidence[note_end:]
+          receipt = "  INTERVIEWER-REPORT-ACCEPTANCE-001:\n"
+          if receipt not in evidence:
               evidence = evidence.rstrip() + f'''\n\n  INTERVIEWER-REPORT-ACCEPTANCE-001:
             task: TASK-S05-001
             operation: INTERVIEWER_REPORT_EXPERIENCE_ACCEPTANCE
             status: VERIFIED
-            prompt_sha256: "6dd884c22c4d58ac6120cfae133e9e27efb48ada228d3f7be1b790be37ad59c5"
             implementation_review_sha: "{R6}"
             final_acceptance_sha: "{EF0}"
             implementation_review: "PASS (R6)"
@@ -239,21 +228,25 @@ Stage `project_control/prompts/SLICE-05_TASK-002_v1.md` from canonical Slice-05 
             vercel_deployment_performed: false
             source_reopen_required: false
           '''
-              evidence = textwrap.dedent(evidence)
           evidence_path.write_text(evidence, encoding="utf-8")
+          PY
 
       - name: Sanity check state
+        if: env.SKIP_PATCH != '1'
         shell: bash
         run: |
           set -euo pipefail
-          grep -A45 '^  TASK-S05-001:' project_control/TASK_REGISTRY.yaml
-          grep -A20 '^last_accepted_task:' project_control/AUTONOMY_RUN_STATE.yaml
-          grep -A8 '^safe_frontier:' project_control/AUTONOMY_RUN_STATE.yaml
           test "$(grep -c '^  TASK-S05-001:' project_control/TASK_REGISTRY.yaml)" = 1
+          grep -A45 '^  TASK-S05-001:' project_control/TASK_REGISTRY.yaml
           grep -q '^    status: DONE$' project_control/TASK_REGISTRY.yaml
           grep -q 'checkpoint/S05-001-accepted-001' project_control/TASK_REGISTRY.yaml
+          grep -A12 '^last_accepted_task:' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -A8 '^stop_gate:' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q '^  status: OWNER_REQUESTED_HANDOFF$' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q '^  INTERVIEWER-REPORT-ACCEPTANCE-001:' project_control/EVIDENCE_INDEX.yaml
 
       - name: Commit acceptance state
+        if: env.SKIP_PATCH != '1'
         shell: bash
         run: |
           set -euo pipefail
