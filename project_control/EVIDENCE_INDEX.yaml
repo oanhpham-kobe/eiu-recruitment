@@ -1167,7 +1167,7 @@ implementation_evidence:
   S06-001-PROMPT-REPAIR-V2-001:
     task: TASK-S06-001
     operation: BOUNDED_PROMPT_REPAIR_AFTER_R1
-    status: PREPARING_R2_MATERIALIZATION
+    status: MATERIALIZED
     source_reopen_required: false
     prior_reviewed_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
     prior_result: BLOCKING_REPAIR
@@ -1177,4 +1177,24 @@ implementation_evidence:
       - S06-PROMPT-01_IDEMPOTENCY_CONTRACT
       - S06-PROMPT-02_DELETE_INACTIVATE_EXPECTED_VERSION
       - NONBLOCKING_ANON_MANAGEMENT_SURFACE_CLARIFICATION
+    materialized_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"
+    materialization_integration_ci: "34491648323 PASS"
+    materialization_governance_ci: "34491648300 PASS"
     next_review: S06-001-PROMPT-REVIEW-002
+
+  S06-001-PROMPT-REVIEW-R2-GATE-001:
+    task: TASK-S06-001
+    operation: INDEPENDENT_BOUNDED_PROMPT_REREVIEW
+    status: WAITING_EXTERNAL_REVIEW
+    reviewed_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"
+    reviewer: eiu-reviewer
+    prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
+    repair_evidence: project_control/reviews/S06_001_PROMPT_REPAIR_RESPONSE_v2.md
+    handoff: project_control/reviews/S06_001_PROMPT_R2_REVIEW_GATE_68d96b3_v1.md
+    r1_blockers:
+      - S06-PROMPT-01_IDEMPOTENCY_CONTRACT
+      - S06-PROMPT-02_DELETE_INACTIVATE_EXPECTED_VERSION
+    materialization_integration_ci: "34491648323 PASS"
+    materialization_governance_ci: "34491648300 PASS"
+    result: PENDING
+    source_reopen_required: PENDING
