@@ -57,4 +57,4 @@ jobs:
         if: always()
         run: supabase stop
 
-# verification rerun after safe Biome formatting
+# final rerun after exact Drawer close selector repair
