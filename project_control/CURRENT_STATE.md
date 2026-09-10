@@ -16,7 +16,7 @@
 - Governance CI `34463405902`: PASS.
 - Reviewer-reported durable evidence coordinates were not GitHub-visible when checked; closure uses the Owner-transported exact-SHA verdict and does not claim durable evidence verification.
 
-## SLICE-06 — IN PROGRESS / S06-001 PROMPT REVIEW PREPARATION
+## SLICE-06 — IN PROGRESS / S06-001 WAITING INDEPENDENT PROMPT REVIEW
 
 First source-backed task:
 
@@ -28,9 +28,16 @@ Prompt:
 
 Producer source reconciliation: PASS, no source reopen.
 
+Exact independent prompt-review target: `5abbb5181405e0f5a468176edd93db8226a3efd5`.
+
+- materialization Integration CI `34488858134`: PASS
+- materialization Governance CI `34488858173`: PASS
+- reviewer: `eiu-reviewer`
+- handoff: `project_control/reviews/S06_001_PROMPT_REVIEW_GATE_5abbb51_v1.md`
+
 Scope is deliberately limited to the 11 Phase-1 business masters and canonical `create_master_item`, `update_master_item`, `delete_or_inactivate_master_item` backend/history contracts. Internal User directory, HR role/permission administration, security identity/rebind, Root break-glass, and management UI remain later Slice-06 tasks.
 
-TASK-S06-001 remains `PLANNED`; no implementation branch/checkpoint is created before independent prompt review PASS.
+TASK-S06-001 remains `PLANNED`; live state is `WAITING_EXTERNAL_REVIEW`. No implementation branch/checkpoint is created before independent prompt review PASS.
 
 ## Do not cross
 

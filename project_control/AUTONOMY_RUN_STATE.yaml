@@ -302,9 +302,12 @@ slice_05_closure:
   reviewer: eiu-reviewer
   review_evidence_transport: "Owner returned PASS / SOURCE_REOPEN_REQUIRED=false for exact reviewed SHA. Reviewer-reported branch review/SLICE-05-CLOSING-60e1f42-v1, commit a276ae4dc10be8c245fffdfa278e40dba8350f87, and path project_control/reviews/SLICE_05_CLOSING_REVIEW_60e1f42_v1.md were not GitHub-visible when Coordinator checked commit/ref/path; no durable-verification claim is made."
   composition_verdict: "PASS — cross-task composition, security/privacy, Current Round/status/final decision, concurrency/lifecycle, design/UX/accessibility, and slice completeness"
+  closure_transition_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
+  closure_transition_integration_ci: "34488858134 PASS"
+  closure_transition_governance_ci: "34488858173 PASS"
 
 slice_06_planning:
-  status: PROMPT_REVIEW_PREPARATION
+  status: WAITING_EXTERNAL_REVIEW
   proposed_first_task: TASK-S06-001
   materialized_task: TASK-S06-001
   task_status: PLANNED
@@ -336,12 +339,12 @@ slice_06_planning:
     later_security_task: "Internal User directory, HR role/permission management, bound identity and lifecycle safeguards"
     later_ui_tasks: "Master Data and Users/Permissions management experiences"
   source_reopen_required: false
-  prompt_review_target_sha: PENDING_INTEGRATION_MATERIALIZATION
+  prompt_review_target_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
   independent_prompt_review:
     work_id: S06-001-PROMPT-REVIEW-001
     reviewer: eiu-reviewer
-    status: PREPARING
-    reviewed_sha: PENDING_INTEGRATION_MATERIALIZATION
+    status: WAITING_EXTERNAL_REVIEW
+    reviewed_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
     result: PENDING
     source_reopen_required: PENDING
     evidence_branch: PENDING
@@ -353,17 +356,21 @@ safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-001 independent pre-implementation prompt/source review preparation"
+  execution_hold: "TASK-S06-001 independent pre-implementation prompt/source review"
 
 stop_gate:
-  status: PREPARING_EXTERNAL_REVIEW
-  type: OMP_PROMPT_REVIEW_PREPARATION
+  status: WAITING_EXTERNAL_REVIEW
+  type: OMP_PROMPT_REVIEW
   work_id: S06-001-PROMPT-REVIEW-001
-  target: project_control/prompts/SLICE-06_TASK-001_v1.md
-  reviewed_sha: PENDING_INTEGRATION_MATERIALIZATION
+  target: "project_control/prompts/SLICE-06_TASK-001_v1.md @ 5abbb5181405e0f5a468176edd93db8226a3efd5"
+  reviewed_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
   reviewer: eiu-reviewer
   verdict: PENDING
   source_reopen_required: PENDING
-  resume_on: "freeze exact integration prompt target, then PASS + SOURCE_REOPEN_REQUIRED=false from independent eiu-reviewer"
+  handoff_package_requirement: SATISFIED
+  handoff_package: project_control/reviews/S06_001_PROMPT_REVIEW_GATE_5abbb51_v1.md
+  materialization_integration_ci: "34488858134 PASS"
+  materialization_governance_ci: "34488858173 PASS"
+  resume_on: "PASS + SOURCE_REOPEN_REQUIRED=false for exact S06-001 prompt target"
 
-next_action: "Materialize Slice-05 closure and TASK-S06-001 prompt/planning on integration, validate control CI, then persist exact-SHA prompt-review handoff and enter WAITING_EXTERNAL_REVIEW. Do not create the risky S06-001 implementation branch/checkpoint until prompt review PASS. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Transport project_control/reviews/S06_001_PROMPT_REVIEW_GATE_5abbb51_v1.md to independent OMP eiu-reviewer for exact prompt target 5abbb5181405e0f5a468176edd93db8226a3efd5. On PASS + SOURCE_REOPEN_REQUIRED=false, verify returned evidence coordinates if available, create immutable pre-S06-001 checkpoint and isolated implementation branch from the accepted planning baseline, then execute the reviewed prompt. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
