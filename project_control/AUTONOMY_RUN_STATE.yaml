@@ -50,6 +50,7 @@ integration:
   last_task_acceptance_integration_ci_result: PASS
   last_task_acceptance_governance_ci_run: "34386549725"
   last_task_acceptance_governance_ci_result: PASS
+  current_prompt_review_target_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -96,12 +97,6 @@ design_system_hardening:
 
 active_workers: []
 
-active_task:
-  id: TASK-S05-001
-  slice: SLICE-05
-  phase: COMPLETED_HANDOFF
-  reviewer_status: PASS
-
 last_accepted_task:
   id: TASK-S05-001
   commit: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
@@ -135,16 +130,30 @@ historical_mcp_governance_maintenance:
   ci_result: PASS
 
 slice_05_planning:
-  status: POST_CI_HANDOFF
+  status: WAITING_EXTERNAL_REVIEW
   proposed_first_task: TASK-S05-001
   proposed_next_task: TASK-S05-002
   materialized_task: TASK-S05-001
-  prompt: project_control/prompts/SLICE-05_TASK-001_v1.md
-  prompt_sha256: "6dd884c22c4d58ac6120cfae133e9e27efb48ada228d3f7be1b790be37ad59c5"
+  materialization_frontier: TASK-S05-002
+  prompt: project_control/prompts/SLICE-05_TASK-002_v1.md
+  prompt_review_target_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
   canonical_sources:
     - recruitment_webapp/review_pack/06_INTERVIEW_REPORT_HR_AND_INTERVIEWER.md
     - recruitment_webapp/review_pack/02_ROLES_PERMISSIONS_AND_NAVIGATION.md
+    - recruitment_webapp/review_pack/07_STATUS_AND_BUSINESS_RULES.md
+    - recruitment_webapp/review_pack/37_BACKEND_COMMAND_CONTRACTS.md
     - recruitment_webapp/review_pack/39_SECURITY_RLS_MATRIX.md
+    - recruitment_webapp/review_pack/55_COMMAND_COVERAGE_MATRIX.md
+    - recruitment_webapp/review_pack/63_BATCH_OPERATION_SEMANTICS.md
+    - recruitment_webapp/review_pack/73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md
+    - recruitment_webapp/review_pack/100_TECHNICAL_PRECODE_GATE_V1_18.md
+    - recruitment_webapp/design_system/00_README.md
+    - recruitment_webapp/design_system/MASTER.md
+    - recruitment_webapp/design_system/TABLE_LAYOUT.md
+    - recruitment_webapp/design_system/PAGE_OVERRIDES_V1_8.md
+    - recruitment_webapp/design_system/COMPONENTS.md
+    - recruitment_webapp/design_system/PATTERNS.md
+    - recruitment_webapp/design_system/ACCESSIBILITY.md
     - recruitment_webapp/design_system/RESPONSIVE.md
     - recruitment_webapp/design_system/I18N.md
   accepted_prerequisites:
@@ -152,28 +161,29 @@ slice_05_planning:
     - TASK-S04-005
     - TASK-S04-004
     - TASK-DS-006
+    - TASK-S05-001
   source_reopen_required: false
-  initial_prompt_review:
-    work_id: S05-001-PROMPT-REVIEW-001
-    reviewed_sha: "458b3856eafc812d8c8edca0b74c205fbfcd2f43"
-    result: BLOCKING_REPAIR
-    source_reopen_required: false
-    evidence_branch: "review/S05-001-PROMPT-458b385-v1"
-    evidence_commit: "569b623a281004e901d5ef374f527b2dfd1906cf"
-    evidence_path: "project_control/reviews/S05_001_PROMPT_REVIEW_458b385_v1.md"
-    required_findings: [F1, F2, F3, F4]
-  prompt_re_review:
-    work_id: S05-001-PROMPT-REVIEW-001-R2
-    reviewed_sha: "54a1f450b27bf8470e683cf66791fba7b7f62791"
+  producer_prompt_reconciliation:
+    work_id: S05-002-PROMPT-PRODUCER-RECONCILIATION-001
+    reviewed_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
     result: PASS
     source_reopen_required: false
-    findings_closed: [F1, F2, F3, F4]
-    new_blocking_findings: NONE
-    evidence_branch: "review/S05-001-PROMPT-54a1f45-v2"
-    evidence_commit: "36b5df1af4564853fb299af24696f0c8796228d0"
-    evidence_path: "project_control/reviews/S05_001_PROMPT_REVIEW_54a1f45_v2.md"
-    release_decision: PROMPT_APPROVED_FOR_TASK_MATERIALIZATION_AND_IMPLEMENTATION
-  external_review_transport: "If OMP is not directly invokable from the Coordinator runtime, Coordinator must emit a complete copy-ready Owner handoff package before yielding; Owner transports it and returns the complete verdict/evidence."
+    evidence_path: project_control/reviews/S05_002_PROMPT_PRODUCER_RECONCILIATION_1f831a7_v1.md
+    repaired_before_pass:
+      - "P1: Added canonical <=100 batch bound, deterministic target ordering, and full-set Current Round revalidation for bulk_change_report_status."
+      - "P2: Clarified normative Current Round predicate and prohibited fallback to inactive historical rounds."
+    known_accepted_tree_reconciliations:
+      - set_report_visibility_missing_trusted_command
+      - bulk_change_report_status_missing_trusted_command
+      - delete_or_inactivate_report_permission_requires_reports_delete_plus_reports_view
+      - dedicated_hr_report_read_projection_required
+  independent_prompt_review:
+    work_id: S05-002-PROMPT-REVIEW-001
+    status: WAITING_EXTERNAL_REVIEW
+    reviewed_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
+    result: PENDING
+    source_reopen_required: PENDING
+  external_review_transport: "OMP is not directly invokable from the Coordinator runtime; Coordinator must emit a complete copy-ready Owner handoff package, and Owner returns the complete exact-target verdict/evidence."
   owner_asset_gap:
     id: ASSET-001
     blocking_now: false
@@ -204,11 +214,17 @@ safe_frontier:
   skipped_due_to_dependency: []
   materialization_frontier:
     - TASK-S05-002
+  execution_hold: "Independent OMP prompt/source reconciliation review must PASS for exact prompt target 1f831a767906e4322e0fc2370d593b5c51e323d5 before TASK-S05-002 is materialized or dispatched."
 
 stop_gate:
-  status: OWNER_REQUESTED_HANDOFF
-  type: SESSION_HANDOFF_AFTER_TASK_ACCEPTANCE
-  target: "TASK-S05-001 accepted and checkpointed"
-  resume_condition: "Owner opens a new chat; resume POST-CI by materializing and prompt-reviewing TASK-S05-002 from the accepted integration head."
+  status: WAITING_EXTERNAL_REVIEW
+  type: OMP_PROMPT_REVIEW
+  work_id: S05-002-PROMPT-REVIEW-001
+  target: project_control/prompts/SLICE-05_TASK-002_v1.md
+  reviewed_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
+  previous_owner_handoff_gate: CLEARED_BY_NEW_SESSION
+  handoff_package_requirement: COPY_READY_OWNER_TRANSPORT_BEFORE_YIELD
+  owner_role: "Transport the Coordinator-supplied review package to independent OMP and return the complete verdict/evidence; do not author or reconstruct the review instructions."
+  resume_on: "Exact-target OMP verdict PASS or BLOCKING_REPAIR/OWNER_DECISION_REQUIRED handoff"
 
-next_action: "NEW CHAT: verify accepted integration/control-plane HEAD, then stage TASK-S05-002 HR Report Management prompt and run independent prompt review before implementation."
+next_action: "Owner transports the Coordinator-supplied copy-ready independent OMP prompt/source reconciliation package for S05-002 exact target 1f831a767906e4322e0fc2370d593b5c51e323d5 and returns the complete verdict/evidence. On PASS with SOURCE_REOPEN_REQUIRED=false, materialize TASK-S05-002 in TASK_REGISTRY, advance SLICE-05 current task, create the task/recovery branch/checkpoint as governed, and dispatch implementation."
