@@ -1,0 +1,30 @@
+name: S06-001 DB Reset Validation
+
+on:
+  push:
+    branches:
+      - validate/S06-001-db-reset-1
+
+permissions:
+  contents: read
+
+jobs:
+  db-reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Start local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: Static migration checks
+        run: |
+          git diff --check 0ec409915bdd00b61b1b7affdb77ec778c7c1dc7...HEAD
+          grep -F "set search_path = ''" supabase/migrations/20260910153441_master_data_lifecycle_history_contracts.sql >/dev/null
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
