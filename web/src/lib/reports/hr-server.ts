@@ -267,7 +267,7 @@ export async function saveHrParticipantReport(
   const { data, error } = await client.rpc("save_interviewer_report", {
     p_interview_participant_id: input.interviewParticipantId,
     p_field_patches: input.patches,
-    p_expected_version: input.expectedVersionNo,
+    p_expected_version_no: input.expectedVersionNo,
     p_base_values: input.baseValues,
   });
   return normalizeCommandResponse(data, error);
