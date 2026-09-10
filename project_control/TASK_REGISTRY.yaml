@@ -1180,5 +1180,4 @@ tasks:
     prompt_review_evidence: "Owner transport PASS; reviewer-reported review/S06-001-PROMPT-68d96b3-v2 @ 28af23929fa0d99d9132f1c779fc722b12c8c1e1 was not GitHub-visible when Coordinator checked"
     pre_task_checkpoint: checkpoint/pre-S06-001-001
     branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle
-    branch: PENDING_AFTER_PROMPT_REVIEW
     notes: "Shared-contract backend prerequisite for Phase-1 business Master Data. Scope is limited to the 11 physical business masters and canonical create_master_item/update_master_item/delete_or_inactivate_master_item lifecycle/history contracts. Internal User directory, HR roles/permissions, bound identity, Root break-glass, and management UI are explicitly deferred to later Slice-06 tasks."
