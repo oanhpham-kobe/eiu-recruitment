@@ -388,7 +388,7 @@ implementation_materialization:
   status: PENDING_CONTROL_CI
 
 safe_frontier:
-  eligible_tasks: [TASK-S06-001]
+  eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: [TASK-S06-001]
   execution_hold: "TASK-S06-001 implementation materialization must pass exact-SHA Integration/Governance CI before branch execution"
