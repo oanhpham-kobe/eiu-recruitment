@@ -167,7 +167,8 @@ function nonNegativeInteger(value: unknown, context: string): number {
 
 function uuid(value: unknown, context: string): string {
   const parsed = requiredString(value, context);
-  if (!UUID_RE.test(parsed)) throw new Error(`Invalid HR report UUID at ${context}`);
+  if (!UUID_RE.test(parsed))
+    throw new Error(`Invalid HR report UUID at ${context}`);
   return parsed;
 }
 
@@ -182,7 +183,8 @@ function reportStatus(value: unknown, context: string): RawReportStatus {
 }
 
 function reportFields(value: unknown, context: string): ReportFields {
-  if (!isRecord(value)) throw new Error(`Invalid HR report fields at ${context}`);
+  if (!isRecord(value))
+    throw new Error(`Invalid HR report fields at ${context}`);
   exactKeys(value, REPORT_FIELD_KEYS, context);
   const result = { ...EMPTY_REPORT_FIELDS };
   for (const key of REPORT_FIELD_KEYS) {
@@ -239,7 +241,8 @@ function participant(value: unknown, index: number): HrReportParticipant {
 
 function finalDecision(value: unknown): HrReportFinalDecision {
   const context = "data.rows[].drawer.final_decision";
-  if (!isRecord(value)) throw new Error(`Invalid HR final decision at ${context}`);
+  if (!isRecord(value))
+    throw new Error(`Invalid HR final decision at ${context}`);
   exactKeys(
     value,
     [
@@ -309,17 +312,22 @@ function row(value: unknown): HrReportRow {
     ],
     context,
   );
-  if (!isRecord(value.drawer)) throw new Error(`Invalid HR drawer at ${context}.drawer`);
+  if (!isRecord(value.drawer))
+    throw new Error(`Invalid HR drawer at ${context}.drawer`);
   exactKeys(
     value.drawer,
     ["hr_owner_name", "participants", "final_decision"],
     `${context}.drawer`,
   );
   if (!Array.isArray(value.drawer.participants)) {
-    throw new Error(`Invalid HR participants at ${context}.drawer.participants`);
+    throw new Error(
+      `Invalid HR participants at ${context}.drawer.participants`,
+    );
   }
   if (typeof value.visible_to_interviewers !== "boolean") {
-    throw new Error(`Invalid HR visibility at ${context}.visible_to_interviewers`);
+    throw new Error(
+      `Invalid HR visibility at ${context}.visible_to_interviewers`,
+    );
   }
   return {
     applicationId: uuid(value.application_id, `${context}.application_id`),
@@ -329,7 +337,10 @@ function row(value: unknown): HrReportRow {
       value.interview_version_no,
       `${context}.interview_version_no`,
     ),
-    candidateName: requiredString(value.candidate_name, `${context}.candidate_name`),
+    candidateName: requiredString(
+      value.candidate_name,
+      `${context}.candidate_name`,
+    ),
     positionNameVi: requiredString(
       value.position_name_vi,
       `${context}.position_name_vi`,
@@ -340,13 +351,28 @@ function row(value: unknown): HrReportRow {
     ),
     startAt: nullableString(value.start_at, `${context}.start_at`),
     endAt: nullableString(value.end_at, `${context}.end_at`),
-    formatNameVi: nullableString(value.format_name_vi, `${context}.format_name_vi`),
-    formatNameEn: nullableString(value.format_name_en, `${context}.format_name_en`),
+    formatNameVi: nullableString(
+      value.format_name_vi,
+      `${context}.format_name_vi`,
+    ),
+    formatNameEn: nullableString(
+      value.format_name_en,
+      `${context}.format_name_en`,
+    ),
     roomName: nullableString(value.room_name, `${context}.room_name`),
-    reportStatus: reportStatus(value.report_status_code, `${context}.report_status_code`),
-    hrReportNote: nullableString(value.hr_report_note, `${context}.hr_report_note`),
+    reportStatus: reportStatus(
+      value.report_status_code,
+      `${context}.report_status_code`,
+    ),
+    hrReportNote: nullableString(
+      value.hr_report_note,
+      `${context}.hr_report_note`,
+    ),
     visibleToInterviewers: value.visible_to_interviewers,
-    lastUpdatedAt: nullableString(value.last_updated_at, `${context}.last_updated_at`),
+    lastUpdatedAt: nullableString(
+      value.last_updated_at,
+      `${context}.last_updated_at`,
+    ),
     lastUpdatedByName: nullableString(
       value.last_updated_by_name,
       `${context}.last_updated_by_name`,
@@ -381,7 +407,12 @@ export function parseHrReportPageRpc(value: unknown): HrReportPageData {
     ["manage_status", "visibility", "edit_interviewer", "delete"],
     "data.permissions",
   );
-  for (const key of ["manage_status", "visibility", "edit_interviewer", "delete"] as const) {
+  for (const key of [
+    "manage_status",
+    "visibility",
+    "edit_interviewer",
+    "delete",
+  ] as const) {
     if (typeof value.data.permissions[key] !== "boolean") {
       throw new Error(`Invalid HR Report permission: ${key}`);
     }
@@ -416,7 +447,9 @@ export function normalizeHrReportFilters(
       ? value.sort
       : "CANDIDATE_ASC";
   const page =
-    typeof value?.page === "number" && Number.isInteger(value.page) && value.page > 0
+    typeof value?.page === "number" &&
+    Number.isInteger(value.page) &&
+    value.page > 0
       ? value.page
       : 1;
   const pageSize =
@@ -431,7 +464,10 @@ export function normalizeHrReportFilters(
     pageSize,
     status,
     visibility,
-    search: typeof value?.search === "string" ? value.search.trim().slice(0, 256) : "",
+    search:
+      typeof value?.search === "string"
+        ? value.search.trim().slice(0, 256)
+        : "",
     sort,
   };
 }
@@ -448,6 +484,7 @@ export function hrReportStatusTone(
   ) {
     return "warning";
   }
-  if (status === "INTERVIEW_SCHEDULING" || status === "FOLLOW_UP") return "info";
+  if (status === "INTERVIEW_SCHEDULING" || status === "FOLLOW_UP")
+    return "info";
   return "neutral";
 }

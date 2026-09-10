@@ -100,27 +100,34 @@ function normalizeCommandResponse(
   data: unknown,
   transportError: { message?: string } | null,
 ): HrReportCommandResult {
-  if (transportError) return commandError("COMMAND_FAILED", transportError.message);
+  if (transportError)
+    return commandError("COMMAND_FAILED", transportError.message);
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return commandError("INVALID_RESPONSE");
   }
   const record = data as Record<string, unknown>;
   if (record.success === true) {
     const payload =
-      record.data && typeof record.data === "object" && !Array.isArray(record.data)
+      record.data &&
+      typeof record.data === "object" &&
+      !Array.isArray(record.data)
         ? (record.data as Record<string, unknown>)
         : {};
     return { success: true, data: payload };
   }
   return commandError(
-    typeof record.error_code === "string" ? record.error_code : "COMMAND_FAILED",
+    typeof record.error_code === "string"
+      ? record.error_code
+      : "COMMAND_FAILED",
     typeof record.message === "string" ? record.message : undefined,
   );
 }
 
 async function authorizedClient(
   client?: SupabaseClient,
-  resolveSession: (client: SupabaseClient) => Promise<AppSession> = getServerSession,
+  resolveSession: (
+    client: SupabaseClient,
+  ) => Promise<AppSession> = getServerSession,
 ): Promise<SupabaseClient> {
   const resolved = client ?? (await createServerClient());
   const session = await resolveSession(resolved);
@@ -183,7 +190,8 @@ export async function bulkChangeHrReportStatus(
     !HR_REPORT_STATUSES.includes(input.status) ||
     input.targets.some(
       (target) =>
-        !validUuid(target.interviewId) || !validVersion(target.expectedVersionNo),
+        !validUuid(target.interviewId) ||
+        !validVersion(target.expectedVersionNo),
     ) ||
     new Set(input.targets.map((target) => target.interviewId)).size !==
       input.targets.length
@@ -276,7 +284,10 @@ export async function saveHrParticipantReport(
 export async function deleteHrParticipantReport(
   input: DeleteHrParticipantReportInput,
 ): Promise<HrReportCommandResult> {
-  if (!validUuid(input.interviewReportId) || !validVersion(input.expectedVersionNo)) {
+  if (
+    !validUuid(input.interviewReportId) ||
+    !validVersion(input.expectedVersionNo)
+  ) {
     return commandError("VALIDATION_ERROR");
   }
   const client = await authorizedClient();

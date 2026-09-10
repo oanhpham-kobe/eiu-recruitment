@@ -12,7 +12,11 @@ import {
 import type { HrReportPageData } from "@/lib/reports/hr-model";
 import { HrReportView } from "./HrReportView";
 
-export function HrReportPage({ initialData }: { initialData: HrReportPageData }) {
+export function HrReportPage({
+  initialData,
+}: {
+  initialData: HrReportPageData;
+}) {
   return (
     <HrReportView
       initialData={initialData}
