@@ -287,10 +287,10 @@ s05_002_acceptance:
   connected_supabase_migration_applied: false
   vercel_deployment_performed: false
 
-slice_05_closing_review:
+slice_05_closure:
   work_id: SLICE-05-CLOSING-REVIEW-001
-  reviewer: eiu-reviewer
-  status: WAITING_EXTERNAL_REVIEW
+  result: PASS
+  source_reopen_required: false
   reviewed_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
   accepted_tasks:
     TASK-S05-001: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
@@ -299,32 +299,71 @@ slice_05_closing_review:
   broader_integration_ci_result: PASS
   governance_ci_run: "34463405902"
   governance_ci_result: PASS
-  source_reopen_required: PENDING
-  verdict: PENDING
-  evidence_branch: PENDING
-  evidence_commit: PENDING
-  evidence_path: PENDING
-  handoff_package: project_control/reviews/SLICE_05_CLOSING_REVIEW_GATE_60e1f42_v1.md
+  reviewer: eiu-reviewer
+  review_evidence_transport: "Owner returned PASS / SOURCE_REOPEN_REQUIRED=false for exact reviewed SHA. Reviewer-reported branch review/SLICE-05-CLOSING-60e1f42-v1, commit a276ae4dc10be8c245fffdfa278e40dba8350f87, and path project_control/reviews/SLICE_05_CLOSING_REVIEW_60e1f42_v1.md were not GitHub-visible when Coordinator checked commit/ref/path; no durable-verification claim is made."
+  composition_verdict: "PASS — cross-task composition, security/privacy, Current Round/status/final decision, concurrency/lifecycle, design/UX/accessibility, and slice completeness"
+
+slice_06_planning:
+  status: PROMPT_REVIEW_PREPARATION
+  proposed_first_task: TASK-S06-001
+  materialized_task: TASK-S06-001
+  task_status: PLANNED
+  prompt: project_control/prompts/SLICE-06_TASK-001_v1.md
+  producer_reconciliation:
+    work_id: S06-001-PROMPT-PRODUCER-RECONCILIATION-001
+    result: PASS
+    source_reopen_required: false
+    evidence_path: project_control/reviews/S06_001_PROMPT_PRODUCER_RECONCILIATION_v1.md
+  canonical_sources:
+    - recruitment_webapp/review_pack/09_MASTER_DATA_CATALOG.md
+    - recruitment_webapp/review_pack/64_MASTER_DATA_HISTORY_POLICY.md
+    - recruitment_webapp/review_pack/08_DATA_MODEL_AND_FIELD_DICTIONARY.md
+    - recruitment_webapp/review_pack/37_BACKEND_COMMAND_CONTRACTS.md
+    - recruitment_webapp/review_pack/39_SECURITY_RLS_MATRIX.md
+    - recruitment_webapp/review_pack/40_DATABASE_INVARIANTS.md
+    - recruitment_webapp/review_pack/55_COMMAND_COVERAGE_MATRIX.md
+    - recruitment_webapp/review_pack/59_RLS_POLICY_BLUEPRINT.md
+    - recruitment_webapp/review_pack/73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md
+    - recruitment_webapp/review_pack/100_TECHNICAL_PRECODE_GATE_V1_18.md
+    - recruitment_webapp/review_pack/command_registry.yaml
+    - recruitment_webapp/review_pack/database_schema.sql
+    - recruitment_webapp/review_pack/seed_master_data.json
+  accepted_prerequisites:
+    - TASK-S05-002
+    - accepted identity/auth/master reference foundations from prior slices
+  scope_split:
+    s06_001: "business Master Data lifecycle/history trusted contracts"
+    later_security_task: "Internal User directory, HR role/permission management, bound identity and lifecycle safeguards"
+    later_ui_tasks: "Master Data and Users/Permissions management experiences"
+  source_reopen_required: false
+  prompt_review_target_sha: PENDING_INTEGRATION_MATERIALIZATION
+  independent_prompt_review:
+    work_id: S06-001-PROMPT-REVIEW-001
+    reviewer: eiu-reviewer
+    status: PREPARING
+    reviewed_sha: PENDING_INTEGRATION_MATERIALIZATION
+    result: PENDING
+    source_reopen_required: PENDING
+    evidence_branch: PENDING
+    evidence_commit: PENDING
+    evidence_path: PENDING
+  reconciliation_note: "Accepted Slice-01 users.directory_read technical helper is intentionally left untouched by S06-001 and must be reconciled in the later User/Identity/RBAC task against current permission-detail visibility rules."
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "SLICE-05 independent closing composition review"
+  execution_hold: "TASK-S06-001 independent pre-implementation prompt/source review preparation"
 
 stop_gate:
-  status: WAITING_EXTERNAL_REVIEW
-  type: OMP_SLICE_CLOSING_REVIEW
-  work_id: SLICE-05-CLOSING-REVIEW-001
-  target: "autonomy/continuous-integration-20260905-01 @ 60e1f425d920ed9d76de68b49347188187054bd4"
-  reviewed_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
+  status: PREPARING_EXTERNAL_REVIEW
+  type: OMP_PROMPT_REVIEW_PREPARATION
+  work_id: S06-001-PROMPT-REVIEW-001
+  target: project_control/prompts/SLICE-06_TASK-001_v1.md
+  reviewed_sha: PENDING_INTEGRATION_MATERIALIZATION
   reviewer: eiu-reviewer
   verdict: PENDING
   source_reopen_required: PENDING
-  broader_integration_ci_run: "34463405935 PASS"
-  governance_ci_run: "34463405902 PASS"
-  handoff_package_requirement: SATISFIED
-  handoff_package: project_control/reviews/SLICE_05_CLOSING_REVIEW_GATE_60e1f42_v1.md
-  resume_on: "PASS + SOURCE_REOPEN_REQUIRED=false for exact SLICE-05 closing target"
+  resume_on: "freeze exact integration prompt target, then PASS + SOURCE_REOPEN_REQUIRED=false from independent eiu-reviewer"
 
-next_action: "Transport project_control/reviews/SLICE_05_CLOSING_REVIEW_GATE_60e1f42_v1.md to independent OMP eiu-reviewer for exact Slice-05 composition target 60e1f425d920ed9d76de68b49347188187054bd4. On PASS + SOURCE_REOPEN_REQUIRED=false, mark SLICE-05 DONE, persist closure evidence/state, recompute frontier, and inspect/materialize SLICE-06 source-backed work. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Materialize Slice-05 closure and TASK-S06-001 prompt/planning on integration, validate control CI, then persist exact-SHA prompt-review handoff and enter WAITING_EXTERNAL_REVIEW. Do not create the risky S06-001 implementation branch/checkpoint until prompt review PASS. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."

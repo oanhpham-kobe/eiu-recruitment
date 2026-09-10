@@ -8,7 +8,7 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: SLICE_05_TASK_S05_002_ACCEPTED_PENDING_SLICE_CLOSURE
+  status: SLICE_05_CLOSED_S06_001_PROMPT_REVIEW
   note: "TASK-S05-002 accepted at exact SHA fe556dda76ebeda7107bcb9310cbaf338b30fc29 after final integration-equivalence PASS, Integration CI 34461727271 PASS, Governance CI 34461727266 PASS, and immutable checkpoint; SLICE-05 closure remains pending composition review and broader regression."
 
   PLAN-RECONCILIATION-S04-005-001:
@@ -1122,3 +1122,27 @@ implementation_evidence:
     review_evidence_coordinates: "reported by reviewer but not GitHub-visible at Coordinator verification time"
     connected_supabase_migration_applied: false
     vercel_deployment_performed: false
+
+  SLICE-05-CLOSURE-001:
+    operation: SLICE_05_CLOSING_COMPOSITION_ACCEPTANCE
+    status: VERIFIED_FROM_OWNER_TRANSPORT
+    reviewed_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
+    result: PASS
+    source_reopen_required: false
+    accepted_tasks:
+      - "TASK-S05-001 @ ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
+      - "TASK-S05-002 @ fe556dda76ebeda7107bcb9310cbaf338b30fc29"
+    broader_integration_ci: "34463405935 PASS"
+    governance_ci: "34463405902 PASS"
+    reviewer: eiu-reviewer
+    reviewer_reported_evidence: "review/SLICE-05-CLOSING-60e1f42-v1 @ a276ae4dc10be8c245fffdfa278e40dba8350f87; project_control/reviews/SLICE_05_CLOSING_REVIEW_60e1f42_v1.md"
+    durable_evidence_verification: "UNRESOLVED — reported branch/commit/path were not GitHub-visible at Coordinator verification time; verdict accepted from Owner transport without claiming durable verification"
+
+  S06-001-PROMPT-PRODUCER-RECONCILIATION-001:
+    task: TASK-S06-001
+    operation: MASTER_DATA_PROMPT_SOURCE_RECONCILIATION
+    status: PASS_PENDING_INDEPENDENT_REVIEW
+    source_reopen_required: false
+    prompt: project_control/prompts/SLICE-06_TASK-001_v1.md
+    evidence_path: project_control/reviews/S06_001_PROMPT_PRODUCER_RECONCILIATION_v1.md
+    scope: "business Master Data lifecycle/history trusted commands only; User/Identity/RBAC and UI split into later Slice-06 tasks"
