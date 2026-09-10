@@ -21,6 +21,7 @@ interface StatusMenuProps {
   onSelect: (value: string) => void;
   triggerContent?: ReactNode;
   triggerClassName?: string;
+  disabled?: boolean;
 }
 
 type OpenFocus = "current" | "first" | "last";
@@ -32,6 +33,7 @@ export function StatusMenu({
   onSelect,
   triggerContent,
   triggerClassName,
+  disabled = false,
 }: StatusMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -115,6 +117,7 @@ export function StatusMenu({
   }, [enabledItems, open, positionPanel]);
 
   const openMenu = (focus: OpenFocus) => {
+    if (disabled) return;
     openFocusRef.current = focus;
     setOpen(true);
   };
@@ -162,6 +165,7 @@ export function StatusMenu({
         aria-label={triggerContent ? label : undefined}
         aria-haspopup="menu"
         aria-expanded={open}
+        disabled={disabled}
         onClick={() => {
           if (open) {
             setOpen(false);
