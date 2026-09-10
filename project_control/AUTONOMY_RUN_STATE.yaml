@@ -50,7 +50,7 @@ integration:
   last_task_acceptance_integration_ci_result: PASS
   last_task_acceptance_governance_ci_run: "34461727266"
   last_task_acceptance_governance_ci_result: PASS
-  current_prompt_review_target_sha: "1f831a767906e4322e0fc2370d593b5c51e323d5"
+  current_prompt_review_target_sha: PENDING_S06_001_R2_MATERIALIZATION
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -307,11 +307,11 @@ slice_05_closure:
   closure_transition_governance_ci: "34488858173 PASS"
 
 slice_06_planning:
-  status: WAITING_EXTERNAL_REVIEW
+  status: PROMPT_REPAIR_R2_PREPARATION
   proposed_first_task: TASK-S06-001
   materialized_task: TASK-S06-001
   task_status: PLANNED
-  prompt: project_control/prompts/SLICE-06_TASK-001_v1.md
+  prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
   producer_reconciliation:
     work_id: S06-001-PROMPT-PRODUCER-RECONCILIATION-001
     result: PASS
@@ -339,12 +339,35 @@ slice_06_planning:
     later_security_task: "Internal User directory, HR role/permission management, bound identity and lifecycle safeguards"
     later_ui_tasks: "Master Data and Users/Permissions management experiences"
   source_reopen_required: false
-  prompt_review_target_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
-  independent_prompt_review:
+  prompt_review_target_sha: PENDING_R2_MATERIALIZATION
+  prior_prompt_review:
     work_id: S06-001-PROMPT-REVIEW-001
     reviewer: eiu-reviewer
-    status: WAITING_EXTERNAL_REVIEW
     reviewed_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
+    result: BLOCKING_REPAIR
+    source_reopen_required: false
+    blocking_findings:
+      - S06-PROMPT-01_MISSING_IDEMPOTENCY_CONTRACT
+      - S06-PROMPT-02_DELETE_INACTIVATE_MISSING_EXPECTED_VERSION
+    owner_transport_evidence:
+      reported_branch: review/S06-001-PROMPT-5abbb51-v1
+      reported_commit: "a93659867e75f95109fa4826cb8b68114b031ddc"
+      reported_path: project_control/reviews/S06_001_PROMPT_REVIEW_5abbb51_v1.md
+      github_verification: UNRESOLVED_NOT_VISIBLE
+  prompt_repair_v2:
+    status: COMPLETE_PENDING_MATERIALIZATION
+    source_reopen_required: false
+    prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
+    repair_evidence: project_control/reviews/S06_001_PROMPT_REPAIR_RESPONSE_v2.md
+    repairs:
+      - "Idempotency contract: scoped key, pre-replay authorization, normalized request fingerprint, mismatch fail-closed, atomic stored result, sequential/concurrent replay safety, actor/type/target isolation."
+      - "Delete/inactivate: required expected_version_no checked under target lock before lifecycle decision; stale request returns STALE_VERSION with no master/audit change."
+      - "Clarified no new anonymous management surface while preserving accepted anonymous lookup reads required by Candidate flows."
+  independent_prompt_review:
+    work_id: S06-001-PROMPT-REVIEW-002
+    reviewer: eiu-reviewer
+    status: PREPARING
+    reviewed_sha: PENDING_R2_MATERIALIZATION
     result: PENDING
     source_reopen_required: PENDING
     evidence_branch: PENDING
@@ -356,21 +379,17 @@ safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-001 independent pre-implementation prompt/source review"
+  execution_hold: "TASK-S06-001 prompt v2 repair materialization and independent rereview preparation"
 
 stop_gate:
-  status: WAITING_EXTERNAL_REVIEW
-  type: OMP_PROMPT_REVIEW
-  work_id: S06-001-PROMPT-REVIEW-001
-  target: "project_control/prompts/SLICE-06_TASK-001_v1.md @ 5abbb5181405e0f5a468176edd93db8226a3efd5"
-  reviewed_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
+  status: PREPARING_EXTERNAL_REVIEW
+  type: OMP_PROMPT_REREVIEW_PREPARATION
+  work_id: S06-001-PROMPT-REVIEW-002
+  target: project_control/prompts/SLICE-06_TASK-001_v2.md
+  reviewed_sha: PENDING_R2_MATERIALIZATION
   reviewer: eiu-reviewer
   verdict: PENDING
   source_reopen_required: PENDING
-  handoff_package_requirement: SATISFIED
-  handoff_package: project_control/reviews/S06_001_PROMPT_REVIEW_GATE_5abbb51_v1.md
-  materialization_integration_ci: "34488858134 PASS"
-  materialization_governance_ci: "34488858173 PASS"
-  resume_on: "PASS + SOURCE_REOPEN_REQUIRED=false for exact S06-001 prompt target"
+  resume_on: "materialize prompt v2 on integration, validate control CI, persist exact-SHA rereview handoff, then PASS + SOURCE_REOPEN_REQUIRED=false"
 
-next_action: "Transport project_control/reviews/S06_001_PROMPT_REVIEW_GATE_5abbb51_v1.md to independent OMP eiu-reviewer for exact prompt target 5abbb5181405e0f5a468176edd93db8226a3efd5. On PASS + SOURCE_REOPEN_REQUIRED=false, verify returned evidence coordinates if available, create immutable pre-S06-001 checkpoint and isolated implementation branch from the accepted planning baseline, then execute the reviewed prompt. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Materialize bounded TASK-S06-001 prompt v2 repair on integration, validate exact materialization CI, then persist and transport an exact-SHA S06-001-PROMPT-REVIEW-002 handoff to independent OMP eiu-reviewer. Do not create the S06-001 implementation branch/checkpoint before rereview PASS. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."

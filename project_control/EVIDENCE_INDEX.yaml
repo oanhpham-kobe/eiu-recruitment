@@ -1150,7 +1150,7 @@ implementation_evidence:
   S06-001-PROMPT-REVIEW-GATE-001:
     task: TASK-S06-001
     operation: INDEPENDENT_PRE_IMPLEMENTATION_PROMPT_SOURCE_REVIEW_GATE
-    status: WAITING_EXTERNAL_REVIEW
+    status: BLOCKING_REPAIR_FROM_OWNER_TRANSPORT
     reviewed_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
     reviewer: eiu-reviewer
     prompt: project_control/prompts/SLICE-06_TASK-001_v1.md
@@ -1158,5 +1158,23 @@ implementation_evidence:
     producer_reconciliation: project_control/reviews/S06_001_PROMPT_PRODUCER_RECONCILIATION_v1.md
     materialization_integration_ci: "34488858134 PASS"
     materialization_governance_ci: "34488858173 PASS"
-    result: PENDING
-    source_reopen_required: PENDING
+    result: BLOCKING_REPAIR
+    source_reopen_required: false
+    blocking_findings: "S06-PROMPT-01 missing idempotency contract; S06-PROMPT-02 delete/inactivate missing expected-version validation"
+    reviewer_reported_evidence: "review/S06-001-PROMPT-5abbb51-v1 @ a93659867e75f95109fa4826cb8b68114b031ddc; project_control/reviews/S06_001_PROMPT_REVIEW_5abbb51_v1.md"
+    durable_evidence_verification: "UNRESOLVED — reported commit/branch/path not GitHub-visible at Coordinator verification time"
+
+  S06-001-PROMPT-REPAIR-V2-001:
+    task: TASK-S06-001
+    operation: BOUNDED_PROMPT_REPAIR_AFTER_R1
+    status: PREPARING_R2_MATERIALIZATION
+    source_reopen_required: false
+    prior_reviewed_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
+    prior_result: BLOCKING_REPAIR
+    repaired_prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
+    repair_evidence: project_control/reviews/S06_001_PROMPT_REPAIR_RESPONSE_v2.md
+    repairs:
+      - S06-PROMPT-01_IDEMPOTENCY_CONTRACT
+      - S06-PROMPT-02_DELETE_INACTIVATE_EXPECTED_VERSION
+      - NONBLOCKING_ANON_MANAGEMENT_SURFACE_CLARIFICATION
+    next_review: S06-001-PROMPT-REVIEW-002
