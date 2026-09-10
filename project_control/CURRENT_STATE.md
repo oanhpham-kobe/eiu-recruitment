@@ -8,38 +8,42 @@
 
 ## SLICE-05 — DONE
 
-- TASK-S05-001 accepted: `ef0bd9e534dec0cc85ef6503fbe0369eda56d555`.
-- TASK-S05-002 accepted: `fe556dda76ebeda7107bcb9310cbaf338b30fc29`.
-- Closing composition review: PASS; `SOURCE_REOPEN_REQUIRED=false`.
+TASK-S05-001 and TASK-S05-002 are accepted; Slice-05 closing composition review passed with no source reopen.
 
-## SLICE-06 / TASK-S06-001 — PROMPT V2 REPAIR PREPARATION
+## SLICE-06 / TASK-S06-001 — WAITING INDEPENDENT PROMPT R2
 
-R1 exact target: `5abbb5181405e0f5a468176edd93db8226a3efd5`.
+R1 target `5abbb5181405e0f5a468176edd93db8226a3efd5` received `BLOCKING_REPAIR / SOURCE_REOPEN_REQUIRED=false` for two bounded prompt defects:
 
-Independent `eiu-reviewer` R1 verdict: `BLOCKING_REPAIR`; `SOURCE_REOPEN_REQUIRED=false`.
+1. missing idempotency/retry-replay contract;
+2. missing expected-version validation for delete/inactivate.
 
-Accepted bounded blockers:
-
-1. `S06-PROMPT-01` — add executable idempotency/replay contract and sequential/concurrent/mismatch/isolation regressions.
-2. `S06-PROMPT-02` — require `expected_version_no` for delete/inactivate under lock, with stale hard-delete/inactivation regressions.
-
-Reviewer-reported R1 evidence coordinates were not GitHub-visible when Coordinator checked; no durable-verification claim is made.
-
-Active repaired prompt:
+Both are repaired in:
 
 `project_control/prompts/SLICE-06_TASK-001_v2.md`
 
-Repair response:
+Exact R2 reviewed target:
 
-`project_control/reviews/S06_001_PROMPT_REPAIR_RESPONSE_v2.md`
+`68d96b39e309ee6f1edbe6cf4031c10a583b0269`
 
-The v2 repair also clarifies that S06-001 creates no new anonymous **management** surface while preserving accepted anonymous active lookup reads required by existing Candidate workflows.
+Materialization evidence:
 
-TASK-S06-001 remains `PLANNED`. No implementation branch/checkpoint exists yet. Next gate is exact-SHA `S06-001-PROMPT-REVIEW-002` by `eiu-reviewer`.
+- Integration CI `34491648323`: PASS
+- Governance CI `34491648300`: PASS
+- changed scope: control/state + prompt v2 + repair response only; no product code
+
+R2 reviewer: `eiu-reviewer`
+
+R2 handoff:
+
+`project_control/reviews/S06_001_PROMPT_R2_REVIEW_GATE_68d96b3_v1.md`
+
+TASK-S06-001 remains `PLANNED`. No implementation branch or pre-task checkpoint exists before R2 PASS.
+
+Reviewer-reported R1 durable evidence coordinates were not GitHub-visible when Coordinator checked; R1 verdict is recorded from Owner transport without a false durable-verification claim.
 
 ## Do not cross
 
-- Do not implement S06-001 before R2 independent prompt review PASS.
+- Do not implement S06-001 before exact-SHA R2 independent prompt review PASS.
 - Do not merge/push `main`.
 - Do not deploy Vercel.
 - Do not apply migrations to connected Supabase DEV/production without explicit Owner authorization.
