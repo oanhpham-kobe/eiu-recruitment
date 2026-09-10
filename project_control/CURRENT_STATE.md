@@ -6,37 +6,35 @@
 > DAG/task/slice authority: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.
 > Exact code/history authority: Git.
 
-## SLICE-05 — WAITING INDEPENDENT CLOSING REVIEW
+## SLICE-05 — DONE / CLOSING REVIEW PASS
 
-Both constituent tasks are individually accepted:
-
-- TASK-S05-001: `ef0bd9e534dec0cc85ef6503fbe0369eda56d555`, checkpoint `checkpoint/S05-001-accepted-001`.
-- TASK-S05-002: `fe556dda76ebeda7107bcb9310cbaf338b30fc29`, checkpoint `checkpoint/S05-002-accepted-001`.
-
-Exact Slice-05 composition review target:
-
-`60e1f425d920ed9d76de68b49347188187054bd4`
-
-Fresh broader closing regression on that SHA:
-
-- Integration CI `34463405935`: PASS — forced web + database via `[full-ci]`.
+- TASK-S05-001 accepted: `ef0bd9e534dec0cc85ef6503fbe0369eda56d555`.
+- TASK-S05-002 accepted: `fe556dda76ebeda7107bcb9310cbaf338b30fc29`.
+- Closing composition target: `60e1f425d920ed9d76de68b49347188187054bd4`.
+- Independent `eiu-reviewer`: PASS; `SOURCE_REOPEN_REQUIRED=false`; blockers NONE.
+- Broader Integration CI `34463405935`: PASS (forced Web + Database).
 - Governance CI `34463405902`: PASS.
-- Acceptance-bookkeeping delta from TASK-S05-002 acceptance SHA changes only five project_control/derived files; no product drift.
+- Reviewer-reported durable evidence coordinates were not GitHub-visible when checked; closure uses the Owner-transported exact-SHA verdict and does not claim durable evidence verification.
 
-Independent closing review:
+## SLICE-06 — IN PROGRESS / S06-001 PROMPT REVIEW PREPARATION
 
-- work ID: `SLICE-05-CLOSING-REVIEW-001`
-- reviewer: `eiu-reviewer`
-- handoff: `project_control/reviews/SLICE_05_CLOSING_REVIEW_GATE_60e1f42_v1.md`
-- verdict: PENDING
-- source reopen: PENDING
+First source-backed task:
 
-SLICE-05 remains `IN_PROGRESS` until this composition review passes. Slice-06 must not be materialized before the closing verdict.
+`TASK-S06-001 — Master Data Lifecycle & Historical Semantics Trusted Contracts`
+
+Prompt:
+
+`project_control/prompts/SLICE-06_TASK-001_v1.md`
+
+Producer source reconciliation: PASS, no source reopen.
+
+Scope is deliberately limited to the 11 Phase-1 business masters and canonical `create_master_item`, `update_master_item`, `delete_or_inactivate_master_item` backend/history contracts. Internal User directory, HR role/permission administration, security identity/rebind, Root break-glass, and management UI remain later Slice-06 tasks.
+
+TASK-S06-001 remains `PLANNED`; no implementation branch/checkpoint is created before independent prompt review PASS.
 
 ## Do not cross
 
-- Do not mark SLICE-05 DONE before closing review PASS.
+- Do not implement S06-001 before independent exact-target prompt review PASS.
 - Do not merge/push `main`.
 - Do not deploy Vercel.
 - Do not apply migrations to connected Supabase DEV/production without explicit Owner authorization.
-- ASSET-001 official pixel-perfect PDF template remains deferred / non-blocking.

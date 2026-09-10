@@ -1,6 +1,6 @@
 version: 1
-current_slice: SLICE-05
-current_task: TASK-S05-002
+current_slice: SLICE-06
+current_task: TASK-S06-001
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1165,3 +1165,17 @@ tasks:
       - "Governance CI 34461727266: PASS"
       - "checkpoint/S05-002-accepted-001 @ fe556dda76ebeda7107bcb9310cbaf338b30fc29"
     notes: "Accepted HR Report management experience. R1/R2 blockers were repaired; R3 implementation review passed; exact integration-equivalence review passed; full web/database exact-SHA CI passed. No Product/Business/Design source reopen, Vercel deployment, main mutation, or connected Supabase migration application occurred. ASSET-001 official pixel-perfect PDF template remains deferred/non-blocking."
+
+  TASK-S06-001:
+    title: Master Data Lifecycle & Historical Semantics Trusted Contracts
+    slice: SLICE-06
+    status: PLANNED
+    lane: LANE_A
+    depends_on:
+      - TASK-S05-002
+    prompt: project_control/prompts/SLICE-06_TASK-001_v1.md
+    prompt_review_status: PENDING
+    prompt_review_evidence: PENDING
+    pre_task_checkpoint: PENDING_AFTER_PROMPT_REVIEW
+    branch: PENDING_AFTER_PROMPT_REVIEW
+    notes: "Shared-contract backend prerequisite for Phase-1 business Master Data. Scope is limited to the 11 physical business masters and canonical create_master_item/update_master_item/delete_or_inactivate_master_item lifecycle/history contracts. Internal User directory, HR roles/permissions, bound identity, Root break-glass, and management UI are explicitly deferred to later Slice-06 tasks."
