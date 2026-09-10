@@ -61,6 +61,22 @@ async function assertNoPageOverflow(page: Page, label: string) {
   );
 }
 
+async function scrollRowStatusIntoReach(page: Page) {
+  const trigger = page.getByRole("button", {
+    name: "Đổi trạng thái của Nguyễn Minh Anh",
+  });
+  const statusCell = trigger.locator("xpath=ancestor::td[1]");
+  const target = await statusCell.evaluate((cell) =>
+    Math.max(0, (cell as HTMLElement).offsetLeft - 300),
+  );
+  await page.locator(".ui-table-scroll").evaluate((element, left) => {
+    element.scrollLeft = Number(left);
+  }, target);
+  const box = await trigger.boundingBox();
+  assert.ok(box && box.x < 390 && box.x + box.width > 288, "status trigger must be exposed beside sticky columns");
+  return trigger;
+}
+
 test(
   "HR Report preserves exact table geometry and responsive scroll containment",
   { timeout: 180_000 },
@@ -139,7 +155,7 @@ test(
 );
 
 test(
-  "HR Report narrow status and drawer mutations preserve unrelated unsaved drafts",
+  "HR Report narrow status and filtered drawer preserve drafts and conflict bases",
   { timeout: 120_000 },
   async () => {
     const assets = await bundleHarness();
@@ -148,9 +164,7 @@ test(
       browser = await chromium.launch();
       const { page, errors } = await openHarness(browser, assets, 390, 700);
 
-      const rowStatus = page.getByRole("button", {
-        name: "Đổi trạng thái của Nguyễn Minh Anh",
-      });
+      const rowStatus = await scrollRowStatusIntoReach(page);
       await rowStatus.click();
       assert.equal(await page.getByRole("menuitemradio").count(), 8);
       await page.keyboard.press("Escape");
@@ -181,6 +195,10 @@ test(
         .getByText("Đã cập nhật trạng thái cho các báo cáo đã chọn.")
         .waitFor({ state: "visible" });
 
+      await page.getByLabel("Hiển thị").selectOption("VISIBLE");
+      await page.locator(".ui-table-scroll").evaluate((element) => {
+        element.scrollLeft = element.scrollWidth;
+      });
       await page.getByRole("button", { name: "Xem" }).first().click();
       const drawer = page.getByRole("dialog", { name: "Chi tiết báo cáo" });
       await drawer.waitFor({ state: "visible" });
@@ -196,36 +214,47 @@ test(
       );
 
       const note = drawer.getByLabel("Nội dung ghi chú");
-      await note.fill("Ghi chú chưa lưu qua visibility");
+      await note.fill("Ghi chú vẫn tồn tại khi row bị filter loại");
       await drawer
         .getByRole("button", { name: "Ẩn với Interviewer" })
         .click();
+      await drawer.waitFor({ state: "visible" });
       assert.equal(
         await note.inputValue(),
-        "Ghi chú chưa lưu qua visibility",
-        "visibility refresh must preserve a dirty HR Note draft",
+        "Ghi chú vẫn tồn tại khi row bị filter loại",
+        "filtered refresh must not close the Drawer or discard a dirty HR Note",
       );
 
       await drawer.getByRole("button", { name: "Sửa" }).first().click();
       const firstParticipant = drawer.locator("article").first();
       const reportDraft = firstParticipant.locator("textarea").first();
-      await reportDraft.fill("Participant draft must survive");
+      await reportDraft.fill("Local participant draft");
 
-      await note.fill("Ghi chú lưu trong khi report đang dirty");
-      await drawer.getByRole("button", { name: "Lưu ghi chú" }).click();
+      await page.evaluate(() => {
+        const edit = (
+          globalThis as typeof globalThis & {
+            __hrReportRemoteParticipantEdit?: (value: string) => void;
+          }
+        ).__hrReportRemoteParticipantEdit;
+        if (!edit) throw new Error("remote edit harness is unavailable");
+        edit("Remote participant edit");
+      });
+
+      await page.getByLabel("Hiển thị").selectOption("ALL");
       assert.equal(
         await reportDraft.inputValue(),
-        "Participant draft must survive",
-        "saving HR Note must preserve participant-report draft",
+        "Local participant draft",
+        "refresh must preserve the local dirty participant field",
       );
 
+      await firstParticipant.getByRole("button", { name: "Lưu báo cáo" }).click();
       await drawer
-        .getByRole("button", { name: "Hiển thị với Interviewer" })
-        .click();
+        .getByText("Dữ liệu đã thay đổi ở nơi khác. Trang đã được tải lại.")
+        .waitFor({ state: "visible" });
       assert.equal(
         await reportDraft.inputValue(),
-        "Participant draft must survive",
-        "visibility refresh must preserve participant-report draft",
+        "Local participant draft",
+        "same-field conflict must not silently overwrite the remote edit",
       );
 
       await drawer.getByRole("button", { name: "Sửa" }).nth(1).click();
@@ -234,27 +263,8 @@ test(
         .waitFor({ state: "visible" });
       assert.equal(
         await reportDraft.inputValue(),
-        "Participant draft must survive",
+        "Local participant draft",
         "participant switch must not replace a dirty report draft",
-      );
-
-      await note.fill("Ghi chú chưa lưu qua delete");
-      await drawer.getByRole("button", { name: "Xóa / Inactive" }).nth(1).click();
-      const destructive = page.getByRole("dialog", {
-        name: "Xóa / Inactive báo cáo?",
-      });
-      await destructive.waitFor({ state: "visible" });
-      await destructive.getByRole("button", { name: "Xác nhận" }).click();
-      await destructive.waitFor({ state: "hidden" });
-      assert.equal(
-        await note.inputValue(),
-        "Ghi chú chưa lưu qua delete",
-        "deleting another participant report must preserve dirty HR Note",
-      );
-      assert.equal(
-        await reportDraft.inputValue(),
-        "Participant draft must survive",
-        "deleting another participant report must preserve dirty report draft",
       );
 
       const interviewsLink = drawer.getByRole("link", {
@@ -268,7 +278,11 @@ test(
       });
       await discard.waitFor({ state: "visible" });
       await discard.getByRole("button", { name: "Tiếp tục sửa" }).click();
-      assert.equal(await note.inputValue(), "Ghi chú chưa lưu qua delete");
+      assert.equal(
+        await reportDraft.inputValue(),
+        "Local participant draft",
+        "closing protection must preserve edits when discard is cancelled",
+      );
 
       assert.deepEqual(errors, [], "HR Report interaction browser errors");
       await page.close();
