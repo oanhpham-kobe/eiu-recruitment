@@ -1,0 +1,32 @@
+name: S06-001 Materialization YAML Repair
+
+on:
+  push:
+    branches:
+      - control/S06-001-materialization-yaml-repair
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ !contains(github.event.head_commit.message, 'repair S06-001 materialization YAML') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Repair duplicate branch key
+        run: python project_control/tmp_s06_materialization_yaml_repair.py
+      - name: Validate strict control plane
+        run: |
+          python -m pip install --disable-pip-version-check 'PyYAML==6.0.2'
+          python project_control/validate_control_plane.py
+          git diff --check
+      - name: Commit repaired registry
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/TASK_REGISTRY.yaml
+          git commit -m 'chore(state): repair S06-001 materialization YAML'
+          git push origin HEAD:control/S06-001-materialization-yaml-repair
