@@ -79,7 +79,9 @@ type InternalSessionRpcData = {
   permissions: string[];
 };
 
-function parseInternalSessionRpc(payload: unknown): InternalSessionRpcData | null {
+function parseInternalSessionRpc(
+  payload: unknown,
+): InternalSessionRpcData | null {
   if (
     !payload ||
     typeof payload !== "object" ||

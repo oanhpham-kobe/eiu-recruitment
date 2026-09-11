@@ -21,7 +21,9 @@ function createInternalRpcClient(payload: unknown): SupabaseClient {
       return { data: payload, error: null };
     },
     from: () => {
-      throw new Error("raw app_users fallback must not run for a valid S06-002 RPC payload");
+      throw new Error(
+        "raw app_users fallback must not run for a valid S06-002 RPC payload",
+      );
     },
   } as unknown as SupabaseClient;
 }
