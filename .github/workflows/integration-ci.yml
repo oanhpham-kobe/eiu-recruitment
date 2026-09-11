@@ -205,6 +205,10 @@ jobs:
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_reason_history_test.sql
 
+      - name: Execute TASK-S06-001 Durable Semantic Reference History Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_durable_reference_history_test.sql
+
       - name: Execute TASK-S06-001 Historical Candidate Document Regression Assertions
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_candidate_document_history_test.sql
