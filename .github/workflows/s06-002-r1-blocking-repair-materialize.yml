@@ -1,0 +1,105 @@
+name: S06-002 R1 Blocking Repair Materialize
+
+on:
+  push:
+    branches:
+      - control/S06-002-r1-blocking-repair-materialize
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: autonomy/continuous-integration-20260905-01
+          fetch-depth: 0
+
+      - name: Guard exact integration head and materialize repair state
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED='568c3826d4fc8a5a872fff13214e369123f2361c'
+          test "$(git rev-parse HEAD)" = "$EXPECTED"
+          python - <<'PY'
+          from pathlib import Path
+
+          REVIEWED = 'a7aa037e26cda6ba70153539c1dfc15c3fba37e6'
+          EVIDENCE = 'project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md'
+
+          def replace_one(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, got {count}')
+              return text.replace(old, new, 1)
+
+          state_path = Path('project_control/AUTONOMY_RUN_STATE.yaml')
+          state = state_path.read_text(encoding='utf-8')
+          state = replace_one(
+              state,
+              's06_002_planning:\n  status: WAITING_EXTERNAL_REVIEW',
+              's06_002_planning:\n  status: IMPLEMENTATION_REPAIR_ACTIVE',
+              'planning_status',
+          )
+          state = replace_one(
+              state,
+              '  implementation_hold: "HELD — exact candidate is producer-verified and frozen for independent implementation review; no product serialization to integration before PASS + SOURCE_REOPEN_REQUIRED=false."',
+              '  implementation_hold: "CLEARED FOR REPAIR — R1 independent implementation review returned BLOCKING_REPAIR with SOURCE_REOPEN_REQUIRED=false; repair remains confined to the isolated TASK-S06-002 branch."',
+              'implementation_hold',
+          )
+          old_review = f'''  independent_implementation_review:\n    work_id: S06-002-IMPLEMENTATION-REVIEW-001\n    reviewer: eiu-reviewer\n    status: WAITING_EXTERNAL_REVIEW\n    reviewed_sha: "{REVIEWED}"\n    result: PENDING\n    source_reopen_required: PENDING\n    blocking_findings: PENDING\n    evidence_branch: PENDING\n    evidence_commit: PENDING\n    evidence_path: PENDING'''
+          new_review = f'''  independent_implementation_review:\n    work_id: S06-002-IMPLEMENTATION-REVIEW-001\n    reviewer: eiu-reviewer\n    status: VERIFIED_FROM_OWNER_TRANSPORT\n    reviewed_sha: "{REVIEWED}"\n    result: BLOCKING_REPAIR\n    source_reopen_required: false\n    blocking_findings:\n      - "Required review-gate artifact was absent from the reviewed candidate/task branch."\n      - "app_users.auth_user_id column-ACL narrowing broke retained request-scoped server consumers."\n      - "Participant statement trigger rejected permitted dormant/CANCELLED historical reorder maintenance."\n      - "Lifecycle versus Application owner assignment had an app_users-row/advisory lock-order cycle."\n      - "First-bind versus Root rebind had reversed normalized-email/target-row lock order."\n    evidence_persistence: UNAVAILABLE\n    evidence_branch: UNAVAILABLE\n    evidence_commit: UNAVAILABLE\n    evidence_path: {EVIDENCE}'''
+          state = replace_one(state, old_review, new_review, 'review_result')
+          state = replace_one(
+              state,
+              f'  current_candidate_sha: "{REVIEWED}"\n  review_round: R1',
+              f'  prior_candidate_sha: "{REVIEWED}"\n  current_candidate_sha: PENDING\n  review_round: R2',
+              'repair_round',
+          )
+          old_frontier = f'''safe_frontier:\n  eligible_tasks: []\n  skipped_due_to_dependency: []\n  materialization_frontier: []\n  execution_hold: "TASK-S06-002 exact candidate {REVIEWED} is frozen for independent implementation review; no later implementation frontier is materialized."\n\nstop_gate:\n  status: HELD\n  type: EXTERNAL_REVIEW\n  work_id: S06-002-IMPLEMENTATION-REVIEW-001\n  target: "TASK-S06-002 exact implementation candidate @ {REVIEWED}"\n  reviewer: eiu-reviewer\n  source_reopen_required: PENDING\n  resume_on: "Independent exact-SHA implementation review returns PASS with SOURCE_REOPEN_REQUIRED=false."\n\nnext_action: "Send project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md to independent eiu-reviewer and obtain an exact-SHA verdict for {REVIEWED}. Do not serialize product code into integration until PASS + SOURCE_REOPEN_REQUIRED=false. Preserve boundaries: no main mutation, PR merge, Vercel deployment, or connected Supabase migration application."'''
+          new_frontier = f'''safe_frontier:\n  eligible_tasks: []\n  skipped_due_to_dependency: []\n  materialization_frontier: []\n  execution_hold: "TASK-S06-002 R2 repair is active on the isolated task branch after R1 BLOCKING_REPAIR; no later Slice-06 frontier is materialized."\n\nstop_gate:\n  status: CLEAR\n  type: NONE\n  work_id: S06-002-IMPLEMENTATION-REPAIR-R2\n  target: "Repair R1 blockers from exact candidate {REVIEWED}"\n  reviewer: eiu-reviewer\n  source_reopen_required: false\n  resume_on: "Repair all five blockers, rerun exact-SHA verification, include the review-gate artifact in the candidate itself, then route the new immutable SHA to independent re-review."\n\nnext_action: "Repair all five S06-002 R1 blockers on oanhpham-kobe/TASK-S06-002-user-rbac-identity without weakening accepted contracts. Run zero-state, focused, concurrency, crossed-regression, web and DB-lint verification on the new immutable SHA. Do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."'''
+          state = replace_one(state, old_frontier, new_frontier, 'repair_frontier')
+          state_path.write_text(state, encoding='utf-8')
+
+          task_path = Path('project_control/TASK_REGISTRY.yaml')
+          tasks = task_path.read_text(encoding='utf-8')
+          tasks = replace_one(
+              tasks,
+              '''  TASK-S06-002:\n    title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"\n    slice: SLICE-06\n    status: REVIEW''',
+              '''  TASK-S06-002:\n    title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"\n    slice: SLICE-06\n    status: IN_PROGRESS''',
+              'task_status',
+          )
+          old_candidate = f'''    implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity\n    implementation_candidate_sha: "{REVIEWED}"\n    review_status: "PENDING (S06-002-IMPLEMENTATION-REVIEW-001 @ {REVIEWED}; independent eiu-reviewer)"\n    producer_verification: "PASS (final exact DB/static verifier run 34611668782; exact prior web job 34602347683/103272463530 PASS on web-equivalent 014e22f737463b049eacca041a0c204ce0699cd1)"'''
+          new_candidate = f'''    implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity\n    prior_implementation_candidate_sha: "{REVIEWED}"\n    implementation_candidate_sha: PENDING\n    repair_round: R2\n    review_status: "BLOCKING_REPAIR (S06-002-IMPLEMENTATION-REVIEW-001 @ {REVIEWED}; SOURCE_REOPEN_REQUIRED=false; evidence persistence unavailable)"\n    review_evidence: {EVIDENCE}\n    prior_producer_verification: "PASS (final exact DB/static verifier run 34611668782; exact prior web job 34602347683/103272463530 PASS on web-equivalent 014e22f737463b049eacca041a0c204ce0699cd1)"'''
+          tasks = replace_one(tasks, old_candidate, new_candidate, 'task_review_result')
+          task_path.write_text(tasks, encoding='utf-8')
+
+          Path('project_control/CURRENT_STATE.md').write_text(f'''# Current Implementation State — Derived Handoff Snapshot\n\n> **DERIVED / NON-AUTHORITATIVE REPORTING ONLY**\n> Runtime authority: `project_control/AUTONOMY_RUN_STATE.yaml`.\n> DAG/task/slice authority: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.\n> Exact code/history authority: Git.\n\n## SLICE-06 / TASK-S06-001 — ACCEPTED\n\nTASK-S06-001 remains accepted at `59be9b2c92906065b8e4baa902fcec1d4cbefa12` / `checkpoint/S06-001-accepted-001`.\n\n## SLICE-06 / TASK-S06-002 — R2 REPAIR ACTIVE\n\n- R1 reviewed exact candidate: `{REVIEWED}`.\n- Independent verdict: `BLOCKING_REPAIR`; `SOURCE_REOPEN_REQUIRED=false`.\n- Reviewer persistence: `UNAVAILABLE`; Owner-transported evidence is recorded at `{EVIDENCE}`.\n- Five blockers: candidate-contained review gate; affected app_users/auth_user_id server consumers; dormant participant trigger scope; Application-owner lifecycle lock order; first-bind/rebind identity lock order.\n- Task branch remains `oanhpham-kobe/TASK-S06-002-user-rbac-identity`; next candidate is PENDING.\n- Task registry status: `IN_PROGRESS`; repair round: `R2`.\n\n## Next action\n\nRepair all five blockers on the isolated task branch, add a review-gate artifact that exists inside the new candidate itself, and rerun exact-SHA web/database/concurrency verification before independent re-review.\n\n## Boundaries\n\n- Do not push/merge `main` without explicit Owner authorization.\n- Do not create/merge a PR in this phase.\n- Do not deploy Vercel without explicit Owner authorization.\n- Do not apply migrations to connected Supabase without explicit Owner authorization.\n''', encoding='utf-8')
+
+          Path(EVIDENCE).write_text(f'''# TASK-S06-002 Implementation Review R1 — Owner-Transported Evidence\n\n## Provenance\n\n- WORK_ID: `S06-002-IMPLEMENTATION-REVIEW-001`\n- REVIEWER: `eiu-reviewer`\n- REVIEWED_REPOSITORY: `oanhpham-kobe/eiu-recruitment`\n- REVIEWED_BRANCH: `oanhpham-kobe/TASK-S06-002-user-rbac-identity`\n- REVIEWED_SHA: `{REVIEWED}`\n- VERDICT: `BLOCKING_REPAIR`\n- SOURCE_REOPEN_REQUIRED: `false`\n- REVIEWER_EVIDENCE_PERSISTENCE: `UNAVAILABLE`\n- COORDINATOR_PROVENANCE: `VERIFIED_FROM_OWNER_TRANSPORT`\n\nThis artifact records the review text transported by the Owner. It is not evidence that the reviewer itself wrote to GitHub.\n\n## Blocking findings\n\n1. The required review gate artifact was absent from the reviewed candidate/task branch. The R2 candidate must carry its review-gate artifact in the reviewed tree so the reviewer does not depend on a control-only integration commit outside the reviewed SHA.\n2. `20260911104530_internal_user_read_contracts.sql` revoked authenticated SELECT on `app_users.auth_user_id` while retained request-scoped server consumers still filtered by that column. Migrate every affected consumer to the narrow session RPC/projection before retaining the column ACL.\n3. `private.recheck_current_participants_after_statement()` rejected any current inactive participant touched by transition-table reorder updates, breaking permitted dormant/CANCELLED historical maintenance. Scope enforcement to transitions that can make an Interview resource-blocking/current participation operational.\n4. `set_internal_user_active()` acquired the target `app_users` row before the shared advisory lock while Application owner guards acquired advisory then later FK `KEY SHARE`, creating a lifecycle/owner-writer deadlock cycle. Establish one deterministic order across all owner writers and revalidate after locking.\n5. First Google bind acquired normalized-email advisory before target row while Root identity change acquired target row before replacement-email advisory, creating an identity bind/rebind deadlock cycle. Apply one deterministic identity lock order to both paths.\n\n## Reviewer assessments\n\n- Identity proof, Active allowlisting, exact replay, Root-only non-Root rebind, SECURITY DEFINER/search_path discipline, version/idempotency/audit structure were directionally correct.\n- Permission visibility narrowing was directionally correct but incomplete because affected trusted server consumers were not migrated.\n- Shared owner/participant serialization covered important races but had the trigger-scope and lock-order defects above.\n- No canonical source contradiction was found. Repairs are technically defined and canonical source reopening is not required.\n\n## Acceptance statement\n\nExact SHA `{REVIEWED}` cannot proceed to governed integration. Repair all five blockers, run gate-required verification on a new immutable SHA, and submit that SHA for independent re-review.\n''', encoding='utf-8')
+          PY
+
+          git diff --check
+          git add -N project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
+          mapfile -t changed < <(git diff --name-only)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 4
+          expected=(
+            'project_control/AUTONOMY_RUN_STATE.yaml'
+            'project_control/CURRENT_STATE.md'
+            'project_control/TASK_REGISTRY.yaml'
+            'project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md'
+          )
+          for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
+
+      - name: Commit and publish control-only repair state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
+          git commit -m 'chore(state): activate TASK-S06-002 R2 repair'
+          git push origin HEAD:control/S06-002-r1-blocking-repair-result
