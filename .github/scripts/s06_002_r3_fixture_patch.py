@@ -43,4 +43,29 @@ if old_restore not in text:
     raise SystemExit('post-HR-removal restore anchor missing')
 text = text.replace(old_restore, new_restore, 1)
 
+old_boundary = """psql_exec -qAt -c \"update public.applications set unit_id='$unit1'::uuid,position_id='$pos1'::uuid,hr_owner_id='$root_id'::uuid where application_id='$application_id'::uuid\"
+
+# 2A. HR is current participant: uncancel vs Root lifecycle must row-lock before advisory.
+"""
+new_boundary = """psql_exec -qAt -c \"update public.applications set unit_id='$unit1'::uuid,position_id='$pos1'::uuid,hr_owner_id='$root_id'::uuid where application_id='$application_id'::uuid\"
+# Scenario 1C may create a second Application for the same Submission because the
+# bulk contract keys an existing Application by Unit/team/Position.  Interview
+# races must not be pre-empted by the independent Active-Application-owner guard.
+psql_exec -qAt -c \"update public.applications set hr_owner_id='$root_id'::uuid where hr_owner_id='$target_id'::uuid and is_active=true\"
+psql_exec -qAt -c \"select count(*) from public.applications where hr_owner_id='$target_id'::uuid and is_active=true\" | grep -qx 0
+
+# 2A. HR is current participant: uncancel vs Root lifecycle must row-lock before advisory.
+"""
+if old_boundary not in text:
+    raise SystemExit('application/interview isolation anchor missing')
+text = text.replace(old_boundary, new_boundary, 1)
+
+old_cleanup = """delete from public.applications where application_id='$application_id'::uuid;
+"""
+new_cleanup = """delete from public.applications where submission_id='$submission_id'::uuid;
+"""
+if old_cleanup not in text:
+    raise SystemExit('application cleanup anchor missing')
+text = text.replace(old_cleanup, new_cleanup, 1)
+
 path.write_text(text)
