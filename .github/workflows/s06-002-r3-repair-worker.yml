@@ -61,6 +61,8 @@ jobs:
         run: bash supabase/tests/internal_user_rbac_identity_test.sh
       - name: Run lifecycle R1/R2/R3 concurrency regressions
         run: bash supabase/tests/internal_user_lifecycle_concurrency_test.sh
+      - name: Fresh replay before crossed regressions
+        run: supabase db reset
       - name: Run crossed Application and Interview regressions
         shell: bash
         run: |
