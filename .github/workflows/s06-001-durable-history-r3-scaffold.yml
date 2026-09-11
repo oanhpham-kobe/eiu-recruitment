@@ -1,0 +1,30 @@
+name: S06-001 Durable History R3 Migration Scaffold
+
+on:
+  push:
+    branches:
+      - scaffold/S06-001-durable-history-r3
+
+permissions:
+  contents: write
+
+jobs:
+  scaffold:
+    if: ${{ !contains(github.event.head_commit.message, 'scaffold S06-001 durable history R3 migration') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Create repair migration
+        run: supabase migration new master_data_durable_reference_history
+      - name: Commit scaffold
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add supabase/migrations/*_master_data_durable_reference_history.sql
+          git commit -m 'chore(db): scaffold S06-001 durable history R3 migration'
+          git push origin HEAD:scaffold/S06-001-durable-history-r3
