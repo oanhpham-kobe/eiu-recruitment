@@ -184,6 +184,38 @@ function createMockSupabase(options: {
         const result = handler(args);
         return { data: result, error: null };
       }
+      const isInternal =
+        options.userSession?.email.toLowerCase().endsWith("@eiu.edu.vn") ===
+        true;
+      if (fn === "get_current_internal_session" && isInternal) {
+        return {
+          data: {
+            success: true,
+            data: {
+              app_user_id: options.userSession?.id ?? "user-1",
+              is_active: isActive,
+              is_root_admin: options.isRootAdmin ?? false,
+              roles,
+              permissions,
+            },
+          },
+          error: null,
+        };
+      }
+      if (fn === "get_current_internal_binding_status" && isInternal) {
+        return {
+          data: {
+            success: true,
+            data: {
+              bound: true,
+              app_user_id: options.userSession?.id ?? "user-1",
+              is_active: isActive,
+              is_root_admin: options.isRootAdmin ?? false,
+            },
+          },
+          error: null,
+        };
+      }
       return { data: null, error: null };
     },
     auth: {
@@ -1331,76 +1363,64 @@ test("9. Active duplicate confirmation: unconfirmed duplicate returns DUPLICATE_
   );
 });
 
-test("10. Actor resolution using is_root_admin prevents real authorized HR callers from being classified as GUEST", async () => {
-  let selectedCols: string | null = null;
-  const supabaseWithIsRootAdmin = {
+test("10. Actor resolution uses trusted session RPC and never raw-queries app_users auth binding", async () => {
+  let rawAppUsersQueried = false;
+  const trustedSessionClient = {
     auth: {
       getUser: async () => ({
-        data: {
-          user: {
-            id: "hr-user-id",
-            email: "hr@eiu.edu.vn",
-          },
-        },
+        data: { user: { id: "hr-user-id", email: "hr@eiu.edu.vn" } },
         error: null,
       }),
     },
-    from: (_table: string) => ({
-      select: (cols: string) => {
-        selectedCols = cols;
+    rpc: async (fn: string) => {
+      if (fn === "get_current_internal_session") {
         return {
-          eq: () => ({
-            maybeSingle: async () => ({
-              data: {
-                app_user_id: "hr-user-id",
-                is_active: true,
-                is_root_admin: false,
-                app_user_roles: [{ role_code: "HR" }],
-                app_user_permissions: [{ permission_code: "submissions.edit" }],
-              },
-              error: null,
-            }),
-            single: async () => ({
-              data: {
-                app_user_id: "hr-user-id",
-                is_active: true,
-                is_root_admin: false,
-                app_user_roles: [{ role_code: "HR" }],
-                app_user_permissions: [{ permission_code: "submissions.edit" }],
-              },
-              error: null,
-            }),
-          }),
+          data: {
+            success: true,
+            data: {
+              app_user_id: "hr-user-id",
+              is_active: true,
+              is_root_admin: false,
+              roles: ["HR"],
+              permissions: ["submissions.edit"],
+            },
+          },
+          error: null,
         };
-      },
-    }),
-    rpc: async () => ({
-      data: {
-        success: true,
-        data: {
-          submission_id: sampleSubmissionId,
-          hr_note: "Test note",
-          version_no: 2,
-        },
-      },
-      error: null,
-    }),
+      }
+      if (fn === "update_submission_by_hr") {
+        return {
+          data: {
+            success: true,
+            data: {
+              submission_id: sampleSubmissionId,
+              hr_note: "Test note",
+              version_no: 2,
+            },
+          },
+          error: null,
+        };
+      }
+      return { data: null, error: null };
+    },
+    from: (table: string) => {
+      if (table === "app_users") rawAppUsersQueried = true;
+      throw new Error(`Unexpected raw table query: ${table}`);
+    },
   } as unknown as SupabaseClient;
 
   const res = await saveSubmissionHrNote(sampleSubmissionId, "Test note", 1, {
-    client: supabaseWithIsRootAdmin,
+    client: trustedSessionClient,
   });
-
-  const queriedCols = selectedCols as string | null;
-  assert.ok(queriedCols?.includes("is_root_admin"), "Must query is_root_admin");
-  assert.ok(
-    !queriedCols?.includes("is_root,"),
-    "Must not query non-existent is_root",
+  assert.equal(
+    rawAppUsersQueried,
+    false,
+    "Must not raw-query app_users identity binding",
   );
   assert.equal(
     res.success,
     true,
-    "Authorized HR actor must not be classified as GUEST",
+    "Authorized HR actor must resolve through trusted session RPC",
   );
 });
 
