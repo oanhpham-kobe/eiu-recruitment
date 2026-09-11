@@ -1,0 +1,74 @@
+name: S06-002 Implementation Materialization
+
+on:
+  push:
+    branches:
+      - control/S06-002-implementation-materialization
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Stage materialization script
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .github/scripts/s06_002_materialize_implementation.py /tmp/s06_002_materialize_implementation.py
+
+      - name: Checkout exact integration baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -B materialize-s06-002-impl origin/autonomy/continuous-integration-20260905-01
+          test "$(git rev-parse HEAD)" = "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+          remote_head="$(git ls-remote origin refs/heads/autonomy/continuous-integration-20260905-01 | awk '{print $1}')"
+          test "$remote_head" = "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+          test "$(git ls-remote origin refs/heads/checkpoint/pre-S06-002-001 | awk '{print $1}')" = "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+          test "$(git ls-remote origin refs/heads/oanhpham-kobe/TASK-S06-002-user-rbac-identity | awk '{print $1}')" = "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+
+      - name: Materialize implementation state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python /tmp/s06_002_materialize_implementation.py
+          git diff --check
+
+      - name: Validate implementation control plane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --quiet pyyaml
+          python project_control/validate_omp_native.py
+          python project_control/validate_control_plane.py
+          git diff --check
+          { git diff --name-only 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01; git ls-files --others --exclude-standard; } | sort -u > /tmp/changed
+          printf '%s\n' \
+            project_control/AUTONOMY_RUN_STATE.yaml \
+            project_control/CURRENT_STATE.md \
+            project_control/TASK_REGISTRY.yaml | sort > /tmp/expected
+          diff -u /tmp/expected /tmp/changed
+
+      - name: Commit and publish materialized result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml
+          git commit -m 'chore(state): activate TASK-S06-002 implementation'
+          final_sha="$(git rev-parse HEAD)"
+          echo "FINAL_SHA=$final_sha" >> "$GITHUB_ENV"
+          git push origin HEAD:refs/heads/control/S06-002-implementation-materialized-result
+
+      - name: Report identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Implementation control-state head: $FINAL_SHA"
