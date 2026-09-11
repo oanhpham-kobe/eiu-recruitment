@@ -88,6 +88,15 @@ owner_context(
     "-- 6. Static ACL / SECURITY DEFINER / search_path assertions",
 )
 
+# RAISE is a PL/pgSQL statement, not top-level SQL. Keep the human-readable
+# PASS marker but emit it from a valid anonymous block so the regression stream
+# can reach the terminal ROLLBACK after every assertion has succeeded.
+replace_once(
+    "raise notice 'TASK-S06-002 focused Internal User/RBAC/identity regressions PASS';",
+    "do $$ begin raise notice 'TASK-S06-002 focused Internal User/RBAC/identity regressions PASS'; end $$;",
+    "focused regression terminal notice",
+)
+
 sys.stdout.write(sql)
 PY
 
