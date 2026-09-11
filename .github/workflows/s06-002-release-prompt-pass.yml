@@ -1,0 +1,73 @@
+name: S06-002 Prompt Pass Release
+
+on:
+  push:
+    branches:
+      - control/S06-002-prompt-pass-f757e76
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Stage release script
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .github/scripts/s06_002_release_prompt_pass.py /tmp/s06_002_release_prompt_pass.py
+
+      - name: Checkout exact integration head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -B release-s06-002 origin/autonomy/continuous-integration-20260905-01
+          test "$(git rev-parse HEAD)" = "f5d9f8cb3bbb1a5a97eeef3ad2b879e5b322a6d8"
+          remote_head="$(git ls-remote origin refs/heads/autonomy/continuous-integration-20260905-01 | awk '{print $1}')"
+          test "$remote_head" = "f5d9f8cb3bbb1a5a97eeef3ad2b879e5b322a6d8"
+
+      - name: Materialize transported PASS
+        shell: bash
+        run: |
+          set -euo pipefail
+          python /tmp/s06_002_release_prompt_pass.py
+          git diff --check
+
+      - name: Validate released control plane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --quiet pyyaml
+          python project_control/validate_omp_native.py
+          python project_control/validate_control_plane.py
+          git diff --check
+          { git diff --name-only f5d9f8cb3bbb1a5a97eeef3ad2b879e5b322a6d8; git ls-files --others --exclude-standard; } | sort -u > /tmp/changed
+          printf '%s\n' \
+            project_control/AUTONOMY_RUN_STATE.yaml \
+            project_control/CURRENT_STATE.md \
+            project_control/TASK_REGISTRY.yaml \
+            project_control/reviews/S06_002_PROMPT_REVIEW_OWNER_TRANSPORT_f757e76_v1.md | sort > /tmp/expected
+          diff -u /tmp/expected /tmp/changed
+
+      - name: Commit and publish release result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml project_control/reviews/S06_002_PROMPT_REVIEW_OWNER_TRANSPORT_f757e76_v1.md
+          git commit -m 'chore(state): release TASK-S06-002 prompt gate'
+          final_sha="$(git rev-parse HEAD)"
+          echo "FINAL_SHA=$final_sha" >> "$GITHUB_ENV"
+          git push origin HEAD:refs/heads/control/S06-002-prompt-pass-result
+
+      - name: Report identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Released control-plane head: $FINAL_SHA"
