@@ -1,0 +1,51 @@
+name: S06-001 DB Suite Validation v4
+
+on:
+  push:
+    branches:
+      - validate/S06-001-db-suite-4
+
+permissions:
+  contents: read
+
+jobs:
+  db-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Start local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: Accepted PRE-S04 regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
+      - name: Accepted S05-001 regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/interviewer_report_contextual_read_test.sql
+      - name: Accepted S05-002 regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/hr_report_management_test.sql
+      - name: Accepted S05-002 privacy regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/hr_report_dto_privacy_test.sql
+      - name: TASK-S06-001 canonical seed and guard regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql
+      - name: TASK-S06-001 focused lifecycle regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql
+      - name: TASK-S06-001 concurrent idempotency regression
+        run: bash supabase/tests/master_data_idempotency_concurrency_test.sh
+      - name: Static candidate and CI markers
+        run: |
+          git diff --check 0ec409915bdd00b61b1b7affdb77ec778c7c1dc7...0c4b94b29e08e1ad877583bdb90d522e5577dccc
+          test "$(grep -c "security definer" supabase/migrations/20260910153441_master_data_lifecycle_history_contracts.sql)" -ge 3
+          test "$(grep -c "set search_path = ''" supabase/migrations/20260910153441_master_data_lifecycle_history_contracts.sql)" -ge 3
+          grep -F "CANONICAL_DOCUMENT_TYPE_SCOPE_HISTORY_CONFLICT" supabase/migrations/20260910155734_master_data_lifecycle_guard_repairs.sql >/dev/null
+          grep -F "Execute TASK-S06-001 Master Data Canonical Seed & Guard Regression Assertions" .github/workflows/integration-ci.yml >/dev/null
+          grep -F "Execute TASK-S06-001 Master Data Lifecycle & History Regression Assertions" .github/workflows/integration-ci.yml >/dev/null
+          grep -F "Execute TASK-S06-001 Master Data Concurrent Idempotency Regression Assertions" .github/workflows/integration-ci.yml >/dev/null
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
