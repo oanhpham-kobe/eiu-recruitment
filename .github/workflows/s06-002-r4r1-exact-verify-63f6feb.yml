@@ -1,0 +1,82 @@
+name: S06-002 R4R1 Exact Verify 63f6feb
+
+on:
+  push:
+    branches:
+      - control/S06-002-r4r1-verify-63f6feb
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: 63f6feba352852af5826dd582d1c42159edd66d6
+          fetch-depth: 0
+      - name: Exact SHA and repair delta checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '63f6feba352852af5826dd582d1c42159edd66d6'
+          git diff --check 73f03e00b6c2f90874eb17419e57ca58715a6990...HEAD
+          actual="$(git diff --name-only 73f03e00b6c2f90874eb17419e57ca58715a6990...HEAD | sort | tr '\n' ' ')"
+          expected='supabase/migrations/20260912014500_internal_user_r4_authorization_prelock.sql supabase/tests/internal_user_r4_authorization_prelock_test.sh '
+          test "$actual" = "$expected"
+          repair_actual="$(git diff --name-only 56dbbb9e261a9c1e4587169870c78a4de8d95956...HEAD | sort | tr '\n' ' ')"
+          test "$repair_actual" = 'supabase/tests/internal_user_r4_authorization_prelock_test.sh '
+          git diff --quiet 56dbbb9e261a9c1e4587169870c78a4de8d95956...HEAD -- supabase/migrations/20260912014500_internal_user_r4_authorization_prelock.sql
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('supabase/migrations/20260912014500_internal_user_r4_authorization_prelock.sql').read_text()
+          authn = p.index("if auth.uid() is null then")
+          authz = p.index("private.has_permission('users.directory_manage')")
+          email_lock = p.index("pg_advisory_xact_lock")
+          unit_lock = p.index("for key share")
+          delegate = p.index("update_internal_user_directory_s06_002_r2_impl")
+          assert authn < authz < email_lock < delegate
+          assert authz < unit_lock < delegate
+
+          t = Path('supabase/tests/internal_user_r4_authorization_prelock_test.sh').read_text()
+          for needle in [
+              'wait_holder_ready',
+              'assert_holder_still_held',
+              'release_holder',
+              'r4-ready-email-unauthz',
+              'r4-ready-unit-unauthz',
+              'r4-ready-email-noauth',
+              'r4-ready-unit-noauth',
+              "missing-auth Unit call did not return UNAUTHENTICATED",
+          ]:
+              assert needle in t, needle
+          assert 'sleep .2' not in t
+          PY
+
+  db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: 63f6feba352852af5826dd582d1c42159edd66d6
+          fetch-depth: 0
+      - name: Verify exact SHA
+        run: test "$(git rev-parse HEAD)" = '63f6feba352852af5826dd582d1c42159edd66d6'
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - run: supabase start
+      - name: Zero-state migration replay
+        run: supabase db reset
+      - name: Synchronized R4 authorization-before-prelock regression
+        run: bash supabase/tests/internal_user_r4_authorization_prelock_test.sh
+      - name: Focused Internal User/RBAC/Identity regressions
+        run: bash supabase/tests/internal_user_rbac_identity_test.sh
+      - name: Retained R1/R2/R3 lifecycle concurrency
+        run: bash supabase/tests/internal_user_lifecycle_concurrency_test.sh
+      - name: Database lint
+        run: supabase db lint --local --level error
+      - if: always()
+        run: supabase stop --no-backup
