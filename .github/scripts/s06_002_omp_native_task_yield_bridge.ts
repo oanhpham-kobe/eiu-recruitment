@@ -2,7 +2,6 @@ import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { createAssistantMessageEventStream } from "@oh-my-pi/pi-ai/utils/event-stream";
 
 const CANDIDATE = "73f03e00b6c2f90874eb17419e57ca58715a6990";
-const CHILD_HEAD_TOKEN = "OMP_EIU_REVIEWER_CHILD_HEAD_OK";
 const FINAL_TOKEN = "OMP_EIU_REVIEWER_BRIDGE_OK_73F03E0";
 const PROVIDER = "omp-review-proof";
 const MODEL = "bridge-model";
@@ -35,12 +34,6 @@ function emitToolCall(model: any, name: string, args: Record<string, unknown>, i
   const partial = baseMessage(model, [toolCall], "toolUse");
   stream.push({ type: "start", partial } as any);
   stream.push({ type: "toolcall_start", contentIndex: 0, partial } as any);
-  stream.push({
-    type: "toolcall_delta",
-    contentIndex: 0,
-    delta: JSON.stringify(args),
-    partial,
-  } as any);
   stream.push({ type: "toolcall_end", contentIndex: 0, toolCall, partial } as any);
   stream.push({ type: "done", reason: "toolUse", message: partial } as any);
   return stream;
@@ -71,14 +64,16 @@ function toolResultText(context: any, toolName: string): string | undefined {
 function isReviewerChild(context: any): boolean {
   const tools = Array.isArray(context?.tools) ? context.tools : [];
   if (tools.some((tool: any) => tool?.name === "yield")) return true;
-  const system = Array.isArray(context?.systemPrompt) ? context.systemPrompt.join("\n") : String(context?.systemPrompt ?? "");
+  const system = Array.isArray(context?.systemPrompt)
+    ? context.systemPrompt.join("\n")
+    : String(context?.systemPrompt ?? "");
   return system.includes("Read-only EIU implementation reviewer") || system.includes("eiu-reviewer");
 }
 
 export default function bridgeProof(pi: ExtensionAPI) {
   pi.registerProvider(PROVIDER, {
     baseUrl: "bridge://local",
-    apiKey: "not-used",
+    auth: "none",
     api: "omp-review-proof",
     models: [
       {
@@ -90,20 +85,6 @@ export default function bridgeProof(pi: ExtensionAPI) {
     ],
     streamSimple: (model: any, context: any) => {
       if (isReviewerChild(context)) {
-        const bashResult = toolResultText(context, "bash");
-        if (!bashResult) {
-          return emitToolCall(
-            model,
-            "bash",
-            {
-              command: `set -euo pipefail; test "$(git rev-parse HEAD)" = '${CANDIDATE}'; printf '${CHILD_HEAD_TOKEN}\\n'`,
-            },
-            "proof-child-bash",
-          );
-        }
-        if (!bashResult.includes(CHILD_HEAD_TOKEN)) {
-          return emitText(model, `BRIDGE_PROOF_CHILD_HEAD_FAILURE\n${bashResult}`);
-        }
         return emitToolCall(
           model,
           "yield",
@@ -121,12 +102,13 @@ export default function bridgeProof(pi: ExtensionAPI) {
         model,
         "task",
         {
-          context: `# Goal\nProve native OMP custom-agent dispatch on exact candidate ${CANDIDATE}.\n# Constraints\nRead-only. Do not modify files, refs, databases, deployments, or external state.\n# Contract\nSpawn exactly the project custom agent eiu-reviewer; it must verify exact HEAD using bash and return the proof token through its native yield tool.`,
+          context: `# Goal\nMechanically prove native OMP project-agent dispatch on exact candidate ${CANDIDATE}.\n# Constraints\nRead-only. The workflow has already asserted exact HEAD and a clean worktree. Do not call filesystem or shell mutation tools.\n# Contract\nSpawn exactly the project custom agent eiu-reviewer and require it to terminate through its native yield tool with explicit non-null data.`,
           tasks: [
             {
               name: "BridgeProof",
               agent: "eiu-reviewer",
-              task: `# Target\nExact checked-out repository HEAD ${CANDIDATE}.\n# Change\nNo changes. Verify exact HEAD with the allowed read-only bash tool.\n# Acceptance\nReturn exactly ${FINAL_TOKEN} through the native yield result payload after exact HEAD verification succeeds.`,
+              isolated: false,
+              task: `This is a deterministic transport proof only. Do not inspect or modify the repository. Return exactly ${FINAL_TOKEN} through the native yield tool as {type: \"result\", data: \"${FINAL_TOKEN}\"}.`,
             },
           ],
         },
