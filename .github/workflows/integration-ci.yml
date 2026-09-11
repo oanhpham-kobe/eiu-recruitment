@@ -201,9 +201,25 @@ jobs:
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql
 
+      - name: Execute TASK-S06-001 Durable Reason History Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_reason_history_test.sql
+
+      - name: Execute TASK-S06-001 Historical Candidate Document Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_candidate_document_history_test.sql
+
+      - name: Execute TASK-S06-001 Manage-Only Inactive Read Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_management_read_test.sql
+
       - name: Execute TASK-S06-001 Master Data Concurrent Idempotency Regression Assertions
         run: |
           bash supabase/tests/master_data_idempotency_concurrency_test.sh
+
+      - name: Execute TASK-S06-001 Interview Format First-Use Race Regression Assertions
+        run: |
+          bash supabase/tests/master_data_interview_format_race_test.sh
 
       - name: Stop local Supabase
         if: always()
