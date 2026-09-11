@@ -2,9 +2,12 @@
 set -euo pipefail
 
 container_name="supabase_db_eiu-recruitment-dev"
-auth_id="60000000-0000-0000-0000-000000000001"
-user_id="60000000-0000-0000-0000-000000000002"
-request_id="60000000-0000-0000-0000-000000000003"
+new_uuid() { cat /proc/sys/kernel/random/uuid; }
+suffix="$(tr -d '-' < /proc/sys/kernel/random/uuid | cut -c1-12)"
+auth_id="$(new_uuid)"
+user_id="$(new_uuid)"
+request_id="$(new_uuid)"
+master_code="S06001_CONCURRENT_${suffix}"
 
 psql_exec() {
   docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"
@@ -15,19 +18,13 @@ insert into public.app_users(app_user_id, auth_user_id, email, full_name, is_act
 values (
   '$user_id'::uuid,
   '$auth_id'::uuid,
-  's06001_concurrency@eiu.edu.vn',
+  's06001_concurrency_${suffix}@eiu.edu.vn',
   'S06-001 Concurrency HR',
   true
-)
-on conflict (app_user_id) do update
-set auth_user_id = excluded.auth_user_id,
-    email = excluded.email,
-    full_name = excluded.full_name,
-    is_active = true;
+);
 
 insert into public.app_user_permissions(app_user_id, permission_code)
-values ('$user_id'::uuid, 'master_data.manage')
-on conflict do nothing;
+values ('$user_id'::uuid, 'master_data.manage');
 
 create or replace function private.s06_test_slow_master_insert()
 returns trigger
@@ -35,7 +32,7 @@ language plpgsql
 set search_path = ''
 as \$\$
 begin
-  if new.code = 'S06001_CONCURRENT' then
+  if new.code = '$master_code' then
     perform pg_sleep(1.5);
   end if;
   return new;
@@ -48,7 +45,7 @@ before insert on public.organizational_units
 for each row execute function private.s06_test_slow_master_insert();
 SQL
 
-call_sql="select set_config('request.jwt.claims', jsonb_build_object('sub','$auth_id')::text, false); select public.create_master_item('organizational_units', '{\"code\":\"S06001_CONCURRENT\",\"name_vi\":\"Concurrent Unit\"}'::jsonb, '$request_id'::uuid)::text;"
+call_sql="select set_config('request.jwt.claims', jsonb_build_object('sub','$auth_id')::text, false); select public.create_master_item('organizational_units', '{\"code\":\"$master_code\",\"name_vi\":\"Concurrent Unit\"}'::jsonb, '$request_id'::uuid)::text;"
 
 run_call() {
   docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call_sql" | tail -n 1
@@ -81,7 +78,7 @@ fi
 psql_exec <<SQL
 do \$\$
 begin
-  assert (select count(*) from public.organizational_units where code = 'S06001_CONCURRENT') = 1,
+  assert (select count(*) from public.organizational_units where code = '$master_code') = 1,
     'concurrent duplicate create must commit exactly one business row';
   assert (
     select count(*) from public.security_audit_log
@@ -98,4 +95,4 @@ drop trigger if exists s06_test_slow_master_insert on public.organizational_unit
 drop function if exists private.s06_test_slow_master_insert();
 SQL
 
-echo "TASK-S06-001 concurrent idempotency assertions passed"
+echo "TASK-S06-001 concurrent idempotency assertions passed with fresh fixture $suffix"
