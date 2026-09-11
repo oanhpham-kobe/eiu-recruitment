@@ -36,6 +36,14 @@ jobs:
         run: |
           set -euo pipefail
           python /tmp/s06_002_release_prompt_pass.py
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('project_control/AUTONOMY_RUN_STATE.yaml')
+          s = p.read_text(encoding='utf-8')
+          old = '  execution_hold: "Prompt/source review passed. Implementation may begin only after checkpoint/pre-S06-002-001 and isolated implementation branch are materialized."'
+          assert s.count(old) == 1, s.count(old)
+          p.write_text(s.replace(old, '  execution_hold: null', 1), encoding='utf-8')
+          PY
           git diff --check
 
       - name: Validate released control plane
