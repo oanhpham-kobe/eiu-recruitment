@@ -1,0 +1,88 @@
+name: S06-002 Prompt Gate Materialization
+
+on:
+  push:
+    branches:
+      - control/S06-002-materialize-28e4baf
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Stage materialization inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp project_control/prompts/SLICE-06_TASK-002_v1.md /tmp/SLICE-06_TASK-002_v1.md
+          cp .github/scripts/s06_002_materialize.py /tmp/s06_002_materialize.py
+
+      - name: Checkout exact integration parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -B materialize-s06-002 origin/autonomy/continuous-integration-20260905-01
+          test "$(git rev-parse HEAD)" = "28e4baf8821c95a332dfcd390718b6af0a14a9bb"
+          remote_head="$(git ls-remote origin refs/heads/autonomy/continuous-integration-20260905-01 | awk '{print $1}')"
+          test "$remote_head" = "28e4baf8821c95a332dfcd390718b6af0a14a9bb"
+
+      - name: Materialize exact prompt-review target
+        shell: bash
+        run: |
+          set -euo pipefail
+          python /tmp/s06_002_materialize.py phase1
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/prompts/SLICE-06_TASK-002_v1.md project_control/TASK_REGISTRY.yaml project_control/SLICE_REGISTRY.yaml
+          git commit -m 'chore(plan): materialize TASK-S06-002 prompt'
+          echo "TARGET_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Persist waiting review state
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET_SHA="$TARGET_SHA" python /tmp/s06_002_materialize.py phase2
+          git diff --check
+
+      - name: Validate final control plane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --quiet pyyaml
+          python project_control/validate_omp_native.py
+          python project_control/validate_control_plane.py
+          git diff --check
+          mapfile -t changed < <(git diff --name-only 28e4baf8821c95a332dfcd390718b6af0a14a9bb | sort)
+          printf '%s\n' "${changed[@]}" > /tmp/changed
+          printf '%s\n' \
+            project_control/AUTONOMY_RUN_STATE.yaml \
+            project_control/CURRENT_STATE.md \
+            project_control/SLICE_REGISTRY.yaml \
+            project_control/TASK_REGISTRY.yaml \
+            project_control/prompts/SLICE-06_TASK-002_v1.md \
+            project_control/reviews/S06_002_PROMPT_REVIEW_GATE_v1.md | sort > /tmp/expected
+          diff -u /tmp/expected /tmp/changed
+
+      - name: Commit waiting state and publish result branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml project_control/reviews/S06_002_PROMPT_REVIEW_GATE_v1.md
+          git commit -m 'chore(state): await TASK-S06-002 prompt review'
+          final_sha="$(git rev-parse HEAD)"
+          echo "FINAL_SHA=$final_sha" >> "$GITHUB_ENV"
+          git push --force-with-lease origin HEAD:refs/heads/control/S06-002-materialized-result
+
+      - name: Report exact identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Prompt review target: $TARGET_SHA"
+          echo "Materialized waiting-state head: $FINAL_SHA"
