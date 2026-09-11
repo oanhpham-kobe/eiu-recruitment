@@ -60,8 +60,7 @@ jobs:
           python project_control/validate_omp_native.py
           python project_control/validate_control_plane.py
           git diff --check
-          mapfile -t changed < <(git diff --name-only 28e4baf8821c95a332dfcd390718b6af0a14a9bb | sort)
-          printf '%s\n' "${changed[@]}" > /tmp/changed
+          { git diff --name-only 28e4baf8821c95a332dfcd390718b6af0a14a9bb; git ls-files --others --exclude-standard; } | sort -u > /tmp/changed
           printf '%s\n' \
             project_control/AUTONOMY_RUN_STATE.yaml \
             project_control/CURRENT_STATE.md \
