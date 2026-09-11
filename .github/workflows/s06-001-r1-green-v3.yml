@@ -1,0 +1,54 @@
+name: S06-001 Review Repairs GREEN v3
+
+on:
+  push:
+    branches:
+      - validate/S06-001-r1-green-v3
+
+permissions:
+  contents: read
+
+jobs:
+  green:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Scope and diff hygiene
+        run: git diff --check 0c4b94b29e08e1ad877583bdb90d522e5577dccc...HEAD -- . ':!.github/workflows/s06-001-r1-green-v3.yml'
+      - name: Start local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: Existing PRE-S04 regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
+      - name: Existing S05 interviewer report regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interviewer_report_contextual_read_test.sql
+      - name: Existing S05 HR report regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/hr_report_management_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/hr_report_dto_privacy_test.sql
+      - name: Existing S06 seed and lifecycle regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql
+      - name: R1 durable reason history regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_reason_history_test.sql
+      - name: R2 historical Candidate document regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_candidate_document_history_test.sql
+      - name: R4 manage-only inactive read regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_management_read_test.sql
+      - name: Concurrent idempotency fresh-fixture regression
+        run: bash supabase/tests/master_data_idempotency_concurrency_test.sh
+      - name: R3 Interview Format first-use race regression
+        run: bash supabase/tests/master_data_interview_format_race_test.sh
+      - name: Database advisors
+        run: supabase db advisors --local
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
