@@ -307,10 +307,10 @@ slice_05_closure:
   closure_transition_governance_ci: "34488858173 PASS"
 
 slice_06_planning:
-  status: IMPLEMENTATION_MATERIALIZATION
+  status: WAITING_EXTERNAL_REVIEW
   proposed_first_task: TASK-S06-001
   materialized_task: TASK-S06-001
-  task_status: READY
+  task_status: REVIEW
   prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
   producer_reconciliation:
     work_id: S06-001-PROMPT-PRODUCER-RECONCILIATION-001
@@ -376,6 +376,38 @@ slice_06_planning:
     evidence_commit: PENDING
     evidence_path: PENDING
   reconciliation_note: "Accepted Slice-01 users.directory_read technical helper is intentionally left untouched by S06-001 and must be reconciled in the later User/Identity/RBAC task against current permission-detail visibility rules."
+  implementation_candidate:
+    branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle
+    baseline_sha: "0ec409915bdd00b61b1b7affdb77ec778c7c1dc7"
+    candidate_sha: "0c4b94b29e08e1ad877583bdb90d522e5577dccc"
+    changed_files_count: 6
+    source_reopen_required: false
+    producer_verification:
+      validation_v3_run: "34551607089 PASS"
+      exact_candidate_validation_v4_run: "34551826518 PASS"
+      zero_state_migration_replay: PASS
+      accepted_pre_s04_regression: PASS
+      accepted_s05_001_regression: PASS
+      accepted_s05_002_regression: PASS
+      accepted_s05_002_privacy_regression: PASS
+      master_data_seed_guard_regression: PASS
+      master_data_lifecycle_history_regression: PASS
+      master_data_concurrent_idempotency_regression: PASS
+      static_diff_security_markers: PASS
+    review_package: project_control/reviews/S06_001_IMPLEMENTATION_REVIEW_GATE_0c4b94b_v1.md
+  independent_implementation_review:
+    work_id: S06-001-IMPLEMENTATION-REVIEW-001
+    reviewer: eiu-reviewer
+    status: WAITING_EXTERNAL_REVIEW
+    reviewed_sha: "0c4b94b29e08e1ad877583bdb90d522e5577dccc"
+    result: PENDING
+    source_reopen_required: PENDING
+    blocking_findings: PENDING
+    evidence_branch: PENDING
+    evidence_commit: PENDING
+    evidence_path: PENDING
+  implementation_execution_hold: "Exact-SHA independent implementation review by eiu-reviewer; no product serialization to integration before PASS + SOURCE_REOPEN_REQUIRED=false."
+  implementation_safe_frontier: NONE
 
 implementation_materialization:
   task: TASK-S06-001
