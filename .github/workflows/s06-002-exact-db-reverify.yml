@@ -1,0 +1,83 @@
+name: S06-002 Exact DB Reverify
+
+on:
+  push:
+    branches:
+      - control/S06-002-verify-1e97023
+
+permissions:
+  contents: read
+
+env:
+  CANDIDATE_SHA: 1e97023e0c02ccc32ab84c5e02867a9511f4cd37
+  PRIOR_WEB_VERIFIED_SHA: 014e22f737463b049eacca041a0c204ce0699cd1
+  BASE_SHA: 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01
+
+jobs:
+  static:
+    name: Exact candidate static and web-equivalence checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+          fetch-depth: 0
+      - name: Verify exact SHA, patch hygiene and web-tree equivalence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
+          test -z "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA" | grep '^README.md$' || true)"
+          mapfile -t repair_paths < <(git diff --name-only "$PRIOR_WEB_VERIFIED_SHA" "$CANDIDATE_SHA")
+          test "${#repair_paths[@]}" -eq 1
+          test "${repair_paths[0]}" = "supabase/tests/internal_user_rbac_identity_test.sh"
+          test "$(git rev-parse "$PRIOR_WEB_VERIFIED_SHA:web")" = "$(git rev-parse "$CANDIDATE_SHA:web")"
+          printf 'EXACT_CANDIDATE=%s\nWEB_TREE_EQUIVALENT_TO=%s\n' "$CANDIDATE_SHA" "$PRIOR_WEB_VERIFIED_SHA"
+
+  database:
+    name: Exact candidate database verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+      - name: Verify exact SHA
+        run: test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Start local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: TASK-S06-002 focused Internal User/RBAC/Identity regressions
+        run: bash supabase/tests/internal_user_rbac_identity_test.sh
+      - name: TASK-S06-002 two-session lifecycle concurrency regressions
+        run: bash supabase/tests/internal_user_lifecycle_concurrency_test.sh
+      - name: Crossed Application reactivation and participant contract regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_reactivation_and_participant_contract_repair_test.sql
+      - name: Crossed Interview lifecycle regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_lifecycle_test.sql
+      - name: Crossed Interview round/conflict regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_round_and_conflict_locking_test.sql
+      - name: Crossed Interview copy regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
+      - name: Crossed bulk Application assignment regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/bulk_commands_replay.sql
+      - name: TASK-S06-001 master data canonical seed and guard regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql
+      - name: TASK-S06-001 master data lifecycle/history regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql
+      - name: TASK-S06-001 durable reference history regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_durable_reference_history_test.sql
+      - name: Database lint at error level
+        run: supabase db lint --local --level error
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
