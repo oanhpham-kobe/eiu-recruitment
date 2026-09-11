@@ -1196,7 +1196,7 @@ tasks:
   TASK-S06-002:
     title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
     slice: SLICE-06
-    status: REVIEW
+    status: IN_PROGRESS
     lane: LANE_A
     depends_on:
       - TASK-S06-001
@@ -1208,7 +1208,10 @@ tasks:
     implementation_baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
     implementation_checkpoint: checkpoint/pre-S06-002-001
     implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
-    implementation_candidate_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
-    review_status: "PENDING (S06-002-IMPLEMENTATION-REVIEW-001 @ a7aa037e26cda6ba70153539c1dfc15c3fba37e6; independent eiu-reviewer)"
-    producer_verification: "PASS (final exact DB/static verifier run 34611668782; exact prior web job 34602347683/103272463530 PASS on web-equivalent 014e22f737463b049eacca041a0c204ce0699cd1)"
+    prior_implementation_candidate_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
+    implementation_candidate_sha: PENDING
+    repair_round: R2
+    review_status: "BLOCKING_REPAIR (S06-002-IMPLEMENTATION-REVIEW-001 @ a7aa037e26cda6ba70153539c1dfc15c3fba37e6; SOURCE_REOPEN_REQUIRED=false; evidence persistence unavailable)"
+    review_evidence: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
+    prior_producer_verification: "PASS (final exact DB/static verifier run 34611668782; exact prior web job 34602347683/103272463530 PASS on web-equivalent 014e22f737463b049eacca041a0c204ce0699cd1)"
     notes: "High-risk shared backend/security prerequisite for Internal User directory lifecycle, HR role/permission administration, first-Google-login hardening, bound non-Root identity change, minimum-safe permission visibility, and race-safe owner/participant lifecycle guards. No Users/Permissions UI, main mutation, deployment, or connected Supabase migration application in this task."
