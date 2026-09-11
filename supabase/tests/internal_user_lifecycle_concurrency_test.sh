@@ -187,4 +187,5 @@ psql_exec -qAt -c "select is_active::text from public.app_users where app_user_i
 psql_exec -qAt -c "select count(*) from public.interview_participants where interview_participant_id='$participant_id'::uuid and is_current=true;" | grep -qx '1'
 
 bash supabase/tests/internal_user_r2_command_concurrency_test.sh
+bash supabase/tests/internal_user_r3_review_concurrency_test.sh
 echo "TASK-S06-002 Internal User owner/participant concurrency assertions passed with fresh fixture $suffix"
