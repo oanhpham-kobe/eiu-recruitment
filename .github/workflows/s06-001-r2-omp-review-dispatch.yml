@@ -1,0 +1,102 @@
+name: S06-001 R2 OMP Review Dispatch
+
+on:
+  push:
+    branches:
+      - review-dispatch/S06-001-R2-dced5aa
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: dced5aac32e6b09181cd53d0011b9c951edf2814
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prepare exact review handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch https://github.com/oanhpham-kobe/eiu-recruitment.git autonomy/continuous-integration-20260905-01 --depth=1
+          git show FETCH_HEAD:project_control/reviews/S06_001_IMPLEMENTATION_R2_GATE_dced5aa_v1.md > /tmp/S06_001_IMPLEMENTATION_R2_GATE_dced5aa_v1.md
+          test "$(git rev-parse HEAD)" = "dced5aac32e6b09181cd53d0011b9c951edf2814"
+          git status --porcelain
+
+      - name: Install OMP
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://omp.sh/install | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.omp/bin" >> "$GITHUB_PATH"
+
+      - name: Dispatch read-only eiu-reviewer
+        id: review
+        continue-on-error: true
+        shell: bash
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          command -v omp
+          cat > /tmp/omp-ci.yml <<'YAML'
+          modelRoles:
+            default: github-copilot/gpt-5.4:high
+            slow: github-copilot/gpt-5.4:high
+          task:
+            batch: true
+          async:
+            enabled: false
+          YAML
+
+          cat > /tmp/dispatch-prompt.txt <<'PROMPT'
+          This is a read-only independent implementation review dispatch for the EIU Recruitment repository.
+
+          You are the OMP main coordinator only for transport. You MUST use the native task tool and spawn exactly one project custom agent named `eiu-reviewer`. Do not perform the acceptance review yourself.
+
+          Shared context for the child reviewer:
+          - WORK_ID: S06-001-IMPLEMENTATION-REVIEW-001-R2
+          - repository: oanhpham-kobe/eiu-recruitment
+          - exact checked-out candidate SHA: dced5aac32e6b09181cd53d0011b9c951edf2814
+          - prior reviewed SHA: 0c4b94b29e08e1ad877583bdb90d522e5577dccc
+          - canonical task prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
+          - review contract: REVIEW.md
+          - reviewer definition: .omp/agents/eiu-reviewer.md
+          - the detailed R2 handoff is available at /tmp/S06_001_IMPLEMENTATION_R2_GATE_dced5aa_v1.md; read it before dispatch and include its full requirements in the child task.
+          - start from the exact diff 0c4b94b29e08e1ad877583bdb90d522e5577dccc...dced5aac32e6b09181cd53d0011b9c951edf2814 and inspect affected consumers/invariants as required.
+
+          The child must remain read-only and return the required fields from the handoff, including VERDICT and SOURCE_REOPEN_REQUIRED. Do not create commits, refs, files, deployments, or external writes.
+
+          After the `eiu-reviewer` child returns, output ONLY its complete review report verbatim enough to persist as evidence. Do not replace its verdict with your own.
+          PROMPT
+
+          set +e
+          omp --config /tmp/omp-ci.yml --model github-copilot/gpt-5.4:high -p "$(cat /tmp/dispatch-prompt.txt)" 2>&1 | tee /tmp/eiu-reviewer-output.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "omp_exit_code=$rc" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+
+      - name: Publish reviewer transport output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s06-001-r2-eiu-reviewer-output
+          path: /tmp/eiu-reviewer-output.txt
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Require successful reviewer runtime
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.review.outputs.omp_exit_code }}" = "0"
