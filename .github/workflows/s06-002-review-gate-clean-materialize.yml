@@ -1,0 +1,114 @@
+name: S06-002 Review Gate Clean Materialize
+
+on:
+  push:
+    branches:
+      - control/S06-002-review-gate-clean-a7aa037
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact integration control baseline
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: autonomy/continuous-integration-20260905-01
+          fetch-depth: 0
+
+      - name: Guard integration baseline and materialize review state
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_INTEGRATION='ca273619303b4d9d09e44bcbc485c26e6e169394'
+          CANDIDATE='a7aa037e26cda6ba70153539c1dfc15c3fba37e6'
+          test "$(git rev-parse HEAD)" = "$EXPECTED_INTEGRATION"
+          git fetch origin "$CANDIDATE"
+          test "$(git rev-parse FETCH_HEAD)" = "$CANDIDATE"
+          python - <<'PY'
+          from pathlib import Path
+
+          CANDIDATE = 'a7aa037e26cda6ba70153539c1dfc15c3fba37e6'
+          BASELINE = '0a2ccdfedc477f9766c9aaa03739d16a7ed83c01'
+          WEB_SHA = '014e22f737463b049eacca041a0c204ce0699cd1'
+          DB_RUN = '34611668782'
+          WEB_RUN = '34602347683'
+          WEB_JOB = '103272463530'
+
+          def replace_one(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, got {count}')
+              return text.replace(old, new, 1)
+
+          state_path = Path('project_control/AUTONOMY_RUN_STATE.yaml')
+          state = state_path.read_text(encoding='utf-8')
+          state = replace_one(
+              state,
+              's06_002_planning:\n  status: IMPLEMENTATION_ACTIVE',
+              's06_002_planning:\n  status: WAITING_EXTERNAL_REVIEW',
+              'planning_status',
+          )
+          state = replace_one(
+              state,
+              '  implementation_hold: "CLEARED — immutable pre-task checkpoint and isolated implementation branch are materialized at the exact validated baseline."',
+              '''  implementation_hold: "HELD — exact candidate is producer-verified and frozen for independent implementation review; no product serialization to integration before PASS + SOURCE_REOPEN_REQUIRED=false."\n  implementation_candidate:\n    branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity\n    baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"\n    candidate_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"\n    changed_files_count: 18\n    source_reopen_required: false\n    producer_verification:\n      final_exact_db_run: "34611668782 PASS"\n      final_static_web_equivalence: PASS\n      prior_exact_web_run: "34602347683 / job 103272463530 PASS"\n      prior_exact_web_sha: "014e22f737463b049eacca041a0c204ce0699cd1"\n      zero_state_migration_replay: PASS\n      focused_internal_user_rbac_identity: PASS\n      two_session_lifecycle_concurrency: PASS\n      crossed_application_interview_bulk: PASS\n      accepted_s06_001_regressions: PASS\n      database_lint_error_level: PASS\n    review_package: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md\n  independent_implementation_review:\n    work_id: S06-002-IMPLEMENTATION-REVIEW-001\n    reviewer: eiu-reviewer\n    status: WAITING_EXTERNAL_REVIEW\n    reviewed_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"\n    result: PENDING\n    source_reopen_required: PENDING\n    blocking_findings: PENDING\n    evidence_branch: PENDING\n    evidence_commit: PENDING\n    evidence_path: PENDING''',
+              'implementation_hold',
+          )
+          state = replace_one(
+              state,
+              '  current_candidate_sha: PENDING\n  review_round: R0',
+              f'  current_candidate_sha: "{CANDIDATE}"\n  review_round: R1',
+              'candidate_materialization',
+          )
+          old_frontier = '''safe_frontier:\n  eligible_tasks: []\n  skipped_due_to_dependency: []\n  materialization_frontier: []\n  execution_hold: "TASK-S06-002 implementation is active on its isolated branch; no additional Slice-06 implementation frontier is materialized."\n\nstop_gate:\n  status: CLEAR\n  type: NONE\n  work_id: S06-002-IMPLEMENTATION-MATERIALIZATION-001\n  target: "TASK-S06-002 implementation baseline @ 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"\n  reviewer: eiu-reviewer\n  source_reopen_required: false\n  resume_on: "Implement the reviewed S06-002 contract on the isolated branch, verify locally/CI, then create exact candidate review gate before integration."\n\nnext_action: "Implement TASK-S06-002 on oanhpham-kobe/TASK-S06-002-user-rbac-identity from exact baseline 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01. Preserve the reviewed scope and non-blocking observations. Do not push/merge main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."'''
+          new_frontier = f'''safe_frontier:\n  eligible_tasks: []\n  skipped_due_to_dependency: []\n  materialization_frontier: []\n  execution_hold: "TASK-S06-002 exact candidate {CANDIDATE} is frozen for independent implementation review; no later implementation frontier is materialized."\n\nstop_gate:\n  status: HELD\n  type: EXTERNAL_REVIEW\n  work_id: S06-002-IMPLEMENTATION-REVIEW-001\n  target: "TASK-S06-002 exact implementation candidate @ {CANDIDATE}"\n  reviewer: eiu-reviewer\n  source_reopen_required: PENDING\n  resume_on: "Independent exact-SHA implementation review returns PASS with SOURCE_REOPEN_REQUIRED=false."\n\nnext_action: "Send project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md to independent eiu-reviewer and obtain an exact-SHA verdict for {CANDIDATE}. Do not serialize product code into integration until PASS + SOURCE_REOPEN_REQUIRED=false. Preserve boundaries: no main mutation, PR merge, Vercel deployment, or connected Supabase migration application."'''
+          state = replace_one(state, old_frontier, new_frontier, 'review_frontier')
+          state_path.write_text(state, encoding='utf-8')
+
+          task_path = Path('project_control/TASK_REGISTRY.yaml')
+          tasks = task_path.read_text(encoding='utf-8')
+          tasks = replace_one(
+              tasks,
+              '''  TASK-S06-002:\n    title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"\n    slice: SLICE-06\n    status: IN_PROGRESS''',
+              '''  TASK-S06-002:\n    title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"\n    slice: SLICE-06\n    status: REVIEW''',
+              'task_status',
+          )
+          tasks = replace_one(
+              tasks,
+              '''    implementation_checkpoint: checkpoint/pre-S06-002-001\n    implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity\n    notes:''',
+              f'''    implementation_checkpoint: checkpoint/pre-S06-002-001\n    implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity\n    implementation_candidate_sha: "{CANDIDATE}"\n    review_status: "PENDING (S06-002-IMPLEMENTATION-REVIEW-001 @ {CANDIDATE}; independent eiu-reviewer)"\n    producer_verification: "PASS (final exact DB/static verifier run {DB_RUN}; exact prior web job {WEB_RUN}/{WEB_JOB} PASS on web-equivalent {WEB_SHA})"\n    notes:''',
+              'task_review_materialization',
+          )
+          task_path.write_text(tasks, encoding='utf-8')
+
+          current = f'''# Current Implementation State — Derived Handoff Snapshot\n\n> **DERIVED / NON-AUTHORITATIVE REPORTING ONLY**\n> Runtime authority: `project_control/AUTONOMY_RUN_STATE.yaml`.\n> DAG/task/slice authority: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.\n> Exact code/history authority: Git.\n\n## SLICE-06 / TASK-S06-001 — ACCEPTED\n\nTASK-S06-001 remains accepted at `59be9b2c92906065b8e4baa902fcec1d4cbefa12` / `checkpoint/S06-001-accepted-001`.\n\n## SLICE-06 / TASK-S06-002 — WAITING INDEPENDENT IMPLEMENTATION REVIEW\n\n- Prompt review: `PASS`, work ID `S06-002-PROMPT-REVIEW-001`, exact reviewed prompt SHA `f757e76f3f97077c608dab29bad45b8bd2126dc3`; `SOURCE_REOPEN_REQUIRED=false`.\n- Immutable pre-task checkpoint: `checkpoint/pre-S06-002-001 @ {BASELINE}`.\n- Isolated task branch: `oanhpham-kobe/TASK-S06-002-user-rbac-identity`.\n- Frozen exact implementation candidate: `{CANDIDATE}`.\n- Net task diff from baseline: 18 files; no README/noop net artifact.\n- Final exact static/database verifier: GitHub Actions run `{DB_RUN}` — PASS.\n- Exact web acceptance: run `{WEB_RUN}`, job `{WEB_JOB}` — PASS on `{WEB_SHA}`; final verifier proves the `web/` tree at `{CANDIDATE}` is byte-equivalent to `{WEB_SHA}`.\n- Zero-state replay, focused Internal User/RBAC/Identity tests, two-session lifecycle races, crossed Application/Interview/bulk regressions, all retained S06-001 regressions, and `supabase db lint --local --level error`: PASS.\n- Task registry status: `REVIEW`.\n- Independent implementation verdict: PENDING.\n\n## Next action\n\nObtain independent exact-SHA review for `{CANDIDATE}` using `project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md`. Product code must not be serialized into integration until the reviewer returns `PASS` with `SOURCE_REOPEN_REQUIRED=false`.\n\n## Boundaries\n\n- Do not push/merge `main` without explicit Owner authorization.\n- Do not create/merge a PR in this phase.\n- Do not deploy Vercel without explicit Owner authorization.\n- Do not apply migrations to connected Supabase without explicit Owner authorization.\n'''
+          Path('project_control/CURRENT_STATE.md').write_text(current, encoding='utf-8')
+
+          review = f'''# TASK-S06-002 Independent Implementation Review Gate\n\n## Identity\n\n- WORK_ID: `S06-002-IMPLEMENTATION-REVIEW-001`\n- REVIEWER: `eiu-reviewer`\n- REPOSITORY: `oanhpham-kobe/eiu-recruitment`\n- TASK_BRANCH: `oanhpham-kobe/TASK-S06-002-user-rbac-identity`\n- ORIGINAL_TASK_BASELINE: `{BASELINE}`\n- EXACT_REVIEWED_SHA: `{CANDIDATE}`\n- REVIEW_DIFF: `{BASELINE}...{CANDIDATE}`\n- CANONICAL_PROMPT: `project_control/prompts/SLICE-06_TASK-002_v1.md`\n- PROMPT_REVIEW_SHA: `f757e76f3f97077c608dab29bad45b8bd2126dc3`\n- SOURCE_REOPEN_EXPECTATION: `false` unless the reviewer proves a concrete canonical contradiction.\n\nReview the immutable SHA above. Do not substitute a later mutable branch HEAD. Producer verification is evidence, not independent acceptance.\n\n## Frozen candidate scope\n\nThe net task diff from the pre-task baseline contains 18 files and no README/noop net artifact. Production/control-relevant implementation paths are:\n\n1. `.github/workflows/integration-ci.yml`\n2. `supabase/migrations/20260911104500_internal_user_serialization_contracts.sql`\n3. `supabase/migrations/20260911104530_internal_user_read_contracts.sql`\n4. `supabase/migrations/20260911104600_internal_user_directory_commands.sql`\n5. `supabase/migrations/20260911104630_internal_user_rbac_commands.sql`\n6. `supabase/migrations/20260911104700_internal_user_identity_commands.sql`\n7. `web/src/lib/auth/internal.ts`\n8. `web/src/lib/auth/session.ts`\n9. `web/src/__tests__/internal-provisioning.test.ts`\n10. `web/src/__tests__/internal-session-rpc.test.ts`\n11. `supabase/tests/internal_user_rbac_identity_test.part1.sql`\n12. `supabase/tests/internal_user_rbac_identity_test.part2.sql`\n13. `supabase/tests/internal_user_rbac_identity_test.sh`\n14. `supabase/tests/internal_user_lifecycle_concurrency_test.sh`\n15. `supabase/tests/interview_lifecycle_test.sql`\n16. `supabase/tests/copy_interview_schedule_test.sql`\n17. `supabase/tests/master_data_lifecycle_history_test.sql`\n18. `supabase/tests/master_data_durable_reference_history_test.sql`\n\nNo Users/Permissions UI, `main` mutation, PR merge, Vercel deployment, or connected Supabase migration application is part of this candidate.\n\n## Test-only repair provenance after web verification\n\nExact product/web tree `{WEB_SHA}` received full web acceptance. Six later paths differ from that SHA and are test-only repairs:\n\n- `supabase/tests/copy_interview_schedule_test.sql`\n- `supabase/tests/internal_user_lifecycle_concurrency_test.sh`\n- `supabase/tests/internal_user_rbac_identity_test.sh`\n- `supabase/tests/interview_lifecycle_test.sql`\n- `supabase/tests/master_data_durable_reference_history_test.sql`\n- `supabase/tests/master_data_lifecycle_history_test.sql`\n\nThe final static gate proves `web/` at `{CANDIDATE}` is byte-equivalent to `{WEB_SHA}`. The fixture repairs align retained tests with already-canonical owner eligibility (`Active + HR role`) and accepted `reports.delete + reports.view` authorization; they did not relax production guards. Independently verify that characterization rather than trusting it.\n\n## Canonical contract areas to review\n\n### Trusted first Google bind and identity lifecycle\n\nVerify first bind requires trusted Auth evidence for Google provider plus confirmed/verified email, normalized EIU email, an Active allowlisted Internal User locked for binding, and no competing Auth binding. Security decisions must not trust user-editable metadata. Binding must be atomic with audit, exact replay only, and no auto-rebind. Bound non-Root identity change must remain Root-only; Root identity remains break-glass rather than an ordinary recovery path.\n\n### Internal User directory commands\n\nVerify `create_internal_user`, `update_internal_user_directory`, `set_internal_user_active`, and identity-change commands enforce authoritative actor resolution, protected-field ownership, optimistic version checks where canonical, normalized email/domain rules, and stable/non-leaking errors. Preserve accepted S06-001 Unit lifecycle/history locking and durable-reference behavior.\n\n### HR RBAC commands\n\nVerify `assign_hr_role_with_defaults`, `remove_hr_role`, `grant_hr_permission`, and `revoke_hr_permission` use canonical Full HR authority rather than treating historical seed inventory as authority. Check dependency guards, exact role/permission semantics, atomic audit, and Root behavior.\n\n### Permission-read minimization\n\nVerify the historical cross-user granular permission exposure is closed. Root may inspect all effective granular permissions; non-root directory managers receive only minimum-safe directory/lifecycle information; a user may still obtain their own permission details required for session behavior. Inspect all migrated session/selector consumers to ensure no broad fallback remains.\n\n### Lifecycle concurrency and lock graph\n\nIndependently inventory every writer that can operationalize an owner or participant, including assignment, reactivation, scheduling, uncancel, copy, add/re-add and bulk paths. Verify deterministic serialization with:\n\n- user deactivation versus Active Application owner assignment/reactivation;\n- user deactivation versus current participant on a non-elapsed `resource_blocking` Interview;\n- HR-role removal versus owner assignment and permission mutation;\n- Unit-history trigger locks and accepted S06-001 durable-reference locks.\n\nFully elapsed participation must not block deactivation, and Current Round must not be substituted for the canonical `resource_blocking` predicate. Check for deadlock cycles and fail-closed reassignment-required outcomes.\n\n### Database security\n\nVerify all exposed-table RLS/ACL boundaries, `SECURITY DEFINER` functions with `SET search_path = ''` and schema-qualified objects, narrow function execute grants, no `service_role` leakage, no authorization from editable `user_metadata`, and atomic audit/security logs.\n\n## Producer verification already executed\n\nFinal exact candidate verifier run `{DB_RUN}`: PASS. It checked exact SHA `{CANDIDATE}` and executed:\n\n- patch hygiene and six-path test-only delta check;\n- final `web/` tree equivalence to `{WEB_SHA}`;\n- local Supabase start;\n- `supabase db reset` from zero;\n- focused S06-002 Internal User/RBAC/Identity regressions;\n- real two-session owner/participant lifecycle concurrency regressions;\n- crossed Application reactivation/participant contract regression;\n- Interview lifecycle, round/conflict and copy regressions;\n- bulk Application assignment replay regression;\n- retained S06-001 canonical seed/guard, lifecycle/history and durable-reference-history regressions;\n- `supabase db lint --local --level error`;\n- clean local Supabase stop.\n\nExact web acceptance evidence: workflow run `{WEB_RUN}`, job `{WEB_JOB}` PASS on exact SHA `{WEB_SHA}`. That web job passed dependency install/audit, design contract, lint, typecheck, build, Chromium install and full web acceptance suite. The overall `{WEB_RUN}` was not green because an earlier database test fixture failed; do not misstate the overall run. Final run `{DB_RUN}` subsequently closed the database/test-fixture boundary and proved web-tree equivalence.\n\n## Independent verification requested\n\nWhen supported, rerun at minimum:\n\n```bash\ngit diff --check {BASELINE}...{CANDIDATE}\nsupabase start\nsupabase db reset\nbash supabase/tests/internal_user_rbac_identity_test.sh\nbash supabase/tests/internal_user_lifecycle_concurrency_test.sh\ndocker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_reactivation_and_participant_contract_repair_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_lifecycle_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_round_and_conflict_locking_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/bulk_commands_replay.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_durable_reference_history_test.sql\nsupabase db lint --local --level error\nsupabase stop\n```\n\nAlso inspect the exact web/session changes and Integration CI diff. If full web rerun is unavailable, verify the final candidate's `web/` tree identity against `{WEB_SHA}` and review the prior exact web evidence.\n\n## Review-only boundaries\n\nDo not modify implementation, refs, integration state, `main`, Vercel, or connected Supabase. Do not select the next task.\n\n## Required reviewer output\n\nReturn:\n\n- `WORK_ID: S06-002-IMPLEMENTATION-REVIEW-001`\n- `REVIEWED_REPOSITORY: oanhpham-kobe/eiu-recruitment`\n- `REVIEWED_BRANCH: oanhpham-kobe/TASK-S06-002-user-rbac-identity`\n- `REVIEWED_SHA: {CANDIDATE}`\n- `VERDICT: PASS | BLOCKING_REPAIR | OWNER_DECISION_REQUIRED`\n- `SOURCE_REOPEN_REQUIRED: true | false`\n- `BLOCKING_FINDINGS`\n- `NON_BLOCKING_OBSERVATIONS`\n- `VERIFICATION_EXECUTED`\n- `IDENTITY_BIND_ASSESSMENT`\n- `RBAC_VISIBILITY_ASSESSMENT`\n- `LIFECYCLE_CONCURRENCY_ASSESSMENT`\n- `SECURITY_ASSESSMENT`\n- `ACCEPTED_CONTRACT_REUSE_ASSESSMENT`\n- `ACCEPTANCE_STATEMENT`\n\nFor PASS explicitly state that exact SHA `{CANDIDATE}` may proceed to governed integration without canonical source reopen.\n\n## Durable evidence\n\nSuggested evidence branch: `review/S06-002-IMPL-a7aa037-v1`\n\nSuggested path: `project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_a7aa037_v1.md`\n\nIf persistence is available, return actual branch, full 40-character evidence commit, and path. If not, state `EVIDENCE_PERSISTENCE: UNAVAILABLE`. Never invent coordinates.\n'''
+          Path('project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md').write_text(review, encoding='utf-8')
+          PY
+
+          git diff --check
+          git add -N project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" -eq 4
+          expected=(
+            "project_control/AUTONOMY_RUN_STATE.yaml"
+            "project_control/CURRENT_STATE.md"
+            "project_control/TASK_REGISTRY.yaml"
+            "project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md"
+          )
+          for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
+
+      - name: Commit and publish control-only review gate result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md
+          git commit -m 'chore(state): route TASK-S06-002 candidate to implementation review'
+          git push origin HEAD:control/S06-002-implementation-review-result-v2
