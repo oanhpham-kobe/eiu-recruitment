@@ -193,6 +193,18 @@ jobs:
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/hr_report_dto_privacy_test.sql
 
+      - name: Execute TASK-S06-001 Master Data Canonical Seed & Guard Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql
+
+      - name: Execute TASK-S06-001 Master Data Lifecycle & History Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql
+
+      - name: Execute TASK-S06-001 Master Data Concurrent Idempotency Regression Assertions
+        run: |
+          bash supabase/tests/master_data_idempotency_concurrency_test.sh
+
       - name: Stop local Supabase
         if: always()
         run: supabase stop
