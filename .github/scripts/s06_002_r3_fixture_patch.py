@@ -34,4 +34,13 @@ if old_role_race not in text:
     raise SystemExit('HR-role/bulk race assertion anchor missing')
 text = text.replace(old_role_race, new_role_race, 1)
 
+old_restore = """psql_exec -qAt -c \"insert into public.app_user_roles(app_user_id,role_code) values('$target_id'::uuid,'HR') on conflict do nothing\"
+"""
+new_restore = """psql_exec -qAt -c \"insert into public.app_user_roles(app_user_id,role_code) values('$target_id'::uuid,'HR') on conflict do nothing\"
+psql_exec -qAt -c \"insert into public.app_user_permissions(app_user_id,permission_code) select '$target_id'::uuid,p.permission_code from public.permissions p where p.permission_code in ('interviews.view','interviews.status','interviews.manage','interviews.participants') on conflict do nothing\"
+"""
+if old_restore not in text:
+    raise SystemExit('post-HR-removal restore anchor missing')
+text = text.replace(old_restore, new_restore, 1)
+
 path.write_text(text)
