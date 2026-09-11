@@ -50,7 +50,7 @@ integration:
   last_task_acceptance_integration_ci_result: PASS
   last_task_acceptance_governance_ci_run: "34579159098"
   last_task_acceptance_governance_ci_result: PASS
-  current_prompt_review_target_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"
+  current_prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -310,9 +310,9 @@ slice_05_closure:
 slice_06_planning:
   status: ACTIVE
   proposed_first_task: TASK-S06-001
-  materialized_task: TASK-S06-001
-  task_status: DONE
-  prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
+  materialized_task: TASK-S06-002
+  task_status: READY
+  prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
   producer_reconciliation:
     work_id: S06-001-PROMPT-PRODUCER-RECONCILIATION-001
     result: PASS
@@ -376,7 +376,7 @@ slice_06_planning:
     evidence_branch: PENDING
     evidence_commit: PENDING
     evidence_path: PENDING
-  reconciliation_note: "Accepted Slice-01 users.directory_read technical helper is intentionally left untouched by S06-001 and must be reconciled in the later User/Identity/RBAC task against current permission-detail visibility rules."
+  reconciliation_note: "TASK-S06-002 is now materialized as the governed User/Identity/RBAC reconciliation task. It must reconcile accepted Slice-01 first-login proof and permission-detail visibility against current canonical source without rewriting accepted migration history."
   implementation_candidate:
     branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle
     baseline_sha: "0ec409915bdd00b61b1b7affdb77ec778c7c1dc7"
@@ -471,6 +471,31 @@ s06_001_acceptance:
   main_mutated: false
   pr_created_or_merged: false
 
+s06_002_planning:
+  status: WAITING_EXTERNAL_REVIEW
+  task: TASK-S06-002
+  title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
+  prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+  prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
+  prompt_review:
+    work_id: S06-002-PROMPT-REVIEW-001
+    reviewer: eiu-reviewer
+    review_type: PROMPT_SOURCE_RECONCILIATION
+    result: PENDING
+    source_reopen_required: PENDING
+    blocking_findings: PENDING
+    handoff: project_control/reviews/S06_002_PROMPT_REVIEW_GATE_v1.md
+  source_reopen_expectation: false
+  accepted_prerequisites:
+    - "TASK-S06-001 accepted @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
+    - "accepted Slice-01 identity/auth schema and Internal first-login provisioning"
+    - "accepted Application owner and Interview participant/resource lifecycle contracts"
+  known_reconciliation_targets:
+    - "Accepted first-login bind must be hardened to current canonical verified Google-provider + confirmed EIU email proof without creating a divergent bind path."
+    - "Non-root directory management must not expose another user's granular effective permissions/security identity; inactive lifecycle management still needs a minimum-safe read surface."
+    - "User deactivation/HR-role removal must be concurrency-safe against new Active Application owner assignment and new/current non-elapsed resource-blocking Interview participation."
+  implementation_hold: "No TASK-S06-002 implementation may start before independent prompt/source reconciliation PASS with SOURCE_REOPEN_REQUIRED=false."
+
 implementation_materialization:
   task: TASK-S06-001
   prompt_review: "PASS S06-001-PROMPT-REVIEW-002 @ 68d96b39e309ee6f1edbe6cf4031c10a583b0269"
@@ -487,15 +512,15 @@ safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-001 is accepted. No later Slice-06 implementation task is materialized yet; derive the next governed frontier before implementation."
+  execution_hold: "TASK-S06-002 is materialized but blocked on independent prompt/source reconciliation review of exact target f757e76f3f97077c608dab29bad45b8bd2126dc3."
 
 stop_gate:
-  status: CLEAR
-  type: NONE
-  work_id: S06-001-FINAL-INTEGRATION-EQUIVALENCE-001
-  target: "TASK-S06-001 final integration 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
+  status: WAITING_EXTERNAL_REVIEW
+  type: INDEPENDENT_PROMPT_SOURCE_REVIEW
+  work_id: S06-002-PROMPT-REVIEW-001
+  target: "TASK-S06-002 prompt/source reconciliation @ f757e76f3f97077c608dab29bad45b8bd2126dc3"
   reviewer: eiu-reviewer
-  source_reopen_required: false
-  resume_on: "No S06-001 hold remains; acceptance is complete at checkpoint/S06-001-accepted-001."
+  source_reopen_required: PENDING
+  resume_on: "Independent reviewer PASS + SOURCE_REOPEN_REQUIRED=false for exact prompt-review target f757e76f3f97077c608dab29bad45b8bd2126dc3; on BLOCKING_REPAIR repair only the prompt/control scope and re-review; on OWNER_DECISION_REQUIRED stop for Owner."
 
-next_action: "Materialize the next governed Slice-06 task from the canonical Slice-06 scope split and registries before implementation. Preserve governance boundaries: do not push/merge main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Send project_control/reviews/S06_002_PROMPT_REVIEW_GATE_v1.md to OMP main/eiu-reviewer for exact-target S06-002 prompt/source reconciliation review. Do not begin implementation before PASS + SOURCE_REOPEN_REQUIRED=false. Preserve boundaries: do not push/merge main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."

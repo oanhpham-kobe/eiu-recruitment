@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-06
-current_task: TASK-S06-001
+current_task: TASK-S06-002
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1192,3 +1192,15 @@ tasks:
       - "Governance CI 34579159098: PASS"
       - "checkpoint/S06-001-accepted-001 @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
     notes: "Accepted Master Data lifecycle/history trusted contracts. R1/R2 blockers were repaired; R3 implementation review passed; exact final integration-equivalence review passed; durable semantic-reference history and all retained S06 regressions are permanently gated in Integration CI. No canonical source reopen, main mutation, PR merge, Vercel deployment, or connected Supabase migration application occurred."
+
+  TASK-S06-002:
+    title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
+    slice: SLICE-06
+    status: READY
+    lane: LANE_A
+    depends_on:
+      - TASK-S06-001
+    prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+    prompt_review_status: "WAITING_EXTERNAL_REVIEW (S06-002-PROMPT-REVIEW-001 @ f757e76f3f97077c608dab29bad45b8bd2126dc3)"
+    prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
+    notes: "High-risk shared backend/security prerequisite for Internal User directory lifecycle, HR role/permission administration, first-Google-login hardening, bound non-Root identity change, minimum-safe permission visibility, and race-safe owner/participant lifecycle guards. No Users/Permissions UI, main mutation, deployment, or connected Supabase migration application in this task."
