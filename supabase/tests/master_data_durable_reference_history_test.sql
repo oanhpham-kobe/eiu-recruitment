@@ -40,6 +40,10 @@ begin
   values (v_hr_auth, 's06001_hist_' || v_suffix || '@eiu.edu.vn', 'S06 History HR', true)
   returning app_user_id into v_hr;
 
+  insert into public.app_user_roles(app_user_id, role_code)
+  values (v_hr, 'HR')
+  on conflict do nothing;
+
   insert into public.app_user_permissions(app_user_id, permission_code)
   values
     (v_hr, 'master_data.manage'),
