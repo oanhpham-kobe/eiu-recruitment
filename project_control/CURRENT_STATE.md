@@ -9,7 +9,7 @@
 
 Both Slice-05 tasks and closing composition review are accepted.
 
-## SLICE-06 / TASK-S06-001 — IMPLEMENTATION R2 REVIEW
+## SLICE-06 / TASK-S06-001 — IMPLEMENTATION R3 REVIEW
 
 Prompt v2 exact review target: `68d96b39e309ee6f1edbe6cf4031c10a583b0269`.
 
@@ -21,33 +21,49 @@ Immutable pre-task checkpoint: `checkpoint/pre-S06-001-001`.
 
 Isolated implementation branch: `oanhpham-kobe/TASK-S06-001-master-data-lifecycle`.
 
-### Prior implementation review R1
+### R1 implementation review
 
 - Reviewed SHA: `0c4b94b29e08e1ad877583bdb90d522e5577dccc`.
 - Verdict: `BLOCKING_REPAIR`.
 - `SOURCE_REOPEN_REQUIRED=false`.
-- Repair targets: durable reason usage history; inactive historical Document Type REPLACE/DELETE semantics; Interview Format first-use metadata race; management read access to inactive master rows.
-- Reviewer report was transported through the Owner/coordinator path; no unverified durable GitHub evidence coordinates are claimed.
+- Four blockers were repaired in R2: reason-history retention, inactive historical Candidate Document Type REPLACE/DELETE, Interview Format first-use metadata race, and inactive management reads.
 
-### Frozen R2 implementation candidate
+### R2 implementation review
 
-- Candidate SHA: `dced5aac32e6b09181cd53d0011b9c951edf2814`.
-- Repair base: `0c4b94b29e08e1ad877583bdb90d522e5577dccc`.
+- Reviewed SHA: `dced5aac32e6b09181cd53d0011b9c951edf2814`.
+- Verdict: `BLOCKING_REPAIR`.
+- `SOURCE_REOPEN_REQUIRED=false`.
+- Final reviewer clarification retained one broad blocker: `master_usage_exists` still depended on current FK evidence for replaceable semantic references. Canonical once-referenced history therefore remained incomplete, concretely for Candidate Qualification rebuild and also across other replaceable semantic master references that erase prior FK evidence.
+- Areas already closed in R2 remain closed unless the R3 repair crosses them.
+- R2 evidence was returned through Owner/reviewer transport with `EVIDENCE_PERSISTENCE: UNAVAILABLE`.
+
+### Frozen R3 implementation candidate
+
+- Candidate SHA: `9002c9be26c57a182494b9b0de46ae612f32d81e`.
+- Repair base: `dced5aac32e6b09181cd53d0011b9c951edf2814`.
 - Original task baseline: `0ec409915bdd00b61b1b7affdb77ec778c7c1dc7`.
-- Repair delta: exactly 7 files — one append-only repair migration, four focused reviewer regressions, the concurrent-idempotency fixture repair, and Integration CI wiring.
-- Focused GREEN: run `34556347568` PASS.
-- Final full product-equivalent verification: run `34571849619` PASS.
-- Verification branch/head: `verify/S06-001-R2-dced5aa` @ `350d32671ab9bd22b93758a19c80c4e4f56d995b`.
-- Equivalence: verification head is the exact candidate tree plus only `.github/workflows/s06-001-r2-final-verify.yml`.
-- Governance job: PASS.
-- Web job: PASS — install/audit/design/lint/typecheck/build/Chromium/full tests.
-- Database job: PASS — zero-state replay, accepted PRE-S04/S05/S06 regressions, R1/R2/R4 focused regressions, concurrent idempotency, deterministic R3 race, DB advisors.
+- Exact R2→R3 delta: 3 files only:
+  - `.github/workflows/integration-ci.yml`
+  - `supabase/migrations/20260911073228_master_data_durable_reference_history.sql`
+  - `supabase/tests/master_data_durable_reference_history_test.sql`
+- Repair: generalized private durable semantic first-use history for retained Master Data references while leaving temporary upload/staging references current-only.
+- Focused GREEN run: `34575487063` PASS.
+- Final full verification: `34575867899` PASS.
+- Verify branch/head: `verify/S06-001-R3-9002c9b` @ `66bb96f9409eadd89f61fe009521ef583cdb2d99`.
+- Equivalence: verify head is exact candidate plus only `.github/workflows/s06-001-r3-final-verify.yml`.
+- Web: PASS — npm install/audit/design/lint/typecheck/build/Chromium/full tests.
+- Database: PASS — zero-state replay, accepted PRE-S04/S05/S06 suites, durable semantic-history regression, concurrent idempotency, deterministic Interview Format race, DB advisors.
+- Governance: PASS.
 
-R2 review handoff: `project_control/reviews/S06_001_IMPLEMENTATION_R2_GATE_dced5aa_v1.md`.
+R3 review handoff:
 
-Review work ID: `S06-001-IMPLEMENTATION-REVIEW-001-R2`.
+`project_control/reviews/S06_001_IMPLEMENTATION_R3_GATE_9002c9b_v1.md`
 
-State: `WAITING_EXTERNAL_REVIEW` for exact SHA `dced5aac32e6b09181cd53d0011b9c951edf2814`.
+Review work ID:
+
+`S06-001-IMPLEMENTATION-REVIEW-001-R3`
+
+State: `WAITING_EXTERNAL_REVIEW` for exact SHA `9002c9be26c57a182494b9b0de46ae612f32d81e`.
 
 Hold: do not serialize product code into integration and do not advance to a later implementation task until independent review returns `PASS` with `SOURCE_REOPEN_REQUIRED=false`.
 
