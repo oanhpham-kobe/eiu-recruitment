@@ -1,0 +1,67 @@
+name: S06-001 Review Gate Materialize
+
+on:
+  push:
+    branches:
+      - control/S06-001-implementation-review-gate
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, 'route S06-001 candidate to implementation review') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Materialize exact-SHA implementation review gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          state_path = Path('project_control/AUTONOMY_RUN_STATE.yaml')
+          state = state_path.read_text()
+          m = re.search(r'(?ms)^slice_06_planning:\n(?P<body>.*?)(?=^[A-Za-z0-9_].*:\s*(?:#.*)?$|\Z)', state)
+          if not m:
+              raise SystemExit('slice_06_planning block not found')
+          body = m.group('body')
+          if 'status: IMPLEMENTATION_MATERIALIZATION' not in body:
+              raise SystemExit('unexpected Slice-06 planning status')
+          if 'task_status: READY' not in body:
+              raise SystemExit('unexpected TASK-S06-001 status')
+          if 'candidate_sha: "0c4b94b29e08e1ad877583bdb90d522e5577dccc"' in body:
+              raise SystemExit('implementation review gate already materialized')
+
+          body = body.replace('  status: IMPLEMENTATION_MATERIALIZATION\n', '  status: WAITING_EXTERNAL_REVIEW\n', 1)
+          body = body.replace('  task_status: READY\n', '  task_status: REVIEW\n', 1)
+          addition = '''\n  implementation_candidate:\n    branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle\n    baseline_sha: "0ec409915bdd00b61b1b7affdb77ec778c7c1dc7"\n    candidate_sha: "0c4b94b29e08e1ad877583bdb90d522e5577dccc"\n    changed_files_count: 6\n    source_reopen_required: false\n    producer_verification:\n      validation_v3_run: "34551607089 PASS"\n      exact_candidate_validation_v4_run: "34551826518 PASS"\n      zero_state_migration_replay: PASS\n      accepted_pre_s04_regression: PASS\n      accepted_s05_001_regression: PASS\n      accepted_s05_002_regression: PASS\n      accepted_s05_002_privacy_regression: PASS\n      master_data_seed_guard_regression: PASS\n      master_data_lifecycle_history_regression: PASS\n      master_data_concurrent_idempotency_regression: PASS\n      static_diff_security_markers: PASS\n    review_package: project_control/reviews/S06_001_IMPLEMENTATION_REVIEW_GATE_0c4b94b_v1.md\n  independent_implementation_review:\n    work_id: S06-001-IMPLEMENTATION-REVIEW-001\n    reviewer: eiu-reviewer\n    status: WAITING_EXTERNAL_REVIEW\n    reviewed_sha: "0c4b94b29e08e1ad877583bdb90d522e5577dccc"\n    result: PENDING\n    source_reopen_required: PENDING\n    blocking_findings: PENDING\n    evidence_branch: PENDING\n    evidence_commit: PENDING\n    evidence_path: PENDING\n  implementation_execution_hold: "Exact-SHA independent implementation review by eiu-reviewer; no product serialization to integration before PASS + SOURCE_REOPEN_REQUIRED=false."\n  implementation_safe_frontier: NONE\n'''
+          new_block = 'slice_06_planning:\n' + body.rstrip() + addition + '\n'
+          state = state[:m.start()] + new_block + state[m.end():]
+          state_path.write_text(state)
+
+          current_path = Path('project_control/CURRENT_STATE.md')
+          current = current_path.read_text()
+          marker = '## TASK-S06-001 implementation review gate — 0c4b94b'
+          if marker not in current:
+              current += '''\n\n## TASK-S06-001 implementation review gate — 0c4b94b\n\n- State: `WAITING_EXTERNAL_REVIEW`.\n- Frozen implementation candidate: `0c4b94b29e08e1ad877583bdb90d522e5577dccc` on `oanhpham-kobe/TASK-S06-001-master-data-lifecycle`.\n- Exact baseline: `0ec409915bdd00b61b1b7affdb77ec778c7c1dc7`.\n- Product diff: 6 files only — Integration CI gate, two append-only Master Data migrations, and three focused regression artifacts.\n- Producer verification: validation v3 `34551607089` PASS and exact-candidate validation v4 `34551826518` PASS. Both covered zero-state replay, accepted PRE-S04/S05 database regressions, canonical seed/active-reference guards, lifecycle/history behavior, real concurrent idempotency, and static security checks.\n- `SOURCE_REOPEN_REQUIRED=false` from producer reconciliation; independent implementation verdict is pending.\n- Hold: do not serialize product code into integration and do not select a later implementation task until exact-SHA review by `eiu-reviewer` returns `PASS` with `SOURCE_REOPEN_REQUIRED=false`.\n- Runtime note: Coordinator has no direct OMP/subagent invoker; external review transport must be explicit and durable evidence must be verified in GitHub when supplied.\n'''
+              current_path.write_text(current)
+
+          review_path = Path('project_control/reviews/S06_001_IMPLEMENTATION_REVIEW_GATE_0c4b94b_v1.md')
+          review_path.write_text('''# TASK-S06-001 Independent Implementation Review Gate\n\n## Identity\n\n- WORK_ID: `S06-001-IMPLEMENTATION-REVIEW-001`\n- REVIEWER: `eiu-reviewer`\n- REPO: `oanhpham-kobe/eiu-recruitment`\n- TARGET_BRANCH: `oanhpham-kobe/TASK-S06-001-master-data-lifecycle`\n- BASELINE_SHA: `0ec409915bdd00b61b1b7affdb77ec778c7c1dc7`\n- REVIEWED_SHA: `0c4b94b29e08e1ad877583bdb90d522e5577dccc`\n- REVIEW_DIFF: `0ec409915bdd00b61b1b7affdb77ec778c7c1dc7...0c4b94b29e08e1ad877583bdb90d522e5577dccc`\n- SOURCE_REOPEN_EXPECTATION: `false` unless a concrete canonical contradiction is proven.\n\n## Frozen implementation scope\n\nExactly six files differ from the accepted integration baseline:\n\n1. `.github/workflows/integration-ci.yml`\n2. `supabase/migrations/20260910153441_master_data_lifecycle_history_contracts.sql`\n3. `supabase/migrations/20260910155734_master_data_lifecycle_guard_repairs.sql`\n4. `supabase/tests/master_data_idempotency_concurrency_test.sh`\n5. `supabase/tests/master_data_lifecycle_history_test.sql`\n6. `supabase/tests/master_data_seed_guard_test.sql`\n\nNo web/UI implementation, Internal User/RBAC management, Vercel deployment, connected Supabase application, `main` mutation, or unrelated workflow is part of this candidate.\n\n## Canonical contract to review\n\nReview against `project_control/prompts/SLICE-06_TASK-001_v2.md` and its listed canonical sources. In particular verify:\n\n- closed allowlist of the 11 Phase-1 business master entities and closed per-type writable DTOs;\n- Active Internal User + effective `master_data.manage`, with Root only through the accepted authorization helper;\n- no broad authenticated/anon direct business-master DML and no private-helper bypass;\n- `SECURITY DEFINER` wrappers use `SET search_path = ''` and schema-qualified references;\n- explicit idempotency key scope/fingerprint/replay semantics across create/update/delete-or-inactivate, including authorization before replay and real concurrent duplicate serialization;\n- target row lock + optimistic version check before update/delete lifecycle decisions;\n- complete reference predicate for hard-delete versus Inactive;\n- referenced structural history immutability while label correction remains allowed and `requires_demo_topic` remains advisory;\n- inactive masters unavailable for new selection while retained historical references remain operable;\n- Unit/Team/Position hierarchy and active-parent selection;\n- Interview Format room/link structural semantics; Room identity-bearing fields; Document Type scope semantics;\n- canonical Document Type seed scopes materialized safely, including fail-closed handling of referenced scope conflicts;\n- parent/master `FOR KEY SHARE` guards correctly close selection-vs-inactivation races without invalidating unchanged history;\n- same-transaction canonical audit events and idempotency records;\n- Integration CI includes the three S06 database acceptance regressions without weakening existing gates.\n\n## Producer verification already executed\n\nValidation v3 run `34551607089`: PASS.\n\nExact-candidate validation v4 run `34551826518`: PASS.\n\nThe exact-candidate run executed:\n\n- local Supabase start;\n- `supabase db reset` from zero;\n- PRE-S04 accepted database regression;\n- TASK-S05-001 accepted contextual-report regression;\n- TASK-S05-002 HR report management regression;\n- TASK-S05-002 HR report DTO privacy regression;\n- TASK-S06-001 canonical seed/active-reference guard regression;\n- TASK-S06-001 lifecycle/history/security/idempotency regression;\n- TASK-S06-001 real two-session concurrent idempotency regression;\n- `git diff --check` and static security/CI marker checks;\n- Supabase stop.\n\nThese are producer claims only; independent review must form its own verdict and rerun checks when supported.\n\n## Independent verification requested\n\nAt minimum, when the reviewer environment supports them:\n\n```bash\ngit diff --check 0ec409915bdd00b61b1b7affdb77ec778c7c1dc7...0c4b94b29e08e1ad877583bdb90d522e5577dccc\nsupabase start\nsupabase db reset\ndocker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/interviewer_report_contextual_read_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/hr_report_management_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/hr_report_dto_privacy_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql\ndocker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql\nbash supabase/tests/master_data_idempotency_concurrency_test.sh\nsupabase stop\n```\n\nAlso independently inspect the migrations for injection safety, privilege/ACL behavior, lock ordering, race safety, structural-field classification, historical semantics, audit atomicity, and compatibility with accepted commands. Web acceptance is not a product-code requirement for this backend-only candidate, but the Integration CI workflow modification itself must be reviewed for correctness.\n\n## Required reviewer output\n\nReturn exactly enough durable information to route the gate:\n\n- `WORK_ID: S06-001-IMPLEMENTATION-REVIEW-001`\n- `REVIEWED_SHA: 0c4b94b29e08e1ad877583bdb90d522e5577dccc`\n- `VERDICT: PASS | BLOCKING_REPAIR | OWNER_DECISION_REQUIRED`\n- `SOURCE_REOPEN_REQUIRED: true | false`\n- `BLOCKING_FINDINGS`\n- `NON_BLOCKING_OBSERVATIONS`\n- `VERIFICATION_EXECUTED`\n- `SECURITY_ASSESSMENT`\n- `ACCEPTED_CONTRACT_REUSE_ASSESSMENT`\n- `ACCEPTANCE_STATEMENT`\n\nSuggested durable evidence coordinates:\n\n- branch: `review/S06-001-IMPL-0c4b94b-v1`\n- path: `project_control/reviews/S06_001_IMPLEMENTATION_REVIEW_0c4b94b_v1.md`\n\nPersist the actual review evidence in a commit descended from the reviewed candidate (or otherwise make the reviewed SHA relationship unambiguous). Do not invent evidence coordinates.\n''')
+          PY
+
+          git diff --check
+          git status --short
+
+      - name: Commit control-only gate
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/reviews/S06_001_IMPLEMENTATION_REVIEW_GATE_0c4b94b_v1.md
+          git commit -m 'chore(state): route S06-001 candidate to implementation review'
+          git push origin HEAD:control/S06-001-implementation-review-gate
