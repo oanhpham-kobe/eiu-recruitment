@@ -1,0 +1,68 @@
+name: S06-002 Crossed Fixture Repair
+
+on:
+  push:
+    branches:
+      - control/S06-002-crossed-fixture-repair-a6a1ff1
+
+permissions:
+  contents: write
+
+env:
+  TASK_BRANCH: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+  EXPECTED_PARENT: a6a1ff19e5176aadc9b88966f7a60a7721a7bf6b
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout guarded task branch
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ env.TASK_BRANCH }}
+          fetch-depth: 0
+      - name: Verify parent and repair legacy crossed fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_PARENT"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str, label: str) -> None:
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise RuntimeError(f"{label}: expected exactly one match, found {count}")
+              p.write_text(text.replace(old, new, 1))
+
+          replace_once(
+              "supabase/tests/interview_lifecycle_test.sql",
+              "  insert into public.app_users(auth_user_id,full_name,email,is_active) values(hr_auth,'T002 HR','t002_hr_'||s||'@eiu.edu.vn',true) returning public.app_users.app_user_id into hr;\n  insert into public.app_user_permissions(app_user_id,permission_code) values",
+              "  insert into public.app_users(auth_user_id,full_name,email,is_active) values(hr_auth,'T002 HR','t002_hr_'||s||'@eiu.edu.vn',true) returning public.app_users.app_user_id into hr;\n  insert into public.app_user_roles(app_user_id,role_code) values(hr,'HR');\n  insert into public.app_user_permissions(app_user_id,permission_code) values",
+              "TASK-S04-002 HR owner role fixture",
+          )
+
+          replace_once(
+              "supabase/tests/copy_interview_schedule_test.sql",
+              "  insert into public.app_users(auth_user_id,full_name,email,is_active) values(hr_auth,'T003 HR','t003_hr_'||s||'@eiu.edu.vn',true) returning public.app_users.app_user_id into hr;\n  insert into public.app_user_permissions(app_user_id,permission_code) values(hr,'interviews.view'),(hr,'interviews.manage') on conflict do nothing;",
+              "  insert into public.app_users(auth_user_id,full_name,email,is_active) values(hr_auth,'T003 HR','t003_hr_'||s||'@eiu.edu.vn',true) returning public.app_users.app_user_id into hr;\n  insert into public.app_user_roles(app_user_id,role_code) values(hr,'HR');\n  insert into public.app_user_permissions(app_user_id,permission_code) values(hr,'interviews.view'),(hr,'interviews.manage') on conflict do nothing;",
+              "TASK-S04-003 HR owner role fixture",
+          )
+          PY
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = "supabase/tests/copy_interview_schedule_test.sql"
+          test "${changed[1]}" = "supabase/tests/interview_lifecycle_test.sql"
+      - name: Commit and push append-only repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "oanhpham-kobe"
+          git config user.email "oanh.pham@eiu.edu.vn"
+          git add supabase/tests/interview_lifecycle_test.sql supabase/tests/copy_interview_schedule_test.sql
+          git commit -m "fix(test): align interview fixtures with HR owner eligibility"
+          git push origin HEAD:"refs/heads/$TASK_BRANCH"
