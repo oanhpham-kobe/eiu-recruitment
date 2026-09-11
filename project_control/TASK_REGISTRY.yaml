@@ -1169,7 +1169,7 @@ tasks:
   TASK-S06-001:
     title: Master Data Lifecycle & Historical Semantics Trusted Contracts
     slice: SLICE-06
-    status: READY
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-S05-002
@@ -1180,4 +1180,15 @@ tasks:
     prompt_review_evidence: "Owner transport PASS; reviewer-reported review/S06-001-PROMPT-68d96b3-v2 @ 28af23929fa0d99d9132f1c779fc722b12c8c1e1 was not GitHub-visible when Coordinator checked"
     pre_task_checkpoint: checkpoint/pre-S06-001-001
     branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle
-    notes: "Shared-contract backend prerequisite for Phase-1 business Master Data. Scope is limited to the 11 physical business masters and canonical create_master_item/update_master_item/delete_or_inactivate_master_item lifecycle/history contracts. Internal User directory, HR roles/permissions, bound identity, Root break-glass, and management UI are explicitly deferred to later Slice-06 tasks."
+    implementation_candidate_sha: "9002c9be26c57a182494b9b0de46ae612f32d81e"
+    implementation_sha: "59be9b2c92906065b8e4baa902fcec1d4cbefa12"
+    review_status: "PASS (S06-001-FINAL-INTEGRATION-EQUIVALENCE-001 @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12; source reopen: NO; evidence persistence: UNAVAILABLE)"
+    github_ci: "VERIFIED (Integration CI run 34579159091; Governance CI run 34579159098; exact SHA 59be9b2c92906065b8e4baa902fcec1d4cbefa12; PASS)"
+    accepted_checkpoint: "checkpoint/S06-001-accepted-001"
+    acceptance:
+      - "R3 implementation review: PASS @ 9002c9be26c57a182494b9b0de46ae612f32d81e"
+      - "Final integration equivalence review: PASS @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
+      - "Integration CI 34579159091: PASS"
+      - "Governance CI 34579159098: PASS"
+      - "checkpoint/S06-001-accepted-001 @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
+    notes: "Accepted Master Data lifecycle/history trusted contracts. R1/R2 blockers were repaired; R3 implementation review passed; exact final integration-equivalence review passed; durable semantic-reference history and all retained S06 regressions are permanently gated in Integration CI. No canonical source reopen, main mutation, PR merge, Vercel deployment, or connected Supabase migration application occurred."
