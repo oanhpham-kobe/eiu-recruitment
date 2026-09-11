@@ -1,0 +1,95 @@
+name: S06-001 R3 Final Verification
+
+on:
+  push:
+    branches:
+      - verify/S06-001-R3-9002c9b
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Web verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Ensure npm 11.19.0
+        run: |
+          if [ "$(npm --version)" != "11.19.0" ]; then npm install --global npm@11.19.0; fi
+          test "$(npm --version)" = "11.19.0"
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run design:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test
+
+  database:
+    name: Database verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Diff hygiene against R2 candidate
+        run: git diff --check dced5aac32e6b09181cd53d0011b9c951edf2814...HEAD -- . ':!.github/workflows/s06-001-r3-final-verify.yml'
+      - name: Start local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: PRE-S04 regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
+      - name: S05 interviewer report regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interviewer_report_contextual_read_test.sql
+      - name: S05 HR report regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/hr_report_management_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/hr_report_dto_privacy_test.sql
+      - name: S06 accepted regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_reason_history_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_candidate_document_history_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_management_read_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_durable_reference_history_test.sql
+      - name: Concurrent idempotency regression
+        run: bash supabase/tests/master_data_idempotency_concurrency_test.sh
+      - name: Interview Format first-use race regression
+        run: bash supabase/tests/master_data_interview_format_race_test.sh
+      - name: Database advisors
+        run: |
+          supabase inspect db index-usage --local >/dev/null
+          supabase inspect db table-sizes --local >/dev/null
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+
+  governance:
+    name: Governance verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --disable-pip-version-check "PyYAML==6.0.2"
+      - run: python project_control/validate_omp_native.py
+      - run: python project_control/validate_control_plane.py
