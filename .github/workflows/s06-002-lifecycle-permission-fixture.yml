@@ -1,0 +1,53 @@
+name: S06-002 Lifecycle Permission Fixture Repair
+
+on:
+  push:
+    branches:
+      - control/S06-002-lifecycle-permission-fixture-b275df7
+
+permissions:
+  contents: write
+
+env:
+  TASK_BRANCH: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+  EXPECTED_PARENT: b275df73eb18032e11357e00f63dbb9409fa29be
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout guarded task branch
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ env.TASK_BRANCH }}
+          fetch-depth: 0
+      - name: Verify parent and align legacy Report permission fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_PARENT"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('supabase/tests/interview_lifecycle_test.sql')
+          text = p.read_text()
+          old = "    (hr,'reports.view'),(hr,'reports.edit_interviewer'),(hr,'reports.manage_status') on conflict do nothing;"
+          new = "    (hr,'reports.view'),(hr,'reports.edit_interviewer'),(hr,'reports.manage_status'),(hr,'reports.delete') on conflict do nothing;"
+          count = text.count(old)
+          if count != 1:
+              raise RuntimeError(f'expected exactly one legacy Report permission fixture, found {count}')
+          p.write_text(text.replace(old, new, 1))
+          PY
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "supabase/tests/interview_lifecycle_test.sql"
+      - name: Commit and push append-only repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "oanhpham-kobe"
+          git config user.email "oanh.pham@eiu.edu.vn"
+          git add supabase/tests/interview_lifecycle_test.sql
+          git commit -m "fix(test): align report delete permission fixture"
+          git push origin HEAD:"refs/heads/$TASK_BRANCH"
