@@ -19,14 +19,38 @@ import sys
 
 sql = Path(sys.argv[1]).read_text() + Path(sys.argv[2]).read_text()
 
+def replace_once(old: str, new: str, label: str) -> None:
+    global sql
+    count = sql.count(old)
+    if count != 1:
+        raise RuntimeError(f"{label}: expected exactly one fixture match, found {count}")
+    sql = sql.replace(old, new, 1)
+
 # Canonical candidates require an Auth identity. This fixture UUID is candidate-
 # only and intentionally distinct from every Internal User/Auth fixture.
-sql = sql.replace(
+replace_once(
     "insert into public.candidates(candidate_id,email,current_full_name,is_active)\n"
     "  values(v_candidate,'candidate_s06_002@example.com'",
     "insert into public.candidates(candidate_id,auth_user_id,email,current_full_name,is_active)\n"
     "  values(v_candidate,'73000000-0000-0000-0000-000000000001','candidate_s06_002@example.com'",
-    1,
+    "candidate auth fixture",
+)
+
+# Durable Application identity is unique across active and historical rows.
+# The base fixture already consumes submission ...006 for the original
+# Interview-bearing Application and ...007 for the active HR-ownership blocker.
+# Add a third submission so historical ownership can be asserted without
+# violating the canonical durable-identity invariant.
+replace_once(
+    "    (v_submission2,v_candidate,'READ','Candidate S06-002','1990-01-01','MALE','Address','0900000000','candidate_s06_002@example.com',1);",
+    "    (v_submission2,v_candidate,'READ','Candidate S06-002','1990-01-01','MALE','Address','0900000000','candidate_s06_002@example.com',1),\n"
+    "    ('80000000-0000-0000-0000-000000000018',v_candidate,'READ','Candidate S06-002 Historical','1990-01-01','MALE','Address','0900000000','candidate_s06_002@example.com',1);",
+    "historical submission fixture",
+)
+replace_once(
+    "'80000000-0000-0000-0000-000000000011','80000000-0000-0000-0000-000000000006',",
+    "'80000000-0000-0000-0000-000000000011','80000000-0000-0000-0000-000000000018',",
+    "historical application durable identity",
 )
 
 def owner_context(start_marker: str, end_marker: str) -> None:
