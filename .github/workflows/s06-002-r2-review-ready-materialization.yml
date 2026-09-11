@@ -36,7 +36,9 @@ jobs:
           grep -F 'status: REVIEW' project_control/TASK_REGISTRY.yaml
           grep -F 'implementation_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"' project_control/TASK_REGISTRY.yaml
           test -f project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
-          test "$(git diff --name-only | sort | tr '\n' ' ')" = 'project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md '
+          actual_files="$((git diff --name-only; git ls-files --others --exclude-standard) | sort | tr '\n' ' ')"
+          expected_files='project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md '
+          test "$actual_files" = "$expected_files"
       - name: Commit and publish isolated control result
         shell: bash
         run: |
