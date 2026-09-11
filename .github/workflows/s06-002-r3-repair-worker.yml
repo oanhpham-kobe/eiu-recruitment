@@ -21,6 +21,7 @@ jobs:
         run: |
           set -euo pipefail
           git show HEAD:.github/scripts/s06_002_r3_repair.py > /tmp/repair.py
+          git show HEAD:.github/scripts/s06_002_r3_fixture_patch.py > /tmp/fixture_patch.py
           git fetch origin oanhpham-kobe/TASK-S06-002-user-rbac-identity
           test "$(git rev-parse origin/oanhpham-kobe/TASK-S06-002-user-rbac-identity)" = '7c37d46fa504b5d98b156735d7355f1d938be0bf'
           git checkout --detach 7c37d46fa504b5d98b156735d7355f1d938be0bf
@@ -36,6 +37,7 @@ jobs:
           migration_path="$(ls -1t supabase/migrations/*_internal_user_r3_review_repairs.sql | head -1)"
           test -n "$migration_path"
           MIGRATION_PATH="$migration_path" python /tmp/repair.py
+          python /tmp/fixture_patch.py
           echo "R3 migration: $migration_path"
       - name: Static repair validation
         shell: bash
@@ -48,6 +50,7 @@ jobs:
           grep -R -F 'capture_app_user_master_reference_history_r3' supabase/migrations/*_internal_user_r3_review_repairs.sql
           grep -R -F 'update_internal_user_directory_s06_002_r2_impl' supabase/migrations/*_internal_user_r3_review_repairs.sql
           grep -R -F 'for update;' supabase/migrations/*_internal_user_r3_review_repairs.sql >/dev/null
+          grep -F "false,clock_timestamp()" supabase/tests/internal_user_r3_review_concurrency_test.sh
           test -f supabase/tests/internal_user_r3_review_concurrency_test.sh
           test -f project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_v1.md
       - name: Start local Supabase
