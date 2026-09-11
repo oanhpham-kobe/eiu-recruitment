@@ -1,0 +1,32 @@
+name: S06-001 R2 Safe Control Materialization v2
+
+on:
+  push:
+    branches:
+      - control/S06-001-R2-gate-dced5aa-v2
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, 'materialize S06-001 R2 review state safely') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Materialize bounded S06 authority update
+        shell: bash
+        run: |
+          set -euo pipefail
+          python project_control/.tmp_s06_r2_materialize.py
+          git rm project_control/.tmp_s06_r2_materialize.py
+          git rm .github/workflows/s06-001-r2-control-materialize-safe.yml
+          git rm .github/workflows/s06-001-r2-control-materialize-safe-v2.yml
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore(state): materialize S06-001 R2 review state safely'
+          git push origin HEAD:control/S06-001-R2-gate-dced5aa-v2
