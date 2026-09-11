@@ -1,0 +1,64 @@
+name: S06-002 OMP Native Task Yield Proof
+
+on:
+  push:
+    branches:
+      - review-probe/S06-002-omp-native-task-yield
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Preserve proof bridge and checkout exact candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show HEAD:.github/scripts/s06_002_omp_native_task_yield_bridge.ts > /tmp/bridge.ts
+          git checkout --detach 73f03e00b6c2f90874eb17419e57ca58715a6990
+          test "$(git rev-parse HEAD)" = '73f03e00b6c2f90874eb17419e57ca58715a6990'
+          test -f .omp/agents/eiu-reviewer.md
+          test -z "$(git status --porcelain)"
+      - name: Install OMP
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://omp.sh/install | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.omp/bin" >> "$GITHUB_PATH"
+      - name: Configure deterministic custom provider
+        shell: bash
+        run: |
+          cat > /tmp/omp-proof.yml <<'YAML'
+          modelRoles:
+            default: omp-review-proof/bridge-model
+            slow: omp-review-proof/bridge-model
+          task:
+            batch: true
+          async:
+            enabled: false
+          YAML
+      - name: Prove native task to eiu-reviewer to yield path
+        shell: bash
+        run: |
+          set -euo pipefail
+          omp --extension /tmp/bridge.ts --config /tmp/omp-proof.yml --model omp-review-proof/bridge-model -p 'Run the deterministic native OMP task/yield bridge proof exactly as provided by the custom provider.' 2>&1 | tee /tmp/omp-proof-output.txt
+          grep -F 'OMP_EIU_REVIEWER_BRIDGE_OK_73F03E0' /tmp/omp-proof-output.txt
+          grep -F 'OMP_NATIVE_TASK_RESULT' /tmp/omp-proof-output.txt
+          test "$(git rev-parse HEAD)" = '73f03e00b6c2f90874eb17419e57ca58715a6990'
+          test -z "$(git status --porcelain)"
+      - name: Publish proof transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s06-002-omp-native-task-yield-proof
+          path: /tmp/omp-proof-output.txt
+          if-no-files-found: warn
+          retention-days: 14
