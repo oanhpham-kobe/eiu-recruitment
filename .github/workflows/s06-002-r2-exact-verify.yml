@@ -1,0 +1,99 @@
+name: S06-002 R2 Exact Verify e3d104b
+on:
+  push:
+    branches: [control/S06-002-r2-verify-e3d104b]
+permissions:
+  contents: read
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: e3d104b4e9057d6df74e3acc1f1e9437374711b6
+          fetch-depth: 0
+      - name: Exact SHA and R2 gate/consumer checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 'e3d104b4e9057d6df74e3acc1f1e9437374711b6'
+          git diff --check 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01...HEAD
+          test -f project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md
+          test -f project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
+          test -f project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          paths = [
+            'web/src/lib/application-inbox/server.ts',
+            'web/src/lib/application-inbox/submission-detail-server.ts',
+            'web/src/lib/commands/application-lifecycle.ts',
+            'web/src/lib/commands/candidate-lifecycle.ts',
+            'web/src/lib/commands/submission-status.ts',
+            'web/src/lib/interview/server.ts',
+            'web/src/lib/auth/session.ts',
+          ]
+          p = re.compile(r'\.from\(["\']app_users["\']\)(?:(?!\.from\().){0,500}?\.eq\(["\']auth_user_id["\']', re.S)
+          bad=[x for x in paths if p.search(Path(x).read_text())]
+          if bad: raise SystemExit('raw app_users auth_user_id consumers remain: '+', '.join(bad))
+          PY
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: e3d104b4e9057d6df74e3acc1f1e9437374711b6
+      - name: Verify exact SHA
+        working-directory: .
+        run: test "$(git rev-parse HEAD)" = 'e3d104b4e9057d6df74e3acc1f1e9437374711b6'
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Ensure npm 11.19.0
+        run: |
+          if [ "$(npm --version)" != '11.19.0' ]; then npm install -g npm@11.19.0; fi
+          test "$(npm --version)" = '11.19.0'
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run design:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test
+  db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: e3d104b4e9057d6df74e3acc1f1e9437374711b6
+          fetch-depth: 0
+      - name: Verify exact SHA
+        run: test "$(git rev-parse HEAD)" = 'e3d104b4e9057d6df74e3acc1f1e9437374711b6'
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - run: supabase start
+      - run: supabase db reset
+      - name: S06-002 focused + R2 dormant-history
+        run: bash supabase/tests/internal_user_rbac_identity_test.sh
+      - name: S06-002 lifecycle + public-command concurrency
+        run: bash supabase/tests/internal_user_lifecycle_concurrency_test.sh
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_reactivation_and_participant_contract_repair_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_lifecycle_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_round_and_conflict_locking_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/bulk_commands_replay.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_durable_reference_history_test.sql
+      - run: supabase db lint --local --level error
+      - if: always()
+        run: supabase stop --no-backup
