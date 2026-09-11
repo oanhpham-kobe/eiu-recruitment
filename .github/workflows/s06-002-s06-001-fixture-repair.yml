@@ -18,26 +18,26 @@ jobs:
           ref: oanhpham-kobe/TASK-S06-002-user-rbac-identity
           fetch-depth: 0
 
-      - name: Verify parent and align S06-001 owner fixture
+      - name: Verify parent and align durable-history owner fixture
         shell: bash
         run: |
           set -euo pipefail
-          EXPECTED_PARENT='6dd0b037fb1e45276e3d5a2b4ecf54f8cc16694a'
+          EXPECTED_PARENT='372341a979ec7423946ccc25035b32829283ca28'
           test "$(git rev-parse HEAD)" = "$EXPECTED_PARENT"
           python - <<'PY'
           from pathlib import Path
 
-          path = Path('supabase/tests/master_data_lifecycle_history_test.sql')
+          path = Path('supabase/tests/master_data_durable_reference_history_test.sql')
           text = path.read_text()
-          old = """  insert into public.app_user_permissions(app_user_id, permission_code)\n  values\n    (v_hr, 'master_data.manage'),\n    (v_hr2, 'master_data.manage'),\n    (v_hr, 'interviews.view'),\n    (v_hr, 'interviews.status')\n  on conflict do nothing;\n"""
-          new = """  insert into public.app_user_roles(app_user_id, role_code)\n  values (v_hr, 'HR')\n  on conflict do nothing;\n\n  insert into public.app_user_permissions(app_user_id, permission_code)\n  values\n    (v_hr, 'master_data.manage'),\n    (v_hr2, 'master_data.manage'),\n    (v_hr, 'interviews.view'),\n    (v_hr, 'interviews.status')\n  on conflict do nothing;\n"""
+          old = """  insert into public.app_user_permissions(app_user_id, permission_code)\n  values\n    (v_hr, 'master_data.manage'),\n    (v_hr, 'interviews.manage'),\n    (v_hr, 'interviews.view'),\n    (v_hr, 'interviews.status')\n  on conflict do nothing;\n"""
+          new = """  insert into public.app_user_roles(app_user_id, role_code)\n  values (v_hr, 'HR')\n  on conflict do nothing;\n\n  insert into public.app_user_permissions(app_user_id, permission_code)\n  values\n    (v_hr, 'master_data.manage'),\n    (v_hr, 'interviews.manage'),\n    (v_hr, 'interviews.view'),\n    (v_hr, 'interviews.status')\n  on conflict do nothing;\n"""
           if text.count(old) != 1:
-              raise SystemExit(f'expected exactly one fixture block, found {text.count(old)}')
+              raise SystemExit(f'expected exactly one durable-history fixture block, found {text.count(old)}')
           path.write_text(text.replace(old, new, 1))
           PY
           git diff --check
           test "$(git diff --name-only | wc -l)" -eq 1
-          test "$(git diff --name-only)" = 'supabase/tests/master_data_lifecycle_history_test.sql'
+          test "$(git diff --name-only)" = 'supabase/tests/master_data_durable_reference_history_test.sql'
 
       - name: Commit and push append-only repair
         shell: bash
@@ -45,6 +45,6 @@ jobs:
           set -euo pipefail
           git config user.name 'oanhpham-kobe'
           git config user.email 'oanh.pham@eiu.edu.vn'
-          git add supabase/tests/master_data_lifecycle_history_test.sql
-          git commit -m 'fix(test): align S06-001 owner fixture with HR eligibility'
+          git add supabase/tests/master_data_durable_reference_history_test.sql
+          git commit -m 'fix(test): align durable-history owner fixture with HR eligibility'
           git push origin HEAD:oanhpham-kobe/TASK-S06-002-user-rbac-identity
