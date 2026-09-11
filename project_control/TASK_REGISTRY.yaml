@@ -1196,7 +1196,7 @@ tasks:
   TASK-S06-002:
     title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
     slice: SLICE-06
-    status: IN_PROGRESS
+    status: REVIEW
     lane: LANE_A
     depends_on:
       - TASK-S06-001
@@ -1209,9 +1209,11 @@ tasks:
     implementation_checkpoint: checkpoint/pre-S06-002-001
     implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
     prior_implementation_candidate_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
-    implementation_candidate_sha: PENDING
+    implementation_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
     repair_round: R2
-    review_status: "BLOCKING_REPAIR (S06-002-IMPLEMENTATION-REVIEW-001 @ a7aa037e26cda6ba70153539c1dfc15c3fba37e6; SOURCE_REOPEN_REQUIRED=false; evidence persistence unavailable)"
-    review_evidence: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
-    prior_producer_verification: "PASS (final exact DB/static verifier run 34611668782; exact prior web job 34602347683/103272463530 PASS on web-equivalent 014e22f737463b049eacca041a0c204ce0699cd1)"
-    notes: "High-risk shared backend/security prerequisite for Internal User directory lifecycle, HR role/permission administration, first-Google-login hardening, bound non-Root identity change, minimum-safe permission visibility, and race-safe owner/participant lifecycle guards. No Users/Permissions UI, main mutation, deployment, or connected Supabase migration application in this task."
+    review_status: "WAITING_INDEPENDENT_REVIEW (S06-002-IMPLEMENTATION-REVIEW-001-R2 @ 7c37d46fa504b5d98b156735d7355f1d938be0bf); R1 was BLOCKING_REPAIR with SOURCE_REOPEN_REQUIRED=false"
+    prior_review_evidence: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
+    review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md
+    review_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
+    producer_verification: "PASS (exact verifier run 34621266079: static PASS, full web PASS, zero-state/focused/concurrency/crossed/S06-001 DB regressions PASS, db lint PASS; exact SHA 7c37d46fa504b5d98b156735d7355f1d938be0bf)"
+    notes: "R2 repairs all five R1 blockers without source reopen: candidate-contained review evidence/gate; trusted current-session/current-binding RPC migration after auth_user_id ACL narrowing; resource_blocking-only participant recheck; deterministic owner/lifecycle row->advisory ordering; deterministic first-bind/rebind email->row->user-advisory ordering. Candidate is producer-verified only and must not enter governed integration before independent exact-SHA PASS. No Users/Permissions UI, main mutation, PR, deployment, or connected Supabase migration application occurred."
