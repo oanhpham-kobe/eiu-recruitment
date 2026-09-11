@@ -1,0 +1,42 @@
+name: S06-002 Review Gate Validator Fix v2
+
+on:
+  push:
+    branches:
+      - control/S06-002-implementation-review-gate-a7aa037
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, 'fix review gate validator v2') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: control/S06-002-implementation-review-gate-a7aa037
+      - name: Patch validator exactly once
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/s06-002-review-gate-materialize.yml')
+          s = p.read_text()
+          old = '''          git diff --check\n          mapfile -t changed < <(git diff --name-only)\n          test "${#changed[@]}" -eq 4\n'''
+          new = '''          git diff --check\n          git add -N project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md\n          mapfile -t changed < <(git diff --name-only)\n          test "${#changed[@]}" -eq 4\n'''
+          if s.count(old) != 1:
+              raise SystemExit(f'validator block match count: {s.count(old)}')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          git diff --check
+      - name: Commit fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/s06-002-review-gate-materialize.yml
+          git commit -m 'fix(control): fix review gate validator v2'
+          git push origin HEAD:control/S06-002-implementation-review-gate-a7aa037
