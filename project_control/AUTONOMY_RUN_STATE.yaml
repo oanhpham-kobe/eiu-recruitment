@@ -472,7 +472,7 @@ s06_001_acceptance:
   pr_created_or_merged: false
 
 s06_002_planning:
-  status: IMPLEMENTATION_ACTIVE
+  status: WAITING_EXTERNAL_REVIEW
   task: TASK-S06-002
   title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
   prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
@@ -496,7 +496,36 @@ s06_002_planning:
     - "Accepted first-login bind must be hardened to current canonical verified Google-provider + confirmed EIU email proof without creating a divergent bind path."
     - "Non-root directory management must not expose another user's granular effective permissions/security identity; inactive lifecycle management still needs a minimum-safe read surface."
     - "User deactivation/HR-role removal must be concurrency-safe against new Active Application owner assignment and new/current non-elapsed resource-blocking Interview participation."
-  implementation_hold: "CLEARED — immutable pre-task checkpoint and isolated implementation branch are materialized at the exact validated baseline."
+  implementation_hold: "HELD — exact candidate is producer-verified and frozen for independent implementation review; no product serialization to integration before PASS + SOURCE_REOPEN_REQUIRED=false."
+  implementation_candidate:
+    branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+    baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+    candidate_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
+    changed_files_count: 18
+    source_reopen_required: false
+    producer_verification:
+      final_exact_db_run: "34611668782 PASS"
+      final_static_web_equivalence: PASS
+      prior_exact_web_run: "34602347683 / job 103272463530 PASS"
+      prior_exact_web_sha: "014e22f737463b049eacca041a0c204ce0699cd1"
+      zero_state_migration_replay: PASS
+      focused_internal_user_rbac_identity: PASS
+      two_session_lifecycle_concurrency: PASS
+      crossed_application_interview_bulk: PASS
+      accepted_s06_001_regressions: PASS
+      database_lint_error_level: PASS
+    review_package: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md
+  independent_implementation_review:
+    work_id: S06-002-IMPLEMENTATION-REVIEW-001
+    reviewer: eiu-reviewer
+    status: WAITING_EXTERNAL_REVIEW
+    reviewed_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
+    result: PENDING
+    source_reopen_required: PENDING
+    blocking_findings: PENDING
+    evidence_branch: PENDING
+    evidence_commit: PENDING
+    evidence_path: PENDING
 
 implementation_materialization:
   task: TASK-S06-002
@@ -508,22 +537,22 @@ implementation_materialization:
   branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
   baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
   status: COMPLETE
-  current_candidate_sha: PENDING
-  review_round: R0
+  current_candidate_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
+  review_round: R1
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-002 implementation is active on its isolated branch; no additional Slice-06 implementation frontier is materialized."
+  execution_hold: "TASK-S06-002 exact candidate a7aa037e26cda6ba70153539c1dfc15c3fba37e6 is frozen for independent implementation review; no later implementation frontier is materialized."
 
 stop_gate:
-  status: CLEAR
-  type: NONE
-  work_id: S06-002-IMPLEMENTATION-MATERIALIZATION-001
-  target: "TASK-S06-002 implementation baseline @ 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+  status: HELD
+  type: EXTERNAL_REVIEW
+  work_id: S06-002-IMPLEMENTATION-REVIEW-001
+  target: "TASK-S06-002 exact implementation candidate @ a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
   reviewer: eiu-reviewer
-  source_reopen_required: false
-  resume_on: "Implement the reviewed S06-002 contract on the isolated branch, verify locally/CI, then create exact candidate review gate before integration."
+  source_reopen_required: PENDING
+  resume_on: "Independent exact-SHA implementation review returns PASS with SOURCE_REOPEN_REQUIRED=false."
 
-next_action: "Implement TASK-S06-002 on oanhpham-kobe/TASK-S06-002-user-rbac-identity from exact baseline 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01. Preserve the reviewed scope and non-blocking observations. Do not push/merge main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Send project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md to independent eiu-reviewer and obtain an exact-SHA verdict for a7aa037e26cda6ba70153539c1dfc15c3fba37e6. Do not serialize product code into integration until PASS + SOURCE_REOPEN_REQUIRED=false. Preserve boundaries: no main mutation, PR merge, Vercel deployment, or connected Supabase migration application."
