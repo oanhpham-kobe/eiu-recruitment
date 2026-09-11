@@ -1,0 +1,49 @@
+name: S06-002 R2 Biome Format
+
+on:
+  push:
+    branches:
+      - control/S06-002-r2-biome-format-2ff81f8
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+          fetch-depth: 0
+      - name: Guard exact repair head
+        run: test "$(git rev-parse HEAD)" = '2ff81f8df58fd72698a9b4125a4abceef3362a44'
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install and format candidate-owned files only
+        working-directory: web
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm --version)" = '11.19.0'
+          npm ci
+          npx biome format --write src/lib/auth/session.ts src/__tests__/internal-session-rpc.test.ts
+          npx biome check src/lib/auth/session.ts src/__tests__/internal-session-rpc.test.ts
+      - name: Commit formatting-only repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t changed < <(git diff --name-only)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = 'web/src/__tests__/internal-session-rpc.test.ts'
+          test "${changed[1]}" = 'web/src/lib/auth/session.ts'
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/src/__tests__/internal-session-rpc.test.ts web/src/lib/auth/session.ts
+          git commit -m 'style(s06-002): format R2 web repairs'
+          git push origin HEAD:oanhpham-kobe/TASK-S06-002-user-rbac-identity
