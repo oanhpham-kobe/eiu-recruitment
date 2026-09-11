@@ -1,0 +1,60 @@
+name: S06-002 R3 Review Materialization
+
+on:
+  push:
+    branches:
+      - control/S06-002-r3-review-materialization
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Preserve materializer and checkout exact integration control HEAD
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show HEAD:.github/scripts/s06_002_materialize_r3_review.py > /tmp/materialize.py
+          git fetch origin autonomy/continuous-integration-20260905-01
+          test "$(git rev-parse origin/autonomy/continuous-integration-20260905-01)" = 'be6c250b0375fa6b66435f24ce65220b89ec461a'
+          git checkout --detach be6c250b0375fa6b66435f24ce65220b89ec461a
+      - name: Materialize exact R3 review state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python /tmp/materialize.py
+          git diff --check
+          test -f project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md
+          test -f project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
+          grep -F '73f03e00b6c2f90874eb17419e57ca58715a6990' project_control/TASK_REGISTRY.yaml
+          grep -F '34628766807 PASS' project_control/AUTONOMY_RUN_STATE.yaml
+          ! grep -F 'project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md' project_control/AUTONOMY_RUN_STATE.yaml project_control/TASK_REGISTRY.yaml
+          ! grep -F 'project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md' project_control/AUTONOMY_RUN_STATE.yaml project_control/TASK_REGISTRY.yaml
+          actual="$(git diff --name-only | sort | tr '\n' ' ')"
+          expected='project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml '
+          test "$actual" = "$expected"
+          untracked="$(git ls-files --others --exclude-standard | sort | tr '\n' ' ')"
+          expected_untracked='project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md '
+          test "$untracked" = "$expected_untracked"
+      - name: Validate durable control plane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check 'PyYAML==6.0.2'
+          python project_control/validate_omp_native.py
+          python project_control/validate_control_plane.py
+      - name: Commit and publish materialized result branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
+          git commit -m 'chore(state): route TASK-S06-002 R3 to independent review'
+          git push origin HEAD:refs/heads/control/S06-002-r3-review-materialized-73f03e0
