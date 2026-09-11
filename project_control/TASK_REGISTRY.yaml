@@ -1196,7 +1196,7 @@ tasks:
   TASK-S06-002:
     title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
     slice: SLICE-06
-    status: IN_PROGRESS
+    status: REVIEW
     lane: LANE_A
     depends_on:
       - TASK-S06-001
@@ -1209,12 +1209,12 @@ tasks:
     implementation_checkpoint: checkpoint/pre-S06-002-001
     implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
     prior_implementation_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-    implementation_candidate_sha: PENDING
+    implementation_candidate_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
     repair_round: R3
-    review_status: "BLOCKING_REPAIR (S06-002-IMPLEMENTATION-REVIEW-001-R2 @ 7c37d46fa504b5d98b156735d7355f1d938be0bf; SOURCE_REOPEN_REQUIRED=false; evidence persistence unavailable)"
-    prior_review_evidence: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
-    review_evidence: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md
-    review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md
-    review_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
-    producer_verification: "PASS (exact verifier run 34621266079: static PASS, full web PASS, zero-state/focused/concurrency/crossed/S06-001 DB regressions PASS, db lint PASS; exact SHA 7c37d46fa504b5d98b156735d7355f1d938be0bf)"
-    notes: "R2 repairs all five R1 blockers without source reopen: candidate-contained review evidence/gate; trusted current-session/current-binding RPC migration after auth_user_id ACL narrowing; resource_blocking-only participant recheck; deterministic owner/lifecycle row->advisory ordering; deterministic first-bind/rebind email->row->user-advisory ordering. Candidate is producer-verified only and must not enter governed integration before independent exact-SHA PASS. No Users/Permissions UI, main mutation, PR, deployment, or connected Supabase migration application occurred."
+    review_status: "WAITING_INDEPENDENT_REVIEW (S06-002-IMPLEMENTATION-REVIEW-001-R3 @ 73f03e00b6c2f90874eb17419e57ca58715a6990); R2 was BLOCKING_REPAIR with SOURCE_REOPEN_REQUIRED=false"
+    prior_review_evidence: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md
+    review_evidence: PENDING
+    review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md
+    review_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
+    producer_verification: "PASS (worker run 34628250213; exact verifier run 34628766807; static/full web/two zero-state DB replays/focused R1-R3 concurrency/crossed Application-Interview/S06-001 history/db lint PASS; exact SHA 73f03e00b6c2f90874eb17419e57ca58715a6990)"
+    notes: "R3 repairs the four independent R2 blockers without canonical source reopen: complete Unit/User/Application lock graph; Interview participant/actor row-before-advisory ordering; dormant add/re-add post-lock active revalidation; and first-bind post-lock trusted Auth evidence freshness. Candidate is producer-verified only and must not enter governed product integration before independent exact-SHA R3 PASS. Dangling historical R2 gate/handoff pointers were not fabricated; the verified R2 Owner-transport evidence remains the historical source of truth. No Users/Permissions UI, main mutation, PR, deployment, or connected Supabase migration application occurred."

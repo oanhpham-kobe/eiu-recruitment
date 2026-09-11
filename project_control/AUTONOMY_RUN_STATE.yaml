@@ -472,7 +472,7 @@ s06_001_acceptance:
   pr_created_or_merged: false
 
 s06_002_planning:
-  status: IMPLEMENTATION_REPAIR_ACTIVE
+  status: WAITING_INDEPENDENT_REVIEW
   task: TASK-S06-002
   title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
   prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
@@ -492,49 +492,76 @@ s06_002_planning:
     - "TASK-S06-001 accepted @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
     - "accepted Slice-01 identity/auth schema and Internal first-login provisioning"
     - "accepted Application owner and Interview participant/resource lifecycle contracts"
-  implementation_hold: "CLEARED FOR R3 REPAIR — independent R2 review returned BLOCKING_REPAIR with SOURCE_REOPEN_REQUIRED=false; repair remains confined to the isolated TASK-S06-002 branch."
+  implementation_hold: "HELD PENDING R3 INDEPENDENT REVIEW — exact candidate 73f03e00b6c2f90874eb17419e57ca58715a6990 is producer-verified but not accepted or product-integrated."
   implementation_candidate:
     branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
     baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
     prior_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-    candidate_sha: PENDING
-    review_round: R3
-    prior_exact_verifier_run: "34621266079 PASS"
-    prior_review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md
-    prior_review_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
-  independent_implementation_review:
+    candidate_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
+    source_reopen_required: false
+    repair_round: R3
+    producer_verification:
+      worker_run: "34628250213 PASS"
+      exact_verifier_run: "34628766807 PASS"
+      exact_verified_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
+      static: "PASS — exact SHA, one-commit R3 delta, append-only migration, review artifacts, diff hygiene, accepted migrations not rewritten"
+      web: "PASS — npm ci, npm audit --audit-level=high, design:check, lint, typecheck, build, Chromium install, full npm run test"
+      database: "PASS — two zero-state replays, focused Internal User/RBAC/Identity, R1/R2/R3 lifecycle concurrency, crossed Application/Interview/copy/bulk, retained S06-001 seed/history/durable-history, db lint --level error, clean stop"
+    review_package: project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md
+    coordinator_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
+  prior_independent_implementation_review:
     work_id: S06-002-IMPLEMENTATION-REVIEW-001-R2
     reviewer: eiu-reviewer
     status: VERIFIED_FROM_OWNER_TRANSPORT
     reviewed_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
     result: BLOCKING_REPAIR
     source_reopen_required: false
-    blocking_findings:
-      - "Unit-history deadlock remains between bulk owner assignment and lifecycle/RBAC app_users updates via S06-001 Unit history locking."
-      - "Interview operationalization can take participant advisory locks before actor/current-participant app_users FK row locks, leaving a public-command deadlock with lifecycle administration."
-      - "Dormant-history repair permits deactivation-first add/re-add of a newly inactive participant because new selection/restoration is not post-lock revalidated outside resource_blocking Interviews."
-      - "First Google bind does not repeat trusted Google/confirmed-email Auth evidence validation after normalized-email, target-row, and Internal User locks."
     evidence_persistence: UNAVAILABLE
     evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md
-  r3_repair_scope:
-    - "Reconcile the complete Unit/User/Application lock graph while preserving S06-001 durable history and active-master validation; add public bulk-assignment vs lifecycle/HR-role-removal races with non-null Unit."
-    - "Make Interview operationalization acquire relevant app_users rows before Internal User advisory locks and revalidate participants; cover uncancel/schedule by an HR who is also a current participant versus Root lifecycle."
-    - "Serialize and post-lock revalidate new participant selection/restoration regardless of dormant/resource-blocking status while preserving historical remove/reorder maintenance; cover CANCELLED and unscheduled deactivation-first add/re-add races."
-    - "Repeat private.verified_google_auth_email(auth.uid()) after the full first-bind lock set, require equality with the advisory-key email, fail closed on change, and add staged Auth-evidence-change regression."
+  independent_implementation_review:
+    work_id: S06-002-IMPLEMENTATION-REVIEW-001-R3
+    reviewer: eiu-reviewer
+    status: PENDING
+    reviewed_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
+    result: PENDING
+    source_reopen_required: false
+    review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md
+    coordinator_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
+    acceptance_rule: "No product serialization into integration until an independent exact-SHA R3 PASS is returned and truthfully persisted."
+  r3_repair_closure:
+    - "Unit/User/Application durable-history lock graph repaired with staged non-null Unit public races."
+    - "Interview operationalization repaired to row-before-advisory ordering with current participant revalidation and schedule/uncancel concurrency coverage."
+    - "Dormant add/re-add restoration now serializes and post-lock revalidates active eligibility while permitted historical maintenance remains intact."
+    - "First Google bind repeats verified Google/confirmed-email proof after the full lock set and fails closed on evidence drift."
+
+implementation_materialization:
+  task: TASK-S06-002
+  prompt_review: "PASS S06-002-PROMPT-REVIEW-001 @ f757e76f3f97077c608dab29bad45b8bd2126dc3"
+  prompt_review_provenance: VERIFIED_FROM_OWNER_TRANSPORT
+  source_reopen_required: false
+  prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+  checkpoint: checkpoint/pre-S06-002-001
+  branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+  baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+  status: WAITING_INDEPENDENT_REVIEW
+  prior_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
+  current_candidate_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
+  exact_verifier_run: "34628766807 PASS"
+  review_round: R3
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-002 R3 repair is active after independent R2 BLOCKING_REPAIR; no later Slice-06 frontier is materialized."
+  execution_hold: "TASK-S06-002 R3 candidate 73f03e00b6c2f90874eb17419e57ca58715a6990 passed exact producer verification run 34628766807; later Slice-06 work remains held pending independent exact-SHA R3 review."
 
 stop_gate:
-  status: CLEAR
-  type: NONE
-  work_id: S06-002-IMPLEMENTATION-REPAIR-R3
-  target: "Repair four R2 blockers from exact candidate 7c37d46fa504b5d98b156735d7355f1d938be0bf"
+  status: WAITING_EXTERNAL_REVIEW
+  type: INDEPENDENT_IMPLEMENTATION_REVIEW
+  work_id: S06-002-IMPLEMENTATION-REVIEW-001-R3
+  target: "73f03e00b6c2f90874eb17419e57ca58715a6990"
   reviewer: eiu-reviewer
   source_reopen_required: false
-  resume_on: "Produce a new immutable task-branch SHA, rerun zero-state/static/web/DB/concurrency verification including the four R2 regressions, then route exact SHA to independent R3 review."
+  resume_on: "Independent exact-SHA R3 verdict for 73f03e00b6c2f90874eb17419e57ca58715a6990. PASS may advance to governed product serialization; any blocker returns to repair without source reopen unless reviewer explicitly requires it."
 
-next_action: "Repair the four S06-002 R2 blockers on oanhpham-kobe/TASK-S06-002-user-rbac-identity without weakening accepted contracts. Do not serialize product into integration before independent PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
+next_action: "Obtain independent implementation re-review S06-002-IMPLEMENTATION-REVIEW-001-R3 on exact task-branch SHA 73f03e00b6c2f90874eb17419e57ca58715a6990 using project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md. Do not serialize product into integration before PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
