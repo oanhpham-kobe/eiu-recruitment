@@ -32,7 +32,7 @@ begin
   insert into public.app_user_roles(app_user_id,role_code) values(hr,'HR');
   insert into public.app_user_permissions(app_user_id,permission_code) values
     (hr,'interviews.view'),(hr,'interviews.manage'),(hr,'interviews.participants'),(hr,'interviews.status'),(hr,'interviews.documents'),
-    (hr,'reports.view'),(hr,'reports.edit_interviewer'),(hr,'reports.manage_status') on conflict do nothing;
+    (hr,'reports.view'),(hr,'reports.edit_interviewer'),(hr,'reports.manage_status'),(hr,'reports.delete') on conflict do nothing;
   insert into public.app_users(auth_user_id,full_name,email,job_title,is_active) values(i1_auth,'T002 Interviewer One','t002_i1_'||s||'@eiu.edu.vn','Lecturer',true) returning public.app_users.app_user_id into i1;
   insert into public.app_users(auth_user_id,full_name,email,job_title,is_active) values(i2_auth,'T002 Interviewer Two','t002_i2_'||s||'@eiu.edu.vn','Professor',true) returning public.app_users.app_user_id into i2;
   insert into public.app_users(auth_user_id,full_name,email,is_active) values(outsider_auth,'T002 Outsider','t002_out_'||s||'@eiu.edu.vn',true) returning public.app_users.app_user_id into outsider;
