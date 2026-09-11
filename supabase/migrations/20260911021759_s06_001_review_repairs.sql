@@ -483,3 +483,118 @@ create policy qualification_levels_authenticated_select on public.qualification_
     or private.has_permission('master_data.manage')
     or private.is_root_admin()
   );
+
+-- -----------------------------------------------------------------------------
+-- R2b. The staged-document validator validates staging, not trusted terminalization.
+-- Materialization/finalization changes reservation/current-version state before the
+-- trusted command marks the immutable plan APPLIED; cancellation likewise cancels
+-- its reservation/session first. Permit only the one-way terminal status transition
+-- when every plan field is unchanged, and retain full validation for staging.
+-- -----------------------------------------------------------------------------
+create or replace function private.validate_candidate_form_document_change()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  form_mode text;
+  form_status text;
+  form_expires_at timestamptz;
+  target_submission uuid;
+  logical_submission uuid;
+  logical_type uuid;
+  current_version_count integer;
+  reservation_session uuid;
+  reservation_type uuid;
+  reservation_status text;
+  reservation_expires_at timestamptz;
+  doc_scope text;
+  doc_active boolean;
+begin
+  if tg_op = 'UPDATE' then
+    if old.status_code = 'PENDING' and new.status_code in ('APPLIED', 'CANCELLED') then
+      if new.candidate_form_session_id is distinct from old.candidate_form_session_id
+        or new.action_code is distinct from old.action_code
+        or new.target_logical_document_id is distinct from old.target_logical_document_id
+        or new.upload_reservation_id is distinct from old.upload_reservation_id
+        or new.document_type_id is distinct from old.document_type_id
+        or new.intended_document_type_id is distinct from old.intended_document_type_id
+        or new.created_at is distinct from old.created_at then
+        raise exception 'candidate document plan is immutable during terminal transition'
+          using errcode = '23514';
+      end if;
+      return new;
+    end if;
+
+    if old.status_code in ('APPLIED', 'CANCELLED')
+       and new.status_code is distinct from old.status_code then
+      raise exception 'candidate document terminal state cannot transition'
+        using errcode = '23514';
+    end if;
+  end if;
+
+  select fs.mode_code, fs.status_code, fs.expires_at, fs.target_submission_id
+    into form_mode, form_status, form_expires_at, target_submission
+  from public.candidate_form_sessions fs
+  where fs.candidate_form_session_id = new.candidate_form_session_id;
+  if not found then raise exception 'candidate form session not found' using errcode = '23503'; end if;
+  if form_status <> 'OPEN' then
+    raise exception 'document changes require an OPEN candidate form session' using errcode = '23514';
+  end if;
+  if form_expires_at <= transaction_timestamp() then
+    raise exception 'FORM_SESSION_EXPIRED' using errcode = '23514';
+  end if;
+
+  if form_mode = 'NEW_SUBMISSION' and new.action_code <> 'ADD' then
+    raise exception 'new Submission form only supports staged ADD document actions' using errcode = '23514';
+  end if;
+
+  select d.scope_code, d.is_active into doc_scope, doc_active
+  from public.document_types d where d.document_type_id = new.intended_document_type_id;
+  if not found then raise exception 'document type not found' using errcode = '23503'; end if;
+  if doc_scope not in ('SUBMISSION','BOTH') then
+    raise exception 'document type is not valid for Submission documents' using errcode = '23514';
+  end if;
+  if new.action_code = 'ADD' and not doc_active then
+    raise exception 'inactive document type cannot be selected for a new document' using errcode = '23514';
+  end if;
+
+  if new.target_logical_document_id is not null then
+    select l.submission_id, l.document_type_id into logical_submission, logical_type
+    from public.submission_document_logicals l where l.logical_document_id = new.target_logical_document_id;
+    if not found or target_submission is null or logical_submission is distinct from target_submission then
+      raise exception 'target logical document does not belong to edit Submission' using errcode = '23514';
+    end if;
+    if logical_type is distinct from new.intended_document_type_id then
+      raise exception 'replace/delete document type must match logical header type' using errcode = '23514';
+    end if;
+    if new.action_code in ('REPLACE','DELETE') then
+      select count(*) into current_version_count
+      from public.submission_documents v
+      where v.logical_document_id = new.target_logical_document_id and v.is_current = true;
+      if current_version_count <> 1 then
+        raise exception 'INVALID_DOCUMENT_TARGET: replace/delete requires exactly one current version' using errcode = '23514';
+      end if;
+    end if;
+  end if;
+
+  if new.upload_reservation_id is not null then
+    select u.candidate_form_session_id, u.intended_document_type_id, u.status_code, u.expires_at
+      into reservation_session, reservation_type, reservation_status, reservation_expires_at
+    from public.upload_reservations u where u.upload_reservation_id = new.upload_reservation_id;
+    if not found or reservation_session is distinct from new.candidate_form_session_id then
+      raise exception 'upload reservation does not belong to candidate form session' using errcode = '23514';
+    end if;
+    if reservation_type is distinct from new.intended_document_type_id then
+      raise exception 'upload reservation document type mismatch' using errcode = '23514';
+    end if;
+    if reservation_status not in ('UPLOADED','VALIDATED') then
+      raise exception 'upload reservation is not stageable' using errcode = '23514';
+    end if;
+    if reservation_expires_at <= transaction_timestamp() then
+      raise exception 'UPLOAD_RESERVATION_EXPIRED' using errcode = '23514';
+    end if;
+  end if;
+  return new;
+end;
+$$;
