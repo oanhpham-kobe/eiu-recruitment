@@ -472,7 +472,7 @@ s06_001_acceptance:
   pr_created_or_merged: false
 
 s06_002_planning:
-  status: PROMPT_REVIEW_PASS
+  status: IMPLEMENTATION_ACTIVE
   task: TASK-S06-002
   title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
   prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
@@ -496,35 +496,34 @@ s06_002_planning:
     - "Accepted first-login bind must be hardened to current canonical verified Google-provider + confirmed EIU email proof without creating a divergent bind path."
     - "Non-root directory management must not expose another user's granular effective permissions/security identity; inactive lifecycle management still needs a minimum-safe read surface."
     - "User deactivation/HR-role removal must be concurrency-safe against new Active Application owner assignment and new/current non-elapsed resource-blocking Interview participation."
-  implementation_hold: "Prompt/source reconciliation passed. Create immutable pre-task checkpoint and isolated implementation branch before any product/database mutation."
+  implementation_hold: "CLEARED — immutable pre-task checkpoint and isolated implementation branch are materialized at the exact validated baseline."
 
 implementation_materialization:
-  task: TASK-S06-001
-  prompt_review: "PASS S06-001-PROMPT-REVIEW-002 @ 68d96b39e309ee6f1edbe6cf4031c10a583b0269"
+  task: TASK-S06-002
+  prompt_review: "PASS S06-002-PROMPT-REVIEW-001 @ f757e76f3f97077c608dab29bad45b8bd2126dc3"
+  prompt_review_provenance: VERIFIED_FROM_OWNER_TRANSPORT
   source_reopen_required: false
-  prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
-  checkpoint: checkpoint/pre-S06-001-001
-  branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle
-  baseline_sha: "0ec409915bdd00b61b1b7affdb77ec778c7c1dc7"
+  prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+  checkpoint: checkpoint/pre-S06-002-001
+  branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+  baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
   status: COMPLETE
-  current_candidate_sha: "9002c9be26c57a182494b9b0de46ae612f32d81e"
-  review_round: R3
+  current_candidate_sha: PENDING
+  review_round: R0
 
 safe_frontier:
-  eligible_tasks:
-    - TASK-S06-002
+  eligible_tasks: []
   skipped_due_to_dependency: []
-  materialization_frontier:
-    - TASK-S06-002
-  execution_hold: null
+  materialization_frontier: []
+  execution_hold: "TASK-S06-002 implementation is active on its isolated branch; no additional Slice-06 implementation frontier is materialized."
 
 stop_gate:
   status: CLEAR
   type: NONE
-  work_id: S06-002-PROMPT-REVIEW-001
-  target: "TASK-S06-002 prompt/source reconciliation @ f757e76f3f97077c608dab29bad45b8bd2126dc3"
+  work_id: S06-002-IMPLEMENTATION-MATERIALIZATION-001
+  target: "TASK-S06-002 implementation baseline @ 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
   reviewer: eiu-reviewer
   source_reopen_required: false
-  resume_on: "Create immutable pre-task checkpoint and isolated implementation branch, then begin bounded S06-002 implementation."
+  resume_on: "Implement the reviewed S06-002 contract on the isolated branch, verify locally/CI, then create exact candidate review gate before integration."
 
-next_action: "Create checkpoint/pre-S06-002-001 from this exact validated control state and create isolated implementation branch oanhpham-kobe/TASK-S06-002-user-rbac-identity. Then begin bounded implementation from the accepted prompt. Preserve boundaries: do not push/merge main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Implement TASK-S06-002 on oanhpham-kobe/TASK-S06-002-user-rbac-identity from exact baseline 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01. Preserve the reviewed scope and non-blocking observations. Do not push/merge main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
