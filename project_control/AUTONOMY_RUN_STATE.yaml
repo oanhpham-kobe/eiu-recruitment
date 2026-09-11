@@ -190,224 +190,56 @@ slice_05_planning:
     evidence_commit: "128859aecc2e8cefc7acc71cf5e2252c43dd5af9"
     evidence_path: project_control/reviews/S05_002_PROMPT_REVIEW_1f831a7_v1.md
   implementation_candidate:
-    branch: oanhpham-kobe/TASK-S05-002-hr-report-management
-    baseline_sha: "fdf5fd27d27f6e6d587aab034cce0f54df425cfc"
-    prior_candidate_sha: "436f733224cf9cb3776b5783afd86f577572d542"
-    candidate_sha: "f4e1a04b59aef92aa55245c451386e0c0cfe3813"
-    producer_review: COMPLETE
-    producer_completion_claim: HELD_PENDING_TARGETED_INDEPENDENT_REREVIEW
-    review_package: project_control/reviews/S05_002_IMPLEMENTATION_R3_GATE_f4e1a04_v1.md
-    prior_independent_reviews:
-      r1:
-        work_id: S05-002-IMPLEMENTATION-REVIEW-001
-        reviewed_sha: "b711bebcb9da15ea4ea8a22f7f8594f49cc6c971"
-        result: BLOCKING_REPAIR
-        source_reopen_required: false
-        evidence_branch: review/S05-002-IMPL-b711beb-v1
-        evidence_commit: "4c4bfe844f887792803691b589964ee0df5c0f5b"
-        evidence_path: project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_b711beb_v1.md
-      r2:
-        work_id: S05-002-IMPLEMENTATION-REVIEW-001-R2
-        reviewed_sha: "436f733224cf9cb3776b5783afd86f577572d542"
-        result: BLOCKING_REPAIR
-        source_reopen_required: false
-        evidence_branch: review/S05-002-IMPL-436f733-v2
-        evidence_commit: "52ea377baf0e0dd99f2fa32929cdd0cc14c9355a"
-        evidence_path: project_control/reviews/S05_002_IMPLEMENTATION_REVIEW_436f733_v2.md
-    r2_repair_scope:
-      - "Preserve Drawer drafts when filtered refresh removes the row; preserve original bases for dirty participant fields so same-field remote updates surface conflicts."
-      - "Use accepted save_interviewer_report RPC argument p_expected_version_no and lock it with adapter regression coverage."
-      - "Make the 390px row Status interaction reachable through the horizontal scroller without changing the fixed 1610px table geometry."
-      - "Resolve candidate-owned Biome/lint diagnostics and rerun the full web gate."
-      - "Repair SQL test fixtures to satisfy the canonical interview-format invariant and isolate S05-002 aggregate-count assertions from prior S05-001 regression residue."
-    final_verification:
-      result: PASS
-      run_id: "34435135134"
-      verify_branch: verify/S05-002-R3-final
-      verify_head: "5ba5541c236faaef20f936bce036e862da00a682"
-      equivalence: "verify head is exact candidate f4e1a04b59aef92aa55245c451386e0c0cfe3813 plus one workflow-only commit"
-      web: "PASS — npm ci, npm audit --audit-level=high, design:check, lint, typecheck, build, Chromium install, npm run test"
-      database: "PASS — Supabase 2.116.0 start, db reset from zero, S05-001 contextual read regression, S05-002 HR management regression, S05-002 HR DTO privacy regression, stop"
-  independent_implementation_review:
-    work_id: S05-002-IMPLEMENTATION-REVIEW-001-R3
+  branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle
+  baseline_sha: "0ec409915bdd00b61b1b7affdb77ec778c7c1dc7"
+  prior_candidate_sha: "0c4b94b29e08e1ad877583bdb90d522e5577dccc"
+  candidate_sha: "dced5aac32e6b09181cd53d0011b9c951edf2814"
+  changed_files_count: 7
+  source_reopen_required: false
+  prior_independent_review:
+    work_id: S06-001-IMPLEMENTATION-REVIEW-001
     reviewer: eiu-reviewer
     status: VERIFIED_FROM_OWNER_TRANSPORT
-    reviewed_sha: "f4e1a04b59aef92aa55245c451386e0c0cfe3813"
-    result: PASS
-    source_reopen_required: false
-    blocking_findings: NONE
-    evidence_persistence: "Reviewer-reported coordinates were not GitHub-visible when checked; verdict accepted per Owner instruction to proceed from reviewer report."
-  final_integration_equivalence:
-    work_id: S05-002-FINAL-INTEGRATION-EQUIVALENCE-001
-    reviewer: eiu-reviewer
-    status: VERIFIED_FROM_OWNER_TRANSPORT
-    source_implementation_sha: "f4e1a04b59aef92aa55245c451386e0c0cfe3813"
-    reviewed_sha: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"
-    result: PASS
-    source_reopen_required: false
-    blocking_findings: NONE
-    evidence_persistence: "Reviewer-reported coordinates were not GitHub-visible when checked; verdict accepted per Owner instruction to proceed from reviewer report."
-    integration_ci_run: "34461727271 PASS"
-    governance_ci_run: "34461727266 PASS"
-    accepted_checkpoint: "checkpoint/S05-002-accepted-001 @ fe556dda76ebeda7107bcb9310cbaf338b30fc29"
-  external_review_transport: "Coordinator runtime has no direct OMP/subagent invoker or OMP CLI. Exact-SHA Owner transport is required; returned review text is transport only until durable evidence is verified directly in GitHub."
-  owner_asset_gap:
-    id: ASSET-001
-    blocking_now: false
-    scope: "official PDF pixel-perfect template integration only"
-
-s05_001_acceptance:
-  result: ACCEPTED
-  final_acceptance_sha: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
-  r6_review:
-    reviewed_sha: "63bb2f9eff9e36c11c704748c3ccf334cbcfc4ce"
-    result: PASS
-    evidence_branch: "review/S05-001-IMPL-63bb2f9-v6"
-    evidence_commit: "03ea6eb5417023e52f54edf4e863b7e585bea975"
-  final_integration_equivalence:
-    reviewed_sha: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
-    result: PASS
-    evidence_branch: "review/S05-001-FINAL-ef0bd9e-v1"
-    evidence_commit: "c1b9eaed5b314ce9f64cbe2301494b04922ab57e"
-  exact_sha_ci:
-    integration_ci_run: "34386549610"
-    governance_ci_run: "34386549725"
-    result: PASS
-  accepted_checkpoint: "checkpoint/S05-001-accepted-001 @ ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
-  source_reopen_required: false
-
-s05_002_acceptance:
-  result: ACCEPTED
-  implementation_candidate_sha: "f4e1a04b59aef92aa55245c451386e0c0cfe3813"
-  final_acceptance_sha: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"
-  integration_ci_run: "34461727271"
-  governance_ci_run: "34461727266"
-  accepted_checkpoint: "checkpoint/S05-002-accepted-001 @ fe556dda76ebeda7107bcb9310cbaf338b30fc29"
-  source_reopen_required: false
-  connected_supabase_migration_applied: false
-  vercel_deployment_performed: false
-
-slice_05_closure:
-  work_id: SLICE-05-CLOSING-REVIEW-001
-  result: PASS
-  source_reopen_required: false
-  reviewed_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
-  accepted_tasks:
-    TASK-S05-001: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"
-    TASK-S05-002: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"
-  broader_integration_ci_run: "34463405935"
-  broader_integration_ci_result: PASS
-  governance_ci_run: "34463405902"
-  governance_ci_result: PASS
-  reviewer: eiu-reviewer
-  review_evidence_transport: "Owner returned PASS / SOURCE_REOPEN_REQUIRED=false for exact reviewed SHA. Reviewer-reported branch review/SLICE-05-CLOSING-60e1f42-v1, commit a276ae4dc10be8c245fffdfa278e40dba8350f87, and path project_control/reviews/SLICE_05_CLOSING_REVIEW_60e1f42_v1.md were not GitHub-visible when Coordinator checked commit/ref/path; no durable-verification claim is made."
-  composition_verdict: "PASS — cross-task composition, security/privacy, Current Round/status/final decision, concurrency/lifecycle, design/UX/accessibility, and slice completeness"
-  closure_transition_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
-  closure_transition_integration_ci: "34488858134 PASS"
-  closure_transition_governance_ci: "34488858173 PASS"
-
-slice_06_planning:
-  status: WAITING_EXTERNAL_REVIEW
-  proposed_first_task: TASK-S06-001
-  materialized_task: TASK-S06-001
-  task_status: REVIEW
-  prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
-  producer_reconciliation:
-    work_id: S06-001-PROMPT-PRODUCER-RECONCILIATION-001
-    result: PASS
-    source_reopen_required: false
-    evidence_path: project_control/reviews/S06_001_PROMPT_PRODUCER_RECONCILIATION_v1.md
-  canonical_sources:
-    - recruitment_webapp/review_pack/09_MASTER_DATA_CATALOG.md
-    - recruitment_webapp/review_pack/64_MASTER_DATA_HISTORY_POLICY.md
-    - recruitment_webapp/review_pack/08_DATA_MODEL_AND_FIELD_DICTIONARY.md
-    - recruitment_webapp/review_pack/37_BACKEND_COMMAND_CONTRACTS.md
-    - recruitment_webapp/review_pack/39_SECURITY_RLS_MATRIX.md
-    - recruitment_webapp/review_pack/40_DATABASE_INVARIANTS.md
-    - recruitment_webapp/review_pack/55_COMMAND_COVERAGE_MATRIX.md
-    - recruitment_webapp/review_pack/59_RLS_POLICY_BLUEPRINT.md
-    - recruitment_webapp/review_pack/73_DOMAIN_GLOSSARY_AND_CANONICAL_PREDICATES.md
-    - recruitment_webapp/review_pack/100_TECHNICAL_PRECODE_GATE_V1_18.md
-    - recruitment_webapp/review_pack/command_registry.yaml
-    - recruitment_webapp/review_pack/database_schema.sql
-    - recruitment_webapp/review_pack/seed_master_data.json
-  accepted_prerequisites:
-    - TASK-S05-002
-    - accepted identity/auth/master reference foundations from prior slices
-  scope_split:
-    s06_001: "business Master Data lifecycle/history trusted contracts"
-    later_security_task: "Internal User directory, HR role/permission management, bound identity and lifecycle safeguards"
-    later_ui_tasks: "Master Data and Users/Permissions management experiences"
-  source_reopen_required: false
-  prompt_review_target_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"
-  prior_prompt_review:
-    work_id: S06-001-PROMPT-REVIEW-001
-    reviewer: eiu-reviewer
-    reviewed_sha: "5abbb5181405e0f5a468176edd93db8226a3efd5"
+    reviewed_sha: "0c4b94b29e08e1ad877583bdb90d522e5577dccc"
     result: BLOCKING_REPAIR
     source_reopen_required: false
     blocking_findings:
-      - S06-PROMPT-01_MISSING_IDEMPOTENCY_CONTRACT
-      - S06-PROMPT-02_DELETE_INACTIVATE_MISSING_EXPECTED_VERSION
-    owner_transport_evidence:
-      reported_branch: review/S06-001-PROMPT-5abbb51-v1
-      reported_commit: "a93659867e75f95109fa4826cb8b68114b031ddc"
-      reported_path: project_control/reviews/S06_001_PROMPT_REVIEW_5abbb51_v1.md
-      github_verification: UNRESOLVED_NOT_VISIBLE
-  prompt_repair_v2:
-    status: MATERIALIZED
-    source_reopen_required: false
-    prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
-    repair_evidence: project_control/reviews/S06_001_PROMPT_REPAIR_RESPONSE_v2.md
-    repairs:
-      - "Idempotency contract: scoped key, pre-replay authorization, normalized request fingerprint, mismatch fail-closed, atomic stored result, sequential/concurrent replay safety, actor/type/target isolation."
-      - "Delete/inactivate: required expected_version_no checked under target lock before lifecycle decision; stale request returns STALE_VERSION with no master/audit change."
-      - "Clarified no new anonymous management surface while preserving accepted anonymous lookup reads required by Candidate flows."
-  independent_prompt_review:
-    work_id: S06-001-PROMPT-REVIEW-002
-    reviewer: eiu-reviewer
-    status: VERIFIED_FROM_OWNER_TRANSPORT
-    reviewed_sha: "68d96b39e309ee6f1edbe6cf4031c10a583b0269"
-    result: PASS
-    source_reopen_required: false
-    blocking_findings: NONE
-    evidence_persistence: "Reviewer-reported review/S06-001-PROMPT-68d96b3-v2 @ 28af23929fa0d99d9132f1c779fc722b12c8c1e1 and project_control/reviews/S06_001_PROMPT_REVIEW_68d96b3_v2.md were not GitHub-visible when checked; verdict accepted from Owner transport without durable-verification claim."
-    evidence_branch: PENDING
-    evidence_commit: PENDING
-    evidence_path: PENDING
-  reconciliation_note: "Accepted Slice-01 users.directory_read technical helper is intentionally left untouched by S06-001 and must be reconciled in the later User/Identity/RBAC task against current permission-detail visibility rules."
-  implementation_candidate:
-    branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle
-    baseline_sha: "0ec409915bdd00b61b1b7affdb77ec778c7c1dc7"
-    candidate_sha: "0c4b94b29e08e1ad877583bdb90d522e5577dccc"
-    changed_files_count: 6
-    source_reopen_required: false
-    producer_verification:
-      validation_v3_run: "34551607089 PASS"
-      exact_candidate_validation_v4_run: "34551826518 PASS"
-      zero_state_migration_replay: PASS
-      accepted_pre_s04_regression: PASS
-      accepted_s05_001_regression: PASS
-      accepted_s05_002_regression: PASS
-      accepted_s05_002_privacy_regression: PASS
-      master_data_seed_guard_regression: PASS
-      master_data_lifecycle_history_regression: PASS
-      master_data_concurrent_idempotency_regression: PASS
-      static_diff_security_markers: PASS
-    review_package: project_control/reviews/S06_001_IMPLEMENTATION_REVIEW_GATE_0c4b94b_v1.md
-  independent_implementation_review:
-    work_id: S06-001-IMPLEMENTATION-REVIEW-001
-    reviewer: eiu-reviewer
-    status: WAITING_EXTERNAL_REVIEW
-    reviewed_sha: "0c4b94b29e08e1ad877583bdb90d522e5577dccc"
-    result: PENDING
-    source_reopen_required: PENDING
-    blocking_findings: PENDING
-    evidence_branch: PENDING
-    evidence_commit: PENDING
-    evidence_path: PENDING
-  implementation_execution_hold: "Exact-SHA independent implementation review by eiu-reviewer; no product serialization to integration before PASS + SOURCE_REOPEN_REQUIRED=false."
-  implementation_safe_frontier: NONE
+      - "Durable first-use history for cancellation/rejection reasons was not preserved after accepted lifecycle normalization cleared current reason FKs."
+      - "Inactive historical Document Types incorrectly blocked trusted Candidate REPLACE/DELETE flows."
+      - "Interview Format structural metadata was not locked across authoritative first-use validation, leaving a concurrent metadata-update race."
+      - "master_data.manage could not read inactive master rows required for lifecycle/history management."
+    evidence_persistence: "Reviewer report accepted through Owner/coordinator transport; no unverified GitHub evidence coordinates are claimed."
+  r1_repair_scope:
+    - "Capture durable cancellation/rejection reason first-use history before/through lifecycle normalization and include that history in master usage decisions."
+    - "Allow trusted Candidate EDIT historical REPLACE/DELETE for the unchanged inactive Document Type while keeping ADD/new selection active-only."
+    - "Make staged-document terminalization transition-aware so trusted PENDING->APPLIED/CANCELLED does not revalidate already-finalized staging prerequisites, while preserving immutable one-way state."
+    - "Lock authoritative Interview Format metadata with transaction-scoped key-share semantics before room/link requirement validation."
+    - "Expose inactive management rows only to authorized master_data.manage while preserving accepted anonymous active-only lookup semantics and deny-by-default DML."
+    - "Use fresh isolated concurrent-idempotency fixtures and permanently wire reviewer regressions into Integration CI."
+  producer_verification:
+    focused_green_run: "34556347568 PASS"
+    final_full_verification_run: "34571849619 PASS"
+    verify_branch: verify/S06-001-R2-dced5aa
+    verify_head: "350d32671ab9bd22b93758a19c80c4e4f56d995b"
+    equivalence: "verify head is exact candidate dced5aac32e6b09181cd53d0011b9c951edf2814 plus only the temporary verification workflow"
+    governance: PASS
+    web: "PASS — npm ci/audit, design check, lint, typecheck, build, Chromium install, full web tests"
+    database: "PASS — diff hygiene, zero-state replay, accepted PRE-S04/S05/S06 regressions, R1/R2/R4 regressions, concurrent idempotency, deterministic R3 race, DB advisors"
+    initial_verify_harness_failure: "Run 34571769839 failed before DB startup because shallow checkout could not resolve the historical diff base; workflow-only fetch-depth repair produced PASS run 34571849619 with no candidate change."
+  review_package: project_control/reviews/S06_001_IMPLEMENTATION_R2_GATE_dced5aa_v1.md
+independent_implementation_review:
+  work_id: S06-001-IMPLEMENTATION-REVIEW-001-R2
+  reviewer: eiu-reviewer
+  status: WAITING_EXTERNAL_REVIEW
+  reviewed_sha: "dced5aac32e6b09181cd53d0011b9c951edf2814"
+  result: PENDING
+  source_reopen_required: PENDING
+  blocking_findings: PENDING
+  evidence_branch: PENDING
+  evidence_commit: PENDING
+  evidence_path: PENDING
+implementation_execution_hold: "Exact-SHA independent R2 implementation review; no product serialization to integration before PASS + SOURCE_REOPEN_REQUIRED=false."
+implementation_safe_frontier: NONE
 
 implementation_materialization:
   task: TASK-S06-001
@@ -416,23 +248,24 @@ implementation_materialization:
   prompt: project_control/prompts/SLICE-06_TASK-001_v2.md
   checkpoint: checkpoint/pre-S06-001-001
   branch: oanhpham-kobe/TASK-S06-001-master-data-lifecycle
-  baseline_sha: PENDING_THIS_MATERIALIZATION_COMMIT
-  status: PENDING_CONTROL_CI
+  baseline_sha: "0ec409915bdd00b61b1b7affdb77ec778c7c1dc7"
+  status: COMPLETE
+  current_candidate_sha: "dced5aac32e6b09181cd53d0011b9c951edf2814"
+  review_round: R2
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
-  materialization_frontier: [TASK-S06-001]
-  execution_hold: "TASK-S06-001 implementation materialization must pass exact-SHA Integration/Governance CI before branch execution"
+  materialization_frontier: []
+  execution_hold: "TASK-S06-001 waits for independent R2 implementation review of exact SHA dced5aac32e6b09181cd53d0011b9c951edf2814."
 
 stop_gate:
-  status: PRE_IMPLEMENTATION_MATERIALIZATION_CI
-  type: CONTROL_MATERIALIZATION
-  work_id: S06-001-IMPLEMENTATION-MATERIALIZATION-001
-  target: "TASK-S06-001 reviewed prompt v2 @ 68d96b39e309ee6f1edbe6cf4031c10a583b0269"
+  status: WAITING_EXTERNAL_REVIEW
+  type: INDEPENDENT_IMPLEMENTATION_REREVIEW
+  work_id: S06-001-IMPLEMENTATION-REVIEW-001-R2
+  target: "TASK-S06-001 R2 repair candidate dced5aac32e6b09181cd53d0011b9c951edf2814"
   reviewer: eiu-reviewer
-  prompt_verdict: PASS
-  source_reopen_required: false
-  resume_on: "materialization exact-SHA Integration CI PASS + Governance CI PASS, then create immutable checkpoint and isolated task branch"
+  source_reopen_required: PENDING
+  resume_on: "Independent reviewer PASS + SOURCE_REOPEN_REQUIRED=false for exact candidate SHA, then verify review report and compose reviewed product delta onto integration."
 
-next_action: "Validate this materialization commit via Integration/Governance CI. On PASS create checkpoint/pre-S06-001-001 and oanhpham-kobe/TASK-S06-001-master-data-lifecycle at the exact materialization SHA, then implement TASK-S06-001 on the isolated branch with local/CI Supabase only. Do not merge/push main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Obtain independent S06-001 R2 implementation review for exact SHA dced5aac32e6b09181cd53d0011b9c951edf2814 using project_control/reviews/S06_001_IMPLEMENTATION_R2_GATE_dced5aa_v1.md. On BLOCKING_REPAIR, repair only the minimum task-branch scope and repeat verification/review. On OWNER_DECISION_REQUIRED, stop for Owner. On PASS + SOURCE_REOPEN_REQUIRED=false, proceed to governed integration composition; do not push/merge main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
