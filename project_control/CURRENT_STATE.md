@@ -9,20 +9,22 @@
 
 TASK-S06-001 remains accepted at `59be9b2c92906065b8e4baa902fcec1d4cbefa12` / `checkpoint/S06-001-accepted-001`.
 
-## SLICE-06 / TASK-S06-002 — WAITING INDEPENDENT R3 REVIEW
+## SLICE-06 / TASK-S06-002 — OMP R5 REVIEW PROMPT READY
 
-- Exact R3 candidate: `73f03e00b6c2f90874eb17419e57ca58715a6990` on `oanhpham-kobe/TASK-S06-002-user-rbac-identity`.
-- Prior R2 target `7c37d46fa504b5d98b156735d7355f1d938be0bf` was **BLOCKING_REPAIR** with `SOURCE_REOPEN_REQUIRED=false`; verified historical evidence remains `project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md`.
-- R3 repair worker `34628250213`: **PASS**.
-- Exact-SHA verifier `34628766807`: **PASS** — static, full web, two zero-state DB replays, focused Internal User/RBAC/Identity, R1/R2/R3 concurrency, crossed Application/Interview/copy/bulk, retained S06-001 history regressions, and DB lint.
-- R3 review gate: `project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md`.
-- R3 reviewer handoff: `project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md`.
-- Task registry status: `REVIEW`; review round: `R3`.
-- Product candidate has **not** been serialized into integration and is not accepted until independent exact-SHA R3 PASS.
+- Exact R5 candidate: `63f6feba352852af5826dd582d1c42159edd66d6` on `oanhpham-kobe/TASK-S06-002-user-rbac-identity`.
+- Parent / prior R4 reviewed SHA: `56dbbb9e261a9c1e4587169870c78a4de8d95956`.
+- R4 independent review `S06-002-IMPLEMENTATION-REVIEW-001-R4`: **BLOCKING_REPAIR**, `SOURCE_REOPEN_REQUIRED=false`.
+- R4 production authorization-before-contention repair was assessed closed; remaining blockers were test-evidence only: missing synchronized lock-overlap proof and missing no-auth Unit contention coverage.
+- R4 verdict is persisted from Owner transport at `review/S06-002-IMPL-56dbbb9-v4` / `dd0eb84eb985327591a4b36f8988ed00db8b389b` / `project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_56dbbb9_v4.md`; reviewer-native persistence was reported `UNAVAILABLE`.
+- R5 delta from R4 is exactly one modified test file: `supabase/tests/internal_user_r4_authorization_prelock_test.sh`; production migration `20260912014500_internal_user_r4_authorization_prelock.sql` is unchanged.
+- R5 exact verifier `34642569919`: **PASS** — exact/static delta, zero-state replay, synchronized authorization-before-prelock regression, focused RBAC/Identity regressions, retained lifecycle concurrency, DB lint, clean stop.
+- OMP copy-ready handoff: branch `review-dispatch/S06-002-R5-63f6feb`, commit `b35ddbfad07544215efb87c930497890b5cb0499`, path `project_control/reviews/S06_002_IMPLEMENTATION_R5_HANDOFF_63f6feb_v1.md`.
+- `eiu-reviewer` has **not** been considered invoked by creating that branch. The reviewer is invoked only when the handoff prompt is actually sent to OMP.
+- Product candidate has **not** been serialized into integration and is not accepted until independent exact-SHA R5 PASS.
 
 ## Next action
 
-Obtain independent review `S06-002-IMPLEMENTATION-REVIEW-001-R3` on exact SHA `73f03e00b6c2f90874eb17419e57ca58715a6990`. A PASS may advance to governed product serialization, exact integration CI, and final integration-equivalence review; any blocker returns to repair.
+Send the R5 handoff prompt to OMP. OMP must dispatch `eiu-reviewer` to inspect exact SHA `63f6feba352852af5826dd582d1c42159edd66d6`. A PASS may advance to governed product serialization, exact integration CI, and final integration-equivalence review; any blocker returns to repair.
 
 ## Boundaries
 

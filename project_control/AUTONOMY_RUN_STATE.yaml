@@ -492,47 +492,80 @@ s06_002_planning:
     - "TASK-S06-001 accepted @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
     - "accepted Slice-01 identity/auth schema and Internal first-login provisioning"
     - "accepted Application owner and Interview participant/resource lifecycle contracts"
-  implementation_hold: "HELD PENDING R3 INDEPENDENT REVIEW — exact candidate 73f03e00b6c2f90874eb17419e57ca58715a6990 is producer-verified but not accepted or product-integrated."
+  implementation_hold: "HELD PENDING R5 OMP INDEPENDENT REVIEW — exact candidate 63f6feba352852af5826dd582d1c42159edd66d6 is producer-verified but not accepted or product-integrated."
   implementation_candidate:
     branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
     baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
-    prior_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-    candidate_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
+    prior_candidate_sha: "56dbbb9e261a9c1e4587169870c78a4de8d95956"
+    candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
     source_reopen_required: false
-    repair_round: R3
+    repair_round: R4_REVIEW_TEST_EVIDENCE_REPAIR
+    product_delta_from_r4: NONE
+    targeted_test_delta: supabase/tests/internal_user_r4_authorization_prelock_test.sh
     producer_verification:
-      worker_run: "34628250213 PASS"
-      exact_verifier_run: "34628766807 PASS"
-      exact_verified_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
-      static: "PASS — exact SHA, one-commit R3 delta, append-only migration, review artifacts, diff hygiene, accepted migrations not rewritten"
-      web: "PASS — npm ci, npm audit --audit-level=high, design:check, lint, typecheck, build, Chromium install, full npm run test"
-      database: "PASS — two zero-state replays, focused Internal User/RBAC/Identity, R1/R2/R3 lifecycle concurrency, crossed Application/Interview/copy/bulk, retained S06-001 seed/history/durable-history, db lint --level error, clean stop"
-    review_package: project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md
-    coordinator_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
-  prior_independent_implementation_review:
-    work_id: S06-002-IMPLEMENTATION-REVIEW-001-R2
-    reviewer: eiu-reviewer
-    status: VERIFIED_FROM_OWNER_TRANSPORT
-    reviewed_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-    result: BLOCKING_REPAIR
-    source_reopen_required: false
-    evidence_persistence: UNAVAILABLE
-    evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md
+      exact_verifier_run: "34642569919 PASS"
+      exact_verified_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+      static: "PASS — exact SHA; R4→R5 repair is one test file only; R4 production migration unchanged; synchronized holder protocol and missing-auth Unit case present"
+      web: "NOT_RERUN — R5 delta is database-test-only and production code is byte-identical to reviewed R4"
+      database: "PASS — zero-state replay, synchronized authorization-before-prelock contention, focused Internal User/RBAC/Identity, retained R1/R2/R3 lifecycle concurrency, db lint, clean stop"
+    omp_review_handoff_branch: review-dispatch/S06-002-R5-63f6feb
+    omp_review_handoff_commit: "b35ddbfad07544215efb87c930497890b5cb0499"
+    omp_review_handoff_path: project_control/reviews/S06_002_IMPLEMENTATION_R5_HANDOFF_63f6feb_v1.md
+  prior_independent_implementation_reviews:
+    r2:
+      work_id: S06-002-IMPLEMENTATION-REVIEW-001-R2
+      reviewer: eiu-reviewer
+      reviewed_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
+      result: BLOCKING_REPAIR
+      source_reopen_required: false
+      evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md
+    r3:
+      work_id: S06-002-IMPLEMENTATION-REVIEW-001-R3
+      reviewer: eiu-reviewer
+      reviewed_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
+      result: BLOCKING_REPAIR
+      source_reopen_required: false
+      evidence_branch: review/S06-002-IMPL-73f03e0-v3
+      evidence_commit: "8d19dab99d66422dcbb3dd4c4e0592b72d30f73d"
+      evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_73f03e0_v3.md
+    r4:
+      work_id: S06-002-IMPLEMENTATION-REVIEW-001-R4
+      reviewer: eiu-reviewer
+      transport: OMP_OWNER_RETURN
+      reviewed_sha: "56dbbb9e261a9c1e4587169870c78a4de8d95956"
+      result: BLOCKING_REPAIR
+      source_reopen_required: false
+      reviewer_native_evidence_persistence: UNAVAILABLE
+      owner_transport_evidence_branch: review/S06-002-IMPL-56dbbb9-v4
+      owner_transport_evidence_commit: "dd0eb84eb985327591a4b36f8988ed00db8b389b"
+      owner_transport_evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_56dbbb9_v4.md
+      blocking_findings:
+        - "Contention regression lacked a readiness handshake proving exact target-lock acquisition and continued ownership through tested RPC completion."
+        - "Missing-auth regression covered email contention but omitted contended Unit-row coverage."
   independent_implementation_review:
-    work_id: S06-002-IMPLEMENTATION-REVIEW-001-R3
+    work_id: S06-002-IMPLEMENTATION-REVIEW-001-R5
     reviewer: eiu-reviewer
+    transport: OMP
     status: PENDING
-    reviewed_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
+    transport_state: OMP_REVIEW_PROMPT_READY
+    reviewed_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
     result: PENDING
     source_reopen_required: false
-    review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md
-    coordinator_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
-    acceptance_rule: "No product serialization into integration until an independent exact-SHA R3 PASS is returned and truthfully persisted."
-  r3_repair_closure:
-    - "Unit/User/Application durable-history lock graph repaired with staged non-null Unit public races."
-    - "Interview operationalization repaired to row-before-advisory ordering with current participant revalidation and schedule/uncancel concurrency coverage."
-    - "Dormant add/re-add restoration now serializes and post-lock revalidates active eligibility while permitted historical maintenance remains intact."
-    - "First Google bind repeats verified Google/confirmed-email proof after the full lock set and fails closed on evidence drift."
+    handoff_branch: review-dispatch/S06-002-R5-63f6feb
+    handoff_commit: "b35ddbfad07544215efb87c930497890b5cb0499"
+    handoff_path: project_control/reviews/S06_002_IMPLEMENTATION_R5_HANDOFF_63f6feb_v1.md
+    acceptance_rule: "No product serialization into integration until OMP dispatches eiu-reviewer and an independent exact-SHA R5 PASS is returned."
+  closed_production_findings:
+    - "R2 durable-history Unit lock inversion closed."
+    - "Interview operationalization row/advisory ordering and current-participant revalidation closed."
+    - "Dormant add/re-add restoration lifecycle selection race closed."
+    - "First Google bind repeats trusted-email verification after the complete lock set."
+    - "R3 authorization-before-contention regression closed in R4 production migration."
+  r4_review_test_evidence_repair:
+    - "Each contention holder acquires the exact target lock before a unique readiness advisory xact lock; tested RPC starts only after readiness is externally observed."
+    - "Post-RPC checks prove holder backend and readiness transaction lock remain held until explicit backend termination."
+    - "Missing-auth coverage now includes synchronized contended Unit-row path and requires UNAUTHENTICATED without timeout."
+
 
 implementation_materialization:
   task: TASK-S06-002
@@ -544,24 +577,29 @@ implementation_materialization:
   branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
   baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
   status: WAITING_INDEPENDENT_REVIEW
-  prior_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-  current_candidate_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
-  exact_verifier_run: "34628766807 PASS"
-  review_round: R3
+  prior_candidate_sha: "56dbbb9e261a9c1e4587169870c78a4de8d95956"
+  current_candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+  exact_verifier_run: "34642569919 PASS"
+  review_round: R5
+
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-002 R3 candidate 73f03e00b6c2f90874eb17419e57ca58715a6990 passed exact producer verification run 34628766807; later Slice-06 work remains held pending independent exact-SHA R3 review."
+  execution_hold: "TASK-S06-002 R5 candidate 63f6feba352852af5826dd582d1c42159edd66d6 passed exact producer verification run 34642569919; later Slice-06 work remains held pending OMP-dispatched independent exact-SHA R5 review."
+
 
 stop_gate:
   status: WAITING_EXTERNAL_REVIEW
   type: INDEPENDENT_IMPLEMENTATION_REVIEW
-  work_id: S06-002-IMPLEMENTATION-REVIEW-001-R3
-  target: "73f03e00b6c2f90874eb17419e57ca58715a6990"
+  work_id: S06-002-IMPLEMENTATION-REVIEW-001-R5
+  target: "63f6feba352852af5826dd582d1c42159edd66d6"
   reviewer: eiu-reviewer
+  transport: OMP
+  transport_state: OMP_REVIEW_PROMPT_READY
   source_reopen_required: false
-  resume_on: "Independent exact-SHA R3 verdict for 73f03e00b6c2f90874eb17419e57ca58715a6990. PASS may advance to governed product serialization; any blocker returns to repair without source reopen unless reviewer explicitly requires it."
+  resume_on: "OMP dispatches eiu-reviewer and returns the independent exact-SHA R5 verdict for 63f6feba352852af5826dd582d1c42159edd66d6. PASS may advance to governed product serialization; any blocker returns to repair without source reopen unless reviewer explicitly requires it."
 
-next_action: "Obtain independent implementation re-review S06-002-IMPLEMENTATION-REVIEW-001-R3 on exact task-branch SHA 73f03e00b6c2f90874eb17419e57ca58715a6990 using project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md. Do not serialize product into integration before PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
+
+next_action: "Send review-dispatch/S06-002-R5-63f6feb:project_control/reviews/S06_002_IMPLEMENTATION_R5_HANDOFF_63f6feb_v1.md to OMP so OMP dispatches eiu-reviewer on exact SHA 63f6feba352852af5826dd582d1c42159edd66d6. Do not serialize product into integration before R5 PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
