@@ -1196,7 +1196,7 @@ tasks:
   TASK-S06-002:
     title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
     slice: SLICE-06
-    status: REVIEW
+    status: IN_PROGRESS
     lane: LANE_A
     depends_on:
       - TASK-S06-001
@@ -1208,11 +1208,12 @@ tasks:
     implementation_baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
     implementation_checkpoint: checkpoint/pre-S06-002-001
     implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
-    prior_implementation_candidate_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
-    implementation_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-    repair_round: R2
-    review_status: "WAITING_INDEPENDENT_REVIEW (S06-002-IMPLEMENTATION-REVIEW-001-R2 @ 7c37d46fa504b5d98b156735d7355f1d938be0bf); R1 was BLOCKING_REPAIR with SOURCE_REOPEN_REQUIRED=false"
+    prior_implementation_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
+    implementation_candidate_sha: PENDING
+    repair_round: R3
+    review_status: "BLOCKING_REPAIR (S06-002-IMPLEMENTATION-REVIEW-001-R2 @ 7c37d46fa504b5d98b156735d7355f1d938be0bf; SOURCE_REOPEN_REQUIRED=false; evidence persistence unavailable)"
     prior_review_evidence: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
+    review_evidence: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md
     review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md
     review_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
     producer_verification: "PASS (exact verifier run 34621266079: static PASS, full web PASS, zero-state/focused/concurrency/crossed/S06-001 DB regressions PASS, db lint PASS; exact SHA 7c37d46fa504b5d98b156735d7355f1d938be0bf)"

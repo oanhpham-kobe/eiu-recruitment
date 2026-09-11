@@ -472,7 +472,7 @@ s06_001_acceptance:
   pr_created_or_merged: false
 
 s06_002_planning:
-  status: WAITING_INDEPENDENT_REVIEW
+  status: IMPLEMENTATION_REPAIR_ACTIVE
   task: TASK-S06-002
   title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
   prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
@@ -492,84 +492,49 @@ s06_002_planning:
     - "TASK-S06-001 accepted @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
     - "accepted Slice-01 identity/auth schema and Internal first-login provisioning"
     - "accepted Application owner and Interview participant/resource lifecycle contracts"
-  known_reconciliation_targets:
-    - "Accepted first-login bind must be hardened to current canonical verified Google-provider + confirmed EIU email proof without creating a divergent bind path."
-    - "Non-root directory management must not expose another user's granular effective permissions/security identity; inactive lifecycle management still needs a minimum-safe read surface."
-    - "User deactivation/HR-role removal must be concurrency-safe against new Active Application owner assignment and new/current non-elapsed resource-blocking Interview participation."
-  implementation_hold: "HELD PENDING R2 INDEPENDENT REVIEW — exact candidate 7c37d46fa504b5d98b156735d7355f1d938be0bf is producer-verified but not accepted or integrated."
+  implementation_hold: "CLEARED FOR R3 REPAIR — independent R2 review returned BLOCKING_REPAIR with SOURCE_REOPEN_REQUIRED=false; repair remains confined to the isolated TASK-S06-002 branch."
   implementation_candidate:
     branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
     baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
-    prior_candidate_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
-    candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-    changed_files_count: 32
-    source_reopen_required: false
-    repair_round: R2
-    producer_verification:
-      exact_verifier_run: "34621266079 PASS"
-      exact_verified_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-      static: "PASS — exact SHA, candidate-contained review artifacts, baseline diff hygiene, three-file test-only tail, and no retained raw app_users.auth_user_id request-scoped server consumers"
-      web: "PASS — npm ci, npm audit --audit-level=high, design:check, lint, typecheck, build, Chromium install, full npm run test"
-      database: "PASS — Supabase 2.116.0 start, zero-state db reset, focused Internal User/RBAC/Identity plus dormant-history regression, public-command concurrency, crossed Application/Interview/copy/bulk regressions, retained S06-001 regressions, db lint --level error, clean stop"
-    review_package: project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md
-    coordinator_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
+    prior_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
+    candidate_sha: PENDING
+    review_round: R3
+    prior_exact_verifier_run: "34621266079 PASS"
+    prior_review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md
+    prior_review_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
   independent_implementation_review:
-    work_id: S06-002-IMPLEMENTATION-REVIEW-001
+    work_id: S06-002-IMPLEMENTATION-REVIEW-001-R2
     reviewer: eiu-reviewer
     status: VERIFIED_FROM_OWNER_TRANSPORT
-    reviewed_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
+    reviewed_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
     result: BLOCKING_REPAIR
     source_reopen_required: false
     blocking_findings:
-      - "Required review-gate artifact was absent from the reviewed candidate/task branch."
-      - "app_users.auth_user_id column-ACL narrowing broke retained request-scoped server consumers."
-      - "Participant statement trigger rejected permitted dormant/CANCELLED historical reorder maintenance."
-      - "Lifecycle versus Application owner assignment had an app_users-row/advisory lock-order cycle."
-      - "First-bind versus Root rebind had reversed normalized-email/target-row lock order."
+      - "Unit-history deadlock remains between bulk owner assignment and lifecycle/RBAC app_users updates via S06-001 Unit history locking."
+      - "Interview operationalization can take participant advisory locks before actor/current-participant app_users FK row locks, leaving a public-command deadlock with lifecycle administration."
+      - "Dormant-history repair permits deactivation-first add/re-add of a newly inactive participant because new selection/restoration is not post-lock revalidated outside resource_blocking Interviews."
+      - "First Google bind does not repeat trusted Google/confirmed-email Auth evidence validation after normalized-email, target-row, and Internal User locks."
     evidence_persistence: UNAVAILABLE
-    evidence_branch: UNAVAILABLE
-    evidence_commit: UNAVAILABLE
-    evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
-
-r2_independent_implementation_review:
-  work_id: S06-002-IMPLEMENTATION-REVIEW-001-R2
-  reviewer: eiu-reviewer
-  status: PENDING
-  reviewed_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-  result: PENDING
-  source_reopen_required: false
-  review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md
-  coordinator_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
-  acceptance_rule: "No product serialization into integration until an independent exact-SHA PASS is returned and truthfully persisted."
-
-implementation_materialization:
-  task: TASK-S06-002
-  prompt_review: "PASS S06-002-PROMPT-REVIEW-001 @ f757e76f3f97077c608dab29bad45b8bd2126dc3"
-  prompt_review_provenance: VERIFIED_FROM_OWNER_TRANSPORT
-  source_reopen_required: false
-  prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
-  checkpoint: checkpoint/pre-S06-002-001
-  branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
-  baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
-  status: WAITING_INDEPENDENT_REVIEW
-  prior_candidate_sha: "a7aa037e26cda6ba70153539c1dfc15c3fba37e6"
-  current_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-  exact_verifier_run: "34621266079 PASS"
-  review_round: R2
+    evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md
+  r3_repair_scope:
+    - "Reconcile the complete Unit/User/Application lock graph while preserving S06-001 durable history and active-master validation; add public bulk-assignment vs lifecycle/HR-role-removal races with non-null Unit."
+    - "Make Interview operationalization acquire relevant app_users rows before Internal User advisory locks and revalidate participants; cover uncancel/schedule by an HR who is also a current participant versus Root lifecycle."
+    - "Serialize and post-lock revalidate new participant selection/restoration regardless of dormant/resource-blocking status while preserving historical remove/reorder maintenance; cover CANCELLED and unscheduled deactivation-first add/re-add races."
+    - "Repeat private.verified_google_auth_email(auth.uid()) after the full first-bind lock set, require equality with the advisory-key email, fail closed on change, and add staged Auth-evidence-change regression."
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-002 R2 candidate 7c37d46fa504b5d98b156735d7355f1d938be0bf passed exact producer verification run 34621266079; later Slice-06 work remains held pending independent exact-SHA R2 review."
+  execution_hold: "TASK-S06-002 R3 repair is active after independent R2 BLOCKING_REPAIR; no later Slice-06 frontier is materialized."
 
 stop_gate:
-  status: WAITING_EXTERNAL_REVIEW
-  type: INDEPENDENT_IMPLEMENTATION_REVIEW
-  work_id: S06-002-IMPLEMENTATION-REVIEW-001-R2
-  target: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
+  status: CLEAR
+  type: NONE
+  work_id: S06-002-IMPLEMENTATION-REPAIR-R3
+  target: "Repair four R2 blockers from exact candidate 7c37d46fa504b5d98b156735d7355f1d938be0bf"
   reviewer: eiu-reviewer
   source_reopen_required: false
-  resume_on: "Independent exact-SHA R2 verdict for 7c37d46fa504b5d98b156735d7355f1d938be0bf. PASS may advance to governed product serialization; any blocker returns to repair without source reopen unless reviewer explicitly requires it."
+  resume_on: "Produce a new immutable task-branch SHA, rerun zero-state/static/web/DB/concurrency verification including the four R2 regressions, then route exact SHA to independent R3 review."
 
-next_action: "Obtain independent implementation re-review S06-002-IMPLEMENTATION-REVIEW-001-R2 on exact task-branch SHA 7c37d46fa504b5d98b156735d7355f1d938be0bf using project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md. Do not serialize product into integration before PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
+next_action: "Repair the four S06-002 R2 blockers on oanhpham-kobe/TASK-S06-002-user-rbac-identity without weakening accepted contracts. Do not serialize product into integration before independent PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
