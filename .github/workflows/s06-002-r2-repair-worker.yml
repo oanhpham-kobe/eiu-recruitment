@@ -1,0 +1,850 @@
+name: S06-002 R2 Repair Worker
+
+on:
+  push:
+    branches:
+      - control/S06-002-r2-repair-worker
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+          fetch-depth: 0
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+
+      - name: Apply R2 repairs on exact R1 candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          R1='a7aa037e26cda6ba70153539c1dfc15c3fba37e6'
+          test "$(git rev-parse HEAD)" = "$R1"
+          git fetch origin autonomy/continuous-integration-20260905-01
+
+          test ! -e project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md
+          git show origin/autonomy/continuous-integration-20260905-01:project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md > project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md
+          git show origin/autonomy/continuous-integration-20260905-01:project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md > project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md
+
+          supabase migration new internal_user_r2_review_repairs
+          MIGRATION="$(ls -1t supabase/migrations/*_internal_user_r2_review_repairs.sql | head -n1)"
+          test -n "$MIGRATION"
+          cat > "$MIGRATION" <<'SQL'
+          -- TASK-S06-002 / R2 repair: consumer-safe identity projection, dormant
+          -- participant maintenance, and deterministic cross-writer lock order.
+
+          -- Current-user-only binding status for trusted server consumers that
+          -- must distinguish an inactive bound Internal User without reading the
+          -- raw app_users.auth_user_id column through the Data API.
+          create or replace function public.get_current_internal_binding_status()
+          returns jsonb
+          language plpgsql
+          stable
+          security definer
+          set search_path = ''
+          as $$
+          declare
+            v_auth_user_id uuid := auth.uid();
+            v_user record;
+          begin
+            if v_auth_user_id is null then
+              return jsonb_build_object('success', false, 'error_code', 'UNAUTHENTICATED');
+            end if;
+
+            select u.app_user_id, u.is_active, u.is_root_admin
+            into v_user
+            from public.app_users u
+            where u.auth_user_id = v_auth_user_id;
+
+            if not found then
+              return jsonb_build_object(
+                'success', true,
+                'data', jsonb_build_object(
+                  'bound', false,
+                  'app_user_id', null,
+                  'is_active', false,
+                  'is_root_admin', false
+                )
+              );
+            end if;
+
+            return jsonb_build_object(
+              'success', true,
+              'data', jsonb_build_object(
+                'bound', true,
+                'app_user_id', v_user.app_user_id,
+                'is_active', v_user.is_active,
+                'is_root_admin', v_user.is_root_admin
+              )
+            );
+          end;
+          $$;
+
+          revoke all on function public.get_current_internal_binding_status() from public, anon;
+          grant execute on function public.get_current_internal_binding_status() to authenticated, postgres, service_role;
+
+          -- Owner writers now acquire the target Internal User row before the
+          -- shared advisory gate. This matches lifecycle/RBAC writers, which
+          -- necessarily own their target app_users row before trigger-time
+          -- advisory serialization. Eligibility is re-read after both locks.
+          create or replace function private.guard_active_application_owner_eligibility()
+          returns trigger
+          language plpgsql
+          security definer
+          set search_path = ''
+          as $$
+          declare
+            v_user_ids uuid[] := array[]::uuid[];
+            v_locked_owner_id uuid;
+            v_owner_ok boolean;
+          begin
+            if not new.is_active then
+              return new;
+            end if;
+
+            if new.hr_owner_id is null then
+              raise exception 'APPLICATION_OWNER_NOT_ELIGIBLE' using errcode = '23514';
+            end if;
+
+            -- Row first, advisory second. FOR UPDATE is intentional: lifecycle
+            -- commands also use FOR UPDATE before the same advisory gate.
+            select u.app_user_id
+            into v_locked_owner_id
+            from public.app_users u
+            where u.app_user_id = new.hr_owner_id
+            for update;
+
+            if not found then
+              raise exception 'APPLICATION_OWNER_NOT_ELIGIBLE' using errcode = '23514';
+            end if;
+
+            v_user_ids := array[new.hr_owner_id];
+
+            if tg_op = 'UPDATE' and old.is_active = false and new.is_active = true then
+              select v_user_ids || coalesce(array_agg(distinct ip.app_user_id order by ip.app_user_id), array[]::uuid[])
+              into v_user_ids
+              from public.interviews i
+              join public.interview_participants ip
+                on ip.interview_id = i.interview_id
+               and ip.is_current = true
+              where i.application_id = new.application_id
+                and i.is_active = true
+                and i.schedule_status_code <> 'CANCELLED'
+                and i.start_at is not null
+                and i.end_at is not null
+                and i.end_at > clock_timestamp();
+            end if;
+
+            perform private.lock_internal_user_ids(v_user_ids);
+
+            -- Revalidate after the complete row/advisory lock set.
+            select exists (
+              select 1
+              from public.app_users u
+              where u.app_user_id = new.hr_owner_id
+                and u.is_active = true
+                and (
+                  u.is_root_admin = true
+                  or exists (
+                    select 1
+                    from public.app_user_roles r
+                    where r.app_user_id = u.app_user_id
+                      and r.role_code = 'HR'
+                  )
+                )
+            ) into v_owner_ok;
+
+            if not coalesce(v_owner_ok, false) then
+              raise exception 'APPLICATION_OWNER_NOT_ELIGIBLE' using errcode = '23514';
+            end if;
+
+            if tg_op = 'UPDATE' and old.is_active = false and new.is_active = true
+               and exists (
+                 select 1
+                 from public.interviews i
+                 join public.interview_participants ip
+                   on ip.interview_id = i.interview_id
+                  and ip.is_current = true
+                 left join public.app_users u on u.app_user_id = ip.app_user_id
+                 where i.application_id = new.application_id
+                   and i.is_active = true
+                   and i.schedule_status_code <> 'CANCELLED'
+                   and i.start_at is not null
+                   and i.end_at is not null
+                   and i.end_at > clock_timestamp()
+                   and coalesce(u.is_active, false) = false
+               ) then
+              raise exception 'CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED' using errcode = '23514';
+            end if;
+
+            return new;
+          end;
+          $$;
+
+          revoke all on function private.guard_active_application_owner_eligibility() from public, anon, authenticated;
+          grant execute on function private.guard_active_application_owner_eligibility() to postgres, service_role;
+
+          -- Participant row maintenance is eligibility-sensitive only when the
+          -- touched current participant belongs to a canonical resource_blocking
+          -- Interview. CANCELLED, inactive, unscheduled, or fully elapsed history
+          -- may be reordered/removed without re-selecting inactive users.
+          create or replace function private.recheck_current_participants_after_statement()
+          returns trigger
+          language plpgsql
+          security definer
+          set search_path = ''
+          as $$
+          declare
+            v_user_ids uuid[];
+          begin
+            select coalesce(array_agg(distinct n.app_user_id order by n.app_user_id), array[]::uuid[])
+            into v_user_ids
+            from s06_new_participants n
+            join public.interviews i on i.interview_id = n.interview_id
+            join public.applications a on a.application_id = i.application_id
+            where n.is_current = true
+              and a.is_active = true
+              and i.is_active = true
+              and i.schedule_status_code <> 'CANCELLED'
+              and i.start_at is not null
+              and i.end_at is not null
+              and i.end_at > clock_timestamp();
+
+            perform private.lock_internal_user_ids(v_user_ids);
+
+            if exists (
+              select 1
+              from s06_new_participants n
+              join public.interviews i on i.interview_id = n.interview_id
+              join public.applications a on a.application_id = i.application_id
+              left join public.app_users u on u.app_user_id = n.app_user_id
+              where n.is_current = true
+                and a.is_active = true
+                and i.is_active = true
+                and i.schedule_status_code <> 'CANCELLED'
+                and i.start_at is not null
+                and i.end_at is not null
+                and i.end_at > clock_timestamp()
+                and coalesce(u.is_active, false) = false
+            ) then
+              raise exception 'USER_INACTIVE_NOT_SELECTABLE' using errcode = '23514';
+            end if;
+
+            return null;
+          end;
+          $$;
+
+          revoke all on function private.recheck_current_participants_after_statement() from public, anon, authenticated;
+          grant execute on function private.recheck_current_participants_after_statement() to postgres, service_role;
+
+          -- Root-only non-Root rebind now uses the same identity lock order as
+          -- first bind: normalized replacement-email advisory -> target row ->
+          -- per-user advisory -> post-lock trusted Auth evidence revalidation.
+          create or replace function public.change_internal_user_identity(
+            p_target_user_id uuid,
+            p_replacement_auth_user_id uuid,
+            p_expected_version_no bigint,
+            p_idempotency_key uuid
+          )
+          returns jsonb
+          language plpgsql
+          security definer
+          set search_path = ''
+          as $$
+          declare
+            v_actor uuid;
+            v_target public.app_users%rowtype;
+            v_replacement_email text;
+            v_post_lock_email text;
+            v_scope text;
+            v_fingerprint text;
+            v_existing jsonb;
+            v_previous_auth_user_id uuid;
+            v_result jsonb;
+          begin
+            if auth.uid() is null then return jsonb_build_object('success',false,'error_code','UNAUTHENTICATED'); end if;
+            v_actor := private.current_app_user_id();
+            if v_actor is null or not private.is_root_admin() then
+              return jsonb_build_object('success',false,'error_code','FORBIDDEN');
+            end if;
+            if p_target_user_id is null
+               or p_replacement_auth_user_id is null
+               or p_expected_version_no is null
+               or p_expected_version_no <= 0
+               or p_idempotency_key is null then
+              return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR');
+            end if;
+
+            v_scope := 'app_user:'||v_actor::text||':target:'||p_target_user_id::text;
+            v_fingerprint := encode(extensions.digest(jsonb_build_object(
+              'command','change_internal_user_identity',
+              'target_user_id',p_target_user_id,
+              'replacement_auth_user_id',p_replacement_auth_user_id,
+              'expected_version_no',p_expected_version_no
+            )::text,'sha256'),'hex');
+            v_existing := private.check_idempotency(v_scope,'change_internal_user_identity',p_idempotency_key,v_fingerprint);
+            if v_existing is not null then return v_existing; end if;
+
+            v_replacement_email := private.verified_google_auth_email(p_replacement_auth_user_id);
+            if v_replacement_email is null then
+              return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR','message','Replacement must be a verified Google EIU Auth identity');
+            end if;
+
+            -- Identity order shared with first bind: email gate before target row.
+            perform pg_advisory_xact_lock(hashtextextended('internal-email:'||v_replacement_email,0));
+
+            select * into v_target
+            from public.app_users u
+            where u.app_user_id=p_target_user_id
+            for update;
+            if not found then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
+            if v_target.version_no<>p_expected_version_no then return jsonb_build_object('success',false,'error_code','STALE_VERSION'); end if;
+            if v_target.is_root_admin then return jsonb_build_object('success',false,'error_code','ROOT_ADMIN_PROTECTED'); end if;
+            if v_target.auth_user_id is null then return jsonb_build_object('success',false,'error_code','IDENTITY_REBIND_FORBIDDEN'); end if;
+
+            perform private.lock_internal_user_ids(array[p_target_user_id]);
+
+            v_post_lock_email := private.verified_google_auth_email(p_replacement_auth_user_id);
+            if v_post_lock_email is null or v_post_lock_email <> v_replacement_email then
+              return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR','message','Replacement Auth identity changed during verification');
+            end if;
+
+            if exists (
+              select 1 from public.app_users u
+              where u.app_user_id<>p_target_user_id
+                and (u.auth_user_id=p_replacement_auth_user_id or lower(u.email::text)=v_replacement_email)
+            ) then
+              return jsonb_build_object('success',false,'error_code','IDENTITY_REBIND_FORBIDDEN');
+            end if;
+
+            if v_target.auth_user_id = p_replacement_auth_user_id
+               and lower(v_target.email::text) = v_replacement_email then
+              v_result := jsonb_build_object('success',true,'data',jsonb_build_object(
+                'app_user_id',v_target.app_user_id,
+                'auth_user_id',v_target.auth_user_id,
+                'email',v_target.email::text,
+                'version_no',v_target.version_no
+              ));
+              perform private.record_idempotency(v_scope,'change_internal_user_identity',p_idempotency_key,v_fingerprint,v_result,'APP_USER',p_target_user_id);
+              return v_result;
+            end if;
+
+            v_previous_auth_user_id := v_target.auth_user_id;
+            begin
+              update public.app_users
+              set auth_user_id=p_replacement_auth_user_id,
+                  email=v_replacement_email
+              where app_user_id=p_target_user_id
+              returning * into v_target;
+            exception
+              when unique_violation or check_violation then
+                return jsonb_build_object('success',false,'error_code','IDENTITY_REBIND_FORBIDDEN');
+            end;
+
+            insert into public.security_audit_log(
+              actor_auth_user_id,actor_app_user_id,action_code,entity_type,entity_id,
+              request_id,source_code,result_code,metadata
+            ) values (
+              auth.uid(),v_actor,'INTERNAL_IDENTITY_REBIND','APP_USER',p_target_user_id,
+              p_idempotency_key,'RPC','SUCCESS',jsonb_build_object(
+                'changed_fields',jsonb_build_array('auth_user_id','email'),
+                'previous_auth_user_id',v_previous_auth_user_id,
+                'replacement_auth_user_id',p_replacement_auth_user_id,
+                'provider','google'
+              )
+            );
+
+            v_result := jsonb_build_object('success',true,'data',jsonb_build_object(
+              'app_user_id',v_target.app_user_id,
+              'auth_user_id',v_target.auth_user_id,
+              'email',v_target.email::text,
+              'version_no',v_target.version_no
+            ));
+            perform private.record_idempotency(v_scope,'change_internal_user_identity',p_idempotency_key,v_fingerprint,v_result,'APP_USER',p_target_user_id);
+            return v_result;
+          end;
+          $$;
+
+          revoke all on function public.change_internal_user_identity(uuid, uuid, bigint, uuid) from public, anon;
+          grant execute on function public.change_internal_user_identity(uuid, uuid, bigint, uuid) to authenticated, postgres, service_role;
+          SQL
+
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str, label: str) -> None:
+              p = Path(path)
+              s = p.read_text(encoding='utf-8')
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, got {count}')
+              p.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          # Session/auth: trusted RPC only for internal authorization; add a
+          # current-user-only binding status RPC adapter for inactive detection.
+          p = Path('web/src/lib/auth/session.ts')
+          s = p.read_text(encoding='utf-8')
+          start = s.index('function extractRoles(')
+          end = s.index('function stringArray(', start)
+          s = s[:start] + s[end:]
+          marker = 'function internalSessionFromData('
+          insert_at = s.index(marker)
+          helper = '''export type CurrentInternalBindingStatus = {\n  bound: boolean;\n  appUserId?: string;\n  isActive: boolean;\n  isRootAdmin: boolean;\n};\n\nexport async function getCurrentInternalBindingStatus(\n  client: SupabaseClient,\n): Promise<CurrentInternalBindingStatus | null> {\n  const { data, error } = await client.rpc(\n    "get_current_internal_binding_status",\n  );\n  if (error || !data || typeof data !== "object" || !("success" in data) || data.success !== true || !("data" in data) || !data.data || typeof data.data !== "object") {\n    return null;\n  }\n\n  const payload = data.data;\n  if (!("bound" in payload) || typeof payload.bound !== "boolean" || !("is_active" in payload) || typeof payload.is_active !== "boolean" || !("is_root_admin" in payload) || typeof payload.is_root_admin !== "boolean") {\n    return null;\n  }\n\n  const appUserId =\n    "app_user_id" in payload && typeof payload.app_user_id === "string"\n      ? payload.app_user_id\n      : undefined;\n\n  return {\n    bound: payload.bound,\n    appUserId,\n    isActive: payload.is_active,\n    isRootAdmin: payload.is_root_admin,\n  };\n}\n\n'''
+          s = s[:insert_at] + helper + s[insert_at:]
+          branch_start = s.index('  if (isInternal) {')
+          branch_end = s.index('\n\n  const { data: candidate }', branch_start)
+          new_branch = '''  if (isInternal) {\n    const { data: internalPayload, error: internalError } = await supabase.rpc(\n      "get_current_internal_session",\n    );\n    const internalData = parseInternalSessionRpc(internalPayload);\n    if (!internalError && internalData) {\n      return internalSessionFromData(user.id, user.email, internalData);\n    }\n\n    // S06-002 intentionally fails closed here. Raw app_users.auth_user_id is\n    // no longer a request-scoped Data API surface; trusted server consumers\n    // must use the dedicated current-session/current-binding RPCs.\n    return { user: null, isAuthenticated: false };\n  }'''
+          s = s[:branch_start] + new_branch + s[branch_end:]
+          p.write_text(s, encoding='utf-8')
+
+          root_lookup = '''  const { data: appUser, error: appUserError } = await supabase\n    .from("app_users")\n    .select("is_root_admin")\n    .eq("auth_user_id", session.user.authUserId)\n    .maybeSingle();\n  if (appUserError) throw new ApplicationInboxReadError();\n  const isRootAdmin =\n    appUser !== null &&\n    typeof appUser === "object" &&\n    "is_root_admin" in appUser &&\n    appUser.is_root_admin === true;'''
+          replace_once(
+              'web/src/lib/application-inbox/server.ts',
+              root_lookup,
+              '  const isRootAdmin = session.user.roles.includes("ROOT_ADMIN");',
+              'application inbox root lookup',
+          )
+
+          p = Path('web/src/lib/application-inbox/submission-detail-server.ts')
+          s = p.read_text(encoding='utf-8')
+          detail_lookup = '''  const { data: appUser, error: appUserError } = await supabase\n    .from("app_users")\n    .select("is_root_admin")\n    .eq("auth_user_id", session.user.authUserId)\n    .maybeSingle();\n\n  if (appUserError) {\n    throw new SubmissionDetailReadError();\n  }\n\n  const isRootAdmin =\n    appUser !== null &&\n    typeof appUser === "object" &&\n    "is_root_admin" in appUser &&\n    appUser.is_root_admin === true;'''
+          count = s.count(detail_lookup)
+          if count != 3:
+              raise SystemExit(f'submission-detail root lookups: expected 3, got {count}')
+          s = s.replace(detail_lookup, '  const isRootAdmin = session.user.roles.includes("ROOT_ADMIN");')
+          p.write_text(s, encoding='utf-8')
+
+          for path in [
+              'web/src/lib/commands/application-lifecycle.ts',
+              'web/src/lib/commands/candidate-lifecycle.ts',
+          ]:
+              p = Path(path)
+              s = p.read_text(encoding='utf-8')
+              s = s.replace(
+                  'import { getServerSession } from "@/lib/auth/session";',
+                  'import {\n  getCurrentInternalBindingStatus,\n  getServerSession,\n} from "@/lib/auth/session";',
+                  1,
+              )
+              old = '''  const { data: appUser } = await supabase\n    .from("app_users")\n    .select("is_active")\n    .eq("auth_user_id", user.id)\n    .maybeSingle();\n\n  if (\n    appUser &&\n    typeof appUser === "object" &&\n    "is_active" in appUser &&\n    !appUser.is_active\n  ) {'''
+              if s.count(old) != 1:
+                  raise SystemExit(f'{path}: inactive raw binding lookup not found exactly once')
+              new = '''  const binding = await getCurrentInternalBindingStatus(supabase);\n\n  if (binding?.bound && !binding.isActive) {'''
+              p.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          p = Path('web/src/lib/commands/submission-status.ts')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace(
+              'import { getServerSession } from "@/lib/auth/session";',
+              'import {\n  getCurrentInternalBindingStatus,\n  getServerSession,\n} from "@/lib/auth/session";',
+              1,
+          )
+          old_bulk = '''  const { data: appUser } = await supabase\n    .from("app_users")\n    .select("is_root_admin")\n    .eq("auth_user_id", session.user.authUserId)\n    .maybeSingle();\n\n  return {\n    authUserId: session.user.authUserId,\n    email: session.user.email,\n    isActive: true,\n    roles:\n      appUser && typeof appUser === "object" && appUser.is_root_admin\n        ? [...session.user.roles, "ROOT_ADMIN"]\n        : session.user.roles,\n    permissions: session.user.permissions,\n  };'''
+          new_bulk = '''  return {\n    authUserId: session.user.authUserId,\n    email: session.user.email,\n    isActive: true,\n    roles: session.user.roles,\n    permissions: session.user.permissions,\n  };'''
+          if s.count(old_bulk) != 1:
+              raise SystemExit('submission-status bulk raw root lookup mismatch')
+          s = s.replace(old_bulk, new_bulk, 1)
+          actor_start = s.index('async function defaultResolveActor(')
+          actor_end = s.index('\n\n// -----------------------------------------------------------------------------\n// 1. Open Submission Command', actor_start)
+          new_actor = '''async function defaultResolveActor(\n  client?: SupabaseClient,\n): Promise<VerifiedActor | null> {\n  const supabase = client ?? (await createServerClient());\n  const {\n    data: { user },\n    error,\n  } = await supabase.auth.getUser();\n\n  if (error || !user || !user.email) {\n    return null;\n  }\n\n  const session = await getServerSession(supabase);\n  if (session.user?.isInternal) {\n    return {\n      authUserId: session.user.authUserId,\n      email: session.user.email,\n      isActive: true,\n      roles: session.user.roles,\n      permissions: session.user.permissions,\n    };\n  }\n\n  if (user.email.toLowerCase().endsWith("@eiu.edu.vn")) {\n    const binding = await getCurrentInternalBindingStatus(supabase);\n    if (binding?.bound && !binding.isActive) {\n      return {\n        authUserId: user.id,\n        email: user.email,\n        isActive: false,\n        roles: [],\n        permissions: [],\n      };\n    }\n  }\n\n  return {\n    authUserId: user.id,\n    email: user.email,\n    isActive: true,\n    roles: ["GUEST"],\n    permissions: [],\n  };\n}'''
+          s = s[:actor_start] + new_actor + s[actor_end:]
+          p.write_text(s, encoding='utf-8')
+
+          # Adapter regression for the new minimum-safe current-binding RPC.
+          p = Path('web/src/__tests__/internal-session-rpc.test.ts')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace(
+              'import { getServerSession } from "@/lib/auth/session";',
+              'import {\n  getCurrentInternalBindingStatus,\n  getServerSession,\n} from "@/lib/auth/session";',
+              1,
+          )
+          s += '''\n\ntest("getCurrentInternalBindingStatus: resolves own binding without raw app_users identity reads", async () => {\n  const client = {\n    rpc: async (functionName: string) => {\n      assert.equal(functionName, "get_current_internal_binding_status");\n      return {\n        data: {\n          success: true,\n          data: {\n            bound: true,\n            app_user_id: "70000000-0000-0000-0000-000000000002",\n            is_active: false,\n            is_root_admin: false,\n          },\n        },\n        error: null,\n      };\n    },\n    from: () => {\n      throw new Error("raw app_users auth binding lookup must not run");\n    },\n  } as unknown as SupabaseClient;\n\n  assert.deepEqual(await getCurrentInternalBindingStatus(client), {\n    bound: true,\n    appUserId: "70000000-0000-0000-0000-000000000002",\n    isActive: false,\n    isRootAdmin: false,\n  });\n});\n\ntest("getServerSession: internal RPC transport failure fails closed without raw auth_user_id fallback", async () => {\n  const client = {\n    auth: {\n      getUser: async () => ({\n        data: { user: { id: "auth-rpc-error", email: "error@eiu.edu.vn" } },\n        error: null,\n      }),\n    },\n    rpc: async () => ({ data: null, error: { message: "rpc unavailable" } }),\n    from: () => {\n      throw new Error("raw app_users fallback must remain unreachable");\n    },\n  } as unknown as SupabaseClient;\n\n  assert.deepEqual(await getServerSession(client), {\n    user: null,\n    isAuthenticated: false,\n  });\n});\n'''
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          cat > supabase/tests/internal_user_r2_repair_test.sql <<'SQL'
+          \set ON_ERROR_STOP on
+          begin;
+
+          insert into public.position_groups(position_group_id,name_vi,code,is_active)
+          values('84000000-0000-0000-0000-000000000001','S06-002 R2 Group','S06002_R2_G',true);
+          insert into public.organizational_units(unit_id,name_vi,code,is_active)
+          values('84000000-0000-0000-0000-000000000002','S06-002 R2 Unit','S06002_R2_U',true);
+          insert into public.positions(position_id,unit_id,position_group_id,code,name_vi,is_active)
+          values('84000000-0000-0000-0000-000000000003','84000000-0000-0000-0000-000000000002','84000000-0000-0000-0000-000000000001','S06002_R2_P','S06-002 R2 Position',true);
+          insert into public.interview_formats(interview_format_id,code,name_vi,requires_room,requires_meeting_link,is_active)
+          values('84000000-0000-0000-0000-000000000004','S06002_R2_F','S06-002 R2 Format',false,false,true);
+
+          insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active,is_root_admin)
+          values
+            ('84000000-0000-0000-0000-000000000010','84100000-0000-0000-0000-000000000010','r2root@eiu.edu.vn','R2 Root',true,true),
+            ('84000000-0000-0000-0000-000000000011',null,'r2remove@eiu.edu.vn','R2 Remove',true,false),
+            ('84000000-0000-0000-0000-000000000012',null,'r2history@eiu.edu.vn','R2 Historical',true,false);
+
+          insert into public.candidates(candidate_id,auth_user_id,email,current_full_name,is_active)
+          values('84000000-0000-0000-0000-000000000020','84100000-0000-0000-0000-000000000020','r2candidate@example.test','R2 Candidate',true);
+          insert into public.submissions(
+            submission_id,candidate_id,status_code,full_name,date_of_birth,gender_code,current_address,phone,email_snapshot,version_no
+          ) values(
+            '84000000-0000-0000-0000-000000000021','84000000-0000-0000-0000-000000000020','READ','R2 Candidate','1990-01-01','MALE','Address','0900000000','r2candidate@example.test',1
+          );
+          insert into public.applications(application_id,submission_id,unit_id,position_id,hr_owner_id,is_active)
+          values('84000000-0000-0000-0000-000000000022','84000000-0000-0000-0000-000000000021','84000000-0000-0000-0000-000000000002','84000000-0000-0000-0000-000000000003','84000000-0000-0000-0000-000000000010',true);
+          insert into public.interviews(
+            interview_id,application_id,round_no,start_at,end_at,interview_format_id,schedule_status_code,report_status_code,is_active
+          ) values(
+            '84000000-0000-0000-0000-000000000023','84000000-0000-0000-0000-000000000022',1,
+            clock_timestamp()+interval '2 days',clock_timestamp()+interval '2 days 1 hour','84000000-0000-0000-0000-000000000004',
+            'CANCELLED','FOLLOW_UP',true
+          );
+          insert into public.interview_participants(
+            interview_participant_id,interview_id,app_user_id,participant_order,snapshot_name,snapshot_email,is_current
+          ) values
+            ('84000000-0000-0000-0000-000000000024','84000000-0000-0000-0000-000000000023','84000000-0000-0000-0000-000000000011',1,'R2 Remove','r2remove@eiu.edu.vn',true),
+            ('84000000-0000-0000-0000-000000000025','84000000-0000-0000-0000-000000000023','84000000-0000-0000-0000-000000000012',2,'R2 Historical','r2history@eiu.edu.vn',true);
+
+          -- A CANCELLED Interview may retain a now-inactive historical current
+          -- participant. This lifecycle transition is allowed because the
+          -- Interview is not resource_blocking.
+          update public.app_users
+          set is_active=false
+          where app_user_id='84000000-0000-0000-0000-000000000012';
+
+          set local role authenticated;
+          do $$
+          declare
+            v_status jsonb;
+            v_remove jsonb;
+            v_version bigint;
+          begin
+            perform set_config('request.jwt.claim.sub','84100000-0000-0000-0000-000000000010',true);
+
+            assert not has_column_privilege('authenticated','public.app_users','auth_user_id','SELECT'),
+              'raw Internal User auth binding must remain hidden';
+
+            v_status := public.get_current_internal_binding_status();
+            assert (v_status->>'success')::boolean;
+            assert (v_status->'data'->>'bound')::boolean;
+            assert (v_status->'data'->>'app_user_id')::uuid='84000000-0000-0000-0000-000000000010'::uuid;
+            assert (v_status->'data'->>'is_active')::boolean;
+            assert (v_status->'data'->>'is_root_admin')::boolean;
+
+            select version_no into v_version
+            from public.interview_participants
+            where interview_participant_id='84000000-0000-0000-0000-000000000024';
+            v_remove := public.remove_interview_participant(
+              '84000000-0000-0000-0000-000000000024', v_version
+            );
+            assert (v_remove->>'success')::boolean,
+              'removing another participant from CANCELLED history must succeed';
+            assert exists(
+              select 1 from public.interview_participants
+              where interview_participant_id='84000000-0000-0000-0000-000000000025'
+                and is_current=true
+                and participant_order=1
+            ), 'inactive historical participant must survive allowed reorder maintenance';
+          end;
+          $$;
+          reset role;
+
+          do $$
+          begin
+            assert not has_function_privilege('anon','public.get_current_internal_binding_status()','EXECUTE');
+            assert has_function_privilege('authenticated','public.get_current_internal_binding_status()','EXECUTE');
+          end;
+          $$;
+
+          rollback;
+          SQL
+
+          cat > supabase/tests/internal_user_r2_command_concurrency_test.sh <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          container_name="supabase_db_eiu-recruitment-dev"
+          new_uuid() { cat /proc/sys/kernel/random/uuid; }
+          suffix="$(tr -d '-' < /proc/sys/kernel/random/uuid | cut -c1-12)"
+          unit_id="$(new_uuid)"
+          group_id="$(new_uuid)"
+          position_id="$(new_uuid)"
+          root_id="$(new_uuid)"
+          root_auth_id="$(new_uuid)"
+          target_id="$(new_uuid)"
+          identity_target_id="$(new_uuid)"
+          old_identity_auth_id="$(new_uuid)"
+          replacement_auth_id="$(new_uuid)"
+          candidate_id="$(new_uuid)"
+          candidate_auth_id="$(new_uuid)"
+          submission_id="$(new_uuid)"
+          application_id="$(new_uuid)"
+          identity_email="identity_race_${suffix}@eiu.edu.vn"
+
+          psql_exec() {
+            docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"
+          }
+          run_sql_file() {
+            local sql="$1" out="$2"
+            printf '%s ' "$sql" | docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres >"$out" 2>&1
+          }
+          cleanup() {
+            psql_exec >/dev/null 2>&1 <<SQL || true
+          begin;
+          delete from public.interviews where application_id='$application_id'::uuid;
+          delete from public.applications where application_id='$application_id'::uuid;
+          delete from public.submissions where submission_id='$submission_id'::uuid;
+          delete from public.candidates where candidate_id='$candidate_id'::uuid;
+          delete from public.app_user_permissions where app_user_id in ('$root_id'::uuid,'$target_id'::uuid,'$identity_target_id'::uuid);
+          delete from public.app_user_roles where app_user_id in ('$root_id'::uuid,'$target_id'::uuid,'$identity_target_id'::uuid);
+          delete from public.app_users where app_user_id in ('$root_id'::uuid,'$target_id'::uuid,'$identity_target_id'::uuid);
+          delete from auth.identities where user_id='$replacement_auth_id'::uuid;
+          delete from auth.users where id='$replacement_auth_id'::uuid;
+          delete from public.positions where position_id='$position_id'::uuid;
+          delete from public.position_groups where position_group_id='$group_id'::uuid;
+          delete from public.organizational_units where unit_id='$unit_id'::uuid;
+          commit;
+          SQL
+          }
+          trap cleanup EXIT
+
+          psql_exec <<SQL
+          insert into public.position_groups(position_group_id,name_vi,code,is_active)
+          values('$group_id'::uuid,'R2 concurrency group','R2CG_${suffix}',true);
+          insert into public.organizational_units(unit_id,name_vi,code,is_active)
+          values('$unit_id'::uuid,'R2 concurrency unit','R2CU_${suffix}',true);
+          insert into public.positions(position_id,unit_id,position_group_id,code,name_vi,is_active)
+          values('$position_id'::uuid,'$unit_id'::uuid,'$group_id'::uuid,'R2CP_${suffix}','R2 concurrency position',true);
+
+          insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active,is_root_admin)
+          values
+            ('$root_id'::uuid,'$root_auth_id'::uuid,'root_r2_${suffix}@eiu.edu.vn','R2 Root',true,true),
+            ('$target_id'::uuid,null,'target_r2_${suffix}@eiu.edu.vn','R2 Target',true,false),
+            ('$identity_target_id'::uuid,'$old_identity_auth_id'::uuid,'$identity_email','R2 Identity Target',true,false);
+          insert into public.app_user_roles(app_user_id,role_code)
+          values('$target_id'::uuid,'HR');
+
+          insert into public.candidates(candidate_id,auth_user_id,email,current_full_name,is_active)
+          values('$candidate_id'::uuid,'$candidate_auth_id'::uuid,'candidate_r2_${suffix}@example.test','R2 Candidate',true);
+          insert into public.submissions(
+            submission_id,candidate_id,status_code,full_name,date_of_birth,gender_code,current_address,phone,email_snapshot,version_no
+          ) values(
+            '$submission_id'::uuid,'$candidate_id'::uuid,'READ','R2 Candidate','1990-01-01','MALE','Address','0900000000','candidate_r2_${suffix}@example.test',1
+          );
+          insert into public.applications(application_id,submission_id,unit_id,position_id,hr_owner_id,is_active)
+          values('$application_id'::uuid,'$submission_id'::uuid,'$unit_id'::uuid,'$position_id'::uuid,'$root_id'::uuid,true);
+
+          insert into auth.users(
+            id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,
+            raw_app_meta_data,raw_user_meta_data,created_at,updated_at
+          ) values(
+            '$replacement_auth_id'::uuid,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','$identity_email','',clock_timestamp(),'{}','{}',clock_timestamp(),clock_timestamp()
+          );
+          insert into auth.identities(provider_id,user_id,identity_data,provider,last_sign_in_at,created_at,updated_at)
+          values(
+            'google-r2-${suffix}','$replacement_auth_id'::uuid,jsonb_build_object('sub','google-r2-${suffix}','email','$identity_email'),'google',clock_timestamp(),clock_timestamp(),clock_timestamp()
+          );
+          SQL
+
+          # ------------------------------------------------------------------
+          # A. Public lifecycle command vs accepted public Application writer.
+          # A staging row lock queues lifecycle before owner assignment. Old
+          # advisory->FK-row order deadlocks; repaired row->advisory order does not.
+          # ------------------------------------------------------------------
+          target_version="$(psql_exec -qAt -c "select version_no from public.app_users where app_user_id='$target_id'::uuid")"
+          lifecycle_key="$(new_uuid)"
+          app_key="$(new_uuid)"
+          blocker="begin; select 1 from public.app_users where app_user_id='$target_id'::uuid for update; select pg_sleep(3); commit;"
+          lifecycle="begin; set local statement_timeout='10s'; set local role authenticated; select set_config('request.jwt.claim.sub','$root_auth_id',true); select public.set_internal_user_active('$target_id'::uuid,false,$target_version,'$lifecycle_key'::uuid); commit;"
+          owner_write="begin; set local statement_timeout='10s'; set local role authenticated; select set_config('request.jwt.claim.sub','$root_auth_id',true); select public.create_or_update_application('$submission_id'::uuid,'$unit_id'::uuid,null::uuid,'$position_id'::uuid,'$target_id'::uuid,'$app_key'::uuid,true); commit;"
+
+          run_sql_file "$blocker" /tmp/s06002-r2-row-blocker.txt & p0=$!
+          sleep 0.25
+          run_sql_file "$lifecycle" /tmp/s06002-r2-lifecycle.txt & p1=$!
+          sleep 0.25
+          set +e
+          run_sql_file "$owner_write" /tmp/s06002-r2-owner-write.txt & p2=$!
+          wait "$p0"; s0=$?
+          wait "$p1"; s1=$?
+          wait "$p2"; s2=$?
+          set -e
+
+          if [[ $s0 -ne 0 || $s1 -ne 0 || $s2 -eq 0 ]]; then
+            echo "R2 public owner/lifecycle race did not fail closed as expected" >&2
+            cat /tmp/s06002-r2-row-blocker.txt /tmp/s06002-r2-lifecycle.txt /tmp/s06002-r2-owner-write.txt >&2 || true
+            exit 1
+          fi
+          ! grep -qi 'deadlock detected' /tmp/s06002-r2-lifecycle.txt /tmp/s06002-r2-owner-write.txt
+          grep -q '"success": true' /tmp/s06002-r2-lifecycle.txt
+          grep -q 'APPLICATION_OWNER_NOT_ELIGIBLE' /tmp/s06002-r2-owner-write.txt
+          psql_exec -qAt -c "select (not is_active)::text from public.app_users where app_user_id='$target_id'::uuid" | grep -qx true
+          psql_exec -qAt -c "select (hr_owner_id='$root_id'::uuid)::text from public.applications where application_id='$application_id'::uuid" | grep -qx true
+          psql_exec -qAt -c "update public.app_users set is_active=true where app_user_id='$target_id'::uuid"
+
+          # ------------------------------------------------------------------
+          # B. Public first-bind vs public Root rebind on the same normalized
+          # replacement email. Staging email lock queues first-bind before rebind.
+          # Old row->email rebind order deadlocks; repaired email->row order does not.
+          # ------------------------------------------------------------------
+          identity_version="$(psql_exec -qAt -c "select version_no from public.app_users where app_user_id='$identity_target_id'::uuid")"
+          rebind_key="$(new_uuid)"
+          email_blocker="begin; select pg_advisory_xact_lock(hashtextextended('internal-email:$identity_email',0)); select pg_sleep(3); commit;"
+          first_bind="begin; set local statement_timeout='10s'; set local role authenticated; select set_config('request.jwt.claim.sub','$replacement_auth_id',true); select public.provision_internal_identity_on_first_google_login(); commit;"
+          rebind="begin; set local statement_timeout='10s'; set local role authenticated; select set_config('request.jwt.claim.sub','$root_auth_id',true); select public.change_internal_user_identity('$identity_target_id'::uuid,'$replacement_auth_id'::uuid,$identity_version,'$rebind_key'::uuid); commit;"
+
+          run_sql_file "$email_blocker" /tmp/s06002-r2-email-blocker.txt & p0=$!
+          sleep 0.25
+          run_sql_file "$first_bind" /tmp/s06002-r2-first-bind.txt & p1=$!
+          sleep 0.25
+          run_sql_file "$rebind" /tmp/s06002-r2-rebind.txt & p2=$!
+          set +e
+          wait "$p0"; s0=$?
+          wait "$p1"; s1=$?
+          wait "$p2"; s2=$?
+          set -e
+
+          if [[ $s0 -ne 0 || $s1 -ne 0 || $s2 -ne 0 ]]; then
+            echo "R2 public identity lock-order race did not serialize cleanly" >&2
+            cat /tmp/s06002-r2-email-blocker.txt /tmp/s06002-r2-first-bind.txt /tmp/s06002-r2-rebind.txt >&2 || true
+            exit 1
+          fi
+          ! grep -qi 'deadlock detected' /tmp/s06002-r2-first-bind.txt /tmp/s06002-r2-rebind.txt
+          grep -q 'IDENTITY_REBIND_FORBIDDEN' /tmp/s06002-r2-first-bind.txt
+          grep -q '"success": true' /tmp/s06002-r2-rebind.txt
+          psql_exec -qAt -c "select (auth_user_id='$replacement_auth_id'::uuid)::text from public.app_users where app_user_id='$identity_target_id'::uuid" | grep -qx true
+
+          echo "TASK-S06-002 R2 public-command lock-order concurrency regressions PASS ($suffix)"
+          SH
+          chmod +x supabase/tests/internal_user_r2_command_concurrency_test.sh
+
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('supabase/tests/internal_user_rbac_identity_test.sh')
+          s = p.read_text(encoding='utf-8')
+          needle = 'docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < "$tmp_sql"\n'
+          if s.count(needle) != 1:
+              raise SystemExit('focused wrapper terminal command mismatch')
+          s = s.replace(
+              needle,
+              needle + 'docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/internal_user_r2_repair_test.sql\n',
+              1,
+          )
+          p.write_text(s, encoding='utf-8')
+
+          p = Path('supabase/tests/internal_user_lifecycle_concurrency_test.sh')
+          s = p.read_text(encoding='utf-8')
+          needle = 'echo "TASK-S06-002 Internal User owner/participant concurrency assertions passed with fresh fixture $suffix"\n'
+          if s.count(needle) != 1:
+              raise SystemExit('lifecycle wrapper terminal marker mismatch')
+          s = s.replace(
+              needle,
+              'bash supabase/tests/internal_user_r2_command_concurrency_test.sh\n' + needle,
+              1,
+          )
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          cat > project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md <<'MD'
+          # TASK-S06-002 Independent Implementation Re-Review Gate R2
+
+          ## Identity
+
+          - WORK_ID: `S06-002-IMPLEMENTATION-REVIEW-001-R2`
+          - REVIEWER: `eiu-reviewer`
+          - REPOSITORY: `oanhpham-kobe/eiu-recruitment`
+          - TASK_BRANCH: `oanhpham-kobe/TASK-S06-002-user-rbac-identity`
+          - R1_REVIEWED_SHA: `a7aa037e26cda6ba70153539c1dfc15c3fba37e6`
+          - R1_VERDICT: `BLOCKING_REPAIR`
+          - SOURCE_REOPEN_EXPECTATION: `false`
+          - EXACT_R2_SHA: supplied in the immutable coordinator handoff; reviewer must verify that exact SHA contains this gate before review.
+
+          This gate intentionally lives **inside the reviewed candidate tree**. A Git commit cannot embed its own future SHA without changing that SHA; therefore the coordinator supplies the exact 40-character R2 SHA out-of-band and the reviewer must verify `git rev-parse HEAD` equals it and that this file exists at that SHA.
+
+          ## R1 blocker reconciliation required
+
+          1. The R1 gate and Owner-transported R1 evidence must now both exist in the reviewed task tree. This R2 gate must also exist at the reviewed SHA.
+          2. `authenticated` must still lack raw `app_users.auth_user_id` SELECT, while every retained request-scoped server consumer uses `get_current_internal_session()` or `get_current_internal_binding_status()` instead of filtering `app_users` by the hidden column.
+          3. Statement-level participant eligibility recheck must apply only to canonical `resource_blocking` Interviews. CANCELLED/inactive/unscheduled/fully-elapsed history must permit unrelated remove/reorder maintenance of retained inactive participants.
+          4. Application owner writers and Internal User lifecycle writers must share deterministic **target app_users row -> internal-user advisory -> revalidate** ordering. Verify the accepted `create_or_update_application()` path, reactivation path, direct trigger coverage, HR-role removal and lifecycle command composition.
+          5. First Google bind and Root rebind must share deterministic **normalized-email advisory -> target app_users row -> internal-user advisory -> revalidate** ordering.
+
+          ## Required verification
+
+          - zero-state migration replay;
+          - focused `internal_user_rbac_identity_test.sh`, including the R2 dormant-history/own-binding regression;
+          - `internal_user_lifecycle_concurrency_test.sh`, including deterministic public-command owner/lifecycle and first-bind/rebind lock staging;
+          - crossed Application reactivation/participant, Interview lifecycle, round/conflict, copy and bulk regressions;
+          - all retained S06-001 canonical seed/history/durable-history regressions;
+          - full web install/audit/design/lint/typecheck/build/test;
+          - static proof that the listed request-scoped server files no longer query `app_users` by `auth_user_id`;
+          - `supabase db lint --local --level error`;
+          - `git diff --check`.
+
+          ## Review boundaries
+
+          Review only the exact immutable R2 SHA supplied by the coordinator. Do not modify implementation, refs, integration, `main`, Vercel, connected Supabase, or later task state.
+
+          ## Required output
+
+          Return `WORK_ID`, reviewed repository/branch/SHA, `VERDICT`, `SOURCE_REOPEN_REQUIRED`, blockers, observations, verification executed, identity-bind assessment, RBAC/visibility assessment, lifecycle-concurrency assessment, security assessment, accepted-contract reuse assessment, acceptance statement, and truthful evidence persistence coordinates or `UNAVAILABLE`.
+          MD
+
+          # Prove the affected request-scoped files no longer use a raw
+          # app_users.auth_user_id filter. Candidate auth_user_id reads elsewhere
+          # are intentionally outside this Internal User column ACL boundary.
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          paths = [
+              'web/src/lib/application-inbox/server.ts',
+              'web/src/lib/application-inbox/submission-detail-server.ts',
+              'web/src/lib/commands/application-lifecycle.ts',
+              'web/src/lib/commands/candidate-lifecycle.ts',
+              'web/src/lib/commands/submission-status.ts',
+              'web/src/lib/interview/server.ts',
+              'web/src/lib/auth/session.ts',
+          ]
+          bad = []
+          pattern = re.compile(r'\.from\(["\']app_users["\']\)(?:(?!\.from\().){0,500}?\.eq\(["\']auth_user_id["\']', re.S)
+          for path in paths:
+              text = Path(path).read_text(encoding='utf-8')
+              if pattern.search(text):
+                  bad.append(path)
+          if bad:
+              raise SystemExit('raw app_users auth_user_id consumers remain: ' + ', '.join(bad))
+          PY
+
+          git diff --check
+          git status --short
+
+      - name: Commit R2 repair candidate work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/src/lib/auth/session.ts \
+                  web/src/lib/application-inbox/server.ts \
+                  web/src/lib/application-inbox/submission-detail-server.ts \
+                  web/src/lib/commands/application-lifecycle.ts \
+                  web/src/lib/commands/candidate-lifecycle.ts \
+                  web/src/lib/commands/submission-status.ts \
+                  web/src/__tests__/internal-session-rpc.test.ts \
+                  supabase/migrations/*_internal_user_r2_review_repairs.sql \
+                  supabase/tests/internal_user_r2_repair_test.sql \
+                  supabase/tests/internal_user_r2_command_concurrency_test.sh \
+                  supabase/tests/internal_user_rbac_identity_test.sh \
+                  supabase/tests/internal_user_lifecycle_concurrency_test.sh \
+                  project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_GATE_a7aa037_v1.md \
+                  project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_a7aa037_v1.md \
+                  project_control/reviews/S06_002_IMPLEMENTATION_R2_GATE_v1.md
+          git commit -m 'fix(s06-002): repair R1 review blockers'
+          git push origin HEAD:oanhpham-kobe/TASK-S06-002-user-rbac-identity
