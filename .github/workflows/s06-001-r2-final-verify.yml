@@ -1,0 +1,115 @@
+name: S06-001 R2 Final Verification
+
+on:
+  push:
+    branches:
+      - verify/S06-001-R2-dced5aa
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Web verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Ensure npm 11.19.0
+        shell: bash
+        run: |
+          if [ "$(npm --version)" != "11.19.0" ]; then
+            npm install --global npm@11.19.0
+          fi
+          test "$(npm --version)" = "11.19.0"
+      - name: Install dependencies
+        run: npm ci
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+      - name: Validate production design contract
+        run: npm run design:check
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run web acceptance suite
+        run: npm run test
+
+  database:
+    name: Database verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Diff hygiene against reviewed R1 SHA
+        run: git diff --check 0c4b94b29e08e1ad877583bdb90d522e5577dccc...HEAD -- . ':!.github/workflows/s06-001-r2-final-verify.yml'
+      - name: Start local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: PRE-S04 regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
+      - name: S05 interviewer report regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interviewer_report_contextual_read_test.sql
+      - name: S05 HR report regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/hr_report_management_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/hr_report_dto_privacy_test.sql
+      - name: Existing S06 regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql
+      - name: R1 durable reason history regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_reason_history_test.sql
+      - name: R2 historical Candidate document regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_candidate_document_history_test.sql
+      - name: R4 manage-only inactive read regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_management_read_test.sql
+      - name: Concurrent idempotency regression
+        run: bash supabase/tests/master_data_idempotency_concurrency_test.sh
+      - name: R3 Interview Format first-use race regression
+        run: bash supabase/tests/master_data_interview_format_race_test.sh
+      - name: Database advisors
+        run: |
+          supabase inspect db index-usage --local >/dev/null
+          supabase inspect db table-sizes --local >/dev/null
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+
+  governance:
+    name: Governance verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install validator dependency
+        run: python -m pip install --disable-pip-version-check "PyYAML==6.0.2"
+      - name: Validate OMP-native integration
+        run: python project_control/validate_omp_native.py
+      - name: Validate durable control plane
+        run: python project_control/validate_control_plane.py
