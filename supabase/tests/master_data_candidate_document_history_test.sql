@@ -49,6 +49,22 @@ begin
   values (v_candidate_auth, 's06001_doc_candidate_' || v_suffix || '@example.com', true)
   returning candidate_id into v_candidate;
 
+  -- Candidate edit sessions require one current effective Privacy Notice.
+  update public.privacy_notice_versions set is_current = false where is_current = true;
+  insert into public.privacy_notice_versions(
+    notice_version, content_vi, content_en, content_hash_sha256,
+    published_at, effective_from, is_current, created_by
+  ) values (
+    'S06001_DOC_' || v_suffix,
+    'S06 document history notice',
+    'S06 document history notice',
+    repeat('a', 64),
+    clock_timestamp() - interval '1 minute',
+    clock_timestamp() - interval '1 minute',
+    true,
+    v_hr
+  );
+
   insert into public.submissions(
     candidate_id, status_code, full_name, date_of_birth, gender_code,
     current_address, phone, email_snapshot
@@ -89,7 +105,7 @@ begin
 
   -- REPLACE: reservation and staged change preserve the existing logical type even though it is inactive.
   v_result := public.start_candidate_form_session('EDIT_SUBMISSION', v_submission);
-  assert (v_result->>'success')::boolean;
+  assert (v_result->>'success')::boolean, 'fixture must open candidate EDIT session';
   v_session := (v_result->'data'->>'candidate_form_session_id')::uuid;
   v_notice := v_result->'data'->>'presented_privacy_notice_version';
 
@@ -102,7 +118,7 @@ begin
 
   v_result := public.validate_and_scan_upload_reservation(
     v_reservation, 'application/pdf', 512, 'CLEAN', true,
-    repeat('a', 64)
+    repeat('b', 64)
   );
   assert (v_result->>'success')::boolean;
 
@@ -164,7 +180,7 @@ begin
 
   v_result := public.validate_and_scan_upload_reservation(
     v_reservation, 'application/pdf', 512, 'CLEAN', true,
-    repeat('b', 64)
+    repeat('c', 64)
   );
   assert (v_result->>'success')::boolean;
 
