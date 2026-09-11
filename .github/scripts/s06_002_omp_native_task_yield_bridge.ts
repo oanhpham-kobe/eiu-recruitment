@@ -73,7 +73,7 @@ function isReviewerChild(context: any): boolean {
 export default function bridgeProof(pi: ExtensionAPI) {
   pi.registerProvider(PROVIDER, {
     baseUrl: "bridge://local",
-    auth: "none",
+    apiKey: "not-used-runtime-registration-sentinel",
     api: "omp-review-proof",
     models: [
       {
