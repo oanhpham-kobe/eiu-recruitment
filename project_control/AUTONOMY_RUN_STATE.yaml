@@ -472,7 +472,7 @@ s06_001_acceptance:
   pr_created_or_merged: false
 
 s06_002_planning:
-  status: WAITING_EXTERNAL_REVIEW
+  status: PROMPT_REVIEW_PASS
   task: TASK-S06-002
   title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
   prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
@@ -481,10 +481,12 @@ s06_002_planning:
     work_id: S06-002-PROMPT-REVIEW-001
     reviewer: eiu-reviewer
     review_type: PROMPT_SOURCE_RECONCILIATION
-    result: PENDING
-    source_reopen_required: PENDING
-    blocking_findings: PENDING
+    result: PASS
+    source_reopen_required: false
+    blocking_findings: NONE
     handoff: project_control/reviews/S06_002_PROMPT_REVIEW_GATE_v1.md
+    evidence_persistence: VERIFIED_FROM_OWNER_TRANSPORT
+    evidence_path: project_control/reviews/S06_002_PROMPT_REVIEW_OWNER_TRANSPORT_f757e76_v1.md
   source_reopen_expectation: false
   accepted_prerequisites:
     - "TASK-S06-001 accepted @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
@@ -494,7 +496,7 @@ s06_002_planning:
     - "Accepted first-login bind must be hardened to current canonical verified Google-provider + confirmed EIU email proof without creating a divergent bind path."
     - "Non-root directory management must not expose another user's granular effective permissions/security identity; inactive lifecycle management still needs a minimum-safe read surface."
     - "User deactivation/HR-role removal must be concurrency-safe against new Active Application owner assignment and new/current non-elapsed resource-blocking Interview participation."
-  implementation_hold: "No TASK-S06-002 implementation may start before independent prompt/source reconciliation PASS with SOURCE_REOPEN_REQUIRED=false."
+  implementation_hold: "Prompt/source reconciliation passed. Create immutable pre-task checkpoint and isolated implementation branch before any product/database mutation."
 
 implementation_materialization:
   task: TASK-S06-001
@@ -509,18 +511,20 @@ implementation_materialization:
   review_round: R3
 
 safe_frontier:
-  eligible_tasks: []
+  eligible_tasks:
+    - TASK-S06-002
   skipped_due_to_dependency: []
-  materialization_frontier: []
-  execution_hold: "TASK-S06-002 is materialized but blocked on independent prompt/source reconciliation review of exact target f757e76f3f97077c608dab29bad45b8bd2126dc3."
+  materialization_frontier:
+    - TASK-S06-002
+  execution_hold: null
 
 stop_gate:
-  status: WAITING_EXTERNAL_REVIEW
-  type: INDEPENDENT_PROMPT_SOURCE_REVIEW
+  status: CLEAR
+  type: NONE
   work_id: S06-002-PROMPT-REVIEW-001
   target: "TASK-S06-002 prompt/source reconciliation @ f757e76f3f97077c608dab29bad45b8bd2126dc3"
   reviewer: eiu-reviewer
-  source_reopen_required: PENDING
-  resume_on: "Independent reviewer PASS + SOURCE_REOPEN_REQUIRED=false for exact prompt-review target f757e76f3f97077c608dab29bad45b8bd2126dc3; on BLOCKING_REPAIR repair only the prompt/control scope and re-review; on OWNER_DECISION_REQUIRED stop for Owner."
+  source_reopen_required: false
+  resume_on: "Create immutable pre-task checkpoint and isolated implementation branch, then begin bounded S06-002 implementation."
 
-next_action: "Send project_control/reviews/S06_002_PROMPT_REVIEW_GATE_v1.md to OMP main/eiu-reviewer for exact-target S06-002 prompt/source reconciliation review. Do not begin implementation before PASS + SOURCE_REOPEN_REQUIRED=false. Preserve boundaries: do not push/merge main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
+next_action: "Create checkpoint/pre-S06-002-001 from this exact validated control state and create isolated implementation branch oanhpham-kobe/TASK-S06-002-user-rbac-identity. Then begin bounded implementation from the accepted prompt. Preserve boundaries: do not push/merge main, deploy Vercel, or apply connected Supabase migrations without explicit Owner authorization."
