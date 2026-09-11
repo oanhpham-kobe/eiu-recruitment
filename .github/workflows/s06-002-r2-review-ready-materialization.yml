@@ -1,0 +1,48 @@
+name: S06-002 R2 Review Ready Materialization
+
+on:
+  push:
+    branches:
+      - control/S06-002-r2-review-ready
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Preserve materializer and checkout exact integration control head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show HEAD:.github/scripts/s06_002_materialize_r2_review_ready.py > /tmp/materialize.py
+          git checkout --detach 3d865b04abc03badfc50e95e72e1561b93f045a8
+          test "$(git rev-parse HEAD)" = '3d865b04abc03badfc50e95e72e1561b93f045a8'
+      - name: Materialize waiting-review state and exact handoff
+        run: python /tmp/materialize.py
+      - name: Validate control artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          ruby -e "require 'yaml'; YAML.load_file('project_control/AUTONOMY_RUN_STATE.yaml'); YAML.load_file('project_control/TASK_REGISTRY.yaml')"
+          grep -F 'status: WAITING_INDEPENDENT_REVIEW' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -F 'current_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -F 'status: REVIEW' project_control/TASK_REGISTRY.yaml
+          grep -F 'implementation_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"' project_control/TASK_REGISTRY.yaml
+          test -f project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
+          test "$(git diff --name-only | sort | tr '\n' ' ')" = 'project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md '
+      - name: Commit and publish isolated control result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml project_control/reviews/S06_002_IMPLEMENTATION_R2_HANDOFF_7c37d46_v1.md
+          git commit -m 'chore(state): route TASK-S06-002 R2 to independent review'
+          git push origin HEAD:refs/heads/control/S06-002-r2-review-ready-result
