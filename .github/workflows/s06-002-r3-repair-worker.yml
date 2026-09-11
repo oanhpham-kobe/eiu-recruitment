@@ -1,0 +1,85 @@
+name: S06-002 R3 Repair Worker
+
+on:
+  push:
+    branches:
+      - control/S06-002-r3-repair-worker
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Preserve worker and checkout exact R2 candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show HEAD:.github/scripts/s06_002_r3_repair.py > /tmp/repair.py
+          git fetch origin oanhpham-kobe/TASK-S06-002-user-rbac-identity
+          test "$(git rev-parse origin/oanhpham-kobe/TASK-S06-002-user-rbac-identity)" = '7c37d46fa504b5d98b156735d7355f1d938be0bf'
+          git checkout --detach 7c37d46fa504b5d98b156735d7355f1d938be0bf
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Create append-only migration and R3 regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase migration new internal_user_r3_review_repairs
+          migration_path="$(ls -1t supabase/migrations/*_internal_user_r3_review_repairs.sql | head -1)"
+          test -n "$migration_path"
+          MIGRATION_PATH="$migration_path" python /tmp/repair.py
+          echo "R3 migration: $migration_path"
+      - name: Static repair validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --name-only -- supabase/migrations | wc -l)" -eq 0
+          test "$(git ls-files --others --exclude-standard 'supabase/migrations/*_internal_user_r3_review_repairs.sql' | wc -l)" -eq 1
+          grep -R -F 'v_post_lock_email := private.verified_google_auth_email(v_auth_user_id);' supabase/migrations/*_internal_user_r3_review_repairs.sql
+          grep -R -F 'capture_app_user_master_reference_history_r3' supabase/migrations/*_internal_user_r3_review_repairs.sql
+          grep -R -F 'update_internal_user_directory_s06_002_r2_impl' supabase/migrations/*_internal_user_r3_review_repairs.sql
+          grep -R -F 'for update;' supabase/migrations/*_internal_user_r3_review_repairs.sql >/dev/null
+          test -f supabase/tests/internal_user_r3_review_concurrency_test.sh
+          test -f project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_v1.md
+      - name: Start local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: Run focused Internal User/RBAC/Identity regressions
+        run: bash supabase/tests/internal_user_rbac_identity_test.sh
+      - name: Run lifecycle R1/R2/R3 concurrency regressions
+        run: bash supabase/tests/internal_user_lifecycle_concurrency_test.sh
+      - name: Run crossed Application and Interview regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_reactivation_and_participant_contract_repair_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_lifecycle_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_round_and_conflict_locking_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/bulk_commands_replay.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_durable_reference_history_test.sql
+      - name: Database lint
+        run: supabase db lint --local --level error
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
+      - name: Commit and non-force push repaired task branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add supabase/migrations supabase/tests/internal_user_lifecycle_concurrency_test.sh supabase/tests/internal_user_r3_review_concurrency_test.sh project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_v1.md
+          git commit -m 'fix(s06-002): close R2 lock and identity races'
+          git push origin HEAD:refs/heads/oanhpham-kobe/TASK-S06-002-user-rbac-identity
