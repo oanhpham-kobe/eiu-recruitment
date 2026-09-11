@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  CANDIDATE_SHA: 372341a979ec7423946ccc25035b32829283ca28
+  CANDIDATE_SHA: a7aa037e26cda6ba70153539c1dfc15c3fba37e6
   PRIOR_WEB_VERIFIED_SHA: 014e22f737463b049eacca041a0c204ce0699cd1
   BASE_SHA: 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01
 
@@ -32,12 +32,13 @@ jobs:
           git diff --check "$BASE_SHA" "$CANDIDATE_SHA"
           test -z "$(git diff --name-only "$BASE_SHA" "$CANDIDATE_SHA" | grep '^README.md$' || true)"
           mapfile -t repair_paths < <(git diff --name-only "$PRIOR_WEB_VERIFIED_SHA" "$CANDIDATE_SHA")
-          test "${#repair_paths[@]}" -eq 5
+          test "${#repair_paths[@]}" -eq 6
           expected=(
             "supabase/tests/copy_interview_schedule_test.sql"
             "supabase/tests/internal_user_lifecycle_concurrency_test.sh"
             "supabase/tests/internal_user_rbac_identity_test.sh"
             "supabase/tests/interview_lifecycle_test.sql"
+            "supabase/tests/master_data_durable_reference_history_test.sql"
             "supabase/tests/master_data_lifecycle_history_test.sql"
           )
           for i in "${!expected[@]}"; do test "${repair_paths[$i]}" = "${expected[$i]}"; done
