@@ -33,6 +33,7 @@ begin
   insert into public.interview_formats(code,name_vi,requires_room,requires_meeting_link) values('T003_F_'||s,'T003 In person',true,false) returning public.interview_formats.interview_format_id into format_id;
   insert into public.document_types(code,name_vi,scope_code) values('T003_D_'||s,'T003 Document','INTERVIEW') returning public.document_types.document_type_id into doc_type;
   insert into public.app_users(auth_user_id,full_name,email,is_active) values(hr_auth,'T003 HR','t003_hr_'||s||'@eiu.edu.vn',true) returning public.app_users.app_user_id into hr;
+  insert into public.app_user_roles(app_user_id,role_code) values(hr,'HR');
   insert into public.app_user_permissions(app_user_id,permission_code) values(hr,'interviews.view'),(hr,'interviews.manage') on conflict do nothing;
   insert into public.app_users(auth_user_id,full_name,email,is_active) values(manage_auth,'T003 Manage','t003_manage_'||s||'@eiu.edu.vn',true) returning public.app_users.app_user_id into manage_only;
   insert into public.app_user_permissions(app_user_id,permission_code) values(manage_only,'interviews.manage') on conflict do nothing;

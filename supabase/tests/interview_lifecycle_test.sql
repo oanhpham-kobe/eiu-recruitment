@@ -29,6 +29,7 @@ begin
   insert into public.interview_formats(code,name_vi,requires_room,requires_meeting_link,is_active) values('T002_F_'||s,'T002 In person',true,false,true) returning public.interview_formats.interview_format_id into fmt_id;
   insert into public.document_types(code,name_vi,scope_code,is_active) values('T002_D_'||s,'T002 Interview Document','INTERVIEW',true) returning public.document_types.document_type_id into doc_type;
   insert into public.app_users(auth_user_id,full_name,email,is_active) values(hr_auth,'T002 HR','t002_hr_'||s||'@eiu.edu.vn',true) returning public.app_users.app_user_id into hr;
+  insert into public.app_user_roles(app_user_id,role_code) values(hr,'HR');
   insert into public.app_user_permissions(app_user_id,permission_code) values
     (hr,'interviews.view'),(hr,'interviews.manage'),(hr,'interviews.participants'),(hr,'interviews.status'),(hr,'interviews.documents'),
     (hr,'reports.view'),(hr,'reports.edit_interviewer'),(hr,'reports.manage_status') on conflict do nothing;
