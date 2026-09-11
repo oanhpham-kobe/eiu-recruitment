@@ -1,0 +1,266 @@
+name: S06-002 R2 Test Fixture Reconcile
+
+on:
+  push:
+    branches:
+      - control/S06-002-r2-test-fixtures-e3d104b
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout task branch
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+          fetch-depth: 0
+      - name: Guard exact task head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = 'e3d104b4e9057d6df74e3acc1f1e9437374711b6'
+      - name: Reconcile trusted-session test fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one replacement, found {count}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          def replace_between(path: str, start: str, end: str, new_block: str) -> None:
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              i = text.find(start)
+              if i < 0:
+                  raise SystemExit(f'{path}: start marker not found: {start}')
+              j = text.find(end, i)
+              if j < 0:
+                  raise SystemExit(f'{path}: end marker not found: {end}')
+              p.write_text(text[:i] + new_block + text[j:], encoding='utf-8')
+
+          inbox = 'web/src/__tests__/application-inbox.test.ts'
+          replace_once(
+              inbox,
+              'function internalSession(permissions: string[], isInternal = true): AppSession {',
+              'function internalSession(\n  permissions: string[],\n  isInternal = true,\n  roles = isInternal ? ["HR"] : ["CANDIDATE"],\n): AppSession {',
+          )
+          replace_once(
+              inbox,
+              '      roles: isInternal ? ["HR"] : ["CANDIDATE"],',
+              '      roles,',
+          )
+          replace_once(
+              inbox,
+              '    resolveSession: async () => internalSession([]),\n  });\n\n  assert.equal(client.getSubmissionQueryCount(), 1);',
+              '    resolveSession: async () => internalSession([], true, ["ROOT_ADMIN"]),\n  });\n\n  assert.equal(client.getSubmissionQueryCount(), 1);',
+          )
+
+          auth = 'web/src/__tests__/auth-routes.test.ts'
+          auth_start = 'test("getServerSession: resolves internal permissions strictly from database, ignoring client claims", async () => {'
+          auth_end = 'test("getServerSession: returns unauthenticated if internal user is inactive", async () => {'
+          auth_block = '''test("getServerSession: resolves internal permissions strictly from trusted database RPC, ignoring client claims", async () => {
+            const client = createMockClient({
+              getUser: async () => ({
+                data: {
+                  user: {
+                    id: "auth-internal-1",
+                    email: "hr.manager@eiu.edu.vn",
+                  },
+                },
+                error: null,
+              }),
+              rpc: async (fnName) => {
+                assert.equal(fnName, "get_current_internal_session");
+                return {
+                  data: {
+                    success: true,
+                    data: {
+                      app_user_id: "app-user-999",
+                      is_active: true,
+                      is_root_admin: false,
+                      roles: ["HR"],
+                      permissions: [
+                        "candidates.view",
+                        "submissions.evaluate",
+                      ],
+                    },
+                  },
+                  error: null,
+                };
+              },
+            });
+
+            const session = await getServerSession(client);
+            assert.equal(session.isAuthenticated, true);
+            assert.notEqual(session.user, null);
+            if (session.user) {
+              assert.equal(session.user.authUserId, "auth-internal-1");
+              assert.equal(session.user.email, "hr.manager@eiu.edu.vn");
+              assert.equal(session.user.isInternal, true);
+              assert.equal(session.user.isCandidate, false);
+              assert.equal(session.user.appUserId, "app-user-999");
+              assert.deepEqual(session.user.roles, ["HR"]);
+              assert.deepEqual(session.user.permissions, [
+                "candidates.view",
+                "submissions.evaluate",
+              ]);
+            }
+          });
+
+          '''
+          replace_between(auth, auth_start, auth_end, auth_block)
+
+          detail = 'web/src/__tests__/submission-detail.test.ts'
+          old_rpc = '''    rpc: async (fn: string, args?: unknown) => {
+              const handler = options.rpcHandlers?.[fn];
+              if (handler) {
+                const result = handler(args);
+                return { data: result, error: null };
+              }
+              return { data: null, error: null };
+            },'''
+          new_rpc = '''    rpc: async (fn: string, args?: unknown) => {
+              const handler = options.rpcHandlers?.[fn];
+              if (handler) {
+                const result = handler(args);
+                return { data: result, error: null };
+              }
+              const isInternal =
+                options.userSession?.email.toLowerCase().endsWith("@eiu.edu.vn") === true;
+              if (fn === "get_current_internal_session" && isInternal) {
+                return {
+                  data: {
+                    success: true,
+                    data: {
+                      app_user_id: options.userSession?.id ?? "user-1",
+                      is_active: isActive,
+                      is_root_admin: options.isRootAdmin ?? false,
+                      roles,
+                      permissions,
+                    },
+                  },
+                  error: null,
+                };
+              }
+              if (fn === "get_current_internal_binding_status" && isInternal) {
+                return {
+                  data: {
+                    success: true,
+                    data: {
+                      bound: true,
+                      app_user_id: options.userSession?.id ?? "user-1",
+                      is_active: isActive,
+                      is_root_admin: options.isRootAdmin ?? false,
+                    },
+                  },
+                  error: null,
+                };
+              }
+              return { data: null, error: null };
+            },'''
+          replace_once(detail, old_rpc, new_rpc)
+
+          t10_start = 'test("10. Actor resolution using is_root_admin prevents real authorized HR callers from being classified as GUEST", async () => {'
+          t10_end = 'test("11. Drawer typography: all drawer body text, labels, document names/meta, and alerts satisfy >=16px", async () => {'
+          t10_block = '''test("10. Actor resolution uses trusted session RPC and never raw-queries app_users auth binding", async () => {
+            let rawAppUsersQueried = false;
+            const trustedSessionClient = {
+              auth: {
+                getUser: async () => ({
+                  data: {
+                    user: {
+                      id: "hr-user-id",
+                      email: "hr@eiu.edu.vn",
+                    },
+                  },
+                  error: null,
+                }),
+              },
+              rpc: async (fn: string) => {
+                if (fn === "get_current_internal_session") {
+                  return {
+                    data: {
+                      success: true,
+                      data: {
+                        app_user_id: "hr-user-id",
+                        is_active: true,
+                        is_root_admin: false,
+                        roles: ["HR"],
+                        permissions: ["submissions.edit"],
+                      },
+                    },
+                    error: null,
+                  };
+                }
+                if (fn === "update_submission_by_hr") {
+                  return {
+                    data: {
+                      success: true,
+                      data: {
+                        submission_id: sampleSubmissionId,
+                        hr_note: "Test note",
+                        version_no: 2,
+                      },
+                    },
+                    error: null,
+                  };
+                }
+                return { data: null, error: null };
+              },
+              from: (table: string) => {
+                if (table === "app_users") rawAppUsersQueried = true;
+                throw new Error(`Unexpected raw table query: ${table}`);
+              },
+            } as unknown as SupabaseClient;
+
+            const res = await saveSubmissionHrNote(sampleSubmissionId, "Test note", 1, {
+              client: trustedSessionClient,
+            });
+
+            assert.equal(rawAppUsersQueried, false, "Must not raw-query app_users identity binding");
+            assert.equal(
+              res.success,
+              true,
+              "Authorized HR actor must resolve through trusted session RPC",
+            );
+          });
+
+          '''
+          replace_between(detail, t10_start, t10_end, t10_block)
+          PY
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+      - name: Format reconciled fixtures
+        working-directory: web
+        run: npx biome check --write src/__tests__/application-inbox.test.ts src/__tests__/auth-routes.test.ts src/__tests__/submission-detail.test.ts
+      - name: Run focused reconciled tests
+        working-directory: web
+        run: node --conditions react-server --test --import tsx src/__tests__/application-inbox.test.ts src/__tests__/auth-routes.test.ts src/__tests__/submission-detail.test.ts
+      - name: Verify patch hygiene
+        run: git diff --check && git status --short
+      - name: Commit and publish test-only repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/src/__tests__/application-inbox.test.ts web/src/__tests__/auth-routes.test.ts web/src/__tests__/submission-detail.test.ts
+          git diff --cached --quiet && { echo 'No fixture changes produced'; exit 1; }
+          git commit -m 'test(s06-002): reconcile trusted-session fixtures'
+          git push origin HEAD:oanhpham-kobe/TASK-S06-002-user-rbac-identity
