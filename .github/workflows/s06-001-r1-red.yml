@@ -1,0 +1,51 @@
+name: S06-001 Reviewer Regressions RED
+
+on:
+  push:
+    branches:
+      - validate/S06-001-r1-red
+
+permissions:
+  contents: read
+
+jobs:
+  red:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Start local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: Prove reviewer regressions fail for the frozen R1 implementation
+        shell: bash
+        run: |
+          set +e
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_reason_history_test.sql > /tmp/r1.log 2>&1
+          r1=$?
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_candidate_document_history_test.sql > /tmp/r2.log 2>&1
+          r2=$?
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/master_data_management_read_test.sql > /tmp/r4.log 2>&1
+          r4=$?
+          bash supabase/tests/master_data_interview_format_race_test.sh > /tmp/r3.log 2>&1
+          r3=$?
+          set -e
+          printf '\n--- R1 reason history ---\n'; cat /tmp/r1.log
+          printf '\n--- R2 Candidate document history ---\n'; cat /tmp/r2.log
+          printf '\n--- R3 Interview Format race ---\n'; cat /tmp/r3.log
+          printf '\n--- R4 management read ---\n'; cat /tmp/r4.log
+          test "$r1" -ne 0
+          test "$r2" -ne 0
+          test "$r3" -ne 0
+          test "$r4" -ne 0
+          grep -F 'ever-used cancellation reason cannot be structurally repurposed' /tmp/r1.log
+          grep -F 'MASTER_INACTIVE_NOT_SELECTABLE:document_types' /tmp/r2.log
+          grep -F 'Concurrent Format requirement update was not rejected after first Interview use' /tmp/r3.log
+          grep -F 'manage-only actor must read active and inactive Recruitment Sources' /tmp/r4.log
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
