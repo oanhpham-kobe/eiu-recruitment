@@ -1,0 +1,116 @@
+name: S06-002 R3 Exact Verify 73f03e0
+
+on:
+  push:
+    branches:
+      - control/S06-002-r3-verify-73f03e0
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: 73f03e00b6c2f90874eb17419e57ca58715a6990
+          fetch-depth: 0
+      - name: Exact SHA and R3 delta checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '73f03e00b6c2f90874eb17419e57ca58715a6990'
+          git diff --check 0a2ccdfedc477f9766c9aaa03739d16a7ed83c01...HEAD
+          test -f project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_v1.md
+          test -f supabase/migrations/20260911173229_internal_user_r3_review_repairs.sql
+          test -f supabase/tests/internal_user_r3_review_concurrency_test.sh
+          actual="$(git diff --name-only 7c37d46fa504b5d98b156735d7355f1d938be0bf...HEAD | sort | tr '\n' ' ')"
+          expected='project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_v1.md supabase/migrations/20260911173229_internal_user_r3_review_repairs.sql supabase/tests/internal_user_lifecycle_concurrency_test.sh supabase/tests/internal_user_r3_review_concurrency_test.sh '
+          test "$actual" = "$expected"
+          grep -F 'v_post_lock_email := private.verified_google_auth_email(v_auth_user_id);' supabase/migrations/20260911173229_internal_user_r3_review_repairs.sql
+          grep -F 'capture_app_user_master_reference_history_r3' supabase/migrations/20260911173229_internal_user_r3_review_repairs.sql
+          grep -F 'update_internal_user_directory_s06_002_r2_impl' supabase/migrations/20260911173229_internal_user_r3_review_repairs.sql
+          grep -F 'bash supabase/tests/internal_user_r3_review_concurrency_test.sh' supabase/tests/internal_user_lifecycle_concurrency_test.sh
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          paths = [
+            'web/src/lib/application-inbox/server.ts',
+            'web/src/lib/application-inbox/submission-detail-server.ts',
+            'web/src/lib/commands/application-lifecycle.ts',
+            'web/src/lib/commands/candidate-lifecycle.ts',
+            'web/src/lib/commands/submission-status.ts',
+            'web/src/lib/interview/server.ts',
+            'web/src/lib/auth/session.ts',
+          ]
+          p = re.compile(r'\.from\(["\']app_users["\']\)(?:(?!\.from\().){0,500}?\.eq\(["\']auth_user_id["\']', re.S)
+          bad=[x for x in paths if p.search(Path(x).read_text())]
+          if bad:
+              raise SystemExit('raw app_users auth_user_id consumers remain: '+', '.join(bad))
+          PY
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: 73f03e00b6c2f90874eb17419e57ca58715a6990
+      - name: Verify exact SHA
+        working-directory: .
+        run: test "$(git rev-parse HEAD)" = '73f03e00b6c2f90874eb17419e57ca58715a6990'
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Ensure npm 11.19.0
+        run: |
+          if [ "$(npm --version)" != '11.19.0' ]; then npm install -g npm@11.19.0; fi
+          test "$(npm --version)" = '11.19.0'
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run design:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test
+
+  db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: 73f03e00b6c2f90874eb17419e57ca58715a6990
+          fetch-depth: 0
+      - name: Verify exact SHA
+        run: test "$(git rev-parse HEAD)" = '73f03e00b6c2f90874eb17419e57ca58715a6990'
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - run: supabase start
+      - name: Zero-state migration replay
+        run: supabase db reset
+      - name: Focused Internal User/RBAC/Identity regressions
+        run: bash supabase/tests/internal_user_rbac_identity_test.sh
+      - name: R1/R2/R3 lifecycle and public-command concurrency
+        run: bash supabase/tests/internal_user_lifecycle_concurrency_test.sh
+      - name: Fresh replay before crossed suites
+        run: supabase db reset
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_reactivation_and_participant_contract_repair_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_lifecycle_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_round_and_conflict_locking_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/bulk_commands_replay.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_seed_guard_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_lifecycle_history_test.sql
+      - run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_durable_reference_history_test.sql
+      - run: supabase db lint --local --level error
+      - if: always()
+        run: supabase stop --no-backup
