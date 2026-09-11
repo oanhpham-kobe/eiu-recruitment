@@ -184,18 +184,26 @@ begin
   );
   assert (v_result->>'success')::boolean;
 
+  v_result := null;
   begin
     v_result := public.stage_candidate_document_change(
       v_session, 'ADD', v_doc_type, v_reservation, null
     );
-    raise exception 'EXPECTED_INACTIVE_DOCUMENT_TYPE_ADD_REJECTION';
   exception
-    when check_violation then
-      if sqlerrm not like '%MASTER_INACTIVE_NOT_SELECTABLE:document_types%' then
+    when others then
+      if sqlstate = '23514'
+         and (
+           sqlerrm like '%inactive document type cannot be selected for a new document%'
+           or sqlerrm like '%MASTER_INACTIVE_NOT_SELECTABLE:document_types%'
+         ) then
+        v_result := jsonb_build_object('success', false, 'error_code', 'INACTIVE_DOCUMENT_TYPE');
+      else
         raise;
       end if;
   end;
 
+  assert v_result is not null and not coalesce((v_result->>'success')::boolean, false),
+    'inactive historical type ADD must be denied';
   assert not exists (
     select 1
     from public.candidate_form_document_changes
