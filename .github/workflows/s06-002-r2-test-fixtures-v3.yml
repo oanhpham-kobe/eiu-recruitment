@@ -1,0 +1,48 @@
+name: S06-002 R2 Test Fixtures v3
+
+on:
+  push:
+    branches:
+      - control/S06-002-r2-test-fixtures-v3
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+          fetch-depth: 0
+      - name: Guard exact head
+        run: test "$(git rev-parse HEAD)" = 'e3d104b4e9057d6df74e3acc1f1e9437374711b6'
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Apply fixture patch
+        run: python <(git show origin/control/S06-002-r2-test-fixtures-v3:.github/scripts/s06_002_reconcile_trusted_session_fixtures.py)
+        shell: bash
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+      - name: Format fixture files
+        working-directory: web
+        run: npx biome check --write src/__tests__/application-inbox.test.ts src/__tests__/auth-routes.test.ts src/__tests__/submission-detail.test.ts
+      - name: Run focused tests
+        working-directory: web
+        run: node --conditions react-server --test --import tsx src/__tests__/application-inbox.test.ts src/__tests__/auth-routes.test.ts src/__tests__/submission-detail.test.ts
+      - name: Verify patch hygiene
+        run: git diff --check
+      - name: Commit and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/src/__tests__/application-inbox.test.ts web/src/__tests__/auth-routes.test.ts web/src/__tests__/submission-detail.test.ts
+          git diff --cached --quiet && exit 1
+          git commit -m 'test(s06-002): reconcile trusted-session fixtures'
+          git push origin HEAD:oanhpham-kobe/TASK-S06-002-user-rbac-identity
