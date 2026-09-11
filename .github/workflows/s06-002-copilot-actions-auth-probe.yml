@@ -1,0 +1,34 @@
+name: S06-002 Copilot Actions Auth Probe
+
+on:
+  push:
+    branches:
+      - review-probe/S06-002-copilot-actions-auth
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: 73f03e00b6c2f90874eb17419e57ca58715a6990
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact candidate
+        run: test "$(git rev-parse HEAD)" = '73f03e00b6c2f90874eb17419e57ca58715a6990'
+      - name: Install official Copilot CLI
+        run: npm install -g @github/copilot
+      - name: Probe read-only Copilot request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          copilot -p 'Return exactly: COPILOT_ACTIONS_AUTH_OK' -s > /tmp/copilot-probe.txt
+          cat /tmp/copilot-probe.txt
+          grep -Fx 'COPILOT_ACTIONS_AUTH_OK' /tmp/copilot-probe.txt
