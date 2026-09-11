@@ -11,6 +11,7 @@ format_id="$(new_uuid)"
 owner_id="$(new_uuid)"
 target_id="$(new_uuid)"
 candidate_id="$(new_uuid)"
+candidate_auth_id="$(new_uuid)"
 submission_id="$(new_uuid)"
 application_id="$(new_uuid)"
 interview_id="$(new_uuid)"
@@ -57,8 +58,8 @@ values
 insert into public.app_user_roles(app_user_id,role_code)
 values('$owner_id'::uuid,'HR'),('$target_id'::uuid,'HR');
 
-insert into public.candidates(candidate_id,email,current_full_name,is_active)
-values('$candidate_id'::uuid,'candidate_${suffix}@example.test','Concurrency Candidate',true);
+insert into public.candidates(candidate_id,auth_user_id,email,current_full_name,is_active)
+values('$candidate_id'::uuid,'$candidate_auth_id'::uuid,'candidate_${suffix}@example.test','Concurrency Candidate',true);
 insert into public.submissions(
   submission_id,candidate_id,status_code,full_name,date_of_birth,gender_code,
   current_address,phone,email_snapshot,version_no
