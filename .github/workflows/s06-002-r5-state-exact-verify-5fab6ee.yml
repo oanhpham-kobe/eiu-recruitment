@@ -1,0 +1,43 @@
+name: S06-002 R5 State Exact Verify 5fab6ee
+
+on:
+  push:
+    branches:
+      - control/S06-002-r5-state-verify-5fab6ee
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: 5fab6ee815537c06b88bd1fc8b5c2798d0448bdd
+          fetch-depth: 2
+      - name: Verify exact state SHA and impact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '5fab6ee815537c06b88bd1fc8b5c2798d0448bdd'
+          test "$(git rev-parse HEAD^)" = 'c2fe94b004741c3aefb537578c8005a583bcfa52'
+          git diff --check HEAD^ HEAD
+          actual="$(git diff --name-only HEAD^ HEAD | sort | tr '\n' ' ')"
+          expected='project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md '
+          test "$actual" = "$expected"
+          ! git diff --name-only HEAD^ HEAD | grep -E '^(web/|supabase/|recruitment_webapp/)' 
+          grep -q 'S06-002-IMPLEMENTATION-REVIEW-001-R5' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q '63f6feba352852af5826dd582d1c42159edd66d6' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q 'OMP_REVIEW_PROMPT_READY' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q 'OMP R5 REVIEW PROMPT READY' project_control/CURRENT_STATE.md
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install governance validator dependency
+        run: python -m pip install --disable-pip-version-check 'PyYAML==6.0.2'
+      - name: Validate OMP-native integration
+        run: python project_control/validate_omp_native.py
+      - name: Validate durable control plane
+        run: python project_control/validate_control_plane.py
