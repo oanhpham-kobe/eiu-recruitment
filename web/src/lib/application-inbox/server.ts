@@ -200,17 +200,7 @@ export async function loadApplicationInbox(
   const session = await (deps.resolveSession ?? getServerSession)(supabase);
   if (!session.user?.isInternal) throw new ApplicationInboxAccessError();
 
-  const { data: appUser, error: appUserError } = await supabase
-    .from("app_users")
-    .select("is_root_admin")
-    .eq("auth_user_id", session.user.authUserId)
-    .maybeSingle();
-  if (appUserError) throw new ApplicationInboxReadError();
-  const isRootAdmin =
-    appUser !== null &&
-    typeof appUser === "object" &&
-    "is_root_admin" in appUser &&
-    appUser.is_root_admin === true;
+  const isRootAdmin = session.user.roles.includes("ROOT_ADMIN");
   if (!isAuthorizedForApplicationInbox(session, isRootAdmin))
     throw new ApplicationInboxAccessError();
 

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getServerSession } from "@/lib/auth/session";
+import {
+  getCurrentInternalBindingStatus,
+  getServerSession,
+} from "@/lib/auth/session";
 
 function createInternalRpcClient(payload: unknown): SupabaseClient {
   return {
@@ -87,4 +90,55 @@ test("getServerSession: trusted RPC denial fails closed without raw-directory fa
 
   assert.equal(session.isAuthenticated, false);
   assert.equal(session.user, null);
+});
+
+
+test("getCurrentInternalBindingStatus: resolves own binding without raw app_users identity reads", async () => {
+  const client = {
+    rpc: async (functionName: string) => {
+      assert.equal(functionName, "get_current_internal_binding_status");
+      return {
+        data: {
+          success: true,
+          data: {
+            bound: true,
+            app_user_id: "70000000-0000-0000-0000-000000000002",
+            is_active: false,
+            is_root_admin: false,
+          },
+        },
+        error: null,
+      };
+    },
+    from: () => {
+      throw new Error("raw app_users auth binding lookup must not run");
+    },
+  } as unknown as SupabaseClient;
+
+  assert.deepEqual(await getCurrentInternalBindingStatus(client), {
+    bound: true,
+    appUserId: "70000000-0000-0000-0000-000000000002",
+    isActive: false,
+    isRootAdmin: false,
+  });
+});
+
+test("getServerSession: internal RPC transport failure fails closed without raw auth_user_id fallback", async () => {
+  const client = {
+    auth: {
+      getUser: async () => ({
+        data: { user: { id: "auth-rpc-error", email: "error@eiu.edu.vn" } },
+        error: null,
+      }),
+    },
+    rpc: async () => ({ data: null, error: { message: "rpc unavailable" } }),
+    from: () => {
+      throw new Error("raw app_users fallback must remain unreachable");
+    },
+  } as unknown as SupabaseClient;
+
+  assert.deepEqual(await getServerSession(client), {
+    user: null,
+    isAuthenticated: false,
+  });
 });

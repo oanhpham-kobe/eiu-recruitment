@@ -101,3 +101,4 @@ sys.stdout.write(sql)
 PY
 
 docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < "$tmp_sql"
+docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/internal_user_r2_repair_test.sql

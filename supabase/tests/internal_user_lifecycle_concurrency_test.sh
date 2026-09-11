@@ -186,4 +186,5 @@ grep -q 'FUTURE_INTERVIEW_PARTICIPANT_REASSIGN_REQUIRED' /tmp/s06002-deactivate-
 psql_exec -qAt -c "select is_active::text from public.app_users where app_user_id='$target_id'::uuid;" | grep -qx 'true'
 psql_exec -qAt -c "select count(*) from public.interview_participants where interview_participant_id='$participant_id'::uuid and is_current=true;" | grep -qx '1'
 
+bash supabase/tests/internal_user_r2_command_concurrency_test.sh
 echo "TASK-S06-002 Internal User owner/participant concurrency assertions passed with fresh fixture $suffix"
