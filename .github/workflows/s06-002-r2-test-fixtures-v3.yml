@@ -33,6 +33,9 @@ jobs:
       - name: Format fixture files
         working-directory: web
         run: npx biome check --write src/__tests__/application-inbox.test.ts src/__tests__/auth-routes.test.ts src/__tests__/submission-detail.test.ts
+      - name: Install Playwright Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
       - name: Run focused tests
         working-directory: web
         run: node --conditions react-server --test --import tsx src/__tests__/application-inbox.test.ts src/__tests__/auth-routes.test.ts src/__tests__/submission-detail.test.ts
