@@ -37,6 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           python /tmp/s06_002_materialize.py phase1
+          python -c "from pathlib import Path; p=Path('project_control/TASK_REGISTRY.yaml'); s=p.read_text(encoding='utf-8'); old='current_task: TASK-S06-001'; assert s.count(old) == 1, s.count(old); p.write_text(s.replace(old, 'current_task: TASK-S06-002', 1), encoding='utf-8')"
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -78,7 +79,7 @@ jobs:
           git commit -m 'chore(state): await TASK-S06-002 prompt review'
           final_sha="$(git rev-parse HEAD)"
           echo "FINAL_SHA=$final_sha" >> "$GITHUB_ENV"
-          git push --force-with-lease origin HEAD:refs/heads/control/S06-002-materialized-result
+          git push origin HEAD:refs/heads/control/S06-002-materialized-result
 
       - name: Report exact identities
         shell: bash
