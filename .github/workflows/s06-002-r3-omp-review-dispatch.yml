@@ -1,0 +1,111 @@
+name: S06-002 R3 OMP Review Dispatch
+
+on:
+  push:
+    branches:
+      - review-dispatch/S06-002-R3-73f03e0
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: 73f03e00b6c2f90874eb17419e57ca58715a6990
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prepare exact review handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch https://github.com/oanhpham-kobe/eiu-recruitment.git autonomy/continuous-integration-20260905-01 --depth=1
+          test "$(git rev-parse FETCH_HEAD)" = "c2fe94b004741c3aefb537578c8005a583bcfa52"
+          git show FETCH_HEAD:project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md > /tmp/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md
+          git show FETCH_HEAD:project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md > /tmp/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
+          test -f project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_v1.md
+          test "$(git rev-parse HEAD)" = "73f03e00b6c2f90874eb17419e57ca58715a6990"
+          git status --porcelain
+
+      - name: Install OMP
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://omp.sh/install | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.omp/bin" >> "$GITHUB_PATH"
+
+      - name: Dispatch read-only eiu-reviewer
+        id: review
+        continue-on-error: true
+        shell: bash
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          command -v omp
+          cat > /tmp/omp-ci.yml <<'YAML'
+          modelRoles:
+            default: github-copilot/gpt-5.4:high
+            slow: github-copilot/gpt-5.4:high
+          task:
+            batch: true
+          async:
+            enabled: false
+          YAML
+
+          cat > /tmp/dispatch-prompt.txt <<'PROMPT'
+          This is a read-only independent implementation review dispatch for the EIU Recruitment repository.
+
+          You are the OMP main coordinator only for transport. You MUST use the native task tool and spawn exactly one project custom agent named `eiu-reviewer`. Do not perform the acceptance review yourself.
+
+          Shared context for the child reviewer:
+          - WORK_ID: S06-002-IMPLEMENTATION-REVIEW-001-R3
+          - repository: oanhpham-kobe/eiu-recruitment
+          - exact checked-out candidate SHA: 73f03e00b6c2f90874eb17419e57ca58715a6990
+          - prior independently blocked SHA: 7c37d46fa504b5d98b156735d7355f1d938be0bf
+          - prior verdict: BLOCKING_REPAIR, SOURCE_REOPEN_REQUIRED=false
+          - canonical task prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+          - review contract: REVIEW.md
+          - reviewer definition: .omp/agents/eiu-reviewer.md
+          - candidate-contained R3 gate: project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_v1.md
+          - immutable coordinator R3 gate: /tmp/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md
+          - copy-ready coordinator handoff: /tmp/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
+          - producer evidence only: repair worker 34628250213 PASS; exact verifier 34628766807 PASS. Do not treat producer CI as acceptance.
+          - inspect the exact diff 7c37d46fa504b5d98b156735d7355f1d938be0bf...73f03e00b6c2f90874eb17419e57ca58715a6990 and all affected accepted contracts/consumers needed to verify the four R2 blockers and regression safety.
+
+          Before dispatch, read both /tmp handoff files and the candidate-contained gate and include their complete requirements in the child task.
+
+          The child must remain strictly read-only. It must verify exact HEAD equality and return the required fields from the handoff, including VERDICT and SOURCE_REOPEN_REQUIRED, plus blocking findings ordered highest risk first. It must not create commits, refs, files, deployments, database mutations, or other external writes.
+
+          After the `eiu-reviewer` child returns, output ONLY its complete review report verbatim enough to persist as evidence. Do not replace, soften, summarize, or override the child's verdict with your own.
+          PROMPT
+
+          set +e
+          omp --config /tmp/omp-ci.yml --model github-copilot/gpt-5.4:high -p "$(cat /tmp/dispatch-prompt.txt)" 2>&1 | tee /tmp/eiu-reviewer-output.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "omp_exit_code=$rc" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+
+      - name: Publish reviewer transport output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s06-002-r3-eiu-reviewer-output
+          path: /tmp/eiu-reviewer-output.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Require successful reviewer runtime
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.review.outputs.omp_exit_code }}" = "0"
