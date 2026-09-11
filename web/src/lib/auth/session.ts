@@ -80,12 +80,28 @@ export async function getCurrentInternalBindingStatus(
   const { data, error } = await client.rpc(
     "get_current_internal_binding_status",
   );
-  if (error || !data || typeof data !== "object" || !("success" in data) || data.success !== true || !("data" in data) || !data.data || typeof data.data !== "object") {
+  if (
+    error ||
+    !data ||
+    typeof data !== "object" ||
+    !("success" in data) ||
+    data.success !== true ||
+    !("data" in data) ||
+    !data.data ||
+    typeof data.data !== "object"
+  ) {
     return null;
   }
 
   const payload = data.data;
-  if (!("bound" in payload) || typeof payload.bound !== "boolean" || !("is_active" in payload) || typeof payload.is_active !== "boolean" || !("is_root_admin" in payload) || typeof payload.is_root_admin !== "boolean") {
+  if (
+    !("bound" in payload) ||
+    typeof payload.bound !== "boolean" ||
+    !("is_active" in payload) ||
+    typeof payload.is_active !== "boolean" ||
+    !("is_root_admin" in payload) ||
+    typeof payload.is_root_admin !== "boolean"
+  ) {
     return null;
   }
 

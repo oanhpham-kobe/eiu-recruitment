@@ -92,7 +92,6 @@ test("getServerSession: trusted RPC denial fails closed without raw-directory fa
   assert.equal(session.user, null);
 });
 
-
 test("getCurrentInternalBindingStatus: resolves own binding without raw app_users identity reads", async () => {
   const client = {
     rpc: async (functionName: string) => {
