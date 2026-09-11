@@ -65,6 +65,76 @@ function extractPermissions(appUser: unknown): string[] {
   return [];
 }
 
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+type InternalSessionRpcData = {
+  appUserId: string;
+  isActive: boolean;
+  isRootAdmin: boolean;
+  roles: string[];
+  permissions: string[];
+};
+
+function parseInternalSessionRpc(payload: unknown): InternalSessionRpcData | null {
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    !("success" in payload) ||
+    payload.success !== true ||
+    !("data" in payload) ||
+    !payload.data ||
+    typeof payload.data !== "object"
+  ) {
+    return null;
+  }
+
+  const data = payload.data;
+  if (
+    !("app_user_id" in data) ||
+    typeof data.app_user_id !== "string" ||
+    !("is_active" in data) ||
+    data.is_active !== true
+  ) {
+    return null;
+  }
+
+  return {
+    appUserId: data.app_user_id,
+    isActive: true,
+    isRootAdmin: "is_root_admin" in data && data.is_root_admin === true,
+    roles: "roles" in data ? stringArray(data.roles) : [],
+    permissions: "permissions" in data ? stringArray(data.permissions) : [],
+  };
+}
+
+function internalSessionFromData(
+  authUserId: string,
+  email: string,
+  data: InternalSessionRpcData,
+): AppSession {
+  const roles = [...data.roles];
+  if (data.isRootAdmin && !roles.includes("ROOT_ADMIN")) {
+    roles.push("ROOT_ADMIN");
+  }
+
+  return {
+    isAuthenticated: true,
+    user: {
+      authUserId,
+      email,
+      isInternal: true,
+      isCandidate: false,
+      appUserId: data.appUserId,
+      roles,
+      permissions: data.permissions,
+    },
+  };
+}
+
 export async function getServerSession(
   client?: SupabaseClient,
 ): Promise<AppSession> {
@@ -81,6 +151,28 @@ export async function getServerSession(
   const isInternal = user.email.toLowerCase().endsWith("@eiu.edu.vn");
 
   if (isInternal) {
+    // S06-002 moves security-identity lookup behind one minimum-safe trusted RPC.
+    // During a rolling database/web transition, an absent RPC payload may fall
+    // back to the accepted Slice-01 read. Once the S06-002 migration is present,
+    // authenticated no longer has SELECT on app_users.auth_user_id, so this
+    // compatibility path fails closed rather than re-exposing the binding.
+    const { data: internalPayload, error: internalError } = await supabase.rpc(
+      "get_current_internal_session",
+    );
+    const internalData = parseInternalSessionRpc(internalPayload);
+    if (!internalError && internalData) {
+      return internalSessionFromData(user.id, user.email, internalData);
+    }
+    if (
+      !internalError &&
+      internalPayload &&
+      typeof internalPayload === "object" &&
+      "success" in internalPayload &&
+      internalPayload.success === false
+    ) {
+      return { user: null, isAuthenticated: false };
+    }
+
     const { data: appUser } = await supabase
       .from("app_users")
       .select(
