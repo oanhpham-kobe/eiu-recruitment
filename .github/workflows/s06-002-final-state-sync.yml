@@ -1,0 +1,213 @@
+name: S06-002 Final Equivalence State Sync
+
+on:
+  push:
+    branches:
+      - control/S06-002-final-state-sync-80146bc
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: autonomy/continuous-integration-20260905-01
+          fetch-depth: 0
+
+      - name: Verify expected integration head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "80146bc5aab88f755312c7ffff6007c1099d6782"
+
+      - name: Patch governance state only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from textwrap import dedent
+
+          state_path = Path('project_control/AUTONOMY_RUN_STATE.yaml')
+          text = state_path.read_text()
+
+          def replace_between(src: str, start: str, end: str, replacement: str) -> str:
+              a = src.index(start)
+              b = src.index(end, a)
+              return src[:a] + replacement.rstrip() + '\n\n' + src[b:]
+
+          s06 = dedent('''\
+          s06_002_planning:
+            status: WAITING_FINAL_INTEGRATION_EQUIVALENCE
+            task: TASK-S06-002
+            title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
+            prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+            prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
+            prompt_review:
+              work_id: S06-002-PROMPT-REVIEW-001
+              reviewer: eiu-reviewer
+              result: PASS
+              source_reopen_required: false
+              evidence_persistence: VERIFIED_FROM_OWNER_TRANSPORT
+              evidence_path: project_control/reviews/S06_002_PROMPT_REVIEW_OWNER_TRANSPORT_f757e76_v1.md
+            source_reopen_expectation: false
+            accepted_prerequisites:
+              - "TASK-S06-001 accepted @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
+              - "accepted Slice-01 identity/auth schema and Internal first-login provisioning"
+              - "accepted Application owner and Interview participant/resource lifecycle contracts"
+            implementation_candidate:
+              branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+              baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+              prior_candidate_sha: "56dbbb9e261a9c1e4587169870c78a4de8d95956"
+              candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+              producer_verification_run: "34642569919 PASS"
+            independent_implementation_review:
+              work_id: S06-002-IMPLEMENTATION-REVIEW-001-R5
+              reviewer: eiu-reviewer
+              transport: OMP_OWNER_RETURN
+              status: VERIFIED_FROM_OWNER_TRANSPORT
+              reviewed_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+              result: PASS
+              source_reopen_required: false
+              blocking_findings: NONE
+              reviewer_native_evidence_persistence: UNAVAILABLE
+              owner_transport_evidence_branch: review/S06-002-IMPL-63f6feb-v5
+              owner_transport_evidence_commit: "5d0d1cb4a54b2a13b94bae24523a775a60a8851c"
+              owner_transport_evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_63f6feb_v5.md
+            integration_serialization:
+              source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+              serialization_sha: "895d54576c47df7d98ea66ed2774b8fac50c6015"
+              latest_application_verified_sha: "80146bc5aab88f755312c7ffff6007c1099d6782"
+              integration_ci_run: "34705140390 PASS"
+              governance_ci_run: "34705140378 PASS"
+              post_serialization_delta: "Eight regression-fixture files plus Integration CI harness only; no migration, web, or product delta."
+              production_delta_after_serialization: NONE
+              bulk_replay_isolation: "Historical bulk replay runs after a fresh local db reset because the test contract explicitly requires a disposable database after migration replay; cumulative S04/S05/S06 regressions pass before that reset."
+            final_integration_equivalence:
+              work_id: S06-002-FINAL-INTEGRATION-EQUIVALENCE-001
+              reviewer: eiu-reviewer
+              status: READY_AFTER_EXACT_STATE_SYNC_CI
+              source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+              target_rule: "Resolve current integration HEAD after this governance-only state sync; require exact full Integration CI and Governance CI PASS before OMP dispatch."
+              result: PENDING
+              source_reopen_required: false
+            closed_production_findings:
+              - "R2 durable-history Unit lock inversion closed."
+              - "Interview operationalization row/advisory ordering and current-participant revalidation closed."
+              - "Dormant add/re-add restoration lifecycle selection race closed."
+              - "First Google bind repeats trusted-email verification after the complete lock set."
+              - "R3 authorization-before-contention regression closed in R4 production migration."
+              - "R4 synchronized authorization-before-prelock evidence and missing-auth Unit contention blockers closed in R5 test evidence."
+          ''')
+
+          materialization = dedent('''\
+          implementation_materialization:
+            task: TASK-S06-002
+            prompt_review: "PASS S06-002-PROMPT-REVIEW-001 @ f757e76f3f97077c608dab29bad45b8bd2126dc3"
+            source_reopen_required: false
+            prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+            checkpoint: checkpoint/pre-S06-002-001
+            branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+            baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+            status: SERIALIZED_WAITING_FINAL_EQUIVALENCE
+            current_candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+            exact_verifier_run: "34642569919 PASS"
+            independent_review: "PASS S06-002-IMPLEMENTATION-REVIEW-001-R5"
+            serialization_sha: "895d54576c47df7d98ea66ed2774b8fac50c6015"
+            latest_application_verified_sha: "80146bc5aab88f755312c7ffff6007c1099d6782"
+            latest_full_integration_ci: "34705140390 PASS"
+            latest_governance_ci: "34705140378 PASS"
+          ''')
+
+          frontier = dedent('''\
+          safe_frontier:
+            eligible_tasks: []
+            skipped_due_to_dependency: []
+            materialization_frontier: []
+            execution_hold: "TASK-S06-002 product is serialized and full integration verification passed at 80146bc5aab88f755312c7ffff6007c1099d6782; later Slice-06 work remains held pending final independent integration-equivalence PASS."
+          ''')
+
+          gate = dedent('''\
+          stop_gate:
+            status: WAITING_EXTERNAL_REVIEW
+            type: FINAL_INTEGRATION_EQUIVALENCE_REVIEW
+            work_id: S06-002-FINAL-INTEGRATION-EQUIVALENCE-001
+            target: "CURRENT_INTEGRATION_HEAD_AFTER_STATE_SYNC_AND_EXACT_FULL_CI"
+            source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+            reviewer: eiu-reviewer
+            transport: OMP
+            transport_state: PREPARE_COPY_READY_HANDOFF_AFTER_EXACT_FULL_CI
+            source_reopen_required: false
+            resume_on: "OMP dispatches eiu-reviewer and returns PASS for the exact state-synced integration SHA with SOURCE_REOPEN_REQUIRED=false. Any blocker returns to the smallest sufficient repair scope."
+          ''')
+
+          text = replace_between(text, 's06_002_planning:\n', '\nimplementation_materialization:\n', s06)
+          text = replace_between(text, 'implementation_materialization:\n', '\nsafe_frontier:\n', materialization)
+          text = replace_between(text, 'safe_frontier:\n', '\nstop_gate:\n', frontier)
+          text = replace_between(text, 'stop_gate:\n', '\nnext_action:', gate)
+          a = text.index('next_action:')
+          text = text[:a] + 'next_action: "Run exact full Integration CI and Governance CI on the governance-only state-synced integration HEAD, then prepare the copy-ready S06-002 final integration-equivalence handoff for OMP/eiu-reviewer. Do not mark TASK-S06-002 accepted before that independent PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."\n'
+          state_path.write_text(text)
+
+          current = dedent('''\
+          # Current Implementation State — Derived Handoff Snapshot
+
+          > **DERIVED / NON-AUTHORITATIVE REPORTING ONLY**
+          > Runtime authority: `project_control/AUTONOMY_RUN_STATE.yaml`.
+          > DAG/task/slice authority: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.
+          > Exact code/history authority: Git.
+
+          ## SLICE-06 / TASK-S06-001 — ACCEPTED
+
+          TASK-S06-001 remains accepted at `59be9b2c92906065b8e4baa902fcec1d4cbefa12` / `checkpoint/S06-001-accepted-001`.
+
+          ## SLICE-06 / TASK-S06-002 — FINAL INTEGRATION-EQUIVALENCE GATE
+
+          - R5 source implementation: `63f6feba352852af5826dd582d1c42159edd66d6`.
+          - Independent R5 review `S06-002-IMPLEMENTATION-REVIEW-001-R5`: **PASS**, `SOURCE_REOPEN_REQUIRED=false`.
+          - Owner-transport evidence: `review/S06-002-IMPL-63f6feb-v5` / `5d0d1cb4a54b2a13b94bae24523a775a60a8851c` / `project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_63f6feb_v5.md`.
+          - Product serialization commit: `895d54576c47df7d98ea66ed2774b8fac50c6015`.
+          - Latest application-verified integration SHA before this governance-only state sync: `80146bc5aab88f755312c7ffff6007c1099d6782`.
+          - Exact full Integration CI `34705140390`: **PASS** — Web PASS; cumulative PRE-S04/S05/S06-001/S06-002 focused + lifecycle concurrency PASS; crossed S04 suites PASS; standalone historical bulk replay after fresh migration replay PASS; DB lint PASS.
+          - Governance CI `34705140378`: **PASS**.
+          - `895d545...` → `80146bc5...` post-serialization changes are regression fixtures plus the Integration CI harness only; no migration, web, or product delta.
+          - TASK-S06-002 is **not accepted yet**. The remaining gate is `S06-002-FINAL-INTEGRATION-EQUIVALENCE-001` by OMP-dispatched `eiu-reviewer` on the exact state-synced integration SHA after exact full CI.
+
+          ## Next action
+
+          Run full Integration CI + Governance CI on the exact governance-only state-synced integration HEAD. If both PASS, prepare and send the copy-ready final integration-equivalence handoff to OMP; only an independent PASS with `SOURCE_REOPEN_REQUIRED=false` may advance TASK-S06-002 to accepted checkpoint creation.
+
+          ## Boundaries
+
+          - Do not push/merge `main` without explicit Owner authorization.
+          - Do not create/merge a PR in this phase.
+          - Do not deploy Vercel without explicit Owner authorization.
+          - Do not apply migrations to connected Supabase without explicit Owner authorization.
+          ''')
+          Path('project_control/CURRENT_STATE.md').write_text(current)
+          PY
+
+          git diff --check
+          actual="$(git diff --name-only | sort | tr '\n' ' ')"
+          expected='project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md '
+          test "$actual" = "$expected"
+          grep -q 'S06-002-FINAL-INTEGRATION-EQUIVALENCE-001' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q '63f6feba352852af5826dd582d1c42159edd66d6' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q '80146bc5aab88f755312c7ffff6007c1099d6782' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q 'FINAL INTEGRATION-EQUIVALENCE GATE' project_control/CURRENT_STATE.md
+
+          python project_control/validate_omp_native.py
+          python project_control/validate_control_plane.py
+
+      - name: Commit and push integration control state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md
+          git commit -m 'chore(state): route TASK-S06-002 to final equivalence review'
+          git push origin HEAD:autonomy/continuous-integration-20260905-01
