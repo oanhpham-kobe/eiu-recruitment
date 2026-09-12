@@ -1196,7 +1196,7 @@ tasks:
   TASK-S06-002:
     title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
     slice: SLICE-06
-    status: REVIEW
+    status: DONE
     lane: LANE_A
     depends_on:
       - TASK-S06-001
@@ -1208,13 +1208,26 @@ tasks:
     implementation_baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
     implementation_checkpoint: checkpoint/pre-S06-002-001
     implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
-    prior_implementation_candidate_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-    implementation_candidate_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
-    repair_round: R3
-    review_status: "WAITING_INDEPENDENT_REVIEW (S06-002-IMPLEMENTATION-REVIEW-001-R3 @ 73f03e00b6c2f90874eb17419e57ca58715a6990); R2 was BLOCKING_REPAIR with SOURCE_REOPEN_REQUIRED=false"
-    prior_review_evidence: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md
-    review_evidence: PENDING
-    review_gate: project_control/reviews/S06_002_IMPLEMENTATION_R3_GATE_73f03e0_v1.md
-    review_handoff: project_control/reviews/S06_002_IMPLEMENTATION_R3_HANDOFF_73f03e0_v1.md
-    producer_verification: "PASS (worker run 34628250213; exact verifier run 34628766807; static/full web/two zero-state DB replays/focused R1-R3 concurrency/crossed Application-Interview/S06-001 history/db lint PASS; exact SHA 73f03e00b6c2f90874eb17419e57ca58715a6990)"
-    notes: "R3 repairs the four independent R2 blockers without canonical source reopen: complete Unit/User/Application lock graph; Interview participant/actor row-before-advisory ordering; dormant add/re-add post-lock active revalidation; and first-bind post-lock trusted Auth evidence freshness. Candidate is producer-verified only and must not enter governed product integration before independent exact-SHA R3 PASS. Dangling historical R2 gate/handoff pointers were not fabricated; the verified R2 Owner-transport evidence remains the historical source of truth. No Users/Permissions UI, main mutation, PR, deployment, or connected Supabase migration application occurred."
+    implementation_candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+    implementation_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+    repair_round: R5
+    implementation_review_status: "PASS (S06-002-IMPLEMENTATION-REVIEW-001-R5 @ 63f6feba352852af5826dd582d1c42159edd66d6; source reopen: NO)"
+    implementation_review_evidence:
+      branch: review/S06-002-IMPL-63f6feb-v5
+      commit: "5d0d1cb4a54b2a13b94bae24523a775a60a8851c"
+      artifact: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_63f6feb_v5.md
+    review_status: "PASS (S06-002-FINAL-INTEGRATION-EQUIVALENCE-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3; source reopen: NO; reviewer-native persistence: UNAVAILABLE)"
+    final_review_evidence:
+      branch: review/S06-002-FINAL-EQUIV-5f2b76c-v1
+      commit: "c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1"
+      artifact: project_control/reviews/S06_002_FINAL_INTEGRATION_EQUIVALENCE_5f2b76c_v1.md
+    producer_verification: "PASS (R5 exact verifier run 34642569919; synchronized authorization-before-prelock evidence, focused RBAC/Identity, retained lifecycle concurrency, DB lint)"
+    github_ci: "VERIFIED (Integration CI run 34705634804; Governance CI run 34705634726; exact SHA 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3; PASS)"
+    accepted_checkpoint: "checkpoint/S06-002-accepted-001"
+    acceptance:
+      - "R5 implementation review: PASS @ 63f6feba352852af5826dd582d1c42159edd66d6"
+      - "Final integration equivalence review: PASS @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+      - "Integration CI 34705634804: PASS"
+      - "Governance CI 34705634726: PASS"
+      - "checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+    notes: "Accepted Internal User Directory, HR RBAC & Identity Lifecycle trusted contracts. R2/R3/R4 blockers were repaired; R5 implementation review passed; final exact integration-equivalence review passed; cumulative/crossed database regressions, standalone historical bulk replay, and DB lint passed. No canonical source reopen, main mutation, PR merge, Vercel deployment, or connected Supabase migration application occurred."

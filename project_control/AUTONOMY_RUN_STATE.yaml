@@ -38,19 +38,20 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "59be9b2c92906065b8e4baa902fcec1d4cbefa12"
-  last_verified_application_ci_run: "34579159091"
+  last_verified_application_checkpoint: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+  last_verified_application_ci_run: "34705634804"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
   last_verified_control_plane_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
   last_verified_control_plane_integration_ci_run: "34463405935"
   last_verified_control_plane_governance_ci_run: "34463405902"
-  last_task_acceptance_attempt_sha: "59be9b2c92906065b8e4baa902fcec1d4cbefa12"
-  last_task_acceptance_integration_ci_run: "34579159091"
+  last_task_acceptance_attempt_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+  last_task_acceptance_integration_ci_run: "34705634804"
   last_task_acceptance_integration_ci_result: PASS
-  last_task_acceptance_governance_ci_run: "34579159098"
+  last_task_acceptance_governance_ci_run: "34705634726"
   last_task_acceptance_governance_ci_result: PASS
   current_prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
+
 
 authorization:
   source_file: "D:/orca/eiu-recruitment-autonomy-pack-v1.1/AUTONOMY_AUTHORIZATION.yaml"
@@ -98,21 +99,24 @@ design_system_hardening:
 active_workers: []
 
 last_accepted_task:
-  id: TASK-S06-001
-  commit: "59be9b2c92906065b8e4baa902fcec1d4cbefa12"
+  id: TASK-S06-002
+  commit: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
   evidence:
-    - "prompt_review: PASS (S06-001-PROMPT-REVIEW-002)"
-    - "implementation_review: PASS (S06-001-IMPLEMENTATION-REVIEW-001-R3 @ 9002c9be26c57a182494b9b0de46ae612f32d81e)"
-    - "final_exact_sha_acceptance_review: PASS (S06-001-FINAL-INTEGRATION-EQUIVALENCE-001 @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12)"
-    - "github_ci: VERIFIED (Integration CI 34579159091; Governance CI 34579159098; PASS)"
-    - "accepted_checkpoint: checkpoint/S06-001-accepted-001 @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
+    - "prompt_review: PASS (S06-002-PROMPT-REVIEW-001)"
+    - "implementation_review: PASS (S06-002-IMPLEMENTATION-REVIEW-001-R5 @ 63f6feba352852af5826dd582d1c42159edd66d6)"
+    - "final_exact_sha_acceptance_review: PASS (S06-002-FINAL-INTEGRATION-EQUIVALENCE-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3)"
+    - "github_ci: VERIFIED (Integration CI 34705634804; Governance CI 34705634726; PASS)"
+    - "accepted_checkpoint: checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+    - "owner_transport_review_evidence: review/S06-002-FINAL-EQUIV-5f2b76c-v1 @ c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1"
 
 previous_accepted_tasks:
+  TASK-S06-001: {commit: "59be9b2c92906065b8e4baa902fcec1d4cbefa12"}
   TASK-S05-002: {commit: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"}
   TASK-S05-001: {commit: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"}
   TASK-S04-005: {commit: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"}
   TASK-S04-003: {commit: "919e4a428dcd2d76730947ca1c4c174441bdfb63"}
   TASK-S03-006: {commit: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"}
+
 
 governance_continuation_repair_ci:
   commit: "faf1716340b55d522981fa3e8fffc5736e5c0506"
@@ -472,7 +476,7 @@ s06_001_acceptance:
   pr_created_or_merged: false
 
 s06_002_planning:
-  status: WAITING_FINAL_INTEGRATION_EQUIVALENCE
+  status: ACCEPTED
   task: TASK-S06-002
   title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
   prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
@@ -484,55 +488,63 @@ s06_002_planning:
     source_reopen_required: false
     evidence_persistence: VERIFIED_FROM_OWNER_TRANSPORT
     evidence_path: project_control/reviews/S06_002_PROMPT_REVIEW_OWNER_TRANSPORT_f757e76_v1.md
-  source_reopen_expectation: false
-  accepted_prerequisites:
-    - "TASK-S06-001 accepted @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
-    - "accepted Slice-01 identity/auth schema and Internal first-login provisioning"
-    - "accepted Application owner and Interview participant/resource lifecycle contracts"
   implementation_candidate:
     branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
     baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
-    prior_candidate_sha: "56dbbb9e261a9c1e4587169870c78a4de8d95956"
     candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
     producer_verification_run: "34642569919 PASS"
   independent_implementation_review:
     work_id: S06-002-IMPLEMENTATION-REVIEW-001-R5
     reviewer: eiu-reviewer
-    transport: OMP_OWNER_RETURN
     status: VERIFIED_FROM_OWNER_TRANSPORT
     reviewed_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
     result: PASS
     source_reopen_required: false
     blocking_findings: NONE
-    reviewer_native_evidence_persistence: UNAVAILABLE
     owner_transport_evidence_branch: review/S06-002-IMPL-63f6feb-v5
     owner_transport_evidence_commit: "5d0d1cb4a54b2a13b94bae24523a775a60a8851c"
     owner_transport_evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_63f6feb_v5.md
   integration_serialization:
     source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
     serialization_sha: "895d54576c47df7d98ea66ed2774b8fac50c6015"
-    latest_application_verified_sha: "80146bc5aab88f755312c7ffff6007c1099d6782"
-    integration_ci_run: "34705140390 PASS"
-    governance_ci_run: "34705140378 PASS"
-    post_serialization_delta: "Eight regression-fixture files plus Integration CI harness only; no migration, web, or product delta."
+    accepted_integration_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+    integration_ci_run: "34705634804 PASS"
+    governance_ci_run: "34705634726 PASS"
     production_delta_after_serialization: NONE
-    bulk_replay_isolation: "Historical bulk replay runs after a fresh local db reset because the test contract explicitly requires a disposable database after migration replay; cumulative S04/S05/S06 regressions pass before that reset."
+    post_serialization_scope: "Regression fixtures, Integration CI harness, and governance-state files only; final reviewer assessed no production divergence."
   final_integration_equivalence:
     work_id: S06-002-FINAL-INTEGRATION-EQUIVALENCE-001
     reviewer: eiu-reviewer
-    status: READY_AFTER_EXACT_STATE_SYNC_CI
+    status: VERIFIED_FROM_OWNER_TRANSPORT
     source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
-    target_rule: "Resolve current integration HEAD after this governance-only state sync; require exact full Integration CI and Governance CI PASS before OMP dispatch."
-    result: PENDING
+    reviewed_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+    result: PASS
     source_reopen_required: false
-  closed_production_findings:
-    - "R2 durable-history Unit lock inversion closed."
-    - "Interview operationalization row/advisory ordering and current-participant revalidation closed."
-    - "Dormant add/re-add restoration lifecycle selection race closed."
-    - "First Google bind repeats trusted-email verification after the complete lock set."
-    - "R3 authorization-before-contention regression closed in R4 production migration."
-    - "R4 synchronized authorization-before-prelock evidence and missing-auth Unit contention blockers closed in R5 test evidence."
+    blocking_findings: NONE
+    reviewer_native_evidence_persistence: UNAVAILABLE
+    owner_transport_evidence_branch: review/S06-002-FINAL-EQUIV-5f2b76c-v1
+    owner_transport_evidence_commit: "c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1"
+    owner_transport_evidence_path: project_control/reviews/S06_002_FINAL_INTEGRATION_EQUIVALENCE_5f2b76c_v1.md
+    integration_ci_run: "34705634804 PASS"
+    governance_ci_run: "34705634726 PASS"
+  implementation_execution_hold: "CLOSED — R5 implementation review and final exact-SHA integration equivalence both PASS with SOURCE_REOPEN_REQUIRED=false."
+  implementation_safe_frontier: NONE
 
+s06_002_acceptance:
+  result: ACCEPTED
+  implementation_candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+  final_acceptance_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+  final_integration_equivalence_work_id: S06-002-FINAL-INTEGRATION-EQUIVALENCE-001
+  integration_ci_run: "34705634804"
+  governance_ci_run: "34705634726"
+  accepted_checkpoint: "checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+  source_reopen_required: false
+  reviewer_native_evidence_persistence: UNAVAILABLE
+  owner_transport_evidence: "review/S06-002-FINAL-EQUIV-5f2b76c-v1 @ c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1"
+  connected_supabase_migration_applied: false
+  vercel_deployment_performed: false
+  main_mutated: false
+  pr_created_or_merged: false
 
 implementation_materialization:
   task: TASK-S06-002
@@ -542,34 +554,31 @@ implementation_materialization:
   checkpoint: checkpoint/pre-S06-002-001
   branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
   baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
-  status: SERIALIZED_WAITING_FINAL_EQUIVALENCE
+  status: ACCEPTED
   current_candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+  final_acceptance_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+  accepted_checkpoint: checkpoint/S06-002-accepted-001
   exact_verifier_run: "34642569919 PASS"
   independent_review: "PASS S06-002-IMPLEMENTATION-REVIEW-001-R5"
-  serialization_sha: "895d54576c47df7d98ea66ed2774b8fac50c6015"
-  latest_application_verified_sha: "80146bc5aab88f755312c7ffff6007c1099d6782"
-  latest_full_integration_ci: "34705140390 PASS"
-  latest_governance_ci: "34705140378 PASS"
-
+  final_equivalence_review: "PASS S06-002-FINAL-INTEGRATION-EQUIVALENCE-001"
+  latest_full_integration_ci: "34705634804 PASS"
+  latest_governance_ci: "34705634726 PASS"
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-002 product is serialized and full integration verification passed at 80146bc5aab88f755312c7ffff6007c1099d6782; later Slice-06 work remains held pending final independent integration-equivalence PASS."
-
+  execution_hold: "TASK-S06-002 is accepted at checkpoint/S06-002-accepted-001. All currently materialized Slice-06 tasks are DONE; Slice-06 must pass a closing composition review before the slice can be marked DONE or downstream Slice-07 work is materialized."
 
 stop_gate:
   status: WAITING_EXTERNAL_REVIEW
-  type: FINAL_INTEGRATION_EQUIVALENCE_REVIEW
-  work_id: S06-002-FINAL-INTEGRATION-EQUIVALENCE-001
-  target: "CURRENT_INTEGRATION_HEAD_AFTER_STATE_SYNC_AND_EXACT_FULL_CI"
-  source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+  type: SLICE_CLOSING_COMPOSITION_REVIEW
+  work_id: SLICE-06-CLOSING-REVIEW-001
+  target: "CURRENT_INTEGRATION_HEAD_AFTER_ACCEPTANCE_STATE_SYNC_AND_EXACT_FULL_CI"
   reviewer: eiu-reviewer
   transport: OMP
   transport_state: PREPARE_COPY_READY_HANDOFF_AFTER_EXACT_FULL_CI
   source_reopen_required: false
-  resume_on: "OMP dispatches eiu-reviewer and returns PASS for the exact state-synced integration SHA with SOURCE_REOPEN_REQUIRED=false. Any blocker returns to the smallest sufficient repair scope."
+  resume_on: "After exact full Integration CI and Governance CI pass on this acceptance-state integration head, OMP dispatches eiu-reviewer for Slice-06 closing composition review. PASS may close Slice-06 and continue FRONTIER RESOLUTION; any blocker returns to the smallest sufficient repair scope."
 
-
-next_action: "Run exact full Integration CI and Governance CI on the governance-only state-synced integration HEAD, then prepare the copy-ready S06-002 final integration-equivalence handoff for OMP/eiu-reviewer. Do not mark TASK-S06-002 accepted before that independent PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
+next_action: "Run exact full Integration CI and Governance CI on the acceptance-state integration HEAD, then prepare the copy-ready SLICE-06-CLOSING-REVIEW-001 handoff. Do not mark SLICE-06 DONE before independent closing PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
