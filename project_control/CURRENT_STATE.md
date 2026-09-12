@@ -21,19 +21,24 @@ TASK-S06-001 remains accepted at `59be9b2c92906065b8e4baa902fcec1d4cbefa12` / `c
 - Acceptance control-plane state was validated and committed at `ba004a947e4e7d3c3e372ac5d3a2a4941428e8f9`; its delta from the reviewed checkpoint is limited to `AUTONOMY_RUN_STATE.yaml`, `CURRENT_STATE.md`, and `TASK_REGISTRY.yaml`.
 - No `main` mutation, PR merge, Vercel deployment, or connected Supabase migration application occurred.
 
-## SLICE-06 — CLOSING COMPOSITION GATE
+## SLICE-06 — CLOSED / ACCEPTED
 
-Both materialized Slice-06 tasks remain accepted/DONE at their immutable checkpoints. Prior closing review `SLICE-06-CLOSING-REVIEW-001` at `0fe24da54d5d471fee5afdba7f34620716642d2e` returned BLOCKING_REPAIR, source reopen false.
+Both materialized Slice-06 tasks remain accepted/DONE at immutable checkpoints:
 
-The bounded Copy/User repair at `7eef5992638da87dc12e3c3cdcfcd77ec070a706` passed independent `SLICE-06-COPY-COMPOSITION-REPAIR-REVIEW-001`, source reopen false. Owner-transport evidence: `review/SLICE-06-COPY-REPAIR-7eef599-v1` / `b9753e9bab9a4a49d997e42ec404aeb399fe7a29` / `project_control/reviews/SLICE_06_COPY_COMPOSITION_REPAIR_REVIEW_7eef599_v1.md`; reviewer-native persistence unavailable.
+- TASK-S06-001: `checkpoint/S06-001-accepted-001 @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12`
+- TASK-S06-002: `checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3`
 
-Serialization `7097a01db6cc74b653615add3dc77538cc41ea07` is tree-identical to the reviewed repair. Official Integration CI `34709939642` and Governance CI `34709939626` passed at that exact SHA, including the permanent Copy/User staged harness and cumulative regressions. DB lint exits successfully with the two unchanged baseline diagnostics; it is not diagnostic-free.
+Bounded Copy/User repair: `7eef5992638da87dc12e3c3cdcfcd77ec070a706`, independent repair review `SLICE-06-COPY-COMPOSITION-REPAIR-REVIEW-001` PASS / source reopen false, serialized at `7097a01db6cc74b653615add3dc77538cc41ea07`.
 
-`SLICE-06` remains `IN_PROGRESS`. This governance-only synchronization requires exact full CI before freezing its SHA for independent `SLICE-06-CLOSING-REVIEW-002`. No product divergence is introduced.
+Final exact Slice-06 closing candidate: `51686bfe8c12581f5eb82a6cef4daed27dc93fe1`, independent `SLICE-06-CLOSING-REVIEW-002` PASS / source reopen false. Closing review Owner-transport evidence: `review/SLICE-06-CLOSING-51686bf-v2 @ 99df1389f031bd715bb59f514451a494391db20b` / `project_control/reviews/SLICE_06_CLOSING_REVIEW_51686bf_v2.md`; reviewer-native persistence unavailable.
+
+Exact final gates: Integration CI `34710206152` PASS; Governance CI `34710206226` PASS; both head SHA `51686bfe8c12581f5eb82a6cef4daed27dc93fe1`. The accepted checkpoint is `checkpoint/SLICE-06-accepted-001 @ 51686bfe8c12581f5eb82a6cef4daed27dc93fe1`.
+
+No S06-001/S06-002 source contracts reopened. No Slice-07 task is materialized by this closure. Known unrelated DB lint diagnostics remain unchanged and documented in the closing evidence.
 
 ## Next action
 
-Obtain exact full Integration + Governance CI on this state-sync commit, then dispatch the whole-slice review. Only exact closing PASS permits immutable checkpoint and governed closure. After closure STOP for external ChatGPT audit; do not start Slice-07 or another task.
+Hard stop. Return the complete Slice-06 closure packet to ChatGPT for independent external audit before starting any next slice/task.
 
 ## Boundaries
 

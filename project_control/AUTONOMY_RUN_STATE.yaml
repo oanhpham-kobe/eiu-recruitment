@@ -583,22 +583,41 @@ slice_06_copy_composition_repair:
   governance_ci_run: "34709939626"
   exact_sha_ci_result: PASS
   lint_diagnostics: "Unchanged baseline: update_master_item v_row.unit_id; update_candidate_submission unassigned v_log. Command exits successfully; not diagnostic-free."
+slice_06_closure:
+  status: CLOSED_ACCEPTED
+  work_id: SLICE-06-CLOSING-REVIEW-002
+  reviewed_sha: "51686bfe8c12581f5eb82a6cef4daed27dc93fe1"
+  result: PASS
+  source_reopen_required: false
+  reviewer: eiu-reviewer
+  evidence_branch: review/SLICE-06-CLOSING-51686bf-v2
+  evidence_commit: "99df1389f031bd715bb59f514451a494391db20b"
+  evidence_path: project_control/reviews/SLICE_06_CLOSING_REVIEW_51686bf_v2.md
+  reviewer_native_evidence_persistence: UNAVAILABLE
+  checkpoint: checkpoint/SLICE-06-accepted-001
+  checkpoint_sha: "51686bfe8c12581f5eb82a6cef4daed27dc93fe1"
+  integration_ci_run: "34710206152"
+  governance_ci_run: "34710206226"
+  ci_result: PASS
+  source_contracts_reopened: NONE
+  next_slice_materialized: false
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "Slice-06 closing review pending after reviewed Copy/User repair serialization and exact CI. Owner requires hard stop for external ChatGPT audit after closure; no Slice-07 task may start."
+  execution_hold: "SLICE-06 CLOSED_ACCEPTED. Hard stop for external ChatGPT audit; do not start Slice-07 or any next task."
 
 stop_gate:
-  status: WAITING_EXTERNAL_REVIEW
-  type: SLICE_CLOSING_COMPOSITION_REVIEW
+  status: STOPPED
+  type: EXTERNAL_CHATGPT_CLOSURE_AUDIT
   work_id: SLICE-06-CLOSING-REVIEW-002
-  target: "EXACT_STATE_SYNC_COMMIT_AFTER_FULL_CI"
+  target: "51686bfe8c12581f5eb82a6cef4daed27dc93fe1"
   reviewer: eiu-reviewer
   transport: OMP
-  transport_state: DISPATCH_AFTER_EXACT_FULL_CI
+  transport_state: PERSISTED_OWNER_TRANSPORT_PASS
   source_reopen_required: false
-  resume_on: "After exact Integration and Governance CI PASS, dispatch independent whole-slice closing review. PASS permits governed Slice-06 checkpoint/closure only, then hard stop for external ChatGPT audit."
+  resume_on: "After external ChatGPT Slice-06 closure audit; no next slice may start before that audit."
 
-next_action: "Freeze this governance-only synchronization SHA after exact official full CI, dispatch SLICE-06-CLOSING-REVIEW-002, then complete governed closure on PASS. No next-slice/task dispatch."
+next_action: "Return complete Slice-06 closure packet to ChatGPT for independent external audit. Do not start Slice-07."
+
