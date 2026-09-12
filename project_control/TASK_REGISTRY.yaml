@@ -1235,7 +1235,7 @@ tasks:
   TASK-S07-001:
     title: "Email Outbox and History Trusted Persistence Contracts"
     slice: SLICE-07
-    status: PLANNED
+    status: IN_PROGRESS
     lane: LANE_A
     depends_on: [TASK-S06-001, TASK-S06-002]
     prompt: project_control/prompts/SLICE-07_TASK-001_v1.md
@@ -1249,4 +1249,5 @@ tasks:
       - "History view/cleanup enforces separate permissions, exact parent context, TEST/WRONG classification and immutable audit."
       - "Focused SQL/RLS/staged concurrency and retained cumulative regressions; exact independent implementation review and official CI before acceptance."
     out_of_scope: "Provider runtime/deployment, UI, document/scan/storage workers, archive/purge, source reopen and second task."
-    notes: "Planning only. Independent prompt/source PASS followed by external audit/dispatch decision required before any Executor. No implementation branch or code started."
+    implementation_branch: oanhpham-kobe/TASK-S07-001-email-persistence
+    notes: "External ChatGPT audit PASS and Owner dispatch approval received. Execute only reviewed task lifecycle; stop after immutable acceptance before next task."

@@ -96,7 +96,16 @@ design_system_hardening:
   verified_web_candidate_sha: "cb42f0fe301fba70cdc32704d605872b05d12515"
   blocked_frontier_after_acceptance: TASK-S04-004
 
-active_workers: []
+active_workers:
+  - task_id: TASK-S07-001
+    lane: LANE_A
+    role: EXECUTOR
+    branch: oanhpham-kobe/TASK-S07-001-email-persistence
+    worktree: .worktrees/s07-implementation
+    exact_sha: "7ffd71bb39b71e2dd67868b0bbf7df7acfe8c559"
+    state: STARTING
+    started_at: "2026-09-12T23:53:07Z"
+    last_observed_at: "2026-09-12T23:53:07Z"
 
 last_accepted_task:
   id: TASK-S06-002
@@ -614,14 +623,14 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: PROMPT_PASS_AWAITING_DISPATCH_DECISION
+  status: IMPLEMENTATION_DISPATCH_APPROVED
   task: TASK-S07-001
   prompt: project_control/prompts/SLICE-07_TASK-001_v1.md
   source_reconciliation: project_control/reviews/S07_001_SOURCE_RECONCILIATION_v1.md
   audit_hold_release_sha: "ad597826c31a0c2d1ec3deaa9a11689c63292af2"
   planning_baseline_sha: "26c186bae8eec12bf8b8d2571238709a6e597c24"
   source_reopen_required: false
-  implementation_started: false
+  implementation_started: true
   second_task_materialized: false
   prompt_review_work_id: S07-001-PROMPT-REVIEW-001
   prompt_review_sha: "14d7492c34c7fd1dcbeb96f28ada9515c1448ec7"
@@ -633,19 +642,26 @@ slice_07_planning:
   governance_ci_run: "34725394349"
   exact_ci_head_sha: "14d7492c34c7fd1dcbeb96f28ada9515c1448ec7"
   exact_ci_result: PASS
+  external_dispatch_approval:
+    reviewer: EXTERNAL_CHATGPT
+    transport: OWNER_MESSAGE
+    result: PASS
+    decision: APPROVED
+    source_reopen_required: false
+    verified_prompt_blob: "2c83c75216db2cd609e2e1adf018d07f111650ff"
+    evidence_persistence: "Owner supplied external audit and dispatch approval in current continuation; no reviewer-native coordinate claimed."
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "Owner released external audit hold for first Slice-07 task planning/prompt review only. No product Executor or second task authorized."
+  execution_hold: "Only TASK-S07-001 lifecycle authorized; STOP after acceptance before any next task."
 
 stop_gate:
-  status: STOPPED
-  type: CHATGPT_IMPLEMENTATION_DISPATCH_DECISION
-  work_id: S07-001-PROMPT-REVIEW-001
+  status: RELEASED_FOR_TASK_LIFECYCLE
+  type: TASK_S07_001_ACCEPTANCE_BOUNDARY
   source_reopen_required: false
-  resume_on: "External ChatGPT audit and explicit implementation-dispatch decision. No Executor is authorized by prompt PASS alone."
+  resume_on: "Implement reviewed task through independent review, serialization, exact CI, final equivalence and acceptance; then STOP for ChatGPT audit."
 
-next_action: "Return this handoff to ChatGPT for audit and implementation-dispatch decision."
+next_action: "Execute only TASK-S07-001 reviewed prompt. No provider runtime, real email, connected migrations, UI or next task."
 
