@@ -602,22 +602,28 @@ slice_06_closure:
   source_contracts_reopened: NONE
   next_slice_materialized: false
 
+slice_06_external_audit:
+  result: PASS
+  reviewer: EXTERNAL_CHATGPT
+  transport: OWNER_MESSAGE
+  accepted_sha: "51686bfe8c12581f5eb82a6cef4daed27dc93fe1"
+  audited_reporting_sha: "26c186bae8eec12bf8b8d2571238709a6e597c24"
+  reopen_slice: false
+  release_audit_hold: true
+  evidence_persistence: "Owner supplied external audit verdict in current continuation; no reviewer-native coordinate claimed."
+  governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
+
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "SLICE-06 CLOSED_ACCEPTED. Hard stop for external ChatGPT audit; do not start Slice-07 or any next task."
+  execution_hold: "Owner released external audit hold for first Slice-07 task planning/prompt review only. No product Executor or second task authorized."
 
 stop_gate:
-  status: STOPPED
-  type: EXTERNAL_CHATGPT_CLOSURE_AUDIT
-  work_id: SLICE-06-CLOSING-REVIEW-002
-  target: "51686bfe8c12581f5eb82a6cef4daed27dc93fe1"
-  reviewer: eiu-reviewer
-  transport: OMP
-  transport_state: PERSISTED_OWNER_TRANSPORT_PASS
+  status: PLANNING_ONLY
+  type: FIRST_SLICE_07_PROMPT_GATE
   source_reopen_required: false
-  resume_on: "After external ChatGPT Slice-06 closure audit; no next slice may start before that audit."
+  resume_on: "Resolve canonical frontier, materialize only first task, obtain independent prompt PASS, then stop for ChatGPT implementation-dispatch decision."
 
-next_action: "Return complete Slice-06 closure packet to ChatGPT for independent external audit. Do not start Slice-07."
+next_action: "Reconcile current Slice-07 sources and accepted implementation; materialize the minimum first task only. No product implementation."
 
