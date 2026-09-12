@@ -14,12 +14,13 @@ Only `TASK-S07-001 — Email Outbox and History Trusted Persistence Contracts` i
 
 - Prompt: `project_control/prompts/SLICE-07_TASK-001_v1.md`.
 - Producer source reconciliation: `project_control/reviews/S07_001_SOURCE_RECONCILIATION_v1.md`.
-- Next gate: exact official CI, independent `S07-001-PROMPT-REVIEW-001`.
+- Independent `S07-001-PROMPT-REVIEW-001`: PASS / SOURCE_REOPEN_REQUIRED=false at exact `14d7492c34c7fd1dcbeb96f28ada9515c1448ec7`. Transported report: `project_control/reviews/S07_001_PROMPT_REVIEW_14d7492_v1.md`; reviewer-native persistence unavailable.
+- Exact baseline CI: Integration `34725394415` and Governance `34725394349` SUCCESS at that reviewed SHA.
 - No product implementation, implementation branch, Executor or second S07 task.
 - Provider runtime/UI, document/scan/storage workers and archive/purge remain outside first task; later domains are proposals only.
 
 ## Stop boundary and debt
 
-Stop at independent prompt PASS; return handoff to ChatGPT for audit and implementation-dispatch decision. No main/PR/deploy/connected Supabase/force-push/checkpoint mutation. No Slice-08.
+STOPPED after independent prompt PASS. Return handoff to ChatGPT for audit and implementation-dispatch decision. Later reporting commits do not change the reviewed prompt. No main/PR/deploy/connected Supabase/force-push/checkpoint mutation. No Slice-08.
 
 Known unchanged lint diagnostics: update_master_item v_row.unit_id and update_candidate_submission unassigned v_log. Checkpoint branches are process-enforced, not server-protected; no hardening in this scope. Production scanner/provider readiness, templates/UAT/assets remain at later canonical gates.
