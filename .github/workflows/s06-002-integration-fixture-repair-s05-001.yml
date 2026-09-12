@@ -1,0 +1,44 @@
+name: S06-002 Integration Fixture Repair S05-001
+
+on:
+  push:
+    branches:
+      - control/S06-002-integration-fixture-repair-s05-001
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Patch accepted S05-001 fixture for canonical owner eligibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = '895d54576c47df7d98ea66ed2774b8fac50c6015'
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('supabase/tests/interviewer_report_contextual_read_test.sql')
+          text = p.read_text()
+          needle = """  returning public.app_users.app_user_id into v_hr;\n\n  insert into public.app_users(\n    auth_user_id,\n    full_name,\n    email,\n    job_title,\n    is_active\n  )\n"""
+          replacement = """  returning public.app_users.app_user_id into v_hr;\n\n  -- S06-002 canonical active-Application owner eligibility requires the\n  -- fixture HR owner to hold the HR role before the Application is inserted.\n  insert into public.app_user_roles(app_user_id, role_code)\n  values (v_hr, 'HR');\n\n  insert into public.app_users(\n    auth_user_id,\n    full_name,\n    email,\n    job_title,\n    is_active\n  )\n"""
+          if text.count(needle) != 1:
+              raise SystemExit(f'expected exactly one S05-001 HR fixture insertion point, found {text.count(needle)}')
+          p.write_text(text.replace(needle, replacement, 1))
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = 'supabase/tests/interviewer_report_contextual_read_test.sql'
+          grep -q "values (v_hr, 'HR');" supabase/tests/interviewer_report_contextual_read_test.sql
+      - name: Commit fixture-only repair on control branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add supabase/tests/interviewer_report_contextual_read_test.sql
+          git commit -m 'test(s05-001): align owner fixture with S06-002 eligibility'
+          git push origin HEAD:control/S06-002-integration-fixture-repair-s05-001
