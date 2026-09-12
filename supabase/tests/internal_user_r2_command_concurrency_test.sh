@@ -26,6 +26,30 @@ run_sql_file() {
   local sql="$1" out="$2"
   printf '%s ' "$sql" | docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres >"$out" 2>&1
 }
+
+root_owned=true
+root_record="$(psql_exec -qAt -F '|' -c "select app_user_id::text, coalesce(auth_user_id::text,'') from public.app_users where is_root_admin=true order by app_user_id" | tr -d '\r')"
+root_count="$(printf '%s\n' "$root_record" | sed '/^$/d' | wc -l | tr -d ' ')"
+if [[ "$root_count" -gt 1 ]]; then
+  echo "R2 concurrency fixture requires at most one pre-existing Root; found $root_count" >&2
+  exit 1
+fi
+if [[ "$root_count" -eq 1 ]]; then
+  IFS='|' read -r root_id root_auth_id <<< "$root_record"
+  if [[ -z "$root_id" || -z "$root_auth_id" ]]; then
+    echo "R2 concurrency fixture cannot reuse an unbound pre-existing Root" >&2
+    exit 1
+  fi
+  root_owned=false
+fi
+
+root_values=""
+root_cleanup_sql=""
+if [[ "$root_owned" == true ]]; then
+  root_values="('$root_id'::uuid,'$root_auth_id'::uuid,'root_r2_${suffix}@eiu.edu.vn','R2 Root',true,true),"
+  root_cleanup_sql="delete from public.app_users where app_user_id='$root_id'::uuid;"
+fi
+
 cleanup() {
   psql_exec >/dev/null 2>&1 <<SQL || true
 begin;
@@ -33,9 +57,10 @@ delete from public.interviews where application_id='$application_id'::uuid;
 delete from public.applications where application_id='$application_id'::uuid;
 delete from public.submissions where submission_id='$submission_id'::uuid;
 delete from public.candidates where candidate_id='$candidate_id'::uuid;
-delete from public.app_user_permissions where app_user_id in ('$root_id'::uuid,'$target_id'::uuid,'$identity_target_id'::uuid);
-delete from public.app_user_roles where app_user_id in ('$root_id'::uuid,'$target_id'::uuid,'$identity_target_id'::uuid);
-delete from public.app_users where app_user_id in ('$root_id'::uuid,'$target_id'::uuid,'$identity_target_id'::uuid);
+delete from public.app_user_permissions where app_user_id in ('$target_id'::uuid,'$identity_target_id'::uuid);
+delete from public.app_user_roles where app_user_id in ('$target_id'::uuid,'$identity_target_id'::uuid);
+delete from public.app_users where app_user_id in ('$target_id'::uuid,'$identity_target_id'::uuid);
+$root_cleanup_sql
 delete from auth.identities where user_id='$replacement_auth_id'::uuid;
 delete from auth.users where id='$replacement_auth_id'::uuid;
 delete from public.positions where position_id='$position_id'::uuid;
@@ -56,7 +81,7 @@ values('$position_id'::uuid,'$unit_id'::uuid,'$group_id'::uuid,'R2CP_${suffix}',
 
 insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active,is_root_admin)
 values
-  ('$root_id'::uuid,'$root_auth_id'::uuid,'root_r2_${suffix}@eiu.edu.vn','R2 Root',true,true),
+  $root_values
   ('$target_id'::uuid,null,'target_r2_${suffix}@eiu.edu.vn','R2 Target',true,false),
   ('$identity_target_id'::uuid,'$old_identity_auth_id'::uuid,'$identity_email','R2 Identity Target',true,false);
 insert into public.app_user_roles(app_user_id,role_code)
@@ -84,11 +109,6 @@ values(
 );
 SQL
 
-# ------------------------------------------------------------------
-# A. Public lifecycle command vs accepted public Application writer.
-# A staging row lock queues lifecycle before owner assignment. Old
-# advisory->FK-row order deadlocks; repaired row->advisory order does not.
-# ------------------------------------------------------------------
 target_version="$(psql_exec -qAt -c "select version_no from public.app_users where app_user_id='$target_id'::uuid")"
 lifecycle_key="$(new_uuid)"
 app_key="$(new_uuid)"
@@ -119,11 +139,6 @@ psql_exec -qAt -c "select (not is_active)::text from public.app_users where app_
 psql_exec -qAt -c "select (hr_owner_id='$root_id'::uuid)::text from public.applications where application_id='$application_id'::uuid" | grep -qx true
 psql_exec -qAt -c "update public.app_users set is_active=true where app_user_id='$target_id'::uuid"
 
-# ------------------------------------------------------------------
-# B. Public first-bind vs public Root rebind on the same normalized
-# replacement email. Staging email lock queues first-bind before rebind.
-# Old row->email rebind order deadlocks; repaired email->row order does not.
-# ------------------------------------------------------------------
 identity_version="$(psql_exec -qAt -c "select version_no from public.app_users where app_user_id='$identity_target_id'::uuid")"
 rebind_key="$(new_uuid)"
 email_blocker="begin; select pg_advisory_xact_lock(hashtextextended('internal-email:$identity_email',0)); select pg_sleep(3); commit;"
