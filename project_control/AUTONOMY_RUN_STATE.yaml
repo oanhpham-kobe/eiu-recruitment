@@ -472,7 +472,7 @@ s06_001_acceptance:
   pr_created_or_merged: false
 
 s06_002_planning:
-  status: WAITING_INDEPENDENT_REVIEW
+  status: WAITING_FINAL_INTEGRATION_EQUIVALENCE
   task: TASK-S06-002
   title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
   prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
@@ -480,11 +480,8 @@ s06_002_planning:
   prompt_review:
     work_id: S06-002-PROMPT-REVIEW-001
     reviewer: eiu-reviewer
-    review_type: PROMPT_SOURCE_RECONCILIATION
     result: PASS
     source_reopen_required: false
-    blocking_findings: NONE
-    handoff: project_control/reviews/S06_002_PROMPT_REVIEW_GATE_v1.md
     evidence_persistence: VERIFIED_FROM_OWNER_TRANSPORT
     evidence_path: project_control/reviews/S06_002_PROMPT_REVIEW_OWNER_TRANSPORT_f757e76_v1.md
   source_reopen_expectation: false
@@ -492,114 +489,87 @@ s06_002_planning:
     - "TASK-S06-001 accepted @ 59be9b2c92906065b8e4baa902fcec1d4cbefa12"
     - "accepted Slice-01 identity/auth schema and Internal first-login provisioning"
     - "accepted Application owner and Interview participant/resource lifecycle contracts"
-  implementation_hold: "HELD PENDING R5 OMP INDEPENDENT REVIEW — exact candidate 63f6feba352852af5826dd582d1c42159edd66d6 is producer-verified but not accepted or product-integrated."
   implementation_candidate:
     branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
     baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
     prior_candidate_sha: "56dbbb9e261a9c1e4587169870c78a4de8d95956"
     candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
-    source_reopen_required: false
-    repair_round: R4_REVIEW_TEST_EVIDENCE_REPAIR
-    product_delta_from_r4: NONE
-    targeted_test_delta: supabase/tests/internal_user_r4_authorization_prelock_test.sh
-    producer_verification:
-      exact_verifier_run: "34642569919 PASS"
-      exact_verified_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
-      static: "PASS — exact SHA; R4→R5 repair is one test file only; R4 production migration unchanged; synchronized holder protocol and missing-auth Unit case present"
-      web: "NOT_RERUN — R5 delta is database-test-only and production code is byte-identical to reviewed R4"
-      database: "PASS — zero-state replay, synchronized authorization-before-prelock contention, focused Internal User/RBAC/Identity, retained R1/R2/R3 lifecycle concurrency, db lint, clean stop"
-    omp_review_handoff_branch: review-dispatch/S06-002-R5-63f6feb
-    omp_review_handoff_commit: "b35ddbfad07544215efb87c930497890b5cb0499"
-    omp_review_handoff_path: project_control/reviews/S06_002_IMPLEMENTATION_R5_HANDOFF_63f6feb_v1.md
-  prior_independent_implementation_reviews:
-    r2:
-      work_id: S06-002-IMPLEMENTATION-REVIEW-001-R2
-      reviewer: eiu-reviewer
-      reviewed_sha: "7c37d46fa504b5d98b156735d7355f1d938be0bf"
-      result: BLOCKING_REPAIR
-      source_reopen_required: false
-      evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_OWNER_TRANSPORT_7c37d46_v2.md
-    r3:
-      work_id: S06-002-IMPLEMENTATION-REVIEW-001-R3
-      reviewer: eiu-reviewer
-      reviewed_sha: "73f03e00b6c2f90874eb17419e57ca58715a6990"
-      result: BLOCKING_REPAIR
-      source_reopen_required: false
-      evidence_branch: review/S06-002-IMPL-73f03e0-v3
-      evidence_commit: "8d19dab99d66422dcbb3dd4c4e0592b72d30f73d"
-      evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_73f03e0_v3.md
-    r4:
-      work_id: S06-002-IMPLEMENTATION-REVIEW-001-R4
-      reviewer: eiu-reviewer
-      transport: OMP_OWNER_RETURN
-      reviewed_sha: "56dbbb9e261a9c1e4587169870c78a4de8d95956"
-      result: BLOCKING_REPAIR
-      source_reopen_required: false
-      reviewer_native_evidence_persistence: UNAVAILABLE
-      owner_transport_evidence_branch: review/S06-002-IMPL-56dbbb9-v4
-      owner_transport_evidence_commit: "dd0eb84eb985327591a4b36f8988ed00db8b389b"
-      owner_transport_evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_56dbbb9_v4.md
-      blocking_findings:
-        - "Contention regression lacked a readiness handshake proving exact target-lock acquisition and continued ownership through tested RPC completion."
-        - "Missing-auth regression covered email contention but omitted contended Unit-row coverage."
+    producer_verification_run: "34642569919 PASS"
   independent_implementation_review:
     work_id: S06-002-IMPLEMENTATION-REVIEW-001-R5
     reviewer: eiu-reviewer
-    transport: OMP
-    status: PENDING
-    transport_state: OMP_REVIEW_PROMPT_READY
+    transport: OMP_OWNER_RETURN
+    status: VERIFIED_FROM_OWNER_TRANSPORT
     reviewed_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+    result: PASS
+    source_reopen_required: false
+    blocking_findings: NONE
+    reviewer_native_evidence_persistence: UNAVAILABLE
+    owner_transport_evidence_branch: review/S06-002-IMPL-63f6feb-v5
+    owner_transport_evidence_commit: "5d0d1cb4a54b2a13b94bae24523a775a60a8851c"
+    owner_transport_evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_63f6feb_v5.md
+  integration_serialization:
+    source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+    serialization_sha: "895d54576c47df7d98ea66ed2774b8fac50c6015"
+    latest_application_verified_sha: "80146bc5aab88f755312c7ffff6007c1099d6782"
+    integration_ci_run: "34705140390 PASS"
+    governance_ci_run: "34705140378 PASS"
+    post_serialization_delta: "Eight regression-fixture files plus Integration CI harness only; no migration, web, or product delta."
+    production_delta_after_serialization: NONE
+    bulk_replay_isolation: "Historical bulk replay runs after a fresh local db reset because the test contract explicitly requires a disposable database after migration replay; cumulative S04/S05/S06 regressions pass before that reset."
+  final_integration_equivalence:
+    work_id: S06-002-FINAL-INTEGRATION-EQUIVALENCE-001
+    reviewer: eiu-reviewer
+    status: READY_AFTER_EXACT_STATE_SYNC_CI
+    source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+    target_rule: "Resolve current integration HEAD after this governance-only state sync; require exact full Integration CI and Governance CI PASS before OMP dispatch."
     result: PENDING
     source_reopen_required: false
-    handoff_branch: review-dispatch/S06-002-R5-63f6feb
-    handoff_commit: "b35ddbfad07544215efb87c930497890b5cb0499"
-    handoff_path: project_control/reviews/S06_002_IMPLEMENTATION_R5_HANDOFF_63f6feb_v1.md
-    acceptance_rule: "No product serialization into integration until OMP dispatches eiu-reviewer and an independent exact-SHA R5 PASS is returned."
   closed_production_findings:
     - "R2 durable-history Unit lock inversion closed."
     - "Interview operationalization row/advisory ordering and current-participant revalidation closed."
     - "Dormant add/re-add restoration lifecycle selection race closed."
     - "First Google bind repeats trusted-email verification after the complete lock set."
     - "R3 authorization-before-contention regression closed in R4 production migration."
-  r4_review_test_evidence_repair:
-    - "Each contention holder acquires the exact target lock before a unique readiness advisory xact lock; tested RPC starts only after readiness is externally observed."
-    - "Post-RPC checks prove holder backend and readiness transaction lock remain held until explicit backend termination."
-    - "Missing-auth coverage now includes synchronized contended Unit-row path and requires UNAUTHENTICATED without timeout."
+    - "R4 synchronized authorization-before-prelock evidence and missing-auth Unit contention blockers closed in R5 test evidence."
 
 
 implementation_materialization:
   task: TASK-S06-002
   prompt_review: "PASS S06-002-PROMPT-REVIEW-001 @ f757e76f3f97077c608dab29bad45b8bd2126dc3"
-  prompt_review_provenance: VERIFIED_FROM_OWNER_TRANSPORT
   source_reopen_required: false
   prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
   checkpoint: checkpoint/pre-S06-002-001
   branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
   baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
-  status: WAITING_INDEPENDENT_REVIEW
-  prior_candidate_sha: "56dbbb9e261a9c1e4587169870c78a4de8d95956"
+  status: SERIALIZED_WAITING_FINAL_EQUIVALENCE
   current_candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
   exact_verifier_run: "34642569919 PASS"
-  review_round: R5
+  independent_review: "PASS S06-002-IMPLEMENTATION-REVIEW-001-R5"
+  serialization_sha: "895d54576c47df7d98ea66ed2774b8fac50c6015"
+  latest_application_verified_sha: "80146bc5aab88f755312c7ffff6007c1099d6782"
+  latest_full_integration_ci: "34705140390 PASS"
+  latest_governance_ci: "34705140378 PASS"
 
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-002 R5 candidate 63f6feba352852af5826dd582d1c42159edd66d6 passed exact producer verification run 34642569919; later Slice-06 work remains held pending OMP-dispatched independent exact-SHA R5 review."
+  execution_hold: "TASK-S06-002 product is serialized and full integration verification passed at 80146bc5aab88f755312c7ffff6007c1099d6782; later Slice-06 work remains held pending final independent integration-equivalence PASS."
 
 
 stop_gate:
   status: WAITING_EXTERNAL_REVIEW
-  type: INDEPENDENT_IMPLEMENTATION_REVIEW
-  work_id: S06-002-IMPLEMENTATION-REVIEW-001-R5
-  target: "63f6feba352852af5826dd582d1c42159edd66d6"
+  type: FINAL_INTEGRATION_EQUIVALENCE_REVIEW
+  work_id: S06-002-FINAL-INTEGRATION-EQUIVALENCE-001
+  target: "CURRENT_INTEGRATION_HEAD_AFTER_STATE_SYNC_AND_EXACT_FULL_CI"
+  source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
   reviewer: eiu-reviewer
   transport: OMP
-  transport_state: OMP_REVIEW_PROMPT_READY
+  transport_state: PREPARE_COPY_READY_HANDOFF_AFTER_EXACT_FULL_CI
   source_reopen_required: false
-  resume_on: "OMP dispatches eiu-reviewer and returns the independent exact-SHA R5 verdict for 63f6feba352852af5826dd582d1c42159edd66d6. PASS may advance to governed product serialization; any blocker returns to repair without source reopen unless reviewer explicitly requires it."
+  resume_on: "OMP dispatches eiu-reviewer and returns PASS for the exact state-synced integration SHA with SOURCE_REOPEN_REQUIRED=false. Any blocker returns to the smallest sufficient repair scope."
 
 
-next_action: "Send review-dispatch/S06-002-R5-63f6feb:project_control/reviews/S06_002_IMPLEMENTATION_R5_HANDOFF_63f6feb_v1.md to OMP so OMP dispatches eiu-reviewer on exact SHA 63f6feba352852af5826dd582d1c42159edd66d6. Do not serialize product into integration before R5 PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
+next_action: "Run exact full Integration CI and Governance CI on the governance-only state-synced integration HEAD, then prepare the copy-ready S06-002 final integration-equivalence handoff for OMP/eiu-reviewer. Do not mark TASK-S06-002 accepted before that independent PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."

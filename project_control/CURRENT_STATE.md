@@ -9,22 +9,21 @@
 
 TASK-S06-001 remains accepted at `59be9b2c92906065b8e4baa902fcec1d4cbefa12` / `checkpoint/S06-001-accepted-001`.
 
-## SLICE-06 / TASK-S06-002 — OMP R5 REVIEW PROMPT READY
+## SLICE-06 / TASK-S06-002 — FINAL INTEGRATION-EQUIVALENCE GATE
 
-- Exact R5 candidate: `63f6feba352852af5826dd582d1c42159edd66d6` on `oanhpham-kobe/TASK-S06-002-user-rbac-identity`.
-- Parent / prior R4 reviewed SHA: `56dbbb9e261a9c1e4587169870c78a4de8d95956`.
-- R4 independent review `S06-002-IMPLEMENTATION-REVIEW-001-R4`: **BLOCKING_REPAIR**, `SOURCE_REOPEN_REQUIRED=false`.
-- R4 production authorization-before-contention repair was assessed closed; remaining blockers were test-evidence only: missing synchronized lock-overlap proof and missing no-auth Unit contention coverage.
-- R4 verdict is persisted from Owner transport at `review/S06-002-IMPL-56dbbb9-v4` / `dd0eb84eb985327591a4b36f8988ed00db8b389b` / `project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_56dbbb9_v4.md`; reviewer-native persistence was reported `UNAVAILABLE`.
-- R5 delta from R4 is exactly one modified test file: `supabase/tests/internal_user_r4_authorization_prelock_test.sh`; production migration `20260912014500_internal_user_r4_authorization_prelock.sql` is unchanged.
-- R5 exact verifier `34642569919`: **PASS** — exact/static delta, zero-state replay, synchronized authorization-before-prelock regression, focused RBAC/Identity regressions, retained lifecycle concurrency, DB lint, clean stop.
-- OMP copy-ready handoff: branch `review-dispatch/S06-002-R5-63f6feb`, commit `b35ddbfad07544215efb87c930497890b5cb0499`, path `project_control/reviews/S06_002_IMPLEMENTATION_R5_HANDOFF_63f6feb_v1.md`.
-- `eiu-reviewer` has **not** been considered invoked by creating that branch. The reviewer is invoked only when the handoff prompt is actually sent to OMP.
-- Product candidate has **not** been serialized into integration and is not accepted until independent exact-SHA R5 PASS.
+- R5 source implementation: `63f6feba352852af5826dd582d1c42159edd66d6`.
+- Independent R5 review `S06-002-IMPLEMENTATION-REVIEW-001-R5`: **PASS**, `SOURCE_REOPEN_REQUIRED=false`.
+- Owner-transport evidence: `review/S06-002-IMPL-63f6feb-v5` / `5d0d1cb4a54b2a13b94bae24523a775a60a8851c` / `project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_63f6feb_v5.md`.
+- Product serialization commit: `895d54576c47df7d98ea66ed2774b8fac50c6015`.
+- Latest application-verified integration SHA before this governance-only state sync: `80146bc5aab88f755312c7ffff6007c1099d6782`.
+- Exact full Integration CI `34705140390`: **PASS** — Web PASS; cumulative PRE-S04/S05/S06-001/S06-002 focused + lifecycle concurrency PASS; crossed S04 suites PASS; standalone historical bulk replay after fresh migration replay PASS; DB lint PASS.
+- Governance CI `34705140378`: **PASS**.
+- `895d545...` → `80146bc5...` post-serialization changes are regression fixtures plus the Integration CI harness only; no migration, web, or product delta.
+- TASK-S06-002 is **not accepted yet**. The remaining gate is `S06-002-FINAL-INTEGRATION-EQUIVALENCE-001` by OMP-dispatched `eiu-reviewer` on the exact state-synced integration SHA after exact full CI.
 
 ## Next action
 
-Send the R5 handoff prompt to OMP. OMP must dispatch `eiu-reviewer` to inspect exact SHA `63f6feba352852af5826dd582d1c42159edd66d6`. A PASS may advance to governed product serialization, exact integration CI, and final integration-equivalence review; any blocker returns to repair.
+Run full Integration CI + Governance CI on the exact governance-only state-synced integration HEAD. If both PASS, prepare and send the copy-ready final integration-equivalence handoff to OMP; only an independent PASS with `SOURCE_REOPEN_REQUIRED=false` may advance TASK-S06-002 to accepted checkpoint creation.
 
 ## Boundaries
 
