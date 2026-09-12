@@ -1,7 +1,10 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getServerSession } from "@/lib/auth/session";
+import {
+  getCurrentInternalBindingStatus,
+  getServerSession,
+} from "@/lib/auth/session";
 import { createCommandRunner } from "@/lib/commands/runner";
 import {
   CommandErrorCode,
@@ -131,20 +134,11 @@ async function defaultResolveBulkActor(
     };
   }
 
-  const { data: appUser } = await supabase
-    .from("app_users")
-    .select("is_root_admin")
-    .eq("auth_user_id", session.user.authUserId)
-    .maybeSingle();
-
   return {
     authUserId: session.user.authUserId,
     email: session.user.email,
     isActive: true,
-    roles:
-      appUser && typeof appUser === "object" && appUser.is_root_admin
-        ? [...session.user.roles, "ROOT_ADMIN"]
-        : session.user.roles,
+    roles: session.user.roles,
     permissions: session.user.permissions,
   };
 }
@@ -171,21 +165,28 @@ async function defaultResolveActor(
     return null;
   }
 
-  // Check internal user role
-  const { data: appUser } = await supabase
-    .from("app_users")
-    .select("app_user_id, is_active, is_root_admin")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
-
-  if (appUser && typeof appUser === "object" && appUser.is_active) {
+  const session = await getServerSession(supabase);
+  if (session.user?.isInternal) {
     return {
-      authUserId: user.id,
-      email: user.email,
+      authUserId: session.user.authUserId,
+      email: session.user.email,
       isActive: true,
-      roles: appUser.is_root_admin ? ["ROOT_ADMIN", "HR"] : ["HR"],
-      permissions: ["submissions.view", "submissions.status"],
+      roles: session.user.roles,
+      permissions: session.user.permissions,
     };
+  }
+
+  if (user.email.toLowerCase().endsWith("@eiu.edu.vn")) {
+    const binding = await getCurrentInternalBindingStatus(supabase);
+    if (binding?.bound && !binding.isActive) {
+      return {
+        authUserId: user.id,
+        email: user.email,
+        isActive: false,
+        roles: [],
+        permissions: [],
+      };
+    }
   }
 
   return {

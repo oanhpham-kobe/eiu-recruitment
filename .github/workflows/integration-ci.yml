@@ -161,7 +161,7 @@ jobs:
     needs: impact
     if: needs.impact.outputs.db == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
@@ -224,6 +224,37 @@ jobs:
       - name: Execute TASK-S06-001 Interview Format First-Use Race Regression Assertions
         run: |
           bash supabase/tests/master_data_interview_format_race_test.sh
+
+      - name: Execute TASK-S06-002 Internal User/RBAC/Identity Focused Regression Assertions
+        run: |
+          bash supabase/tests/internal_user_rbac_identity_test.sh
+
+      - name: Execute TASK-S06-002 Internal User Lifecycle Concurrency Assertions
+        run: |
+          bash supabase/tests/internal_user_lifecycle_concurrency_test.sh
+
+      - name: Execute crossed Application reactivation and participant contract regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_reactivation_and_participant_contract_repair_test.sql
+
+      - name: Execute crossed Interview lifecycle regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_lifecycle_test.sql
+
+      - name: Execute crossed Interview round/conflict regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_round_and_conflict_locking_test.sql
+
+      - name: Execute crossed Interview copy regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
+
+      - name: Execute crossed bulk Application assignment regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/bulk_commands_replay.sql
+
+      - name: Lint local database at error level
+        run: supabase db lint --local --level error
 
       - name: Stop local Supabase
         if: always()

@@ -183,7 +183,7 @@ test("provisionInternalUserIdentity: handles subsequent login with idempotent su
   }
 });
 
-test("provisionInternalUserIdentity: maps unexpected RPC transport error to INTERNAL_ERROR", async () => {
+test("provisionInternalUserIdentity: maps unexpected RPC transport error to stable non-leaking INTERNAL_ERROR", async () => {
   const client = createMockSupabaseClient({
     data: null,
     error: { message: "database connection failure" },
@@ -194,7 +194,8 @@ test("provisionInternalUserIdentity: maps unexpected RPC transport error to INTE
   assert.equal(result.success, false);
   if (!result.success) {
     assert.equal(result.error.code, CommandErrorCode.INTERNAL_ERROR);
-    assert.equal(result.error.message, "database connection failure");
+    assert.equal(result.error.message, "Internal provisioning error");
+    assert.equal("details" in result.error, false);
   }
 });
 

@@ -43,8 +43,7 @@ export async function provisionInternalUserIdentity(
         success: false,
         error: {
           code: CommandErrorCode.INTERNAL_ERROR,
-          message: error.message || "Failed to execute provisioning RPC",
-          details: error,
+          message: "Internal provisioning error",
         },
       };
     }

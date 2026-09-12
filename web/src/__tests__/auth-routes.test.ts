@@ -485,31 +485,27 @@ test("getServerSession: returns unauthenticated when user email is empty", async
   assert.equal(session.user, null);
 });
 
-test("getServerSession: resolves internal permissions strictly from database, ignoring client claims", async () => {
+test("getServerSession: resolves internal permissions strictly from trusted database RPC, ignoring client claims", async () => {
   const client = createMockClient({
     getUser: async () => ({
-      data: {
-        user: {
-          id: "auth-internal-1",
-          email: "hr.manager@eiu.edu.vn",
-        },
-      },
+      data: { user: { id: "auth-internal-1", email: "hr.manager@eiu.edu.vn" } },
       error: null,
     }),
-    tableData: {
-      app_users: {
+    rpc: async (fnName) => {
+      assert.equal(fnName, "get_current_internal_session");
+      return {
         data: {
-          app_user_id: "app-user-999",
-          is_active: true,
-          is_root_admin: false,
-          app_user_roles: [{ role_code: "HR" }],
-          app_user_permissions: [
-            { permission_code: "candidates.view" },
-            { permission_code: "submissions.evaluate" },
-          ],
+          success: true,
+          data: {
+            app_user_id: "app-user-999",
+            is_active: true,
+            is_root_admin: false,
+            roles: ["HR"],
+            permissions: ["candidates.view", "submissions.evaluate"],
+          },
         },
         error: null,
-      },
+      };
     },
   });
 

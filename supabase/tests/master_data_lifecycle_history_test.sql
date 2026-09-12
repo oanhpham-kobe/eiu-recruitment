@@ -99,6 +99,10 @@ begin
     where app_user_id = v_root;
   end if;
 
+  insert into public.app_user_roles(app_user_id, role_code)
+  values (v_hr, 'HR')
+  on conflict do nothing;
+
   insert into public.app_user_permissions(app_user_id, permission_code)
   values
     (v_hr, 'master_data.manage'),

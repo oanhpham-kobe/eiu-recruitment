@@ -49,7 +49,11 @@ const candidateTwo: ApplicationInboxSubmission = {
   phone: "0987 654 321",
 };
 
-function internalSession(permissions: string[], isInternal = true): AppSession {
+function internalSession(
+  permissions: string[],
+  isInternal = true,
+  roles = isInternal ? ["HR"] : ["CANDIDATE"],
+): AppSession {
   return {
     isAuthenticated: true,
     user: {
@@ -59,7 +63,7 @@ function internalSession(permissions: string[], isInternal = true): AppSession {
       isCandidate: !isInternal,
       appUserId: isInternal ? "app-user-1" : undefined,
       candidateId: isInternal ? undefined : "candidate-1",
-      roles: isInternal ? ["HR"] : ["CANDIDATE"],
+      roles,
       permissions,
     },
   };
@@ -173,7 +177,7 @@ test("Application Inbox Root Admin bypasses submissions.view and receives only m
 
   const result = await loadApplicationInbox({
     client: client.client,
-    resolveSession: async () => internalSession([]),
+    resolveSession: async () => internalSession([], true, ["ROOT_ADMIN"]),
   });
 
   assert.equal(client.getSubmissionQueryCount(), 1);

@@ -19,50 +19,127 @@ export interface AppSession {
   isAuthenticated: boolean;
 }
 
-function extractRoles(appUser: unknown): string[] {
-  if (
-    appUser &&
-    typeof appUser === "object" &&
-    "app_user_roles" in appUser &&
-    Array.isArray(appUser.app_user_roles)
-  ) {
-    const roles: string[] = [];
-    for (const item of appUser.app_user_roles) {
-      if (
-        item &&
-        typeof item === "object" &&
-        "role_code" in item &&
-        typeof item.role_code === "string"
-      ) {
-        roles.push(item.role_code);
-      }
-    }
-    return roles;
-  }
-  return [];
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
-function extractPermissions(appUser: unknown): string[] {
+type InternalSessionRpcData = {
+  appUserId: string;
+  isActive: boolean;
+  isRootAdmin: boolean;
+  roles: string[];
+  permissions: string[];
+};
+
+function parseInternalSessionRpc(
+  payload: unknown,
+): InternalSessionRpcData | null {
   if (
-    appUser &&
-    typeof appUser === "object" &&
-    "app_user_permissions" in appUser &&
-    Array.isArray(appUser.app_user_permissions)
+    !payload ||
+    typeof payload !== "object" ||
+    !("success" in payload) ||
+    payload.success !== true ||
+    !("data" in payload) ||
+    !payload.data ||
+    typeof payload.data !== "object"
   ) {
-    const permissions: string[] = [];
-    for (const item of appUser.app_user_permissions) {
-      if (
-        item &&
-        typeof item === "object" &&
-        "permission_code" in item &&
-        typeof item.permission_code === "string"
-      ) {
-        permissions.push(item.permission_code);
-      }
-    }
-    return permissions;
+    return null;
   }
-  return [];
+
+  const data = payload.data;
+  if (
+    !("app_user_id" in data) ||
+    typeof data.app_user_id !== "string" ||
+    !("is_active" in data) ||
+    data.is_active !== true
+  ) {
+    return null;
+  }
+
+  return {
+    appUserId: data.app_user_id,
+    isActive: true,
+    isRootAdmin: "is_root_admin" in data && data.is_root_admin === true,
+    roles: "roles" in data ? stringArray(data.roles) : [],
+    permissions: "permissions" in data ? stringArray(data.permissions) : [],
+  };
+}
+
+export type CurrentInternalBindingStatus = {
+  bound: boolean;
+  appUserId?: string;
+  isActive: boolean;
+  isRootAdmin: boolean;
+};
+
+export async function getCurrentInternalBindingStatus(
+  client: SupabaseClient,
+): Promise<CurrentInternalBindingStatus | null> {
+  const { data, error } = await client.rpc(
+    "get_current_internal_binding_status",
+  );
+  if (
+    error ||
+    !data ||
+    typeof data !== "object" ||
+    !("success" in data) ||
+    data.success !== true ||
+    !("data" in data) ||
+    !data.data ||
+    typeof data.data !== "object"
+  ) {
+    return null;
+  }
+
+  const payload = data.data;
+  if (
+    !("bound" in payload) ||
+    typeof payload.bound !== "boolean" ||
+    !("is_active" in payload) ||
+    typeof payload.is_active !== "boolean" ||
+    !("is_root_admin" in payload) ||
+    typeof payload.is_root_admin !== "boolean"
+  ) {
+    return null;
+  }
+
+  const appUserId =
+    "app_user_id" in payload && typeof payload.app_user_id === "string"
+      ? payload.app_user_id
+      : undefined;
+
+  return {
+    bound: payload.bound,
+    appUserId,
+    isActive: payload.is_active,
+    isRootAdmin: payload.is_root_admin,
+  };
+}
+
+function internalSessionFromData(
+  authUserId: string,
+  email: string,
+  data: InternalSessionRpcData,
+): AppSession {
+  const roles = [...data.roles];
+  if (data.isRootAdmin && !roles.includes("ROOT_ADMIN")) {
+    roles.push("ROOT_ADMIN");
+  }
+
+  return {
+    isAuthenticated: true,
+    user: {
+      authUserId,
+      email,
+      isInternal: true,
+      isCandidate: false,
+      appUserId: data.appUserId,
+      roles,
+      permissions: data.permissions,
+    },
+  };
 }
 
 export async function getServerSession(
@@ -81,47 +158,18 @@ export async function getServerSession(
   const isInternal = user.email.toLowerCase().endsWith("@eiu.edu.vn");
 
   if (isInternal) {
-    const { data: appUser } = await supabase
-      .from("app_users")
-      .select(
-        "app_user_id, is_active, is_root_admin, app_user_roles(role_code), app_user_permissions(permission_code)",
-      )
-      .eq("auth_user_id", user.id)
-      .single();
-
-    if (
-      !appUser ||
-      typeof appUser !== "object" ||
-      !("is_active" in appUser) ||
-      !appUser.is_active ||
-      !("app_user_id" in appUser) ||
-      typeof appUser.app_user_id !== "string"
-    ) {
-      return { user: null, isAuthenticated: false };
+    const { data: internalPayload, error: internalError } = await supabase.rpc(
+      "get_current_internal_session",
+    );
+    const internalData = parseInternalSessionRpc(internalPayload);
+    if (!internalError && internalData) {
+      return internalSessionFromData(user.id, user.email, internalData);
     }
 
-    const roles = extractRoles(appUser);
-    if (
-      "is_root_admin" in appUser &&
-      appUser.is_root_admin === true &&
-      !roles.includes("ROOT_ADMIN")
-    ) {
-      roles.push("ROOT_ADMIN");
-    }
-    const permissions = extractPermissions(appUser);
-
-    return {
-      isAuthenticated: true,
-      user: {
-        authUserId: user.id,
-        email: user.email,
-        isInternal: true,
-        isCandidate: false,
-        appUserId: appUser.app_user_id,
-        roles,
-        permissions,
-      },
-    };
+    // S06-002 intentionally fails closed here. Raw app_users.auth_user_id is
+    // no longer a request-scoped Data API surface; trusted server consumers
+    // must use the dedicated current-session/current-binding RPCs.
+    return { user: null, isAuthenticated: false };
   }
 
   const { data: candidate } = await supabase

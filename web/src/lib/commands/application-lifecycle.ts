@@ -1,7 +1,10 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getServerSession } from "@/lib/auth/session";
+import {
+  getCurrentInternalBindingStatus,
+  getServerSession,
+} from "@/lib/auth/session";
 import { createCommandRunner } from "@/lib/commands/runner";
 import {
   CommandErrorCode,
@@ -120,18 +123,9 @@ async function defaultResolveActor(
   }
 
   // Authoritative fallback: check if app_user exists but is inactive
-  const { data: appUser } = await supabase
-    .from("app_users")
-    .select("is_active")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
+  const binding = await getCurrentInternalBindingStatus(supabase);
 
-  if (
-    appUser &&
-    typeof appUser === "object" &&
-    "is_active" in appUser &&
-    !appUser.is_active
-  ) {
+  if (binding?.bound && !binding.isActive) {
     return {
       authUserId: user.id,
       email: user.email,
