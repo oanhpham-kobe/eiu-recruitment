@@ -107,6 +107,11 @@ begin
   )
   returning public.app_users.app_user_id into v_hr;
 
+  -- S06-002 canonical active-Application owner eligibility requires the
+  -- fixture HR owner to hold the HR role before the Application is inserted.
+  insert into public.app_user_roles(app_user_id, role_code)
+  values (v_hr, 'HR');
+
   insert into public.app_users(
     auth_user_id,
     full_name,
