@@ -1,0 +1,323 @@
+name: S06-002 Acceptance State Sync
+
+on:
+  push:
+    branches:
+      - control/S06-002-acceptance-sync-5f2b76c
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          ref: autonomy/continuous-integration-20260905-01
+          fetch-depth: 0
+
+      - name: Verify reviewed integration head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+
+      - name: Patch governed acceptance state only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          from textwrap import dedent
+
+          ACCEPTED_SHA = '5f2b76c7f1e901b3cadb847906efcd1568c8cbc3'
+          SOURCE_SHA = '63f6feba352852af5826dd582d1c42159edd66d6'
+          FINAL_EVIDENCE_BRANCH = 'review/S06-002-FINAL-EQUIV-5f2b76c-v1'
+          FINAL_EVIDENCE_COMMIT = 'c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1'
+          FINAL_EVIDENCE_PATH = 'project_control/reviews/S06_002_FINAL_INTEGRATION_EQUIVALENCE_5f2b76c_v1.md'
+
+          def replace_between(src: str, start: str, end: str, replacement: str) -> str:
+              a = src.index(start)
+              b = src.index(end, a)
+              return src[:a] + replacement.rstrip() + '\n\n' + src[b:]
+
+          # ------------------------------------------------------------------
+          # TASK_REGISTRY: close TASK-S06-002 at the independently reviewed SHA.
+          # ------------------------------------------------------------------
+          task_path = Path('project_control/TASK_REGISTRY.yaml')
+          task_text = task_path.read_text()
+          marker = '  TASK-S06-002:\n'
+          a = task_text.index(marker)
+          accepted_task = dedent('''\
+            TASK-S06-002:
+              title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
+              slice: SLICE-06
+              status: DONE
+              lane: LANE_A
+              depends_on:
+                - TASK-S06-001
+              prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+              prompt_review_status: "PASS (S06-002-PROMPT-REVIEW-001 @ f757e76f3f97077c608dab29bad45b8bd2126dc3; VERIFIED_FROM_OWNER_TRANSPORT)"
+              prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
+              prompt_review_source_reopen_required: false
+              prompt_review_evidence: project_control/reviews/S06_002_PROMPT_REVIEW_OWNER_TRANSPORT_f757e76_v1.md
+              implementation_baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+              implementation_checkpoint: checkpoint/pre-S06-002-001
+              implementation_branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+              implementation_candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+              implementation_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+              repair_round: R5
+              implementation_review_status: "PASS (S06-002-IMPLEMENTATION-REVIEW-001-R5 @ 63f6feba352852af5826dd582d1c42159edd66d6; source reopen: NO)"
+              implementation_review_evidence:
+                branch: review/S06-002-IMPL-63f6feb-v5
+                commit: "5d0d1cb4a54b2a13b94bae24523a775a60a8851c"
+                artifact: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_63f6feb_v5.md
+              review_status: "PASS (S06-002-FINAL-INTEGRATION-EQUIVALENCE-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3; source reopen: NO; reviewer-native persistence: UNAVAILABLE)"
+              final_review_evidence:
+                branch: review/S06-002-FINAL-EQUIV-5f2b76c-v1
+                commit: "c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1"
+                artifact: project_control/reviews/S06_002_FINAL_INTEGRATION_EQUIVALENCE_5f2b76c_v1.md
+              producer_verification: "PASS (R5 exact verifier run 34642569919; synchronized authorization-before-prelock evidence, focused RBAC/Identity, retained lifecycle concurrency, DB lint)"
+              github_ci: "VERIFIED (Integration CI run 34705634804; Governance CI run 34705634726; exact SHA 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3; PASS)"
+              accepted_checkpoint: "checkpoint/S06-002-accepted-001"
+              acceptance:
+                - "R5 implementation review: PASS @ 63f6feba352852af5826dd582d1c42159edd66d6"
+                - "Final integration equivalence review: PASS @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+                - "Integration CI 34705634804: PASS"
+                - "Governance CI 34705634726: PASS"
+                - "checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+              notes: "Accepted Internal User Directory, HR RBAC & Identity Lifecycle trusted contracts. R2/R3/R4 blockers were repaired; R5 implementation review passed; final exact integration-equivalence review passed; all cumulative and crossed database regressions plus standalone historical bulk replay and DB lint passed. No canonical source reopen, main mutation, PR merge, Vercel deployment, or connected Supabase migration application occurred."
+          ''')
+          task_text = task_text[:a] + accepted_task
+          task_path.write_text(task_text)
+
+          # ------------------------------------------------------------------
+          # AUTONOMY_RUN_STATE: accepted task + next governed slice-close gate.
+          # ------------------------------------------------------------------
+          state_path = Path('project_control/AUTONOMY_RUN_STATE.yaml')
+          text = state_path.read_text()
+
+          integration = dedent('''\
+          integration:
+            branch: autonomy/continuous-integration-20260905-01
+            head_resolution: DIRECT_GIT_RUNTIME
+            last_verified_application_checkpoint: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+            last_verified_application_ci_run: "34705634804"
+            last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
+            last_verified_slice_closing_ci_run: "34201054499"
+            last_verified_control_plane_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
+            last_verified_control_plane_integration_ci_run: "34463405935"
+            last_verified_control_plane_governance_ci_run: "34463405902"
+            last_task_acceptance_attempt_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+            last_task_acceptance_integration_ci_run: "34705634804"
+            last_task_acceptance_integration_ci_result: PASS
+            last_task_acceptance_governance_ci_run: "34705634726"
+            last_task_acceptance_governance_ci_result: PASS
+            current_prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
+          ''')
+          text = replace_between(text, 'integration:\n', '\nauthorization:\n', integration)
+
+          accepted_history = dedent('''\
+          last_accepted_task:
+            id: TASK-S06-002
+            commit: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+            evidence:
+              - "prompt_review: PASS (S06-002-PROMPT-REVIEW-001)"
+              - "implementation_review: PASS (S06-002-IMPLEMENTATION-REVIEW-001-R5 @ 63f6feba352852af5826dd582d1c42159edd66d6)"
+              - "final_exact_sha_acceptance_review: PASS (S06-002-FINAL-INTEGRATION-EQUIVALENCE-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3)"
+              - "github_ci: VERIFIED (Integration CI 34705634804; Governance CI 34705634726; PASS)"
+              - "accepted_checkpoint: checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+              - "owner_transport_review_evidence: review/S06-002-FINAL-EQUIV-5f2b76c-v1 @ c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1"
+
+          previous_accepted_tasks:
+            TASK-S06-001: {commit: "59be9b2c92906065b8e4baa902fcec1d4cbefa12"}
+            TASK-S05-002: {commit: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"}
+            TASK-S05-001: {commit: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"}
+            TASK-S04-005: {commit: "ab6c5194d15eb29e2ee285106c6bef14f0291ec3"}
+            TASK-S04-003: {commit: "919e4a428dcd2d76730947ca1c4c174441bdfb63"}
+            TASK-S03-006: {commit: "fa59ab2a3508ff80c0f8fcb3a77bf82a2faf5221"}
+          ''')
+          text = replace_between(text, 'last_accepted_task:\n', '\ngovernance_continuation_repair_ci:\n', accepted_history)
+
+          accepted_tail = dedent('''\
+          s06_002_planning:
+            status: ACCEPTED
+            task: TASK-S06-002
+            title: "Internal User Directory, HR RBAC & Identity Lifecycle Trusted Contracts"
+            prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+            prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
+            prompt_review:
+              work_id: S06-002-PROMPT-REVIEW-001
+              reviewer: eiu-reviewer
+              result: PASS
+              source_reopen_required: false
+              evidence_persistence: VERIFIED_FROM_OWNER_TRANSPORT
+              evidence_path: project_control/reviews/S06_002_PROMPT_REVIEW_OWNER_TRANSPORT_f757e76_v1.md
+            implementation_candidate:
+              branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+              baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+              candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+              producer_verification_run: "34642569919 PASS"
+            independent_implementation_review:
+              work_id: S06-002-IMPLEMENTATION-REVIEW-001-R5
+              reviewer: eiu-reviewer
+              status: VERIFIED_FROM_OWNER_TRANSPORT
+              reviewed_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+              result: PASS
+              source_reopen_required: false
+              blocking_findings: NONE
+              owner_transport_evidence_branch: review/S06-002-IMPL-63f6feb-v5
+              owner_transport_evidence_commit: "5d0d1cb4a54b2a13b94bae24523a775a60a8851c"
+              owner_transport_evidence_path: project_control/reviews/S06_002_IMPLEMENTATION_REVIEW_63f6feb_v5.md
+            integration_serialization:
+              source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+              serialization_sha: "895d54576c47df7d98ea66ed2774b8fac50c6015"
+              accepted_integration_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+              integration_ci_run: "34705634804 PASS"
+              governance_ci_run: "34705634726 PASS"
+              production_delta_after_serialization: NONE
+              post_serialization_scope: "Regression fixtures, Integration CI harness, and governance-state files only; final reviewer assessed no production divergence."
+            final_integration_equivalence:
+              work_id: S06-002-FINAL-INTEGRATION-EQUIVALENCE-001
+              reviewer: eiu-reviewer
+              status: VERIFIED_FROM_OWNER_TRANSPORT
+              source_implementation_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+              reviewed_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+              result: PASS
+              source_reopen_required: false
+              blocking_findings: NONE
+              reviewer_native_evidence_persistence: UNAVAILABLE
+              owner_transport_evidence_branch: review/S06-002-FINAL-EQUIV-5f2b76c-v1
+              owner_transport_evidence_commit: "c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1"
+              owner_transport_evidence_path: project_control/reviews/S06_002_FINAL_INTEGRATION_EQUIVALENCE_5f2b76c_v1.md
+              integration_ci_run: "34705634804 PASS"
+              governance_ci_run: "34705634726 PASS"
+            implementation_execution_hold: "CLOSED — R5 implementation review and final exact-SHA integration equivalence both PASS with SOURCE_REOPEN_REQUIRED=false."
+            implementation_safe_frontier: NONE
+
+          s06_002_acceptance:
+            result: ACCEPTED
+            implementation_candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+            final_acceptance_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+            final_integration_equivalence_work_id: S06-002-FINAL-INTEGRATION-EQUIVALENCE-001
+            integration_ci_run: "34705634804"
+            governance_ci_run: "34705634726"
+            accepted_checkpoint: "checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+            source_reopen_required: false
+            reviewer_native_evidence_persistence: UNAVAILABLE
+            owner_transport_evidence: "review/S06-002-FINAL-EQUIV-5f2b76c-v1 @ c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1"
+            connected_supabase_migration_applied: false
+            vercel_deployment_performed: false
+            main_mutated: false
+            pr_created_or_merged: false
+
+          implementation_materialization:
+            task: TASK-S06-002
+            prompt_review: "PASS S06-002-PROMPT-REVIEW-001 @ f757e76f3f97077c608dab29bad45b8bd2126dc3"
+            source_reopen_required: false
+            prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
+            checkpoint: checkpoint/pre-S06-002-001
+            branch: oanhpham-kobe/TASK-S06-002-user-rbac-identity
+            baseline_sha: "0a2ccdfedc477f9766c9aaa03739d16a7ed83c01"
+            status: ACCEPTED
+            current_candidate_sha: "63f6feba352852af5826dd582d1c42159edd66d6"
+            final_acceptance_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+            accepted_checkpoint: checkpoint/S06-002-accepted-001
+            exact_verifier_run: "34642569919 PASS"
+            independent_review: "PASS S06-002-IMPLEMENTATION-REVIEW-001-R5"
+            final_equivalence_review: "PASS S06-002-FINAL-INTEGRATION-EQUIVALENCE-001"
+            latest_full_integration_ci: "34705634804 PASS"
+            latest_governance_ci: "34705634726 PASS"
+
+          safe_frontier:
+            eligible_tasks: []
+            skipped_due_to_dependency: []
+            materialization_frontier: []
+            execution_hold: "TASK-S06-002 is accepted at checkpoint/S06-002-accepted-001. All currently materialized Slice-06 tasks are DONE; Slice-06 must pass a closing composition review before the slice can be marked DONE or downstream Slice-07 work is materialized."
+
+          stop_gate:
+            status: WAITING_EXTERNAL_REVIEW
+            type: SLICE_CLOSING_COMPOSITION_REVIEW
+            work_id: SLICE-06-CLOSING-REVIEW-001
+            target: "CURRENT_INTEGRATION_HEAD_AFTER_ACCEPTANCE_STATE_SYNC_AND_EXACT_FULL_CI"
+            reviewer: eiu-reviewer
+            transport: OMP
+            transport_state: PREPARE_COPY_READY_HANDOFF_AFTER_EXACT_FULL_CI
+            source_reopen_required: false
+            resume_on: "After exact full Integration CI and Governance CI pass on this acceptance-state integration head, OMP dispatches eiu-reviewer for Slice-06 closing composition review. PASS may close Slice-06 and continue FRONTIER RESOLUTION; any blocker returns to the smallest sufficient repair scope."
+
+          next_action: "Run exact full Integration CI and Governance CI on the acceptance-state integration HEAD, then prepare the copy-ready SLICE-06-CLOSING-REVIEW-001 handoff. Do not mark SLICE-06 DONE before independent closing PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
+          ''')
+          a = text.index('s06_002_planning:\n')
+          text = text[:a] + accepted_tail
+          state_path.write_text(text)
+
+          # ------------------------------------------------------------------
+          # Derived reporting snapshot.
+          # ------------------------------------------------------------------
+          current = dedent('''\
+          # Current Implementation State — Derived Handoff Snapshot
+
+          > **DERIVED / NON-AUTHORITATIVE REPORTING ONLY**
+          > Runtime authority: `project_control/AUTONOMY_RUN_STATE.yaml`.
+          > DAG/task/slice authority: `project_control/TASK_REGISTRY.yaml` and `project_control/SLICE_REGISTRY.yaml`.
+          > Exact code/history authority: Git.
+
+          ## SLICE-06 / TASK-S06-001 — ACCEPTED
+
+          TASK-S06-001 remains accepted at `59be9b2c92906065b8e4baa902fcec1d4cbefa12` / `checkpoint/S06-001-accepted-001`.
+
+          ## SLICE-06 / TASK-S06-002 — ACCEPTED
+
+          - R5 source implementation: `63f6feba352852af5826dd582d1c42159edd66d6`.
+          - Independent R5 implementation review: **PASS**, `SOURCE_REOPEN_REQUIRED=false`.
+          - Final integration-equivalence review `S06-002-FINAL-INTEGRATION-EQUIVALENCE-001` at exact `5f2b76c7f1e901b3cadb847906efcd1568c8cbc3`: **PASS**, `SOURCE_REOPEN_REQUIRED=false`.
+          - Exact Integration CI `34705634804`: **PASS**.
+          - Exact Governance CI `34705634726`: **PASS**.
+          - Accepted checkpoint: `checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3`.
+          - Final review Owner-transport evidence: `review/S06-002-FINAL-EQUIV-5f2b76c-v1` / `c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1` / `project_control/reviews/S06_002_FINAL_INTEGRATION_EQUIVALENCE_5f2b76c_v1.md`.
+          - No `main` mutation, PR merge, Vercel deployment, or connected Supabase migration application occurred.
+
+          ## SLICE-06 — CLOSING COMPOSITION GATE
+
+          Both materialized Slice-06 tasks are now accepted/DONE. `SLICE-06` remains `IN_PROGRESS` until independent `SLICE-06-CLOSING-REVIEW-001` passes on an exact full-CI-verified integration SHA. This prevents task acceptance from being conflated with slice closure.
+
+          ## Next action
+
+          Run full Integration CI + Governance CI on this acceptance-state HEAD, then prepare/send the copy-ready Slice-06 closing composition review to OMP/eiu-reviewer. Only a closing PASS may mark `SLICE-06` DONE and reopen downstream frontier resolution.
+
+          ## Boundaries
+
+          - Do not push/merge `main` without explicit Owner authorization.
+          - Do not create/merge a PR in this phase.
+          - Do not deploy Vercel without explicit Owner authorization.
+          - Do not apply migrations to connected Supabase without explicit Owner authorization.
+          ''')
+          Path('project_control/CURRENT_STATE.md').write_text(current)
+          PY
+
+          git diff --check
+          actual="$(git diff --name-only | sort | tr '\n' ' ')"
+          expected='project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml '
+          test "$actual" = "$expected"
+
+          grep -q 'status: DONE' project_control/TASK_REGISTRY.yaml
+          grep -q 'implementation_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"' project_control/TASK_REGISTRY.yaml
+          grep -q 'checkpoint/S06-002-accepted-001' project_control/TASK_REGISTRY.yaml
+          grep -q 'S06-002-FINAL-INTEGRATION-EQUIVALENCE-001' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q 'SLICE-06-CLOSING-REVIEW-001' project_control/AUTONOMY_RUN_STATE.yaml
+          grep -q 'TASK-S06-002 — ACCEPTED' project_control/CURRENT_STATE.md
+
+          python project_control/validate_omp_native.py
+          python project_control/validate_control_plane.py
+
+      - name: Commit and push accepted control state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md project_control/TASK_REGISTRY.yaml
+          git commit -m 'chore(state): accept TASK-S06-002 and route slice closure [full-ci]'
+          git push origin HEAD:autonomy/continuous-integration-20260905-01
