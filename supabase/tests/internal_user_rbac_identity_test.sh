@@ -7,17 +7,45 @@ part2="supabase/tests/internal_user_rbac_identity_test.part2.sql"
 tmp_sql="$(mktemp)"
 trap 'rm -f "$tmp_sql"' EXIT
 
+# The focused producer verifier starts from a clean database and therefore owns
+# its canonical Root fixture. The full integration stream is intentionally
+# cumulative and may already contain the protected singleton Root established by
+# an earlier slice. Reuse that Root instead of weakening/dropping the singleton
+# invariant or mutating protected Root state.
+root_record="$(
+  docker exec -i "$container_name" psql -qAt -F '|' -v ON_ERROR_STOP=1 -U postgres -d postgres \
+    -c "select app_user_id::text, coalesce(auth_user_id::text, '') from public.app_users where is_root_admin = true order by app_user_id" \
+    | tr -d '\r'
+)"
+root_count="$(printf '%s\n' "$root_record" | sed '/^$/d' | wc -l | tr -d ' ')"
+if [[ "$root_count" -gt 1 ]]; then
+  echo "S06-002 focused fixture requires at most one pre-existing Root; found $root_count" >&2
+  exit 1
+fi
+
+existing_root_id=""
+existing_root_auth_id=""
+if [[ "$root_count" -eq 1 ]]; then
+  IFS='|' read -r existing_root_id existing_root_auth_id <<< "$root_record"
+  if [[ -z "$existing_root_id" || -z "$existing_root_auth_id" ]]; then
+    echo "S06-002 focused fixture cannot reuse an unbound pre-existing Root" >&2
+    exit 1
+  fi
+fi
+
 # The checked-in regression stream intentionally exercises two contexts:
 # - mutation/audit postconditions run as the DB test owner while the trusted
 #   SECURITY DEFINER RPCs resolve the simulated actor from request.jwt.claim.sub;
 # - explicit RLS/column-ACL and anon denial blocks keep their real roles.
 # This avoids weakening production grants merely so the test can inspect the
 # immutable audit table or raw Auth binding after a trusted mutation.
-python3 - "$part1" "$part2" > "$tmp_sql" <<'PY'
+python3 - "$part1" "$part2" "$existing_root_id" "$existing_root_auth_id" > "$tmp_sql" <<'PY'
 from pathlib import Path
 import sys
 
 sql = Path(sys.argv[1]).read_text() + Path(sys.argv[2]).read_text()
+existing_root_id = sys.argv[3]
+existing_root_auth_id = sys.argv[4]
 
 def replace_once(old: str, new: str, label: str) -> None:
     global sql
@@ -25,6 +53,25 @@ def replace_once(old: str, new: str, label: str) -> None:
     if count != 1:
         raise RuntimeError(f"{label}: expected exactly one fixture match, found {count}")
     sql = sql.replace(old, new, 1)
+
+# In a cumulative integration database, preserve and reuse the already-existing
+# protected singleton Root. Remove only the synthetic Root tuple from this
+# transaction-local fixture, then retarget every Root actor/owner reference to
+# the existing row. On a clean producer database these substitutions are not
+# applied and the canonical fixed Root fixture remains unchanged.
+if existing_root_id:
+    root_tuple = (
+        "    ('70000000-0000-0000-0000-000000000001','71000000-0000-0000-0000-000000000001',"
+        "'root_s06_002@eiu.edu.vn','Root S06-002',null,v_unit,true,true),\n"
+    )
+    replace_once(root_tuple, "", "pre-existing Root fixture reuse")
+
+    fixture_root_id = "70000000-0000-0000-0000-000000000001"
+    fixture_root_auth_id = "71000000-0000-0000-0000-000000000001"
+    if fixture_root_id not in sql or fixture_root_auth_id not in sql:
+        raise RuntimeError("pre-existing Root reuse: expected Root references after tuple removal")
+    sql = sql.replace(fixture_root_id, existing_root_id)
+    sql = sql.replace(fixture_root_auth_id, existing_root_auth_id)
 
 # Canonical candidates require an Auth identity. This fixture UUID is candidate-
 # only and intentionally distinct from every Internal User/Auth fixture.
