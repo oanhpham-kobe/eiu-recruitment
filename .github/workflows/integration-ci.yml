@@ -233,6 +233,10 @@ jobs:
         run: |
           bash supabase/tests/internal_user_lifecycle_concurrency_test.sh
 
+      - name: Execute Slice-06 Copy/User Concurrency Composition Assertions
+        run: |
+          bash supabase/tests/copy_interview_schedule_concurrency_test.sh
+
       - name: Execute crossed Application reactivation and participant contract regressions
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_reactivation_and_participant_contract_repair_test.sql
