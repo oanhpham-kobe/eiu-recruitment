@@ -249,6 +249,9 @@ jobs:
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
 
+      - name: Reset local database for standalone bulk replay
+        run: supabase db reset
+
       - name: Execute crossed bulk Application assignment regressions
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/bulk_commands_replay.sql
