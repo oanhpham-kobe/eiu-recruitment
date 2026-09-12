@@ -4,8 +4,10 @@ set -euo pipefail
 container_name="supabase_db_eiu-recruitment-dev"
 part1="supabase/tests/internal_user_rbac_identity_test.part1.sql"
 part2="supabase/tests/internal_user_rbac_identity_test.part2.sql"
+r2_test="supabase/tests/internal_user_r2_repair_test.sql"
 tmp_sql="$(mktemp)"
-trap 'rm -f "$tmp_sql"' EXIT
+tmp_r2_sql="$(mktemp)"
+trap 'rm -f "$tmp_sql" "$tmp_r2_sql"' EXIT
 
 # The focused producer verifier starts from a clean database and therefore owns
 # its canonical Root fixture. The full integration stream is intentionally
@@ -148,4 +150,37 @@ sys.stdout.write(sql)
 PY
 
 docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < "$tmp_sql"
-docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/internal_user_r2_repair_test.sql
+
+# The retained R2 regression is also transaction-local and historically creates
+# its own Root. Apply the same isolation rule so cumulative integration reuses
+# the protected singleton Root, while clean producer verification keeps the
+# original R2 fixture unchanged.
+python3 - "$r2_test" "$existing_root_id" "$existing_root_auth_id" > "$tmp_r2_sql" <<'PY'
+from pathlib import Path
+import sys
+
+sql = Path(sys.argv[1]).read_text()
+existing_root_id = sys.argv[2]
+existing_root_auth_id = sys.argv[3]
+
+if existing_root_id:
+    root_tuple = (
+        "  ('84000000-0000-0000-0000-000000000010','84100000-0000-0000-0000-000000000010',"
+        "'r2root@eiu.edu.vn','R2 Root',true,true),\n"
+    )
+    count = sql.count(root_tuple)
+    if count != 1:
+        raise RuntimeError(f"retained R2 Root reuse: expected exactly one fixture tuple, found {count}")
+    sql = sql.replace(root_tuple, "", 1)
+
+    fixture_root_id = "84000000-0000-0000-0000-000000000010"
+    fixture_root_auth_id = "84100000-0000-0000-0000-000000000010"
+    if fixture_root_id not in sql or fixture_root_auth_id not in sql:
+        raise RuntimeError("retained R2 Root reuse: expected Root references after tuple removal")
+    sql = sql.replace(fixture_root_id, existing_root_id)
+    sql = sql.replace(fixture_root_auth_id, existing_root_auth_id)
+
+sys.stdout.write(sql)
+PY
+
+docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres < "$tmp_r2_sql"
