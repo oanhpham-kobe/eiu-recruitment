@@ -315,7 +315,7 @@ slice_06_planning:
   status: ACTIVE
   proposed_first_task: TASK-S06-001
   materialized_task: TASK-S06-002
-  task_status: READY
+  task_status: DONE
   prompt: project_control/prompts/SLICE-06_TASK-002_v1.md
   producer_reconciliation:
     work_id: S06-001-PROMPT-PRODUCER-RECONCILIATION-001
@@ -564,21 +564,41 @@ implementation_materialization:
   latest_full_integration_ci: "34705634804 PASS"
   latest_governance_ci: "34705634726 PASS"
 
+slice_06_copy_composition_repair:
+  blocked_closing_sha: "0fe24da54d5d471fee5afdba7f34620716642d2e"
+  original_review: SLICE-06-CLOSING-REVIEW-001
+  original_result: BLOCKING_REPAIR
+  reviewed_candidate_sha: "7eef5992638da87dc12e3c3cdcfcd77ec070a706"
+  review_work_id: SLICE-06-COPY-COMPOSITION-REPAIR-REVIEW-001
+  reviewer: eiu-reviewer
+  result: PASS
+  source_reopen_required: false
+  reviewer_native_evidence_persistence: UNAVAILABLE
+  owner_transport_evidence_branch: review/SLICE-06-COPY-REPAIR-7eef599-v1
+  owner_transport_evidence_commit: "b9753e9bab9a4a49d997e42ec404aeb399fe7a29"
+  owner_transport_evidence_path: project_control/reviews/SLICE_06_COPY_COMPOSITION_REPAIR_REVIEW_7eef599_v1.md
+  serialization_sha: "7097a01db6cc74b653615add3dc77538cc41ea07"
+  serialization_equivalence: "Complete tree identical to exact reviewed candidate; three-path repair only."
+  integration_ci_run: "34709939642"
+  governance_ci_run: "34709939626"
+  exact_sha_ci_result: PASS
+  lint_diagnostics: "Unchanged baseline: update_master_item v_row.unit_id; update_candidate_submission unassigned v_log. Command exits successfully; not diagnostic-free."
+
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "TASK-S06-002 is accepted at checkpoint/S06-002-accepted-001. All currently materialized Slice-06 tasks are DONE; Slice-06 must pass a closing composition review before the slice can be marked DONE or downstream Slice-07 work is materialized."
+  execution_hold: "Slice-06 closing review pending after reviewed Copy/User repair serialization and exact CI. Owner requires hard stop for external ChatGPT audit after closure; no Slice-07 task may start."
 
 stop_gate:
   status: WAITING_EXTERNAL_REVIEW
   type: SLICE_CLOSING_COMPOSITION_REVIEW
-  work_id: SLICE-06-CLOSING-REVIEW-001
-  target: "CURRENT_INTEGRATION_HEAD_AFTER_ACCEPTANCE_STATE_SYNC_AND_EXACT_FULL_CI"
+  work_id: SLICE-06-CLOSING-REVIEW-002
+  target: "EXACT_STATE_SYNC_COMMIT_AFTER_FULL_CI"
   reviewer: eiu-reviewer
   transport: OMP
-  transport_state: PREPARE_COPY_READY_HANDOFF_AFTER_EXACT_FULL_CI
+  transport_state: DISPATCH_AFTER_EXACT_FULL_CI
   source_reopen_required: false
-  resume_on: "After exact full Integration CI and Governance CI pass on this acceptance-state integration head, OMP dispatches eiu-reviewer for Slice-06 closing composition review. PASS may close Slice-06 and continue FRONTIER RESOLUTION; any blocker returns to the smallest sufficient repair scope."
+  resume_on: "After exact Integration and Governance CI PASS, dispatch independent whole-slice closing review. PASS permits governed Slice-06 checkpoint/closure only, then hard stop for external ChatGPT audit."
 
-next_action: "Run exact full Integration CI and Governance CI on the acceptance-state integration HEAD, then prepare the copy-ready SLICE-06-CLOSING-REVIEW-001 handoff. Do not mark SLICE-06 DONE before independent closing PASS; do not push/merge main, create/merge a PR, deploy Vercel, or apply connected Supabase migrations."
+next_action: "Freeze this governance-only synchronization SHA after exact official full CI, dispatch SLICE-06-CLOSING-REVIEW-002, then complete governed closure on PASS. No next-slice/task dispatch."

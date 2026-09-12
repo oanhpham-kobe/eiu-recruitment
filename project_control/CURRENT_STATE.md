@@ -23,13 +23,17 @@ TASK-S06-001 remains accepted at `59be9b2c92906065b8e4baa902fcec1d4cbefa12` / `c
 
 ## SLICE-06 — CLOSING COMPOSITION GATE
 
-Both materialized Slice-06 tasks are now accepted/DONE. `SLICE-06` remains `IN_PROGRESS` until independent `SLICE-06-CLOSING-REVIEW-001` passes on an exact full-CI-verified integration SHA. This prevents task acceptance from being conflated with slice closure.
+Both materialized Slice-06 tasks remain accepted/DONE at their immutable checkpoints. Prior closing review `SLICE-06-CLOSING-REVIEW-001` at `0fe24da54d5d471fee5afdba7f34620716642d2e` returned BLOCKING_REPAIR, source reopen false.
 
-This derived-state follow-up intentionally requests `[full-ci]`; resolve its exact Git SHA and use that immutable, fully verified SHA as the target of `SLICE-06-CLOSING-REVIEW-001` only after both Integration CI and Governance CI pass.
+The bounded Copy/User repair at `7eef5992638da87dc12e3c3cdcfcd77ec070a706` passed independent `SLICE-06-COPY-COMPOSITION-REPAIR-REVIEW-001`, source reopen false. Owner-transport evidence: `review/SLICE-06-COPY-REPAIR-7eef599-v1` / `b9753e9bab9a4a49d997e42ec404aeb399fe7a29` / `project_control/reviews/SLICE_06_COPY_COMPOSITION_REPAIR_REVIEW_7eef599_v1.md`; reviewer-native persistence unavailable.
+
+Serialization `7097a01db6cc74b653615add3dc77538cc41ea07` is tree-identical to the reviewed repair. Official Integration CI `34709939642` and Governance CI `34709939626` passed at that exact SHA, including the permanent Copy/User staged harness and cumulative regressions. DB lint exits successfully with the two unchanged baseline diagnostics; it is not diagnostic-free.
+
+`SLICE-06` remains `IN_PROGRESS`. This governance-only synchronization requires exact full CI before freezing its SHA for independent `SLICE-06-CLOSING-REVIEW-002`. No product divergence is introduced.
 
 ## Next action
 
-Require full Integration CI + Governance CI PASS on this exact acceptance-state follow-up HEAD, then prepare/send the copy-ready Slice-06 closing composition review to OMP/eiu-reviewer. Only a closing PASS may mark `SLICE-06` DONE and reopen downstream frontier resolution.
+Obtain exact full Integration + Governance CI on this state-sync commit, then dispatch the whole-slice review. Only exact closing PASS permits immutable checkpoint and governed closure. After closure STOP for external ChatGPT audit; do not start Slice-07 or another task.
 
 ## Boundaries
 
