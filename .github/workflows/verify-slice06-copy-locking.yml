@@ -1,0 +1,57 @@
+name: Verify Slice-06 Copy Locking Repair
+
+on:
+  push:
+    branches:
+      - verify/SLICE-06-copy-locking-7955f16
+
+permissions:
+  contents: read
+
+jobs:
+  verify-db:
+    name: Copy/User composition verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Replay migrations from zero
+        run: supabase db reset
+
+      - name: Execute S06-002 focused RBAC/Identity regressions
+        run: bash supabase/tests/internal_user_rbac_identity_test.sh
+
+      - name: Execute S06-002 lifecycle concurrency regressions
+        run: bash supabase/tests/internal_user_lifecycle_concurrency_test.sh
+
+      - name: Execute Slice-06 Copy/User staged concurrency regressions
+        run: bash supabase/tests/copy_interview_schedule_concurrency_test.sh
+
+      - name: Execute crossed Application reactivation/participant regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_reactivation_and_participant_contract_repair_test.sql
+
+      - name: Execute crossed Interview lifecycle regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_lifecycle_test.sql
+
+      - name: Execute crossed Interview round/conflict regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_round_and_conflict_locking_test.sql
+
+      - name: Execute crossed Interview Copy regressions
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
+
+      - name: Lint local database at error level
+        run: supabase db lint --local --level error
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
