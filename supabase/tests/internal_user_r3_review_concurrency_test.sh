@@ -14,6 +14,36 @@ bind_user="$(new_uuid)"; bind_auth="$(new_uuid)"; bind_email="bind_r3_${suffix}@
 psql_exec() { docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
 run_sql() { local sql="$1" out="$2"; printf '%s ' "$sql" | docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres >"$out" 2>&1; }
 
+# Preserve the singleton-Root production invariant in cumulative integration.
+# A clean producer database still gets this script's original synthetic Root;
+# when an earlier regression already established the protected Root, reuse its
+# bound actor identity and never include it in this script's cleanup set.
+root_owned=true
+root_record="$(psql_exec -qAt -F '|' -c "select app_user_id::text, coalesce(auth_user_id::text,'') from public.app_users where is_root_admin=true order by app_user_id" | tr -d '\r')"
+root_count="$(printf '%s\n' "$root_record" | sed '/^$/d' | wc -l | tr -d ' ')"
+if [[ "$root_count" -gt 1 ]]; then
+  echo "R3 concurrency fixture requires at most one pre-existing Root; found $root_count" >&2
+  exit 1
+fi
+if [[ "$root_count" -eq 1 ]]; then
+  IFS='|' read -r root_id root_auth <<< "$root_record"
+  if [[ -z "$root_id" || -z "$root_auth" ]]; then
+    echo "R3 concurrency fixture cannot reuse an unbound pre-existing Root" >&2
+    exit 1
+  fi
+  root_owned=false
+fi
+
+root_values=""
+root_cleanup_sql=""
+if [[ "$root_owned" == true ]]; then
+  root_values="('$root_id'::uuid,'$root_auth'::uuid,'root_r3_${suffix}@eiu.edu.vn','R3 Root','$unit1'::uuid,true,true),"
+  root_cleanup_sql="
+delete from public.app_user_permissions where app_user_id='$root_id'::uuid;
+delete from public.app_user_roles where app_user_id='$root_id'::uuid;
+delete from public.app_users where app_user_id='$root_id'::uuid;"
+fi
+
 cleanup() {
   psql_exec >/dev/null 2>&1 <<SQL || true
 begin;
@@ -23,9 +53,10 @@ delete from public.interviews where interview_id in ('$int_cancel'::uuid,'$int_u
 delete from public.applications where submission_id='$submission_id'::uuid;
 delete from public.submissions where submission_id='$submission_id'::uuid;
 delete from public.candidates where candidate_id='$candidate_id'::uuid;
-delete from public.app_user_permissions where app_user_id in ('$root_id'::uuid,'$target_id'::uuid,'$dormant_id'::uuid,'$bind_user'::uuid);
-delete from public.app_user_roles where app_user_id in ('$root_id'::uuid,'$target_id'::uuid,'$dormant_id'::uuid,'$bind_user'::uuid);
-delete from public.app_users where app_user_id in ('$root_id'::uuid,'$target_id'::uuid,'$dormant_id'::uuid,'$bind_user'::uuid);
+delete from public.app_user_permissions where app_user_id in ('$target_id'::uuid,'$dormant_id'::uuid,'$bind_user'::uuid);
+delete from public.app_user_roles where app_user_id in ('$target_id'::uuid,'$dormant_id'::uuid,'$bind_user'::uuid);
+delete from public.app_users where app_user_id in ('$target_id'::uuid,'$dormant_id'::uuid,'$bind_user'::uuid);
+$root_cleanup_sql
 delete from auth.identities where user_id='$bind_auth'::uuid;
 delete from auth.users where id='$bind_auth'::uuid;
 delete from public.positions where position_id in ('$pos1'::uuid,'$pos2'::uuid);
@@ -47,7 +78,7 @@ insert into public.positions(position_id,unit_id,position_group_id,code,name_vi,
 insert into public.interview_formats(interview_format_id,code,name_vi,requires_room,requires_meeting_link,is_active)
  values('$format_id'::uuid,'R3F_${suffix}','R3 format',false,false,true);
 insert into public.app_users(app_user_id,auth_user_id,email,full_name,unit_id,is_active,is_root_admin) values
- ('$root_id'::uuid,'$root_auth'::uuid,'root_r3_${suffix}@eiu.edu.vn','R3 Root','$unit1'::uuid,true,true),
+ $root_values
  ('$target_id'::uuid,'$target_auth'::uuid,'target_r3_${suffix}@eiu.edu.vn','R3 Target','$unit1'::uuid,true,false),
  ('$dormant_id'::uuid,null,'dormant_r3_${suffix}@eiu.edu.vn','R3 Dormant','$unit1'::uuid,true,false),
  ('$bind_user'::uuid,null,'$bind_email','R3 Bind','$unit1'::uuid,true,false);
@@ -114,7 +145,7 @@ grep -q '"success": true' /tmp/r3-d-dir
 grep -q '"success": true' /tmp/r3-d-bulk
 psql_exec -qAt -c "update public.applications set unit_id='$unit1'::uuid,position_id='$pos1'::uuid,hr_owner_id='$root_id'::uuid where application_id='$application_id'::uuid"
 # Scenario 1C may create a second Application for the same Submission because the
-# bulk contract keys an existing Application by Unit/team/Position.  Interview
+# bulk contract keys an existing Application by Unit/team/Position. Interview
 # races must not be pre-empted by the independent Active-Application-owner guard.
 psql_exec -qAt -c "update public.applications set hr_owner_id='$root_id'::uuid where hr_owner_id='$target_id'::uuid and is_active=true"
 psql_exec -qAt -c "select count(*) from public.applications where hr_owner_id='$target_id'::uuid and is_active=true" | grep -qx 0
