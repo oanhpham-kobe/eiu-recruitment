@@ -1,6 +1,6 @@
 version: 1
-current_slice: SLICE-06
-current_task: TASK-S06-002
+current_slice: SLICE-07
+current_task: TASK-S07-001
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1231,3 +1231,21 @@ tasks:
       - "Governance CI 34705634726: PASS"
       - "checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
     notes: "Accepted Internal User Directory, HR RBAC & Identity Lifecycle trusted contracts. R2/R3/R4 blockers were repaired; R5 implementation review passed; final exact integration-equivalence review passed; cumulative/crossed database regressions, standalone historical bulk replay, and DB lint passed. No canonical source reopen, main mutation, PR merge, Vercel deployment, or connected Supabase migration application occurred."
+
+  TASK-S07-001:
+    title: "Email Outbox and History Trusted Persistence Contracts"
+    slice: SLICE-07
+    status: PLANNED
+    lane: LANE_A
+    depends_on: [TASK-S06-001, TASK-S06-002]
+    prompt: project_control/prompts/SLICE-07_TASK-001_v1.md
+    prompt_review_status: PENDING
+    source_reconciliation: project_control/reviews/S07_001_SOURCE_RECONCILIATION_v1.md
+    planning_baseline_sha: "26c186bae8eec12bf8b8d2571238709a6e597c24"
+    acceptance:
+      - "Trusted logical enqueue/bulk and same-transaction exact-Submission notifications preserve idempotency, TEST environment safety and production retention."
+      - "Worker-only leased claim/result persistence fences stale attempts and atomically records history/audit without promising exactly-once provider delivery."
+      - "History view/cleanup enforces separate permissions, exact parent context, TEST/WRONG classification and immutable audit."
+      - "Focused SQL/RLS/staged concurrency and retained cumulative regressions; exact independent implementation review and official CI before acceptance."
+    out_of_scope: "Provider runtime/deployment, UI, document/scan/storage workers, archive/purge, source reopen and second task."
+    notes: "Planning only. Independent prompt/source PASS followed by external audit/dispatch decision required before any Executor. No implementation branch or code started."

@@ -613,6 +613,18 @@ slice_06_external_audit:
   evidence_persistence: "Owner supplied external audit verdict in current continuation; no reviewer-native coordinate claimed."
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
+slice_07_planning:
+  status: PROMPT_REVIEW_PENDING
+  task: TASK-S07-001
+  prompt: project_control/prompts/SLICE-07_TASK-001_v1.md
+  source_reconciliation: project_control/reviews/S07_001_SOURCE_RECONCILIATION_v1.md
+  audit_hold_release_sha: "ad597826c31a0c2d1ec3deaa9a11689c63292af2"
+  planning_baseline_sha: "26c186bae8eec12bf8b8d2571238709a6e597c24"
+  source_reopen_required: false
+  implementation_started: false
+  second_task_materialized: false
+  prompt_review_work_id: S07-001-PROMPT-REVIEW-001
+
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
@@ -620,10 +632,11 @@ safe_frontier:
   execution_hold: "Owner released external audit hold for first Slice-07 task planning/prompt review only. No product Executor or second task authorized."
 
 stop_gate:
-  status: PLANNING_ONLY
+  status: WAITING_INDEPENDENT_PROMPT_REVIEW
   type: FIRST_SLICE_07_PROMPT_GATE
+  work_id: S07-001-PROMPT-REVIEW-001
   source_reopen_required: false
-  resume_on: "Resolve canonical frontier, materialize only first task, obtain independent prompt PASS, then stop for ChatGPT implementation-dispatch decision."
+  resume_on: "Obtain independent prompt PASS, then STOP for ChatGPT audit and implementation-dispatch decision."
 
-next_action: "Reconcile current Slice-07 sources and accepted implementation; materialize the minimum first task only. No product implementation."
+next_action: "Validate/freeze first-task planning baseline, obtain exact official CI and independent prompt/source review. No implementation Executor or second task."
 
