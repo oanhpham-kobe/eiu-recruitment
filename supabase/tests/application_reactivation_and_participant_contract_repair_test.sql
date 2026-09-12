@@ -6,7 +6,7 @@ do $$
 <<test>>
 declare
   s text := substr(gen_random_uuid()::text,1,8);
-  root_auth uuid := gen_random_uuid(); root_user uuid;
+  root_auth uuid; root_user uuid;
   manage_auth uuid := gen_random_uuid(); manage_user uuid;
   view_auth uuid := gen_random_uuid(); view_user uuid;
   participant_auth uuid := gen_random_uuid(); participant_user uuid;
@@ -51,8 +51,19 @@ begin
   select room_id into room2 from public.rooms where code='T005_R2_'||s;
   insert into public.interview_formats(code,name_vi,requires_room) values ('T005_F_'||s,'T005 In Person',true) returning public.interview_formats.interview_format_id into format_id;
 
+  select app_user_id,auth_user_id into root_user,root_auth
+  from public.app_users
+  where is_root_admin and is_active and auth_user_id is not null
+  order by app_user_id
+  limit 1;
+  if root_user is null then
+    root_auth:=gen_random_uuid();
+    insert into public.app_users(auth_user_id,full_name,email,is_active,is_root_admin)
+    values(root_auth,'T005 Root','t005_root_'||s||'@eiu.edu.vn',true,true)
+    returning app_user_id into root_user;
+  end if;
+
   insert into public.app_users(auth_user_id,full_name,email,is_active,is_root_admin) values
-    (root_auth,'T005 Root','t005_root_'||s||'@eiu.edu.vn',true,true),
     (manage_auth,'T005 Manage','t005_manage_'||s||'@eiu.edu.vn',true,false),
     (view_auth,'T005 View','t005_view_'||s||'@eiu.edu.vn',true,false),
     (participant_auth,'T005 Participant','t005_participant_'||s||'@eiu.edu.vn',true,false),
@@ -60,7 +71,6 @@ begin
     (manage_view_auth,'T005 Manage View','t005_manage_view_'||s||'@eiu.edu.vn',true,false),
     (interviewer_auth,'T005 Interviewer','t005_interviewer_'||s||'@eiu.edu.vn',true,false),
     (inactive_auth,'T005 Inactive','t005_inactive_'||s||'@eiu.edu.vn',false,false);
-  select app_user_id into root_user from public.app_users where auth_user_id=root_auth;
   select app_user_id into manage_user from public.app_users where auth_user_id=manage_auth;
   select app_user_id into view_user from public.app_users where auth_user_id=view_auth;
   select app_user_id into participant_user from public.app_users where auth_user_id=participant_auth;
