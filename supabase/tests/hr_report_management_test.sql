@@ -86,6 +86,11 @@ begin
   values (v_hr_auth, 'S05-002 HR', 's05002_hr_' || v_suffix || '@eiu.edu.vn', true)
   returning app_user_id into v_hr;
 
+  -- S06-002 canonical active-Application owner eligibility requires the
+  -- fixture HR owner to hold the HR role before active Applications exist.
+  insert into public.app_user_roles(app_user_id, role_code)
+  values (v_hr, 'HR');
+
   insert into public.app_users(auth_user_id, full_name, email, is_active)
   values (v_status_auth, 'S05-002 Status Only', 's05002_status_' || v_suffix || '@eiu.edu.vn', true)
   returning app_user_id into v_status_user;
