@@ -25,6 +25,9 @@ psql_exec() {
 psql_exec <<SQL
 insert into public.app_users(app_user_id, auth_user_id, email, full_name, is_active)
 values ('$user_id'::uuid, '$auth_id'::uuid, 's06001_format_race_${suffix}@eiu.edu.vn', 'S06 Format Race HR', true);
+insert into public.app_user_roles(app_user_id, role_code)
+values ('$user_id'::uuid, 'HR')
+on conflict do nothing;
 insert into public.app_user_permissions(app_user_id, permission_code)
 values ('$user_id'::uuid, 'master_data.manage');
 
@@ -139,6 +142,7 @@ delete from public.position_groups where position_group_id = '$group_id'::uuid;
 delete from public.organizational_units where unit_id = '$unit_id'::uuid;
 delete from public.interview_formats where interview_format_id = '$format_id'::uuid;
 delete from public.app_user_permissions where app_user_id = '$user_id'::uuid;
+delete from public.app_user_roles where app_user_id = '$user_id'::uuid;
 delete from public.app_users where app_user_id = '$user_id'::uuid;
 SQL
 
