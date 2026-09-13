@@ -157,13 +157,25 @@ $$;
 
 create or replace function public.complete_document_scan_attempt(p_document_scan_request_id uuid,p_attempt_id uuid,p_fencing_token uuid,p_worker_id text,p_outcome text,p_error_code text default null)
 returns jsonb language plpgsql security definer set search_path='' as $$
-declare v_q public.document_scan_requests%rowtype; v_a private.document_scan_attempts%rowtype; v_now timestamptz:=clock_timestamp(); v_retry boolean;
+declare v_q public.document_scan_requests%rowtype; v_a private.document_scan_attempts%rowtype; v_session public.candidate_form_sessions%rowtype;
+ v_res public.upload_reservations%rowtype; v_now timestamptz:=clock_timestamp(); v_retry boolean;
 begin
  if p_outcome not in ('CLEAN','INFECTED','ERROR') or p_worker_id is null then return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR'); end if;
+ -- Match cancellation's session -> reservation -> request lock order before
+ -- checking a fenced completion; never hold the request while waiting on a
+ -- reservation whose cancellation trigger will take that request.
+ select s.* into v_session from public.candidate_form_sessions s
+ join public.document_scan_requests q on q.candidate_form_session_id=s.candidate_form_session_id
+ where q.document_scan_request_id=p_document_scan_request_id for update of s;
+ if not found then return jsonb_build_object('success',false,'error_code','STALE_CONTEXT'); end if;
+ select r.* into v_res from public.upload_reservations r
+ join public.document_scan_requests q on q.upload_reservation_id=r.upload_reservation_id
+ where q.document_scan_request_id=p_document_scan_request_id for update of r;
+ if not found then return jsonb_build_object('success',false,'error_code','STALE_CONTEXT'); end if;
  select * into v_q from public.document_scan_requests where document_scan_request_id=p_document_scan_request_id for update;
  select * into v_a from private.document_scan_attempts where document_scan_attempt_id=p_attempt_id and document_scan_request_id=p_document_scan_request_id for update;
  if not found or v_a.worker_id is distinct from p_worker_id or v_a.fencing_token is distinct from p_fencing_token or v_q.status_code<>'PROCESSING' or v_q.current_attempt_id is distinct from p_attempt_id or v_q.current_fencing_token is distinct from p_fencing_token or v_q.leased_until<=v_now then return jsonb_build_object('success',false,'error_code','STALE_ATTEMPT'); end if;
- if not exists(select 1 from public.upload_reservations r join public.candidate_form_sessions s on s.candidate_form_session_id=r.candidate_form_session_id where r.upload_reservation_id=v_q.upload_reservation_id and r.candidate_form_session_id=v_q.candidate_form_session_id and r.status_code='UPLOADED' and r.malware_scan_status='PENDING' and r.expires_at>v_now and r.temp_bucket=v_q.bucket_name and r.temp_path=v_q.object_path and r.checksum_sha256=v_q.checksum_sha256 and s.status_code='OPEN' and s.expires_at>v_now) then
+ if v_res.candidate_form_session_id is distinct from v_q.candidate_form_session_id or v_res.status_code<>'UPLOADED' or v_res.malware_scan_status<>'PENDING' or v_res.expires_at<=v_now or v_res.temp_bucket is distinct from v_q.bucket_name or v_res.temp_path is distinct from v_q.object_path or v_res.checksum_sha256 is distinct from v_q.checksum_sha256 or v_session.status_code<>'OPEN' or v_session.expires_at<=v_now then
    update private.document_scan_attempts set completed_at=v_now,outcome_code='STALE',error_code='STALE_CONTEXT' where document_scan_attempt_id=p_attempt_id;
    return jsonb_build_object('success',false,'error_code','STALE_CONTEXT');
  end if;
@@ -176,9 +188,9 @@ begin
    update public.document_scan_requests set status_code='INFECTED',leased_until=null,updated_at=v_now where document_scan_request_id=v_q.document_scan_request_id;
  else
    v_retry:=v_q.attempt_no<3;
-   update public.document_scan_requests set status_code=case when v_retry then 'ERROR' else 'ERROR' end,leased_until=null,next_attempt_at=case when v_retry then v_now+(least(300,30*(2^v_q.attempt_no))||' seconds')::interval else 'infinity'::timestamptz end,updated_at=v_now where document_scan_request_id=v_q.document_scan_request_id;
+   update public.document_scan_requests set status_code='ERROR',leased_until=null,next_attempt_at=case when v_retry then v_now+(least(300,30*(2^v_q.attempt_no))||' seconds')::interval else 'infinity'::timestamptz end,updated_at=v_now where document_scan_request_id=v_q.document_scan_request_id;
  end if;
-  perform private.document_scan_audit('DOCUMENT_SCAN_RESULT',v_q.document_scan_request_id,case when p_outcome='ERROR' then 'FAILED' else 'SUCCESS' end);
+ perform private.document_scan_audit('DOCUMENT_SCAN_RESULT',v_q.document_scan_request_id,case when p_outcome='ERROR' then 'FAILED' else 'SUCCESS' end);
  return jsonb_build_object('success',true,'data',jsonb_build_object('status_code',p_outcome));
 end;
 $$;
