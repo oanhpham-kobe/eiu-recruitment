@@ -97,11 +97,24 @@ alt_request="$(jq -c --arg i "{${interview}}" '.interview_id=$i' <<<"$request")"
 participant_bulk_key="$(uuidgen)"
 participant_bulk_sql="begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.bulk_enqueue_email(jsonb_build_array('$alt_request'::jsonb),'$participant_bulk_key'); commit"
 participant_sql="begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.enqueue_email('$request','$participant_key'); commit"
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select 1 from public.interviews where interview_id='$interview' for update; select pg_sleep(1); update public.interview_participants set is_current=false,removed_at=clock_timestamp() where interview_participant_id='$participant'; commit" >/tmp/s07-participant-holder.txt 2>/tmp/s07-participant-holder.err & p1=$!
-sleep 0.1
-participant_bulk_result="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$participant_bulk_sql" 2>/tmp/s07-participant-bulk.err | tr -d '\r' | tail -n 1)"
+docker exec -e PGAPPNAME="s07-holder-${suffix}" -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select 1 from public.interviews where interview_id='$interview' for update; select pg_advisory_xact_lock(hashtextextended('s07-ready:${suffix}',0)); select pg_sleep(5); update public.interview_participants set is_current=false,removed_at=clock_timestamp() where interview_participant_id='$participant'; commit" >/tmp/s07-participant-holder.txt 2>/tmp/s07-participant-holder.err & p1=$!
+holder_ready=false
+for _ in {1..50}; do
+  if [[ "$(docker exec -i "$container_name" psql -qAt -U postgres -d postgres -c "select count(*) from pg_stat_activity a join pg_locks l on l.pid=a.pid where a.application_name='s07-holder-${suffix}' and l.locktype='advisory' and l.granted")" == "1" ]]; then holder_ready=true; break; fi
+  sleep 0.1
+done
+if [[ "$holder_ready" != true ]]; then echo 'participant holder readiness timeout' >&2; exit 1; fi
+docker exec -e PGAPPNAME="s07-bulk-${suffix}" -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$participant_bulk_sql" >/tmp/s07-participant-bulk.txt 2>/tmp/s07-participant-bulk.err & p2=$!
+bulk_blocked=false
+for _ in {1..50}; do
+  if [[ "$(docker exec -i "$container_name" psql -qAt -U postgres -d postgres -c "select count(*) from pg_stat_activity where application_name='s07-bulk-${suffix}' and wait_event_type='Lock' and query like '%bulk_enqueue_email%'")" == "1" ]]; then bulk_blocked=true; break; fi
+  sleep 0.1
+done
+if [[ "$bulk_blocked" != true ]]; then echo 'participant bulk did not block behind held Interview lock' >&2; kill "$p1" "$p2" 2>/dev/null || true; exit 1; fi
 participant_result="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$participant_sql" 2>/tmp/s07-participant-enqueue.err | tr -d '\r' | tail -n 1)"
-set +e; wait "$p1"; participant_status=$?; set -e
+set +e; wait "$p1"; participant_status=$?; wait "$p2"; bulk_status=$?; set -e
+if [[ "$participant_status" -ne 0 || "$bulk_status" -ne 0 ]]; then echo "participant barrier failure holder=$participant_status bulk=$bulk_status" >&2; cat /tmp/s07-participant-holder.txt /tmp/s07-participant-holder.err /tmp/s07-participant-bulk.txt /tmp/s07-participant-bulk.err >&2; exit 1; fi
+participant_bulk_result="$(tr -d '\r' </tmp/s07-participant-bulk.txt | tail -n 1)"
 if [[ -s /tmp/s07-participant-bulk.err ]]; then echo 'S07 participant bulk stderr:' >&2; cat /tmp/s07-participant-bulk.err >&2; fi
 if ! jq -e '((.failed | length) == 1) and (.failed[0].error_code == "STALE_PREVIEW" or .failed[0].error_code == "FORBIDDEN")' <<<"$participant_bulk_result" >/dev/null; then
   echo 'participant change must invalidate brace-spelled bulk enqueue' >&2; exit 1;
