@@ -1279,8 +1279,15 @@ implementation_evidence:
       finding: "R1: existing upload consumer pending-to-staged continuation was unspecified."
       evidence_persistence: "agent://S07PromptReviewer report; no separate evidence branch created."
     prompt_repair_scope: "Preserve server-validated ADD/REPLACE intent through pending scan work; discriminate pending/staged results; stage exactly once after trusted CLEAN; safe pending cancellation/expiry."
+    planning_review_baseline: "checkpoint/pre-S07-002-002 @ c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
+    governance_ci: "34759700679 PASS @ c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
+    impact_ci: "34759700673 PASS @ c26c7bf183949117fe4901a62bf9e9d8a42c1dbb; Resolve impacted verification PASS; Web and Database jobs skipped"
     rereview:
       work_id: S07-002-PROMPT-REVIEW-001-R2
       reviewer: eiu-reviewer
-      status: PENDING
-      baseline_ref: checkpoint/pre-S07-002-002
+      status: PASS
+      reviewed_sha: "c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
+      source_reopen_required: false
+      result: PASS
+      findings: NONE
+      evidence_persistence: "OMP task result S07PromptR2Reviewer; reviewer assignment was read-only, with no GitHub-visible review artifact."
