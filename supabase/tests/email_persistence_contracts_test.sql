@@ -42,6 +42,9 @@ begin
    assert (select count(*)=1 from public.email_history where attempt_id=v_attempt), 'repeat completion does not duplicate history';
  end if;
  -- Cleanup classification and permission surface are explicit and bounded.
+ insert into public.app_user_permissions(app_user_id,permission_code)
+ values(v_user,'emails.history_view'),(v_user,'emails.history_delete'),(v_user,'submissions.view');
+ perform set_config('request.jwt.claim.sub',v_auth::text,true);
  select email_history_id into v_hist from public.email_history where attempt_id=v_attempt limit 1;
  if v_hist is not null then
    v_result:=public.delete_email_history(v_hist,'WRONG_RECORD','S07 fixture cleanup');
