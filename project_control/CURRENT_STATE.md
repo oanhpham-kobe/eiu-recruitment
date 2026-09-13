@@ -4,19 +4,15 @@
 
 ## TASK-S07-001 accepted
 
-`TASK-S07-001 — Email Outbox and History Trusted Persistence Contracts` is accepted at exact integration SHA `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
+`TASK-S07-001 — Email Outbox and History Trusted Persistence Contracts` remains accepted at application/checkpoint SHA `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
 
-- Independent repair re-review: PASS; source reopen not required; evidence: `project_control/reviews/S07_001_IMPLEMENTATION_REVIEW_8397be3_v1.md`.
-- Focused clean-replay verifier: `34735225520` PASS — contract SQL and staged concurrency 3/3.
-- Candidate Integration CI: `34735451324` PASS.
-- Serialized Integration CI: `34735656146` PASS.
-- Governance CI: `34735941819` PASS.
 - Accepted checkpoint: `checkpoint/S07-001-accepted-001` at `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
-- Reviewed application SHA, serialized Integration CI SHA, and accepted checkpoint SHA are identical: `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
-- Current control-plane reporting HEAD: `d344d53e49ecb8698f8f3a2dc6c69a2824d1e7d2`; Governance CI `34736085689` PASS. This reporting coordinate is distinct from the accepted application/checkpoint SHA.
+- External ChatGPT final acceptance audit: PASS, Owner-transported; source/task reopen is false and frontier release is approved. No `eiu-reviewer` evidence is claimed for that external audit.
+- Current reporting HEAD: `72b0e8b44601d8ec290e22f194357c55f32509f2`; Governance CI `34758681936` PASS. This reporting coordinate is distinct from the accepted application/checkpoint SHA.
+- S07-001 implementation lifecycle is closed. No Executor is active; the next task is not assumed pending canonical Frontier Resolution.
 
 No real provider delivery, production email, provider/SMTP credentials, document/scan worker, main mutation, PR merge, deployment, or connected Supabase action occurred.
 
-## Stop boundary
+## Prompt-gate boundary
 
-TASK-S07-001 is accepted. Stop before materializing or dispatching any next S07 task. Return this packet to ChatGPT for TASK-S07-001 acceptance audit and next-frontier decision.
+Resolve exactly one next Slice-07 task from canonical authority, freeze and independently review its prompt, then stop before implementation dispatch.

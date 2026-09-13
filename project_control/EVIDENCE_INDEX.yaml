@@ -1225,6 +1225,13 @@ implementation_evidence:
     accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
     reviewed_application_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
     serialized_ci_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+    external_acceptance_audit:
+      reviewer: EXTERNAL_CHATGPT
+      transport: OWNER_MESSAGE
+      result: PASS
+      source_reopen_required: false
+      frontier_release: APPROVED
+      evidence_persistence: "Owner-transported external audit only; no reviewer-native evidence is claimed."
     focused_verifier:
       run: "34735225520"
       branch: verify/S07-001-focused-8397be3-v1

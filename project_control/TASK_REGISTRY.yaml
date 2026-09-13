@@ -1245,6 +1245,13 @@ tasks:
     planning_baseline_sha: "26c186bae8eec12bf8b8d2571238709a6e597c24"
     accepted_checkpoint: checkpoint/S07-001-accepted-001
     accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+    external_acceptance_audit:
+      reviewer: EXTERNAL_CHATGPT
+      transport: OWNER_MESSAGE
+      result: PASS
+      source_reopen_required: false
+      frontier_release: APPROVED
+      evidence_persistence: "Owner-transported external audit only; no reviewer-native evidence is claimed."
     acceptance:
       - "Trusted logical enqueue/bulk and same-transaction exact-Submission notifications preserve idempotency, TEST environment safety and production retention."
       - "Worker-only leased claim/result persistence fences stale attempts and atomically records history/audit without promising exactly-once provider delivery."

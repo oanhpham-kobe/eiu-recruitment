@@ -47,8 +47,8 @@ integration:
   last_verified_control_plane_sha: "44f1d1d22d09a3b8bb0855324b6631e16256cefc"
   last_verified_control_plane_integration_ci_run: "34736028874"
   last_verified_control_plane_governance_ci_run: "34736028909"
-  current_reporting_head: "d344d53e49ecb8698f8f3a2dc6c69a2824d1e7d2"
-  current_reporting_governance_ci_run: "34736085689"
+  current_reporting_head: "72b0e8b44601d8ec290e22f194357c55f32509f2"
+  current_reporting_governance_ci_run: "34758681936"
   last_task_acceptance_attempt_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
   last_task_acceptance_integration_ci_run: "34735656146"
   last_task_acceptance_integration_ci_result: PASS
@@ -624,45 +624,33 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: IMPLEMENTATION_DISPATCH_APPROVED
-  task: TASK-S07-001
-  prompt: project_control/prompts/SLICE-07_TASK-001_v1.md
-  source_reconciliation: project_control/reviews/S07_001_SOURCE_RECONCILIATION_v1.md
-  audit_hold_release_sha: "ad597826c31a0c2d1ec3deaa9a11689c63292af2"
-  planning_baseline_sha: "26c186bae8eec12bf8b8d2571238709a6e597c24"
-  source_reopen_required: false
-  implementation_started: true
-  second_task_materialized: false
-  prompt_review_work_id: S07-001-PROMPT-REVIEW-001
-  prompt_review_sha: "14d7492c34c7fd1dcbeb96f28ada9515c1448ec7"
-  prompt_review_result: PASS
-  reviewer: eiu-reviewer
-  reviewer_native_evidence_persistence: UNAVAILABLE
-  transported_review_path: project_control/reviews/S07_001_PROMPT_REVIEW_14d7492_v1.md
-  integration_ci_run: "34725394415"
-  governance_ci_run: "34725394349"
-  exact_ci_head_sha: "14d7492c34c7fd1dcbeb96f28ada9515c1448ec7"
-  exact_ci_result: PASS
-  external_dispatch_approval:
+  status: ACCEPTANCE_CLOSED_AWAITING_FRONTIER_RESOLUTION
+  accepted_task: TASK-S07-001
+  accepted_checkpoint: checkpoint/S07-001-accepted-001
+  accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+  implementation_lifecycle: CLOSED
+  external_acceptance_audit:
     reviewer: EXTERNAL_CHATGPT
     transport: OWNER_MESSAGE
     result: PASS
-    decision: APPROVED
+    audited_reporting_sha: "72b0e8b44601d8ec290e22f194357c55f32509f2"
     source_reopen_required: false
-    verified_prompt_blob: "2c83c75216db2cd609e2e1adf018d07f111650ff"
-    evidence_persistence: "Owner supplied external audit and dispatch approval in current continuation; no reviewer-native coordinate claimed."
+    frontier_release: APPROVED
+    evidence_persistence: "Owner-transported external audit only; no reviewer-native evidence is claimed."
+  next_task_assumed: false
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "Only TASK-S07-001 lifecycle authorized; STOP after acceptance before any next task."
+  frontier_resolution: REQUIRED
+  execution_hold: null
 
 stop_gate:
-  status: RELEASED_FOR_TASK_LIFECYCLE
-  type: TASK_S07_001_ACCEPTANCE_BOUNDARY
+  status: FRONTIER_RESOLUTION_REQUIRED
+  type: POST_ACCEPTANCE_PROMPT_GATE
   source_reopen_required: false
-  resume_on: "Implement reviewed task through independent review, serialization, exact CI, final equivalence and acceptance; then STOP for ChatGPT audit."
+  resume_on: "Resolve one canonical next Slice-07 task, freeze its prompt-review baseline, and stop before implementation dispatch."
 
-next_action: "Execute only TASK-S07-001 reviewed prompt. No provider runtime, real email, connected migrations, UI or next task."
+next_action: "Resolve the next Slice-07 prompt gate from canonical authority; do not start an Executor or materialize a second task."
 
