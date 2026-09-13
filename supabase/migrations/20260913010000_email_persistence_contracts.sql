@@ -115,7 +115,11 @@ begin
  perform 1 from public.applications a where a.application_id in
    (select i.application_id from public.interviews i where i.interview_id=any(p_interviews))
    order by a.application_id for share;
- perform 1 from public.interviews i where i.interview_id=any(p_interviews) order by i.interview_id for update;
+ -- Serialize schedule/participant writers without excluding history's FK KEY
+ -- SHARE locks. Worker result/reclaim holds outbox first; authorization holds
+ -- context first. FOR UPDATE here would create their inverse-lock deadlock.
+ -- NO KEY UPDATE still conflicts with every accepted Interview writer lock.
+ perform 1 from public.interviews i where i.interview_id=any(p_interviews) order by i.interview_id for no key update;
  perform 1 from public.submissions s where s.submission_id in
    (select a.submission_id from public.applications a join public.interviews i on i.application_id=a.application_id
     where i.interview_id=any(p_interviews)) order by s.submission_id for share;
@@ -363,28 +367,46 @@ begin
    return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR'); end if;
  if not exists(select 1 from private.email_configuration where singleton and not delivery_paused
    and (delivery_not_before is null or delivery_not_before<=v_now)) then return jsonb_build_object('success',true,'data','[]'::jsonb); end if;
- for v_o in select * from public.email_outbox where request_fingerprint is not null and
-   (((status_code='QUEUED' or (status_code='FAILED' and next_attempt_at is not null))
-      and attempt_no<3 and coalesce(next_attempt_at,v_now)<=v_now)
-     or (status_code='SENDING' and locked_until<=v_now))
-   order by coalesce(next_attempt_at,created_at),email_outbox_id limit p_limit for update skip locked loop
-   if v_o.status_code='SENDING' then
-     perform private.finish_email_attempt(v_o,'ABANDONED',null,'LEASE_EXPIRED',jsonb_build_object('success',false,'error_code','LEASE_EXPIRED'));
-     if v_o.attempt_no>=3 then
-       update public.email_outbox set status_code='FAILED',next_attempt_at=null,locked_at=null,locked_until=null,worker_id=null,
-         last_error='RETRY_EXHAUSTED',provider_error_code='RETRY_EXHAUSTED' where email_outbox_id=v_o.email_outbox_id;
-       continue;
-     end if;
-   end if;
-   v_token:=gen_random_uuid();
-   update public.email_outbox set status_code='SENDING',attempt_no=attempt_no+1,attempt_id=v_token,
-     locked_at=v_now,locked_until=v_now+interval '2 minutes',worker_id=p_worker_id,next_attempt_at=null
-   where email_outbox_id=v_o.email_outbox_id returning * into v_o;
-   insert into private.email_attempts(attempt_id,email_outbox_id,attempt_no,worker_id,claimed_at,locked_until,status_code)
-   values(v_token,v_o.email_outbox_id,v_o.attempt_no,p_worker_id,v_now,v_o.locked_until,'SENDING');
-   v_items:=v_items||jsonb_build_array(jsonb_build_object('email_outbox_id',v_o.email_outbox_id,'attempt_id',v_token,
-     'attempt_no',v_o.attempt_no,'locked_until',v_o.locked_until));
- end loop;
+-- Lock order is context (Interview FK parent) before outbox for every worker
+-- operation. A per-outbox advisory try-lock replaces FOR UPDATE SKIP LOCKED:
+-- it keeps competing claims nonblocking without taking the outbox lock before
+-- the Interview FK parent. The row is re-read after the parent lock, so stale
+-- candidates are skipped without reversing the authorization order.
+for v_o in select * from public.email_outbox where request_fingerprint is not null and
+  (((status_code='QUEUED' or (status_code='FAILED' and next_attempt_at is not null))
+     and attempt_no<3 and coalesce(next_attempt_at,v_now)<=v_now)
+    or (status_code='SENDING' and locked_until<=v_now))
+  order by interview_id nulls first,email_outbox_id limit p_limit loop
+  if not pg_try_advisory_xact_lock(hashtextextended('email-outbox:'||v_o.email_outbox_id::text,0)) then
+    continue;
+  end if;
+  if v_o.interview_id is not null then
+    perform private.lock_email_contexts(array[v_o.interview_id],null);
+  end if;
+  select * into v_o from public.email_outbox where email_outbox_id=v_o.email_outbox_id for update;
+  if not found or not (v_o.request_fingerprint is not null and
+    (((v_o.status_code='QUEUED' or (v_o.status_code='FAILED' and v_o.next_attempt_at is not null))
+       and v_o.attempt_no<3 and coalesce(v_o.next_attempt_at,v_now)<=v_now)
+      or (v_o.status_code='SENDING' and v_o.locked_until<=v_now))) then
+    continue;
+  end if;
+  if v_o.status_code='SENDING' then
+    perform private.finish_email_attempt(v_o,'ABANDONED',null,'LEASE_EXPIRED',jsonb_build_object('success',false,'error_code','LEASE_EXPIRED'));
+    if v_o.attempt_no>=3 then
+      update public.email_outbox set status_code='FAILED',next_attempt_at=null,locked_at=null,locked_until=null,worker_id=null,
+        last_error='RETRY_EXHAUSTED',provider_error_code='RETRY_EXHAUSTED' where email_outbox_id=v_o.email_outbox_id;
+      continue;
+    end if;
+  end if;
+  v_token:=gen_random_uuid();
+  update public.email_outbox set status_code='SENDING',attempt_no=attempt_no+1,attempt_id=v_token,
+    locked_at=v_now,locked_until=v_now+interval '2 minutes',worker_id=p_worker_id,next_attempt_at=null
+  where email_outbox_id=v_o.email_outbox_id returning * into v_o;
+  insert into private.email_attempts(attempt_id,email_outbox_id,attempt_no,worker_id,claimed_at,locked_until,status_code)
+  values(v_token,v_o.email_outbox_id,v_o.attempt_no,p_worker_id,v_now,v_o.locked_until,'SENDING');
+  v_items:=v_items||jsonb_build_array(jsonb_build_object('email_outbox_id',v_o.email_outbox_id,'attempt_id',v_token,
+    'attempt_no',v_o.attempt_no,'locked_until',v_o.locked_until));
+end loop;
  return jsonb_build_object('success',true,'data',v_items);
 end;
 $$;
@@ -395,9 +417,10 @@ begin
  select * into v_o from public.email_outbox where email_outbox_id=p_email_outbox_id;
  if not found then return jsonb_build_object('success',false,'error_code','STALE_ATTEMPT'); end if;
  if v_o.interview_id is not null then perform private.lock_email_contexts(array[v_o.interview_id],null); end if;
- select * into v_o from public.email_outbox where email_outbox_id=p_email_outbox_id for update;
- if v_o.status_code<>'SENDING' or v_o.attempt_id is distinct from p_attempt_id or v_o.worker_id is distinct from p_worker_id
-   or v_o.locked_until<=clock_timestamp() then return jsonb_build_object('success',false,'error_code','STALE_ATTEMPT'); end if;
+select * into v_o from public.email_outbox where email_outbox_id=p_email_outbox_id for update;
+if not found then return jsonb_build_object('success',false,'error_code','STALE_ATTEMPT'); end if;
+if v_o.status_code<>'SENDING' or v_o.attempt_id is distinct from p_attempt_id or v_o.worker_id is distinct from p_worker_id
+  or v_o.locked_until<=clock_timestamp() then return jsonb_build_object('success',false,'error_code','STALE_ATTEMPT'); end if;
  if v_o.interview_id is not null then
    begin
      v_snapshot:=private.email_snapshot(v_o.email_type,v_o.submission_id,v_o.application_id,v_o.interview_id);
@@ -432,9 +455,14 @@ begin
    (p_outcome<>'SENT' and (p_provider_message_id is not null or p_error_code is null or p_error_code not in
       ('PROVIDER_TEMPORARY','PROVIDER_REJECTED','RATE_LIMITED','NETWORK_ERROR'))) then
    return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR'); end if;
- select * into v_o from public.email_outbox where email_outbox_id=p_email_outbox_id for update;
- select * into v_a from private.email_attempts where attempt_id=p_attempt_id and email_outbox_id=p_email_outbox_id;
- if not found or v_a.worker_id is distinct from p_worker_id then return jsonb_build_object('success',false,'error_code','STALE_ATTEMPT'); end if;
+-- Context is locked before the outbox row, matching authorization and reclaim.
+select * into v_o from public.email_outbox where email_outbox_id=p_email_outbox_id;
+if not found then return jsonb_build_object('success',false,'error_code','STALE_ATTEMPT'); end if;
+if v_o.interview_id is not null then perform private.lock_email_contexts(array[v_o.interview_id],null); end if;
+select * into v_o from public.email_outbox where email_outbox_id=p_email_outbox_id for update;
+if not found then return jsonb_build_object('success',false,'error_code','STALE_ATTEMPT'); end if;
+select * into v_a from private.email_attempts where attempt_id=p_attempt_id and email_outbox_id=p_email_outbox_id;
+if not found or v_a.worker_id is distinct from p_worker_id then return jsonb_build_object('success',false,'error_code','STALE_ATTEMPT'); end if;
  v_result:=jsonb_build_object('success',true,'data',jsonb_build_object('outcome',p_outcome,'provider_message_id',p_provider_message_id,'error_code',p_error_code));
  if v_a.finished_at is not null then
    if v_a.result_payload=v_result then return v_result; end if;
