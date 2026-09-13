@@ -1308,7 +1308,8 @@ tasks:
       checkpoint: checkpoint/S07-002-accepted-001
       candidate_review: "PASS (S07-002-IMPLEMENTATION-REVIEW-001-R9)"
       integration_review: "PASS (S07-002-INTEGRATION-EQUIVALENCE-REVIEW-001)"
-      exact_integration_ci: "34764835368 PASS"
+      exact_integration_ci: "34765432362 PASS @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; full_verification=true; resolver, Web, Database and both S07-002 DB gates PASS"
+      prior_incomplete_integration_ci: "34764835368 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; resolver PASS; Web/Database skipped; insufficient final acceptance domain verification"
       source_reopen_required: false
       external_boundaries:
         scanner_provider_runtime: NOT_IMPLEMENTED

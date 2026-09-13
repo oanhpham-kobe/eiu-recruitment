@@ -1319,7 +1319,12 @@ implementation_evidence:
     ci:
       candidate_database_and_web: "34764176441 PASS @ c9f8f3abeff27685cd32bec4c3abbb3fcbe8ee60"
       candidate_web_after_reconciliation_repair: "34764532102 PASS @ f0dc2312028a6e3edc7d3a99e532976b34877dfa"
-      exact_integration: "34764835368 PASS @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; Web/Database jobs skipped by impact resolver"
+      prior_incomplete_exact_integration: "34764835368 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; resolver PASS; Web/Database skipped; insufficient final acceptance domain verification"
+      exact_integration: "34765432362 PASS @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; checkpoint tag dispatch; full_verification=true; resolver, Web and Database PASS"
+      document_scan_protocol_regression: "PASS (34765432362, Database job 103745456974)"
+      document_scan_claim_and_fencing_concurrency: "PASS (34765432362, Database job 103745456974)"
+      checkpoint_tag_object_sha: "105506f6e68e1acb4e1b0cf732bbe5beb2b66136"
+      checkpoint_peeled_target_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
     external_boundaries:
       scanner_provider_runtime: NOT_IMPLEMENTED
       physical_storage_cleanup_worker: NOT_IMPLEMENTED

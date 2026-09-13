@@ -39,7 +39,7 @@ integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
   last_verified_application_checkpoint: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
-  last_verified_application_ci_run: "34764835368"
+  last_verified_application_ci_run: "34765432362"
   accepted_checkpoint: checkpoint/S07-002-accepted-001
   accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
@@ -50,8 +50,10 @@ integration:
   current_reporting_head: DIRECT_GIT_RUNTIME
   current_reporting_classification: GOVERNANCE_ONLY
   last_task_acceptance_attempt_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
-  last_task_acceptance_integration_ci_run: "34764835368"
+  last_task_acceptance_integration_ci_run: "34765432362"
   last_task_acceptance_integration_ci_result: PASS
+  acceptance_domain_verification: "34765432362 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; full_verification=true; resolver, Web, Database and both S07-002 DB gates PASS"
+  prior_incomplete_acceptance_ci: "34764835368 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; resolver PASS; Web/Database skipped; insufficient final acceptance domain verification"
   last_task_acceptance_governance_ci_run: NOT_RUN
   last_task_acceptance_governance_ci_result: NOT_APPLICABLE
   current_prompt_review_target_sha: "c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
@@ -122,7 +124,7 @@ last_accepted_task:
   evidence:
     - "implementation_review: PASS (S07-002-IMPLEMENTATION-REVIEW-001-R9 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed)"
     - "integration_equivalence_review: PASS (S07-002-INTEGRATION-EQUIVALENCE-REVIEW-001 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed)"
-    - "github_ci: VERIFIED (Integration CI 34764835368 PASS)"
+    - "github_ci: VERIFIED (Integration CI 34765432362 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; resolver, Web, Database and both S07-002 DB gates PASS)"
 
 previous_accepted_tasks:
   TASK-S06-002: {commit: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"}
