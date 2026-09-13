@@ -632,12 +632,21 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: S07_002_ACCEPTED
+  status: FRONTIER_RECONCILIATION_AUTHORIZED
   accepted_checkpoint: checkpoint/S07-002-accepted-001
   accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
   accepted_task: TASK-S07-002
   accepted_scope: "Durable document scan request and result-fencing trusted contracts."
   source_reopen_required: false
+  lifecycle: CLOSED
+  external_final_acceptance_audit:
+    reviewer: EXTERNAL_CHATGPT
+    transport: OWNER_MESSAGE
+    decision: FINAL_ACCEPTANCE_PASS_AND_FRONTIER_RELEASE
+    accepted_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
+    audited_reporting_head: "37b01169394378bf666a6baa440a2431407b22d6"
+    source_reopen_required: false
+    evidence_persistence: "Owner-transported message; no reviewer-native persistence claimed."
   external_boundaries:
     scanner_provider_runtime: NOT_IMPLEMENTED
     physical_storage_cleanup_worker: NOT_IMPLEMENTED
@@ -646,15 +655,15 @@ slice_07_planning:
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "No next Slice-07 task is authorized by this acceptance."
+    - "Next task is not yet selected; canonical reconciliation authorized."
   materialization_frontier: []
-  execution_hold: "Stop after S07-002 acceptance; do not materialize another Slice-07 task."
+  execution_hold: "Implementation prohibited; continuation authorized only through one next Slice-07 prompt gate."
 
 stop_gate:
   status: ACTIVE
-  type: TASK_S07_002_ACCEPTED
+  type: NEXT_SLICE_07_PROMPT_GATE_ONLY
   source_reopen_required: false
-  resume_on: "Explicit Owner authorization."
+  resume_on: "External prompt-gate audit and explicit implementation-dispatch decision."
 
-next_action: "Stop after S07-002 acceptance; no next frontier is authorized."
+next_action: "Reconcile remaining Slice-07 authority, materialize one task, freeze and independently review its prompt; stop at PASS."
 
