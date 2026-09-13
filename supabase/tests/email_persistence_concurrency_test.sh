@@ -20,23 +20,31 @@ update public.email_outbox set next_attempt_at=clock_timestamp()+interval '1 day
 where request_fingerprint is not null;
 do \$\$
 declare v_actor uuid:=gen_random_uuid(); v_auth uuid:=gen_random_uuid(); v_i uuid;
+declare v_cand uuid:=gen_random_uuid(); v_cand_auth uuid:=gen_random_uuid(); v_sub uuid:=gen_random_uuid();
+declare v_unit uuid; v_group uuid; v_pos uuid; v_app uuid;
 begin
+ insert into public.candidates(candidate_id,auth_user_id,email,current_full_name,is_active)
+ values(v_cand,v_cand_auth,'s07-candidate-'||'${suffix}'||'@example.invalid','S07 Candidate',true);
+ insert into public.submissions(submission_id,candidate_id,status_code,full_name,date_of_birth,gender_code,current_address,phone,email_snapshot)
+ values(v_sub,v_cand,'NEW','S07 Candidate','1990-01-01','MALE','S07 address','0900000000','s07-candidate-'||'${suffix}'||'@example.invalid');
+ insert into public.organizational_units(code,name_vi) values('S07_'||'${suffix}','S07') returning unit_id into v_unit;
+ insert into public.position_groups(code,name_vi) values('S07_'||'${suffix}','S07') returning position_group_id into v_group;
+ insert into public.positions(code,name_vi,unit_id,position_group_id) values('S07_'||'${suffix}','S07',v_unit,v_group) returning position_id into v_pos;
+ insert into public.applications(submission_id,unit_id,position_id,hr_owner_id) values(v_sub,v_unit,v_pos,v_actor) returning application_id into v_app;
+ insert into public.interviews(application_id,round_no,visible_to_interviewers) values(v_app,1,true) returning interview_id into v_i;
  insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active)
  values(v_actor,v_auth,'s07-worker-'||'${suffix}'||'@eiu.edu.vn','S07 Worker',true);
  insert into public.app_user_permissions(app_user_id,permission_code,granted_by,granted_at)
  values(v_actor,'interviews.email',v_actor,clock_timestamp()),(v_actor,'interviews.view',v_actor,clock_timestamp());
- select i.interview_id into v_i from public.interviews i join public.applications a on a.application_id=i.application_id
- where i.is_active and a.is_active order by i.interview_id limit 1;
- if v_i is null then raise exception 'S07 requires an active Interview/Application fixture'; end if;
  insert into public.interview_participants(interview_id,app_user_id,participant_order,snapshot_name,snapshot_email)
- values(v_i,v_actor,(select coalesce(max(participant_order),0)+1 from public.interview_participants where interview_id=v_i),'S07 Worker','s07-worker-'||'${suffix}'||'@eiu.edu.vn');
+ values(v_i,v_actor,1,'S07 Worker','s07-worker-'||'${suffix}'||'@eiu.edu.vn');
 end\$\$;
 do \$\$
 declare v_i uuid; v_a uuid; v_s uuid; v_snap jsonb; v_id uuid;
 begin
  select i.interview_id,a.application_id,a.submission_id into v_i,v_a,v_s
  from public.interviews i join public.applications a on a.application_id=i.application_id
- where i.is_active and a.is_active
+ where i.is_active and a.is_active and a.hr_owner_id=(select app_user_id from public.app_users where email='s07-worker-'||'${suffix}'||'@eiu.edu.vn')
    and not exists (select 1 from public.interview_participants ip join public.app_users pu on pu.app_user_id=ip.app_user_id
                    where ip.interview_id=i.interview_id and ip.is_current and ip.removed_at is null and not pu.is_active)
  order by i.interview_id limit 1;
@@ -52,9 +60,8 @@ begin
  if not exists(select 1 from public.email_outbox where email_outbox_id=v_id and context_fingerprint is not null) then
    raise exception 'S07 snapshot-bound fixture missing context fingerprint';
  end if;
-end\$\$;
 SQL
-actor_row="$(docker exec -i "$container_name" psql -qAt -F ' ' -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select u.app_user_id,u.auth_user_id,i.interview_id,a.application_id,a.submission_id from public.app_users u join public.app_user_permissions p on p.app_user_id=u.app_user_id join public.interviews i on i.is_active join public.applications a on a.application_id=i.application_id where p.permission_code='interviews.email' and u.is_active and a.is_active and not exists (select 1 from public.interview_participants ip join public.app_users pu on pu.app_user_id=ip.app_user_id where ip.interview_id=i.interview_id and ip.is_current and ip.removed_at is null and not pu.is_active) order by i.interview_id limit 1")"
+actor_row="$(docker exec -i "$container_name" psql -qAt -F ' ' -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select u.app_user_id,u.auth_user_id,i.interview_id,a.application_id,a.submission_id from public.app_users u join public.app_user_permissions p on p.app_user_id=u.app_user_id join public.interviews i on i.is_active join public.applications a on a.application_id=i.application_id where p.permission_code='interviews.email' and u.is_active and a.is_active and a.hr_owner_id=u.app_user_id and not exists (select 1 from public.interview_participants ip join public.app_users pu on pu.app_user_id=ip.app_user_id where ip.interview_id=i.interview_id and ip.is_current and ip.removed_at is null and not pu.is_active) order by i.interview_id limit 1")"
 if [[ -z "$actor_row" ]]; then echo 'S07 setup failed: authenticated worker actor fixture missing' >&2; exit 1; fi
 read -r actor actor_auth interview application submission <<<"$actor_row"
 preview="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.preview_email('INTERVIEW_INVITATION','$interview','$application','$submission'); commit" | tr -d '\r' | tail -n 1)"
