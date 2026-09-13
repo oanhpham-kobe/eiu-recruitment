@@ -10,6 +10,7 @@ declare
   v_doc_type uuid;
   v_request uuid;
   v_notice text:='s07-scan-'||replace(gen_random_uuid()::text,'-','');
+  v_claim jsonb;
   v_result jsonb;
   v_attempt uuid;
   v_token uuid;
