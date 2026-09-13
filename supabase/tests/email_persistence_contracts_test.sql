@@ -17,7 +17,7 @@ begin
    v_sub,v_cand,'NEW','S07 Candidate','1990-01-01','MALE','S07 fixture address','0900000000',
    'candidate_'||substr(v_cand::text,1,8)||'@example.invalid',1
  );
- set_config('request.jwt.claim.sub',v_cand_auth::text,true);
+ perform set_config('request.jwt.claim.sub',v_cand_auth::text,true);
  set local role postgres;
  v_id:=private.enqueue_candidate_email('CANDIDATE_SUBMISSION_CONFIRMATION',v_sub,v_cand,v_key);
  assert (select environment_code='TEST' and submission_id=v_sub and created_by_candidate_id=v_cand and request_fingerprint is not null from public.email_outbox where email_outbox_id=v_id), 'candidate enqueue exact TEST Submission trace';
