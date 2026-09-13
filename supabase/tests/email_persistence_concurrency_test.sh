@@ -11,15 +11,16 @@ declare v_actor uuid:=gen_random_uuid(); v_auth uuid:=gen_random_uuid();
 begin
  insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active)
  values(v_actor,v_auth,'s07-worker-'||'${suffix}'||'@eiu.edu.vn','S07 Worker',true);
- insert into public.app_user_permissions(app_user_id,permission_code,granted_by,granted_at)
- values(v_actor,'interviews.email',v_actor,clock_timestamp());
 end\$\$;
 do \$\$
 declare v_i uuid; v_a uuid; v_s uuid; v_snap jsonb; v_id uuid;
 begin
  select i.interview_id,a.application_id,a.submission_id into v_i,v_a,v_s
  from public.interviews i join public.applications a on a.application_id=i.application_id
- where i.is_active and a.is_active order by i.interview_id limit 1;
+ where i.is_active and a.is_active
+   and not exists (select 1 from public.interview_participants ip join public.app_users pu on pu.app_user_id=ip.app_user_id
+                   where ip.interview_id=i.interview_id and ip.is_current and ip.removed_at is null and not pu.is_active)
+ order by i.interview_id limit 1;
  if v_i is null then raise exception 'S07 requires an Interview-backed outbox fixture'; end if;
  v_snap:=private.email_snapshot('INTERVIEW_INVITATION',v_s,v_a,v_i);
  insert into public.email_outbox(submission_id,application_id,interview_id,email_type,environment_code,
@@ -33,8 +34,7 @@ begin
    raise exception 'S07 snapshot-bound fixture missing context fingerprint';
  end if;
 end\$\$;
-SQL
-actor_row="$(docker exec -i "$container_name" psql -qAt -F ' ' -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select u.app_user_id,u.auth_user_id,i.interview_id,a.application_id,a.submission_id from public.app_users u join public.app_user_permissions p on p.app_user_id=u.app_user_id join public.interviews i on i.is_active join public.applications a on a.application_id=i.application_id where p.permission_code='interviews.email' and u.is_active and a.is_active order by i.interview_id limit 1")"
+actor_row="$(docker exec -i "$container_name" psql -qAt -F ' ' -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select u.app_user_id,u.auth_user_id,i.interview_id,a.application_id,a.submission_id from public.app_users u join public.app_user_permissions p on p.app_user_id=u.app_user_id join public.interviews i on i.is_active join public.applications a on a.application_id=i.application_id where p.permission_code='interviews.email' and u.is_active and a.is_active and not exists (select 1 from public.interview_participants ip join public.app_users pu on pu.app_user_id=ip.app_user_id where ip.interview_id=i.interview_id and ip.is_current and ip.removed_at is null and not pu.is_active) order by i.interview_id limit 1")"
 if [[ -z "$actor_row" ]]; then echo 'S07 setup failed: authenticated worker actor fixture missing' >&2; exit 1; fi
 read -r actor actor_auth interview application submission <<<"$actor_row"
 preview="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.preview_email('INTERVIEW_INVITATION','$interview','$application','$submission'); commit" | tr -d '\r' | tail -n 1)"
