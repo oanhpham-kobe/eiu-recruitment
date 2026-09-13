@@ -103,6 +103,8 @@ if [[ -s /tmp/s07-participant-enqueue.err ]]; then echo 'S07 participant enqueue
 if ! jq -e '.success == false and (.error_code == "STALE_PREVIEW" or .error_code == "FORBIDDEN")' <<<"$participant_result" >/dev/null; then
   echo 'participant change must invalidate concurrent enqueue' >&2; exit 1;
 fi
+message="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select email_outbox_id from public.email_outbox where actor_scope='s07:${suffix}'")"
+docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c "update public.email_outbox set next_attempt_at=clock_timestamp()+interval '1 day' where request_fingerprint is not null and email_outbox_id<>'$message'::uuid"
 docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c "update private.email_configuration set delivery_paused=false,delivery_not_before=null where singleton"
 call="select public.claim_email_outbox('worker-${suffix}',1)::text;"
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call" >/tmp/s07-worker-a.txt 2>/tmp/s07-worker-a.err & p1=$!
