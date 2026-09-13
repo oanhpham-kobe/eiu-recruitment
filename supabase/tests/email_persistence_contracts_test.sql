@@ -127,7 +127,13 @@ values(actor,'interviews.email',actor,now());
  assert exists(select 1 from private.email_attempts where attempt_id=token),'cleanup preserves attempts';
  assert exists(select 1 from public.security_audit_log where entity_id=history and action_code='EMAIL_HISTORY_DELETED');
  -- Actual Candidate Save with staged CLEAN CV. No helper substituted for producer.
- select notice_version into notice from public.privacy_notice_versions where is_current and effective_from<=clock_timestamp() order by effective_from desc limit 1;
+update public.privacy_notice_versions set is_current=false;
+insert into public.privacy_notice_versions(notice_version,content_vi,content_en,content_hash_sha256,published_at,effective_from,is_current,created_by)
+values('s07-'||actor,'S07 privacy notice','S07 privacy notice',repeat('0',64),clock_timestamp(),clock_timestamp(),true,actor);
+insert into public.document_types(code,name_vi,name_en,scope_code,is_active)
+values('CV_RESUME','S07 CV','S07 CV','SUBMISSION',true)
+on conflict(code) do update set is_active=true returning document_type_id into cv;
+notice:='s07-'||actor;
  assert notice is not null,'predecessor published privacy fixture';
  select document_type_id into cv from public.document_types where code='CV_RESUME'; assert cv is not null;
  session_id:=gen_random_uuid(); upload:=gen_random_uuid();
