@@ -1233,7 +1233,10 @@ implementation_evidence:
     integration_ci:
       candidate_run: "34735451324 PASS"
       serialized_run: "34735656146 PASS"
-    governance_ci: "34735941819 PASS"
+    governance_ci:
+      candidate_run: "34735941819 PASS"
+      acceptance_checkpoint_run: "34736028909 PASS @ 44f1d1d22d09a3b8bb0855324b6631e16256cefc"
+    acceptance_control_plane_ci: "34736028874 PASS @ 44f1d1d22d09a3b8bb0855324b6631e16256cefc"
     external_boundaries:
       real_provider_delivery_certified: false
       production_email_sent: false

@@ -42,9 +42,9 @@ integration:
   last_verified_application_ci_run: "34735656146"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
-  last_verified_control_plane_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
-  last_verified_control_plane_integration_ci_run: "34463405935"
-  last_verified_control_plane_governance_ci_run: "34463405902"
+  last_verified_control_plane_sha: "44f1d1d22d09a3b8bb0855324b6631e16256cefc"
+  last_verified_control_plane_integration_ci_run: "34736028874"
+  last_verified_control_plane_governance_ci_run: "34736028909"
   last_task_acceptance_attempt_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
   last_task_acceptance_integration_ci_run: "34735656146"
   last_task_acceptance_integration_ci_result: PASS
