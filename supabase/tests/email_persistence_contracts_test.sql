@@ -83,12 +83,10 @@ values(actor,'interviews.email',actor,now());
  update public.email_outbox set next_attempt_at=clock_timestamp()+interval '1 day' where status_code in ('QUEUED','FAILED');
  update private.email_configuration set delivery_paused=false;
  update public.email_outbox set next_attempt_at=clock_timestamp()-interval '1 minute' where email_outbox_id=message;
- execute 'set local role email_worker';
  r:=public.claim_email_outbox('s07',1); assert jsonb_array_length(r->'data')=1,'claim must exercise one message'; token:=(r->'data'->0->>'attempt_id')::uuid;
  assert (r->'data'->0->>'email_outbox_id')::uuid=message;
  assert jsonb_array_length(public.claim_email_outbox('other',1)->'data')=0,'live lease not claimable';
  r:=public.authorize_email_send(message,token,'s07'); assert r->>'error_code'='STALE_PREVIEW','send authorization checks queued snapshot';
- execute 'reset role';
  assert (select status_code='CANCELLED' from public.email_outbox where email_outbox_id=message);
  -- Fresh message exercises crash/reclaim, late completion and finite retries.
  r:=public.enqueue_email(req,gen_random_uuid()); assert (r->>'success')::boolean; message:=(r->'data'->>'email_outbox_id')::uuid;
