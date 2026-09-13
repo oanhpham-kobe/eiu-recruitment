@@ -293,17 +293,22 @@ end;
 $$;
 create or replace function public.bulk_enqueue_email(p_requests jsonb,p_idempotency_key uuid)
 returns jsonb language plpgsql security definer set search_path = '' as $$
-declare v_actor uuid:=private.interview_command_actor('interviews.email'); v_ids uuid[]; v_item jsonb; v_r jsonb;
+declare v_actor uuid:=private.interview_command_actor('interviews.email'); v_ids uuid[]:='{}'; v_item jsonb; v_r jsonb;
  v_success jsonb:='[]'; v_failed jsonb:='[]'; v_key uuid; v_fp text; v_existing jsonb; v_result jsonb;
+ v_interview_id uuid;
 begin
  if v_actor is null then return jsonb_build_object('success',false,'error_code','FORBIDDEN'); end if;
  if p_idempotency_key is null or jsonb_typeof(p_requests) is distinct from 'array' then
    return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR'); end if;
  if jsonb_array_length(p_requests) not between 1 and 100 then return jsonb_build_object('success',false,'error_code','BATCH_LIMIT_EXCEEDED'); end if;
- -- Syntactic failures remain per item; only parseable IDs participate in locking.
- select coalesce(array_agg(distinct (x->>'interview_id')::uuid order by (x->>'interview_id')::uuid),'{}') into v_ids
- from jsonb_array_elements(p_requests) x where x->>'interview_id' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
- perform private.lock_email_contexts(v_ids,v_actor);
+-- Parse with PostgreSQL UUID semantics; malformed items remain per-item failures.
+for v_item in select value from jsonb_array_elements(p_requests) loop
+  begin v_interview_id:=(v_item->>'interview_id')::uuid;
+  exception when invalid_text_representation then continue; end;
+  if v_interview_id is not null then v_ids:=v_ids||v_interview_id; end if;
+end loop;
+select coalesce(array_agg(distinct x order by x),'{}'::uuid[]) into v_ids from unnest(v_ids) x;
+perform private.lock_email_contexts(v_ids,v_actor);
  if private.interview_command_actor('interviews.email') is distinct from v_actor then return jsonb_build_object('success',false,'error_code','FORBIDDEN'); end if;
  v_fp:=encode(extensions.digest(p_requests::text,'sha256'),'hex');
  perform pg_advisory_xact_lock(hashtextextended('app_user:'||v_actor||':bulk_enqueue_email:'||p_idempotency_key,0));
@@ -319,8 +324,10 @@ begin
    return v_existing->'result';
  end if;
  for v_item in select value from jsonb_array_elements(p_requests) loop
-   -- Stable target identity is independent of ordering and unrelated failed items.
-   v_key:=md5(p_idempotency_key::text||':'||coalesce(v_item->>'email_type','')||':'||coalesce(v_item->>'interview_id',''))::uuid;
+   -- Stable target identity uses canonical UUID spelling.
+   begin v_interview_id:=(v_item->>'interview_id')::uuid;
+   exception when invalid_text_representation then v_interview_id:=null; end;
+   v_key:=md5(p_idempotency_key::text||':'||coalesce(v_item->>'email_type','')||':'||coalesce(v_interview_id::text,''))::uuid;
    begin
      v_r:=private.enqueue_manual_email(v_item,v_key,v_actor);
      v_success:=v_success||jsonb_build_array(jsonb_build_object('id',v_item->>'interview_id','email_type',v_item->>'email_type',

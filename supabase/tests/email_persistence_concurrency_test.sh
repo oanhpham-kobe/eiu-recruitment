@@ -64,7 +64,7 @@ begin
  end if;
 end\$\$;
 SQL
-actor_row="$(docker exec -i "$container_name" psql -qAt -F ' ' -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select u.app_user_id,u.auth_user_id,i.interview_id,a.application_id,a.submission_id from public.app_users u join public.app_user_permissions p on p.app_user_id=u.app_user_id join public.interviews i on i.is_active join public.applications a on a.application_id=i.application_id where p.permission_code='interviews.email' and u.is_active and a.is_active and a.hr_owner_id=u.app_user_id and not exists (select 1 from public.interview_participants ip join public.app_users pu on pu.app_user_id=ip.app_user_id where ip.interview_id=i.interview_id and ip.is_current and ip.removed_at is null and not pu.is_active) order by i.interview_id limit 1")"
+actor_row="$(docker exec -i "$container_name" psql -qAt -F ' ' -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select u.app_user_id,u.auth_user_id,i.interview_id,a.application_id,a.submission_id from public.app_users u join public.app_user_permissions p on p.app_user_id=u.app_user_id join public.interviews i on i.is_active join public.applications a on a.application_id=i.application_id where p.permission_code='interviews.email' and u.email='s07-worker-${suffix}@eiu.edu.vn' and u.is_active and a.is_active and a.hr_owner_id=u.app_user_id and not exists (select 1 from public.interview_participants ip join public.app_users pu on pu.app_user_id=ip.app_user_id where ip.interview_id=i.interview_id and ip.is_current and ip.removed_at is null and not pu.is_active) order by i.interview_id limit 1")"
 if [[ -z "$actor_row" ]]; then echo 'S07 setup failed: authenticated worker actor fixture missing' >&2; exit 1; fi
 read -r actor actor_auth interview application submission <<<"$actor_row"
 preview="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.preview_email('INTERVIEW_INVITATION','$interview','$application','$submission'); commit" | tr -d '\r' | tail -n 1)"
@@ -93,13 +93,19 @@ fi
 participant="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select interview_participant_id from public.interview_participants where interview_id='$interview' and app_user_id='$actor' and is_current limit 1")"
 if [[ -z "$participant" ]]; then echo 'participant-change race requires a participant fixture' >&2; exit 1; fi
 participant_key="$(uuidgen)"
+alt_request="$(jq -c --arg i "{${interview}}" '.interview_id=$i' <<<"$request")"
+participant_bulk_key="$(uuidgen)"
+participant_bulk_sql="begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.bulk_enqueue_email(jsonb_build_array('$alt_request'::jsonb),'$participant_bulk_key'); commit"
 participant_sql="begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.enqueue_email('$request','$participant_key'); commit"
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select 1 from public.interviews where interview_id='$interview' for update; select pg_sleep(1); update public.interview_participants set is_current=false,removed_at=clock_timestamp() where interview_participant_id='$participant'; commit" >/tmp/s07-participant-holder.txt 2>/tmp/s07-participant-holder.err & p1=$!
 sleep 0.1
+participant_bulk_result="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$participant_bulk_sql" 2>/tmp/s07-participant-bulk.err | tr -d '\r' | tail -n 1)"
 participant_result="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$participant_sql" 2>/tmp/s07-participant-enqueue.err | tr -d '\r' | tail -n 1)"
 set +e; wait "$p1"; participant_status=$?; set -e
-if [[ "$participant_status" -ne 0 ]]; then echo "S07 background failure: participant-holder pid=$p1 exit=$participant_status" >&2; cat /tmp/s07-participant-holder.txt /tmp/s07-participant-holder.err >&2; exit 1; fi
-if [[ -s /tmp/s07-participant-enqueue.err ]]; then echo 'S07 participant enqueue stderr:' >&2; cat /tmp/s07-participant-enqueue.err >&2; fi
+if [[ -s /tmp/s07-participant-bulk.err ]]; then echo 'S07 participant bulk stderr:' >&2; cat /tmp/s07-participant-bulk.err >&2; fi
+if ! jq -e '((.failed | length) == 1) and (.failed[0].error_code == "STALE_PREVIEW" or .failed[0].error_code == "FORBIDDEN")' <<<"$participant_bulk_result" >/dev/null; then
+  echo 'participant change must invalidate brace-spelled bulk enqueue' >&2; exit 1;
+fi
 if ! jq -e '.success == false and (.error_code == "STALE_PREVIEW" or .error_code == "FORBIDDEN")' <<<"$participant_result" >/dev/null; then
   echo 'participant change must invalidate concurrent enqueue' >&2; exit 1;
 fi
