@@ -9,7 +9,7 @@ declare
   v_reservation uuid:=gen_random_uuid();
   v_doc_type uuid;
   v_request uuid;
-  v_claim jsonb;
+  v_notice text:='s07-scan-'||replace(gen_random_uuid()::text,'-','');
   v_result jsonb;
   v_attempt uuid;
   v_token uuid;
@@ -24,8 +24,10 @@ begin
   end if;
   insert into public.candidates(candidate_id,auth_user_id,email,current_full_name,is_active)
   values(v_candidate,v_auth,'scan-'||v_candidate||'@example.invalid','Scan Candidate',true);
+  insert into public.privacy_notice_versions(notice_version,content_vi,content_en,content_hash_sha256,published_at,effective_from,is_current)
+  values(v_notice,'S07 scan test notice','S07 scan test notice',repeat('e',64),clock_timestamp(),clock_timestamp(),false);
   insert into public.candidate_form_sessions(candidate_form_session_id,candidate_id,mode_code,status_code,presented_privacy_notice_version,expires_at)
-  values(v_session,v_candidate,'NEW_SUBMISSION','OPEN','scan-'||v_session,clock_timestamp()+interval '1 hour');
+  values(v_session,v_candidate,'NEW_SUBMISSION','OPEN',v_notice,clock_timestamp()+interval '1 hour');
   insert into public.upload_reservations(upload_reservation_id,candidate_form_session_id,intended_document_type_id,temp_bucket,temp_path,original_filename,declared_mime_type,expected_max_size_bytes,actor_auth_user_id,idempotency_key,expires_at)
   values(v_reservation,v_session,v_doc_type,'candidate-quarantine','scan/'||v_reservation||'.pdf','cv.pdf','application/pdf',5242880,v_auth,gen_random_uuid(),clock_timestamp()+interval '1 hour');
 
