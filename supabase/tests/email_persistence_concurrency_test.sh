@@ -6,7 +6,14 @@ suffix="$(tr -d '-' < /proc/sys/kernel/random/uuid | cut -c1-12)"
 psql_exec <<SQL
 update public.email_outbox set next_attempt_at=clock_timestamp()+interval '1 day'
 where request_fingerprint is not null;
-update private.email_configuration set environment_code='TEST',delivery_paused=false;
+do \$\$
+declare v_actor uuid:=gen_random_uuid(); v_auth uuid:=gen_random_uuid();
+begin
+ insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active)
+ values(v_actor,v_auth,'s07-worker-'||'${suffix}'||'@eiu.edu.vn','S07 Worker',true);
+ insert into public.app_user_permissions(app_user_id,permission_code,granted_by,granted_at)
+ values(v_actor,'interviews.email',v_actor,clock_timestamp());
+end\$\$;
 do \$\$
 declare v_i uuid; v_a uuid; v_s uuid; v_snap jsonb; v_id uuid;
 begin
@@ -27,7 +34,9 @@ begin
  end if;
 end\$\$;
 SQL
-read -r actor actor_auth interview application submission < <(docker exec -i "$container_name" psql -qAt -F ' ' -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select u.app_user_id,u.auth_user_id,i.interview_id,a.application_id,a.submission_id from public.app_users u join public.app_user_permissions p on p.app_user_id=u.app_user_id join public.interviews i on i.is_active join public.applications a on a.application_id=i.application_id where p.permission_code='interviews.email' and u.is_active and a.is_active order by i.interview_id limit 1")
+actor_row="$(docker exec -i "$container_name" psql -qAt -F ' ' -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select u.app_user_id,u.auth_user_id,i.interview_id,a.application_id,a.submission_id from public.app_users u join public.app_user_permissions p on p.app_user_id=u.app_user_id join public.interviews i on i.is_active join public.applications a on a.application_id=i.application_id where p.permission_code='interviews.email' and u.is_active and a.is_active order by i.interview_id limit 1")"
+if [[ -z "$actor_row" ]]; then echo 'S07 setup failed: authenticated worker actor fixture missing' >&2; exit 1; fi
+read -r actor actor_auth interview application submission <<<"$actor_row"
 preview="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.preview_email('INTERVIEW_INVITATION','$interview','$application','$submission'); commit" | tr -d '\r' | tail -n 1)"
 if ! jq -e '.success == true' <<<"$preview" >/dev/null; then echo 'trusted preview fixture failed' >&2; exit 1; fi
 fingerprint="$(jq -r '.data.preview_fingerprint' <<<"$preview")"
