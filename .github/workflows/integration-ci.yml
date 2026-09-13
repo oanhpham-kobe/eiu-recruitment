@@ -253,6 +253,21 @@ jobs:
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
 
+      - name: Execute TASK-S07-001 Email Persistence Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/email_persistence_contracts_test.sql
+
+      - name: Execute TASK-S07-001 staged worker concurrency assertions
+        run: |
+          bash supabase/tests/email_persistence_concurrency_test.sh
+      - name: Execute TASK-S07-001 Email Persistence Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/email_persistence_contracts_test.sql
+
+      - name: Execute TASK-S07-001 staged worker concurrency assertions
+        run: |
+          bash supabase/tests/email_persistence_concurrency_test.sh
+
       - name: Reset local database for standalone bulk replay
         run: supabase db reset
 
