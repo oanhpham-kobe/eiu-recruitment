@@ -11,6 +11,9 @@
 - Candidate Integration CI: `34735451324` PASS.
 - Serialized Integration CI: `34735656146` PASS.
 - Governance CI: `34735941819` PASS.
+- Accepted checkpoint: `checkpoint/S07-001-accepted-001` at `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
+- Reviewed application SHA, serialized Integration CI SHA, and accepted checkpoint SHA are identical: `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
+- Current control-plane reporting HEAD: `d344d53e49ecb8698f8f3a2dc6c69a2824d1e7d2`; Governance CI `34736085689` PASS. This reporting coordinate is distinct from the accepted application/checkpoint SHA.
 
 No real provider delivery, production email, provider/SMTP credentials, document/scan worker, main mutation, PR merge, deployment, or connected Supabase action occurred.
 

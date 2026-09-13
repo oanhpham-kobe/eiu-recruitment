@@ -1221,6 +1221,10 @@ implementation_evidence:
     status: VERIFIED
     implementation_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
     source_reopen_required: false
+    accepted_checkpoint: checkpoint/S07-001-accepted-001
+    accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+    reviewed_application_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+    serialized_ci_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
     focused_verifier:
       run: "34735225520"
       branch: verify/S07-001-focused-8397be3-v1
@@ -1237,6 +1241,8 @@ implementation_evidence:
       candidate_run: "34735941819 PASS"
       acceptance_checkpoint_run: "34736028909 PASS @ 44f1d1d22d09a3b8bb0855324b6631e16256cefc"
     acceptance_control_plane_ci: "34736028874 PASS @ 44f1d1d22d09a3b8bb0855324b6631e16256cefc"
+    current_reporting_head: "d344d53e49ecb8698f8f3a2dc6c69a2824d1e7d2"
+    current_reporting_governance_ci: "34736085689 PASS"
     external_boundaries:
       real_provider_delivery_certified: false
       production_email_sent: false

@@ -40,11 +40,15 @@ integration:
   head_resolution: DIRECT_GIT_RUNTIME
   last_verified_application_checkpoint: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
   last_verified_application_ci_run: "34735656146"
+  accepted_checkpoint: checkpoint/S07-001-accepted-001
+  accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
   last_verified_control_plane_sha: "44f1d1d22d09a3b8bb0855324b6631e16256cefc"
   last_verified_control_plane_integration_ci_run: "34736028874"
   last_verified_control_plane_governance_ci_run: "34736028909"
+  current_reporting_head: "d344d53e49ecb8698f8f3a2dc6c69a2824d1e7d2"
+  current_reporting_governance_ci_run: "34736085689"
   last_task_acceptance_attempt_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
   last_task_acceptance_integration_ci_run: "34735656146"
   last_task_acceptance_integration_ci_result: PASS
@@ -107,6 +111,8 @@ worker_settled_history:
 last_accepted_task:
   id: TASK-S07-001
   commit: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+  accepted_checkpoint: checkpoint/S07-001-accepted-001
+  accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
   evidence:
     - "implementation_review: PASS (S07-001 exact repair re-review @ 8397be35d64a65f4a693811e4fc6b9e43287a7cd)"
     - "github_ci: VERIFIED (Integration CI 34735451324 and 34735656146; Governance CI 34735941819; PASS)"
