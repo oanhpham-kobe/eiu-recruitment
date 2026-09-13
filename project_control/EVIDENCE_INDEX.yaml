@@ -1280,6 +1280,7 @@ implementation_evidence:
       evidence_persistence: "agent://S07PromptReviewer report; no separate evidence branch created."
     prompt_repair_scope: "Preserve server-validated ADD/REPLACE intent through pending scan work; discriminate pending/staged results; stage exactly once after trusted CLEAN; safe pending cancellation/expiry."
     planning_review_baseline: "checkpoint/pre-S07-002-002 @ c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
+    implementation_branch: "oanhpham-kobe/TASK-S07-002-document-scan-request-and-result-fencing @ c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
     governance_ci: "34759700679 PASS @ c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
     impact_ci: "34759700673 PASS @ c26c7bf183949117fe4901a62bf9e9d8a42c1dbb; Resolve impacted verification PASS; Web and Database jobs skipped"
     rereview:

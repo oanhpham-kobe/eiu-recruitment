@@ -659,6 +659,7 @@ slice_07_planning:
     evidence_persistence: "agent://S07PromptReviewer report; no separate evidence branch created."
   prompt_repair_scope: "Preserve server-validated ADD/REPLACE intent through pending scan work; discriminate pending/staged results; stage exactly once after trusted CLEAN; safe pending cancellation/expiry."
   prompt_review_baseline_ref: checkpoint/pre-S07-002-002
+  implementation_branch: oanhpham-kobe/TASK-S07-002-document-scan-request-and-result-fencing
   prompt_review_status: PASS
   final_prompt_review:
     work_id: S07-002-PROMPT-REVIEW-001-R2

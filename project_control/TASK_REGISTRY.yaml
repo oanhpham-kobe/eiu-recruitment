@@ -1273,6 +1273,9 @@ tasks:
     lane: LANE_A
     depends_on: [TASK-S02-003, TASK-S02-004, TASK-S04-002, TASK-S06-002, TASK-S07-001]
     planning_baseline_sha: "93cd9942f928729ddd4e13179ccac0aafc734a51"
+    implementation_baseline_sha: "c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
+    pre_task_checkpoint: checkpoint/pre-S07-002-002
+    implementation_branch: oanhpham-kobe/TASK-S07-002-document-scan-request-and-result-fencing
     source_reconciliation: project_control/reviews/S07_002_SOURCE_RECONCILIATION_v1.md
     prompt: project_control/prompts/SLICE-07_TASK-002_v1.md
     source_authority: "review_pack 11 §§5-9; 37 §§3/10/16; 39; 41; 42; 47; 48; 55; 59; 63; 66; 73; 99; 100; app_spec.yaml"
