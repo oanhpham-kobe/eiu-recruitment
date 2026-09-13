@@ -362,6 +362,7 @@ end $$;
 create or replace function public.claim_email_outbox(p_worker_id text,p_limit integer default 10)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare v_o public.email_outbox%rowtype; v_now timestamptz:=clock_timestamp(); v_token uuid; v_items jsonb:='[]';
+ v_ids uuid[]:='{}'; v_context_ids uuid[]:='{}'; v_candidate uuid;
 begin
  if p_worker_id is null or p_worker_id !~ '^[A-Za-z0-9_.:-]{1,100}$' or p_limit is null or p_limit not between 1 and 100 then
    return jsonb_build_object('success',false,'error_code','VALIDATION_ERROR'); end if;
@@ -372,18 +373,23 @@ begin
 -- it keeps competing claims nonblocking without taking the outbox lock before
 -- the Interview FK parent. The row is re-read after the parent lock, so stale
 -- candidates are skipped without reversing the authorization order.
-for v_o in select * from public.email_outbox where request_fingerprint is not null and
+-- Reserve up to p_limit rows before consuming the limit. Advisory try-locks
+-- skip rows already claimed by another worker without waiting.
+for v_candidate in select email_outbox_id from public.email_outbox where request_fingerprint is not null and
   (((status_code='QUEUED' or (status_code='FAILED' and next_attempt_at is not null))
      and attempt_no<3 and coalesce(next_attempt_at,v_now)<=v_now)
     or (status_code='SENDING' and locked_until<=v_now))
-  order by interview_id nulls first,email_outbox_id limit p_limit loop
-  if not pg_try_advisory_xact_lock(hashtextextended('email-outbox:'||v_o.email_outbox_id::text,0)) then
-    continue;
+  order by interview_id nulls first,email_outbox_id loop
+  if pg_try_advisory_xact_lock(hashtextextended('email-outbox:'||v_candidate::text,0)) then
+    v_ids:=v_ids||v_candidate;
+    if cardinality(v_ids)>=p_limit then exit; end if;
   end if;
-  if v_o.interview_id is not null then
-    perform private.lock_email_contexts(array[v_o.interview_id],null);
-  end if;
-  select * into v_o from public.email_outbox where email_outbox_id=v_o.email_outbox_id for update;
+end loop;
+select coalesce(array_agg(distinct interview_id order by interview_id),'{}'::uuid[]) into v_context_ids
+from public.email_outbox where email_outbox_id=any(v_ids) and interview_id is not null;
+if cardinality(v_context_ids)>0 then perform private.lock_email_contexts(v_context_ids,null); end if;
+foreach v_candidate in array v_ids loop
+  select * into v_o from public.email_outbox where email_outbox_id=v_candidate for update;
   if not found or not (v_o.request_fingerprint is not null and
     (((v_o.status_code='QUEUED' or (v_o.status_code='FAILED' and v_o.next_attempt_at is not null))
        and v_o.attempt_no<3 and coalesce(v_o.next_attempt_at,v_now)<=v_now)
