@@ -7,12 +7,17 @@ psql_exec <<SQL
 update public.email_outbox set next_attempt_at=clock_timestamp()+interval '1 day'
 where request_fingerprint is not null;
 do \$\$
-declare v_actor uuid:=gen_random_uuid(); v_auth uuid:=gen_random_uuid();
+declare v_actor uuid:=gen_random_uuid(); v_auth uuid:=gen_random_uuid(); v_i uuid;
 begin
  insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active)
  values(v_actor,v_auth,'s07-worker-'||'${suffix}'||'@eiu.edu.vn','S07 Worker',true);
  insert into public.app_user_permissions(app_user_id,permission_code,granted_by,granted_at)
  values(v_actor,'interviews.email',v_actor,clock_timestamp()),(v_actor,'interviews.view',v_actor,clock_timestamp());
+ select i.interview_id into v_i from public.interviews i join public.applications a on a.application_id=i.application_id
+ where i.is_active and a.is_active order by i.interview_id limit 1;
+ if v_i is null then raise exception 'S07 requires an active Interview/Application fixture'; end if;
+ insert into public.interview_participants(interview_id,app_user_id,participant_order,snapshot_name,snapshot_email)
+ values(v_i,v_actor,(select coalesce(max(participant_order),0)+1 from public.interview_participants where interview_id=v_i),'S07 Worker','s07-worker-'||'${suffix}'||'@eiu.edu.vn');
 end\$\$;
 do \$\$
 declare v_i uuid; v_a uuid; v_s uuid; v_snap jsonb; v_id uuid;
@@ -67,7 +72,7 @@ bulk_a="$(tr -d '\r' </tmp/s07-bulk-a.txt | tail -n 1)"; bulk_b="$(tr -d '\r' </
 if [[ "$bulk_a" != "$bulk_b" ]] || ! jq -e '.success | length == 1' <<<"$bulk_a" >/dev/null; then
   echo 'overlapping bulk requests must converge without duplicate target outcome' >&2; exit 1;
 fi
-participant="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select interview_participant_id from public.interview_participants where interview_id='$interview' and is_current limit 1")"
+participant="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select interview_participant_id from public.interview_participants where interview_id='$interview' and app_user_id='$actor' and is_current limit 1")"
 if [[ -z "$participant" ]]; then echo 'participant-change race requires a participant fixture' >&2; exit 1; fi
 participant_key="$(uuidgen)"
 participant_sql="begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.enqueue_email('$request','$participant_key'); commit"
