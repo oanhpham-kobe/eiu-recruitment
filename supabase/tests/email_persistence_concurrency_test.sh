@@ -12,7 +12,7 @@ begin
  insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active)
  values(v_actor,v_auth,'s07-worker-'||'${suffix}'||'@eiu.edu.vn','S07 Worker',true);
  insert into public.app_user_permissions(app_user_id,permission_code,granted_by,granted_at)
- values(v_actor,'interviews.email',v_actor,clock_timestamp());
+ values(v_actor,'interviews.email',v_actor,clock_timestamp()),(v_actor,'interviews.view',v_actor,clock_timestamp());
 end\$\$;
 do \$\$
 declare v_i uuid; v_a uuid; v_s uuid; v_snap jsonb; v_id uuid;
