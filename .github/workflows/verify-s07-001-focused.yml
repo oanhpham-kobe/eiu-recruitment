@@ -1,6 +1,9 @@
 name: Verify S07-001 Focused
 
 on:
+  push:
+    branches:
+      - verify/S07-001-focused-b24b633-v1
   workflow_dispatch:
 
 permissions:
