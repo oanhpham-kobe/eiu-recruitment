@@ -18,11 +18,13 @@ suffix="$(tr -d '-' < /proc/sys/kernel/random/uuid | cut -c1-12)"
 psql_exec <<SQL
 update public.email_outbox set next_attempt_at=clock_timestamp()+interval '1 day'
 where request_fingerprint is not null;
-do \$\$
 declare v_actor uuid:=gen_random_uuid(); v_auth uuid:=gen_random_uuid(); v_i uuid;
 declare v_cand uuid:=gen_random_uuid(); v_cand_auth uuid:=gen_random_uuid(); v_sub uuid:=gen_random_uuid();
 declare v_unit uuid; v_group uuid; v_pos uuid; v_app uuid;
 begin
+ insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active)
+ values(v_actor,v_auth,'s07-worker-'||'${suffix}'||'@eiu.edu.vn','S07 Worker',true);
+ insert into public.app_user_roles(app_user_id,role_code) values(v_actor,'HR');
  insert into public.candidates(candidate_id,auth_user_id,email,current_full_name,is_active)
  values(v_cand,v_cand_auth,'s07-candidate-'||'${suffix}'||'@example.invalid','S07 Candidate',true);
  insert into public.submissions(submission_id,candidate_id,status_code,full_name,date_of_birth,gender_code,current_address,phone,email_snapshot)
@@ -32,8 +34,7 @@ begin
  insert into public.positions(code,name_vi,unit_id,position_group_id) values('S07_'||'${suffix}','S07',v_unit,v_group) returning position_id into v_pos;
  insert into public.applications(submission_id,unit_id,position_id,hr_owner_id) values(v_sub,v_unit,v_pos,v_actor) returning application_id into v_app;
  insert into public.interviews(application_id,round_no,visible_to_interviewers) values(v_app,1,true) returning interview_id into v_i;
- insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active)
- values(v_actor,v_auth,'s07-worker-'||'${suffix}'||'@eiu.edu.vn','S07 Worker',true);
+-- actor fixture is inserted before Application so ownership eligibility can be checked.
  insert into public.app_user_permissions(app_user_id,permission_code,granted_by,granted_at)
  values(v_actor,'interviews.email',v_actor,clock_timestamp()),(v_actor,'interviews.view',v_actor,clock_timestamp());
  insert into public.interview_participants(interview_id,app_user_id,participant_order,snapshot_name,snapshot_email)
