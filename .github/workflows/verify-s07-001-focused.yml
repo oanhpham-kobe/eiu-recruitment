@@ -1,0 +1,49 @@
+name: Verify S07-001 Focused
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-s07-001-focused-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-s07-concurrency:
+    name: S07 focused concurrency verifier
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact verifier ref
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+
+      - name: Start disposable Supabase
+        run: supabase start
+
+      - name: Replay migrations from zero
+        run: supabase db reset
+
+      - name: Run focused concurrency 1/3
+        run: bash supabase/tests/email_persistence_concurrency_test.sh
+
+      - name: Repeat focused concurrency 2/3 and 3/3
+        run: |
+          for i in 2 3; do
+            echo "Focused concurrency repeat $i/3"
+            bash supabase/tests/email_persistence_concurrency_test.sh
+          done
+
+      - name: Run S07 email persistence contract assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/email_persistence_contracts_test.sql
+
+      - name: Stop disposable Supabase
+        if: always()
+        run: supabase stop
