@@ -178,7 +178,7 @@ begin
    v_retry:=v_q.attempt_no<3;
    update public.document_scan_requests set status_code=case when v_retry then 'ERROR' else 'ERROR' end,leased_until=null,next_attempt_at=case when v_retry then v_now+(least(300,30*(2^v_q.attempt_no))||' seconds')::interval else 'infinity'::timestamptz end,updated_at=v_now where document_scan_request_id=v_q.document_scan_request_id;
  end if;
- perform private.document_scan_audit('DOCUMENT_SCAN_RESULT',v_q.document_scan_request_id,p_outcome);
+  perform private.document_scan_audit('DOCUMENT_SCAN_RESULT',v_q.document_scan_request_id,case when p_outcome='ERROR' then 'FAILED' else 'SUCCESS' end);
  return jsonb_build_object('success',true,'data',jsonb_build_object('status_code',p_outcome));
 end;
 $$;
