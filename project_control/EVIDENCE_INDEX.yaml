@@ -1268,5 +1268,19 @@ implementation_evidence:
     prompt_review:
       work_id: S07-002-PROMPT-REVIEW-001
       reviewer: eiu-reviewer
-      status: PENDING
+      status: BLOCKING_REPAIR
+      reviewed_sha: "caeb826022224d44aefcb3c7747d555d4c53333c"
+      source_reopen_required: false
       baseline_ref: checkpoint/pre-S07-002-001
+    prior_prompt_review:
+      reviewed_sha: "caeb826022224d44aefcb3c7747d555d4c53333c"
+      result: BLOCKING_REPAIR
+      source_reopen_required: false
+      finding: "R1: existing upload consumer pending-to-staged continuation was unspecified."
+      evidence_persistence: "agent://S07PromptReviewer report; no separate evidence branch created."
+    prompt_repair_scope: "Preserve server-validated ADD/REPLACE intent through pending scan work; discriminate pending/staged results; stage exactly once after trusted CLEAN; safe pending cancellation/expiry."
+    rereview:
+      work_id: S07-002-PROMPT-REVIEW-001-R2
+      reviewer: eiu-reviewer
+      status: PENDING
+      baseline_ref: checkpoint/pre-S07-002-002

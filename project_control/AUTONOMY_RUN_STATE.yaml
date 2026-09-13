@@ -624,7 +624,7 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: NEXT_TASK_PROMPT_REVIEW_PENDING
+  status: PROMPT_REPAIR_READY_FOR_REREVIEW
   accepted_task: TASK-S07-001
   accepted_checkpoint: checkpoint/S07-001-accepted-001
   accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
@@ -651,8 +651,15 @@ slice_07_planning:
   prompt: project_control/prompts/SLICE-07_TASK-002_v1.md
   source_reconciliation: project_control/reviews/S07_002_SOURCE_RECONCILIATION_v1.md
   prompt_review_work_id: S07-002-PROMPT-REVIEW-001
-  prompt_review_baseline_ref: checkpoint/pre-S07-002-001
-  prompt_review_status: PENDING
+  prior_prompt_review:
+    reviewed_sha: "caeb826022224d44aefcb3c7747d555d4c53333c"
+    result: BLOCKING_REPAIR
+    source_reopen_required: false
+    finding: "R1: existing upload consumer pending-to-staged continuation was unspecified."
+    evidence_persistence: "agent://S07PromptReviewer report; no separate evidence branch created."
+  prompt_repair_scope: "Preserve server-validated ADD/REPLACE intent through pending scan work; discriminate pending/staged results; stage exactly once after trusted CLEAN; safe pending cancellation/expiry."
+  prompt_review_baseline_ref: checkpoint/pre-S07-002-002
+  prompt_review_status: PENDING_REREVIEW
   implementation_started: false
   materialized_task_count: 1
 

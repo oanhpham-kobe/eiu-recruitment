@@ -1287,4 +1287,11 @@ tasks:
     concurrency_idempotency: "One logical request per reservation fingerprint; bounded SKIP LOCKED claims, lease fencing, finite retry and stale-result rejection."
     verification: "Disposable local replay, focused SQL/RLS/staged concurrency and affected adapter tests; crossed S02/S04/S06/S07-001 regressions only when directly impacted."
     review_gate: "Independent exact-baseline eiu-reviewer prompt/source PASS required before any implementation dispatch."
+    prompt_review:
+      r1:
+        reviewed_sha: "caeb826022224d44aefcb3c7747d555d4c53333c"
+        result: BLOCKING_REPAIR
+        source_reopen_required: false
+        finding: "R1: existing upload consumer requires an explicit pending-to-staged continuation; pending cannot masquerade as staged success."
+      repair_scope: "Preserve server-validated ADD/REPLACE intent through pending scan work; discriminate pending/staged results; stage exactly once after trusted CLEAN; safe pending cancellation/expiry."
     next_frontier_behavior: "STOP after prompt review PASS; do not start an Executor or materialize another Slice-07 task."

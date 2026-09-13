@@ -6,8 +6,7 @@
 - SLICE: `SLICE-07 — Email / Documents / Activity / Workers`
 - TYPE: backend persistence/security prerequisite; not scanner-provider delivery, Storage cleanup execution or UI.
 - AUDIT-RELEASE BASE SHA: `93cd9942f928729ddd4e13179ccac0aafc734a51` on `autonomy/continuous-integration-20260905-01`.
-- GOVERNED IMPLEMENTATION START REF: `checkpoint/pre-S07-002-001`. It must be created from and resolve exactly to the frozen prompt-review baseline before any implementation worktree or Executor starts.
-- This prompt authorizes no implementation by itself. Require an independent `eiu-reviewer` PASS against the exact frozen prompt baseline, then a subsequent ChatGPT/Owner implementation-dispatch decision. Resolve the governed ref directly at dispatch; never substitute a moving branch.
+- GOVERNED IMPLEMENTATION START REF: `checkpoint/pre-S07-002-002`. It must be created from and resolve exactly to the frozen prompt-review baseline before any implementation worktree or Executor starts.
 - SOURCE_REOPEN_EXPECTATION: false. Preserve accepted S01–S07-001 contracts and report concrete contradictions rather than redefining predecessors.
 
 ## Accepted dependencies
@@ -43,12 +42,12 @@ Implement one durable, provider-independent document-scan protocol for existing 
 2. **Post-commit worker protocol.** Replace request-path scanner invocation with durable scan work. Implement bounded due claims, finite retry/backoff, worker/attempt identity, lease expiry/reclaim and a fencing token. Concurrent workers must not own one live attempt. Late completion from an expired or replaced lease must not mutate the current request.
 3. **Trusted result persistence.** Only a narrow trusted server/worker path may claim or complete scan work. Recheck the exact reservation, form/interview parent, expiry, bucket/path, immutable object identity and checksum at completion. Browser input, ordinary authenticated callers and arbitrary service-facing adapters cannot assert worker identity, scanner verdict, `CLEAN`, object path or result metadata.
 4. **Security outcome.** `CLEAN` can make the existing reservation eligible for finalization only after the authoritative existing finalization guards recheck `VALIDATED`, `CLEAN`, unexpired state, parent/session eligibility, exact current target and count/CV rules. `INFECTED`, `ERROR`, absent, expired or stale results must remain non-finalizable; preserve or schedule only the existing safe cleanup path. Never synthesize `CLEAN` because a scanner is absent or a worker retries.
-5. **Server/action cutover.** Candidate upload completion records server-derived object facts and returns safe pending state. It does not download/scan the object inline, accept a browser verdict or stage/finalize a file before durable trusted `CLEAN`. Preserve existing Candidate authorization and structured errors; do not add a UI feature.
+5. **Existing-consumer continuation.** Adapt only the existing Candidate upload completion consumer and trusted server actions needed to preserve the reservation's ADD/REPLACE target intent across scan pending. Return a discriminated `PENDING_SCAN` result without `changeId`; it must never masquerade as a staged attachment, count toward the staged CV/file plan, or call the staged-doc consumer path. After a trusted current `CLEAN` result, an authorized continuation rederives the persisted intent and creates exactly one staged change; it returns a distinct staged result with `changeId`. Pending cancellation/expiry must cancel the request/reservation safely and cannot later stage. No new document-management surface is authorized.
 6. **Audit/privacy.** Security-relevant request/result/rejection transitions record minimal immutable Security Audit in the same relevant database transaction. Do not store object content, signed URLs, scanner tokens, secrets or whole PII rows. Activity remains an operational concept and is not an audit substitute or a business-usage/retention reference.
 
 ## Explicit non-goals
 
-Do not implement a scanner provider/runtime, call a real scanner, add scanner credentials, deploy a worker/scheduler, or claim malware production readiness. Do not implement physical Storage deletion/cleanup worker execution or redesign its existing queue; do not implement email sender runtime, email/history/Activity/document UI, attachment delivery, archive/export/purge, automatic business retention, document preview conversion, generic queues, or any Slice-08 work. Do not change accepted S07-001 email contracts, checkpoints, production data, main, PRs, deployments or connected Supabase.
+Do not implement a scanner provider/runtime, call a real scanner, add scanner credentials, deploy a worker/scheduler, or claim malware production readiness. Do not implement physical Storage deletion/cleanup worker execution or redesign its existing queue; do not add a new document-management UI beyond the minimum existing upload consumer pending/staged/cancel continuation needed by this contract; do not implement email sender runtime, email/history/Activity UI, attachment delivery, archive/export/purge, automatic business retention, document preview conversion, generic queues, or any Slice-08 work. Do not change accepted S07-001 email contracts, checkpoints, production data, main, PRs, deployments or connected Supabase.
 
 ## Required trust, database and Storage constraints
 
@@ -67,15 +66,16 @@ Before review, prove at least these observable contracts:
 2. two workers cannot claim one live scan attempt; expiry permits bounded reclaim; stale completion cannot overwrite a newer claim;
 3. worker result for an expired, cancelled, replaced or wrong-parent reservation is rejected without marking it `CLEAN`;
 4. `CLEAN`, `INFECTED`, `ERROR` and missing scanner result preserve correct finalization eligibility; finalization remains denied until all existing synchronous guards pass;
-5. Candidate/browser and untrusted authenticated/service-facing callers cannot claim or complete scan work, forge result metadata, or access unrelated private object/reservation context;
-6. minimal immutable audit persists for relevant transitions, audit failure rolls back its mutation, and no signed URL/token/content is persisted;
-7. crossed S02 Candidate form/session/staged-document tests, S04 Interview document/finalization/hard-delete cleanup-capture tests, S06 authorization/RLS tests and S07-001 email persistence tests remain unchanged except for direct, justified contract adaptations.
+5. the existing upload consumer distinguishes `PENDING_SCAN` from staged success, retains server-validated ADD/REPLACE target intent, stages exactly once only after trusted `CLEAN`, and safely cancels pending work;
+6. Candidate/browser and untrusted authenticated/service-facing callers cannot claim or complete scan work, forge result metadata, or access unrelated private object/reservation context;
+7. minimal immutable audit persists for relevant transitions, audit failure rolls back its mutation, and no signed URL/token/content is persisted;
+8. crossed S02 Candidate form/session/staged-document tests, S04 Interview document/finalization/hard-delete cleanup-capture tests, S06 authorization/RLS tests and S07-001 email persistence tests remain unchanged except for direct, justified contract adaptations.
 
 Use a fresh disposable local Supabase replay and provider-independent simulated worker outcomes. Do not call external scanners or connected Supabase. Add permanent tests only for plausible contract failures above; do not add source-text or plumbing assertions.
 
 ## Verification economy and lifecycle
 
-Run focused SQL/RLS/staged-concurrency tests for the new scan protocol, affected server-action/adapter tests, and directly crossed S02/S04 regressions. Run DB lint/advisors only when their usual scope is touched. Do not rerun unrelated email, web UI, browser, PRE-S04/S05/S06 or full suites without impact evidence. Never set `full_verification=true` for planning or prompt artifacts; exact Integration CI selects impacted domains.
+Run focused SQL/RLS/staged-concurrency tests for the new scan protocol, affected server-action/adapter tests, and an existing upload-consumer rendered/behavioral test covering pending, CLEAN continuation, rejection and cancellation. Run directly crossed S02/S04 regressions and DB lint/advisors only when their usual scope is touched. Do not rerun unrelated email, web UI, browser, PRE-S04/S05/S06 or full suites without impact evidence. Never set `full_verification=true` for planning or prompt artifacts; exact Integration CI selects impacted domains.
 
 Require focused verification, producer self-review, independent exact implementation-SHA `eiu-reviewer` PASS/no source reopen, serialized integration, exact-SHA CI, final equivalence review if integration changes SHA, and an immutable accepted checkpoint. The review/repair loop is bounded to concrete findings. A changed SHA invalidates prior approval.
 

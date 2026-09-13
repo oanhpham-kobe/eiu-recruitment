@@ -26,7 +26,8 @@ The task owns the durable scan-request state and trusted worker completion contr
 2. Restrict claim and result transitions to a narrowly trusted server/worker boundary. Use bounded due claims, lease ownership/fencing and finite retry semantics; a stale completion must not overwrite a reclaimed/newer attempt.
 3. Revalidate reservation ownership, parent/session current state, expiry, private object identity and checksum at result persistence. `CLEAN` is the only result that can enable existing finalization guards. `INFECTED`, `ERROR`, missing or stale results remain non-finalizable and preserve/trigger only the existing safe cleanup path.
 4. Move request-path scanning out of the Candidate server action into the durable protocol. Browser data and arbitrary authenticated callers never provide a verdict, worker identity, object path, or `CLEAN` transition.
-5. Keep Security Audit minimal and transactional for state transitions. Do not make Activity a Security Audit substitute or a business-retention reference.
+5. The existing Candidate upload consumer currently treats every successful completion as staged because it requires `data.changeId`. The durable protocol must therefore carry validated ADD/REPLACE target intent through pending work, expose a discriminated pending versus staged result, and permit exactly one authorized post-CLEAN continuation to stage. Pending must not be shown or counted as a staged attachment; cancellation/expiry must prevent a later continuation. This is the minimum composition repair, not authorization for a new document-management surface.
+6. Keep Security Audit minimal and transactional for state transitions. Do not make Activity a Security Audit substitute or a business-retention reference.
 
 No source contradiction requires reopening S07-001: email persistence and document scanning use different durable work identities, permissions, retention purposes and external boundaries.
 
