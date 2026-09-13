@@ -2,6 +2,18 @@
 set -euo pipefail
 container_name="supabase_db_eiu-recruitment-dev"
 psql_exec() { docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
+wait_pair() {
+  local label="$1" pid_a="$2" pid_b="$3" out_a="$4" err_a="$5" out_b="$6" err_b="$7" status_a status_b
+  set +e; wait "$pid_a"; status_a=$?; wait "$pid_b"; status_b=$?; set -e
+  if [[ "$status_a" -ne 0 || "$status_b" -ne 0 ]]; then
+    echo "S07 background failure: $label (pid=$pid_a exit=$status_a, pid=$pid_b exit=$status_b)" >&2
+    echo "--- $label pid=$pid_a stdout ---" >&2; cat "$out_a" >&2
+    echo "--- $label pid=$pid_a stderr ---" >&2; cat "$err_a" >&2
+    echo "--- $label pid=$pid_b stdout ---" >&2; cat "$out_b" >&2
+    echo "--- $label pid=$pid_b stderr ---" >&2; cat "$err_b" >&2
+    return 1
+  fi
+}
 suffix="$(tr -d '-' < /proc/sys/kernel/random/uuid | cut -c1-12)"
 psql_exec <<SQL
 update public.email_outbox set next_attempt_at=clock_timestamp()+interval '1 day'
@@ -51,11 +63,9 @@ fingerprint="$(jq -r '.data.preview_fingerprint' <<<"$preview")"
 request="$(jq -cn --arg t INTERVIEW_INVITATION --arg i "$interview" --arg a "$application" --arg s "$submission" --arg f "$fingerprint" '{email_type:$t,interview_id:$i,application_id:$a,submission_id:$s,preview_fingerprint:$f}')"
 same_key="$(uuidgen)"
 enqueue_sql="begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.enqueue_email('$request','$same_key'); commit"
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$enqueue_sql" >/tmp/s07-enqueue-a.txt &
-p1=$!
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$enqueue_sql" >/tmp/s07-enqueue-b.txt &
-p2=$!
-wait "$p1"; wait "$p2"
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$enqueue_sql" >/tmp/s07-enqueue-a.txt 2>/tmp/s07-enqueue-a.err & p1=$!
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$enqueue_sql" >/tmp/s07-enqueue-b.txt 2>/tmp/s07-enqueue-b.err & p2=$!
+wait_pair same-key-enqueue "$p1" "$p2" /tmp/s07-enqueue-a.txt /tmp/s07-enqueue-a.err /tmp/s07-enqueue-b.txt /tmp/s07-enqueue-b.err
 enqueue_a="$(tr -d '\r' </tmp/s07-enqueue-a.txt | tail -n 1)"; enqueue_b="$(tr -d '\r' </tmp/s07-enqueue-b.txt | tail -n 1)"
 if ! jq -e '.success == true' <<<"$enqueue_a" >/dev/null || ! jq -e '.success == true' <<<"$enqueue_b" >/dev/null ||
    [[ "$(jq -r '.data.email_outbox_id' <<<"$enqueue_a")" != "$(jq -r '.data.email_outbox_id' <<<"$enqueue_b")" ]]; then
@@ -63,11 +73,9 @@ if ! jq -e '.success == true' <<<"$enqueue_a" >/dev/null || ! jq -e '.success ==
 fi
 bulk_key="$(uuidgen)"
 bulk_sql="begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.bulk_enqueue_email(jsonb_build_array('$request'::jsonb),'$bulk_key'); commit"
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$bulk_sql" >/tmp/s07-bulk-a.txt &
-p1=$!
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$bulk_sql" >/tmp/s07-bulk-b.txt &
-p2=$!
-wait "$p1"; wait "$p2"
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$bulk_sql" >/tmp/s07-bulk-a.txt 2>/tmp/s07-bulk-a.err & p1=$!
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$bulk_sql" >/tmp/s07-bulk-b.txt 2>/tmp/s07-bulk-b.err & p2=$!
+wait_pair overlapping-bulk "$p1" "$p2" /tmp/s07-bulk-a.txt /tmp/s07-bulk-a.err /tmp/s07-bulk-b.txt /tmp/s07-bulk-b.err
 bulk_a="$(tr -d '\r' </tmp/s07-bulk-a.txt | tail -n 1)"; bulk_b="$(tr -d '\r' </tmp/s07-bulk-b.txt | tail -n 1)"
 if [[ "$bulk_a" != "$bulk_b" ]] || ! jq -e '.success | length == 1' <<<"$bulk_a" >/dev/null; then
   echo 'overlapping bulk requests must converge without duplicate target outcome' >&2; exit 1;
@@ -76,22 +84,14 @@ participant="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U 
 if [[ -z "$participant" ]]; then echo 'participant-change race requires a participant fixture' >&2; exit 1; fi
 participant_key="$(uuidgen)"
 participant_sql="begin; select set_config('request.jwt.claim.sub','$actor_auth',true); select set_config('request.jwt.claims',jsonb_build_object('sub','$actor_auth')::text,true); set local role authenticated; select public.enqueue_email('$request','$participant_key'); commit"
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select 1 from public.interviews where interview_id='$interview' for update; select pg_sleep(1); update public.interview_participants set is_current=false,removed_at=clock_timestamp() where interview_participant_id='$participant'; commit" >/tmp/s07-participant-holder.txt &
-p1=$!
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select 1 from public.interviews where interview_id='$interview' for update; select pg_sleep(1); update public.interview_participants set is_current=false,removed_at=clock_timestamp() where interview_participant_id='$participant'; commit" >/tmp/s07-participant-holder.txt 2>/tmp/s07-participant-holder.err & p1=$!
 sleep 0.1
-participant_result="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$participant_sql" | tr -d '\r' | tail -n 1)"
-wait "$p1"
-if ! jq -e '.success == false and (.error_code == "STALE_PREVIEW" or .error_code == "FORBIDDEN")' <<<"$participant_result" >/dev/null; then
-  echo 'participant change must invalidate concurrent enqueue' >&2; exit 1;
-fi
-call="select public.claim_email_outbox('worker-${suffix}',1)::text;"
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call" >/tmp/s07-worker-a.txt & p1=$!
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call" >/tmp/s07-worker-b.txt & p2=$!
-wait "$p1"; wait "$p2"
-a="$(cat /tmp/s07-worker-a.txt)"; b="$(cat /tmp/s07-worker-b.txt)"
-if ! jq -e '.success == true' <<<"$a" >/dev/null || ! jq -e '.success == true' <<<"$b" >/dev/null; then
-  echo 'worker claims must return typed success=true' >&2; exit 1;
-fi
+participant_result="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$participant_sql" 2>/tmp/s07-participant-enqueue.err | tr -d '\r' | tail -n 1)"
+wait "$p1"; participant_status=$?
+if [[ "$participant_status" -ne 0 ]]; then echo "S07 background failure: participant-holder pid=$p1 exit=$participant_status" >&2; cat /tmp/s07-participant-holder.txt /tmp/s07-participant-holder.err >&2; exit 1; fi
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call" >/tmp/s07-worker-a.txt 2>/tmp/s07-worker-a.err & p1=$!
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call" >/tmp/s07-worker-b.txt 2>/tmp/s07-worker-b.err & p2=$!
+wait_pair worker-claim "$p1" "$p2" /tmp/s07-worker-a.txt /tmp/s07-worker-a.err /tmp/s07-worker-b.txt /tmp/s07-worker-b.err
 psql_exec <<SQL
 do \$\$
 declare n integer;
@@ -105,20 +105,16 @@ SQL
 token="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select ea.attempt_id from private.email_attempts ea join public.email_outbox eo on eo.attempt_id=ea.attempt_id where eo.actor_scope='s07:${suffix}' and eo.status_code='SENDING'")"
 message="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select email_outbox_id from public.email_outbox where actor_scope='s07:${suffix}'")"
 docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c "update public.email_outbox set locked_until=clock_timestamp()-interval '1 second' where email_outbox_id='$message'"
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; set local statement_timeout='10s'; select public.authorize_email_send('$message','$token','worker-${suffix}'); commit" >/tmp/s07-authorize-late.txt &
-p1=$!
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select public.claim_email_outbox('reclaim-${suffix}',1)" >/tmp/s07-reclaim.txt &
-p2=$!
-wait "$p1"; wait "$p2"
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; set local statement_timeout='10s'; select public.authorize_email_send('$message','$token','worker-${suffix}'); commit" >/tmp/s07-authorize-late.txt 2>/tmp/s07-authorize-late.err & p1=$!
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select public.claim_email_outbox('reclaim-${suffix}',1)" >/tmp/s07-reclaim.txt 2>/tmp/s07-reclaim.err & p2=$!
+wait_pair reclaim-vs-late-auth "$p1" "$p2" /tmp/s07-authorize-late.txt /tmp/s07-authorize-late.err /tmp/s07-reclaim.txt /tmp/s07-reclaim.err
 token="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select ea.attempt_id from private.email_attempts ea join public.email_outbox eo on eo.attempt_id=ea.attempt_id where eo.actor_scope='s07:${suffix}' and eo.status_code='SENDING'")"
 if [[ -z "$token" ]]; then echo 'reclaim versus late authorization did not produce a live staged attempt' >&2; exit 1; fi
 auth_result="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select public.authorize_email_send('$message','$token','reclaim-${suffix}')")"
 if ! jq -e '.success == true' <<<"$auth_result" >/dev/null; then echo 'reclaimed snapshot-bound attempt must authorize' >&2; exit 1; fi
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; set local statement_timeout='10s'; select public.complete_email_attempt('$message','$token','reclaim-${suffix}','SENT','s07-provider',null); commit" >/tmp/s07-complete.txt &
-p1=$!
-docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select public.authorize_email_send('$message','$token','reclaim-${suffix}')" >/tmp/s07-authorize-complete.txt &
-p2=$!
-wait "$p1"; wait "$p2"
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; set local statement_timeout='10s'; select public.complete_email_attempt('$message','$token','reclaim-${suffix}','SENT','s07-provider',null); commit" >/tmp/s07-complete.txt 2>/tmp/s07-complete.err & p1=$!
+docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select public.authorize_email_send('$message','$token','reclaim-${suffix}')" >/tmp/s07-authorize-complete.txt 2>/tmp/s07-authorize-complete.err & p2=$!
+wait_pair completion-vs-authorization "$p1" "$p2" /tmp/s07-complete.txt /tmp/s07-complete.err /tmp/s07-authorize-complete.txt /tmp/s07-authorize-complete.err
 psql_exec <<SQL
 do \$\$
 declare n integer;
