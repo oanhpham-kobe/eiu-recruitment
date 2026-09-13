@@ -1,0 +1,55 @@
+name: Verify S07-001 Impacted Contracts
+
+on:
+  push:
+    branches:
+      - verify/S07-001-impact-279e44c-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-s07-001-impact-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  impacted-s07-contracts:
+    name: S07 impacted database contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact verifier ref
+        uses: actions/checkout@v4.2.2
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Start disposable Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: Establish PRE-S04 canonical seed fixture
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
+      - name: Run crossed S06 candidate document history regression
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_candidate_document_history_test.sql
+      - name: Run crossed S06 durable reference history regression
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/master_data_durable_reference_history_test.sql
+      - name: Run crossed application and participant regression
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_reactivation_and_participant_contract_repair_test.sql
+      - name: Run crossed interview lifecycle regression
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_lifecycle_test.sql
+      - name: Run crossed interview conflict regression
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_round_and_conflict_locking_test.sql
+      - name: Run crossed interview copy regression
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
+      - name: Stop disposable Supabase
+        if: always()
+        run: supabase stop
