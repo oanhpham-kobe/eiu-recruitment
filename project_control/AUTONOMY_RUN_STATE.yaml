@@ -38,23 +38,23 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
-  last_verified_application_ci_run: "34735656146"
-  accepted_checkpoint: checkpoint/S07-001-accepted-001
-  accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+  last_verified_application_checkpoint: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
+  last_verified_application_ci_run: "34764835368"
+  accepted_checkpoint: checkpoint/S07-002-accepted-001
+  accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
   last_verified_control_plane_sha: "44f1d1d22d09a3b8bb0855324b6631e16256cefc"
   last_verified_control_plane_integration_ci_run: "34736028874"
   last_verified_control_plane_governance_ci_run: "34736028909"
-  current_reporting_head: "93cd9942f928729ddd4e13179ccac0aafc734a51"
-  current_reporting_governance_ci_run: PENDING
-  last_task_acceptance_attempt_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
-  last_task_acceptance_integration_ci_run: "34735656146"
+  current_reporting_head: DIRECT_GIT_RUNTIME
+  current_reporting_classification: GOVERNANCE_ONLY
+  last_task_acceptance_attempt_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
+  last_task_acceptance_integration_ci_run: "34764835368"
   last_task_acceptance_integration_ci_result: PASS
-  last_task_acceptance_governance_ci_run: "34735941819"
-  last_task_acceptance_governance_ci_result: PASS
-  current_prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
+  last_task_acceptance_governance_ci_run: NOT_RUN
+  last_task_acceptance_governance_ci_result: NOT_APPLICABLE
+  current_prompt_review_target_sha: "c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
 
 
 authorization:
@@ -108,15 +108,21 @@ worker_settled_history:
     result: PASS
     exact_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
     settled_at: "2026-09-13T00:00:00Z"
+  - task_id: TASK-S07-002
+    lane: LANE_A
+    role: EXECUTOR
+    result: PASS
+    exact_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
+    settled_at: "2026-09-14T00:00:00Z"
 last_accepted_task:
-  id: TASK-S07-001
-  commit: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
-  accepted_checkpoint: checkpoint/S07-001-accepted-001
-  accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+  id: TASK-S07-002
+  commit: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
+  accepted_checkpoint: checkpoint/S07-002-accepted-001
+  accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
   evidence:
-    - "implementation_review: PASS (S07-001 exact repair re-review @ 8397be35d64a65f4a693811e4fc6b9e43287a7cd)"
-    - "github_ci: VERIFIED (Integration CI 34735451324 and 34735656146; Governance CI 34735941819; PASS)"
-    - "acceptance_evidence: project_control/reviews/S07_001_IMPLEMENTATION_REVIEW_8397be3_v1.md"
+    - "implementation_review: PASS (S07-002-IMPLEMENTATION-REVIEW-001-R9 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed)"
+    - "integration_equivalence_review: PASS (S07-002-INTEGRATION-EQUIVALENCE-REVIEW-001 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed)"
+    - "github_ci: VERIFIED (Integration CI 34764835368 PASS)"
 
 previous_accepted_tasks:
   TASK-S06-002: {commit: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"}
@@ -624,71 +630,29 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: IMPLEMENTATION_DISPATCH_APPROVED
-  accepted_task: TASK-S07-001
-  accepted_checkpoint: checkpoint/S07-001-accepted-001
-  accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
-  audit_release_sha: "93cd9942f928729ddd4e13179ccac0aafc734a51"
-  external_acceptance_audit:
-    reviewer: EXTERNAL_CHATGPT
-    transport: OWNER_MESSAGE
-    result: PASS
-    source_reopen_required: false
-    frontier_release: APPROVED
-    evidence_persistence: "Owner-transported external audit only; no reviewer-native evidence is claimed."
-  frontier_resolution:
-    result: MATERIALIZED_ONE_TASK
-    source_reopen_required: false
-    selected_task: TASK-S07-002
-    selected_cut: "Durable document scan request and result-fencing trusted contracts."
-    later_domains_unmaterialized:
-      - scanner provider/runtime
-      - physical Storage cleanup worker
-      - email provider sender runtime
-      - manual email/history/activity/document UI
-      - archive/export/purge
-  task: TASK-S07-002
-  prompt: project_control/prompts/SLICE-07_TASK-002_v1.md
-  source_reconciliation: project_control/reviews/S07_002_SOURCE_RECONCILIATION_v1.md
-  prompt_review_work_id: S07-002-PROMPT-REVIEW-001
-  prior_prompt_review:
-    reviewed_sha: "caeb826022224d44aefcb3c7747d555d4c53333c"
-    result: BLOCKING_REPAIR
-    source_reopen_required: false
-    finding: "R1: existing upload consumer pending-to-staged continuation was unspecified."
-    evidence_persistence: "agent://S07PromptReviewer report; no separate evidence branch created."
-  prompt_repair_scope: "Preserve server-validated ADD/REPLACE intent through pending scan work; discriminate pending/staged results; stage exactly once after trusted CLEAN; safe pending cancellation/expiry."
-  prompt_review_baseline_ref: checkpoint/pre-S07-002-002
-  implementation_branch: oanhpham-kobe/TASK-S07-002-document-scan-request-and-result-fencing
-  prompt_review_status: PASS
-  final_prompt_review:
-    work_id: S07-002-PROMPT-REVIEW-001-R2
-    reviewer: eiu-reviewer
-    reviewed_sha: "c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
-    result: PASS
-    source_reopen_required: false
-    evidence_persistence: "OMP task result S07PromptR2Reviewer; reviewer assignment was read-only, with no GitHub-visible review artifact."
-  external_implementation_dispatch:
-    reviewer: EXTERNAL_CHATGPT
-    transport: OWNER_MESSAGE
-    decision: IMPLEMENTATION_DISPATCH_APPROVED
-    source_reopen_required: false
-    audited_reporting_head: "f353ced54a0ecc0a03cebf5101f3ceafe34327ea"
-  implementation_started: true
-  materialized_task_count: 1
+  status: S07_002_ACCEPTED
+  accepted_checkpoint: checkpoint/S07-002-accepted-001
+  accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
+  accepted_task: TASK-S07-002
+  accepted_scope: "Durable document scan request and result-fencing trusted contracts."
+  source_reopen_required: false
+  external_boundaries:
+    scanner_provider_runtime: NOT_IMPLEMENTED
+    physical_storage_cleanup_worker: NOT_IMPLEMENTED
+    deployment_or_connected_supabase: NOT_USED
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-002: implementation lifecycle active in its one authorized task branch."
+    - "No next Slice-07 task is authorized by this acceptance."
   materialization_frontier: []
-  execution_hold: "No second Slice-07 task may be materialized while TASK-S07-002 is in implementation/review/CI lifecycle."
+  execution_hold: "Stop after S07-002 acceptance; do not materialize another Slice-07 task."
 
 stop_gate:
-  status: NONE
-  type: TASK_S07_002_IMPLEMENTATION
+  status: ACTIVE
+  type: TASK_S07_002_ACCEPTED
   source_reopen_required: false
-  resume_on: "Independent implementation review, serialization and exact-SHA CI lifecycle."
+  resume_on: "Explicit Owner authorization."
 
-next_action: "Implement only TASK-S07-002 on its authorized task branch; do not materialize another Slice-07 task."
+next_action: "Stop after S07-002 acceptance; no next frontier is authorized."
 
