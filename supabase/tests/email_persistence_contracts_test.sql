@@ -11,7 +11,12 @@ begin
  assert not exists(select 1 from information_schema.routine_privileges where routine_schema='public' and routine_name in ('claim_email_outbox','authorize_email_send','complete_email_attempt') and grantee in ('PUBLIC','anon','authenticated')), 'worker RPCs are not browser-callable';
  insert into public.app_users(app_user_id,auth_user_id,email,full_name,is_active) values(v_user,v_auth,'s07_fixture_'||substr(v_user::text,1,8)||'@eiu.edu.vn','S07 Fixture',true);
  insert into public.candidates(candidate_id,auth_user_id,email,current_full_name,is_active) values(v_cand,gen_random_uuid(),'candidate_'||substr(v_cand::text,1,8)||'@example.invalid','S07 Candidate',true);
- insert into public.submissions(submission_id,candidate_id,status_code,full_name,email_snapshot,version_no) values(v_sub,v_cand,'NEW','S07 Candidate','candidate_'||substr(v_cand::text,1,8)||'@example.invalid',1);
+ insert into public.submissions(
+   submission_id,candidate_id,status_code,full_name,date_of_birth,gender_code,current_address,phone,email_snapshot,version_no
+ ) values(
+   v_sub,v_cand,'NEW','S07 Candidate','1990-01-01','MALE','S07 fixture address','0900000000',
+   'candidate_'||substr(v_cand::text,1,8)||'@example.invalid',1
+ );
  set local role postgres;
  v_id:=private.enqueue_candidate_email('CANDIDATE_SUBMISSION_CONFIRMATION',v_sub,v_cand,v_key);
  assert (select environment_code='TEST' and submission_id=v_sub and created_by_candidate_id=v_cand and request_fingerprint is not null from public.email_outbox where email_outbox_id=v_id), 'candidate enqueue exact TEST Submission trace';
