@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   cancelDocumentChangeAction,
   completeAndStageUploadAction,
+  continueCleanDocumentScanAction,
   reserveUploadAction,
   stageCandidateDocumentDeleteAction,
 } from "@/app/candidate/candidate-actions";
@@ -44,6 +45,11 @@ interface DocumentUploaderProps {
     docType: { id: string; code: string; name: string },
   ) => Promise<StagedDocumentItem>;
   disabled?: boolean;
+}
+function delay(milliseconds: number): Promise<void> {
+  const { promise, resolve } = Promise.withResolvers<void>();
+  setTimeout(resolve, milliseconds);
+  return promise;
 }
 export function DocumentUploader({
   sessionId,
@@ -165,14 +171,48 @@ export function DocumentUploader({
           scanRequest.error || "Không thể tạo yêu cầu quét bảo mật tệp",
         );
       }
-
-      if (scanRequest.data.kind === "PENDING_SCAN") {
-        setUploadError(
-          "Tệp đang chờ kiểm tra bảo mật và chưa được đính kèm / File is pending security scan and is not attached yet",
-        );
-        e.target.value = "";
-        return;
+      if (scanRequest.data.kind !== "PENDING_SCAN") {
+        throw new Error("Unexpected scan request state");
       }
+
+      // The worker owns the verdict; poll the server-owned continuation until
+      // the scan is clean, then add the returned staged change locally.
+      let stagedChangeId: string | null = null;
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        const continuation = await continueCleanDocumentScanAction(
+          sessionId,
+          reservation.reservationId,
+        );
+        if (continuation.success) {
+          stagedChangeId = continuation.data.changeId;
+          break;
+        }
+        if (continuation.code !== "SCAN_NOT_CLEAN") {
+          throw new Error(
+            continuation.error || "Không thể hoàn tất kiểm tra bảo mật tệp",
+          );
+        }
+        await delay(1000);
+      }
+      if (!stagedChangeId) {
+        throw new Error(
+          "Tệp vẫn đang chờ kiểm tra bảo mật / File is still pending security scan",
+        );
+      }
+      onDocsChange([
+        ...attachedDocs,
+        {
+          changeId: stagedChangeId,
+          reservationId: reservation.reservationId,
+          documentTypeCode: docType.code,
+          documentTypeName: docType.name,
+          filename: file.name,
+          fileSizeBytes: file.size,
+          documentTypeId: docType.id,
+          isCv: docType.code === "CV_RESUME",
+        },
+      ]);
+      e.target.value = "";
     } catch (err) {
       setUploadError(
         err instanceof Error ? err.message : "Tải tệp thất bại / Upload failed",
