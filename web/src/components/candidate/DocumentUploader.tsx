@@ -150,8 +150,9 @@ export function DocumentUploader({
         throw new Error(`Upload failed: ${storageError.message}`);
       }
 
-      // 3. Record completion, validate/scan, and stage document change
-      const stageRes = await completeAndStageUploadAction({
+      // 3. The request path never scans or stages. PENDING_SCAN deliberately
+      // has no changeId and must not enter the staged-document collection.
+      const scanRequest = await completeAndStageUploadAction({
         sessionId,
         reservationId: reservation.reservationId,
         intendedDocumentTypeId: docType.id,
@@ -159,25 +160,19 @@ export function DocumentUploader({
         mimeType: file.type || "application/pdf",
       });
 
-      if (!stageRes.success || !stageRes.data) {
+      if (!scanRequest.success || !scanRequest.data) {
         throw new Error(
-          stageRes.error || "Không thể hoàn tất kiểm tra và stage tệp",
+          scanRequest.error || "Không thể tạo yêu cầu quét bảo mật tệp",
         );
       }
 
-      const newDoc: StagedDocumentItem = {
-        changeId: stageRes.data.changeId,
-        reservationId: reservation.reservationId,
-        documentTypeId: docType.id,
-        documentTypeCode: docType.code,
-        documentTypeName: docType.name,
-        filename: file.name,
-        fileSizeBytes: file.size,
-        isCv: docType.code === "CV_RESUME",
-      };
-
-      onDocsChange([...attachedDocs, newDoc]);
-      e.target.value = "";
+      if (scanRequest.data.kind === "PENDING_SCAN") {
+        setUploadError(
+          "Tệp đang chờ kiểm tra bảo mật và chưa được đính kèm / File is pending security scan and is not attached yet",
+        );
+        e.target.value = "";
+        return;
+      }
     } catch (err) {
       setUploadError(
         err instanceof Error ? err.message : "Tải tệp thất bại / Upload failed",

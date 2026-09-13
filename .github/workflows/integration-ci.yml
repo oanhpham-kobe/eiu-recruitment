@@ -261,6 +261,14 @@ jobs:
         run: |
           bash supabase/tests/email_persistence_concurrency_test.sh
 
+      - name: Execute TASK-S07-002 document scan protocol regression assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/document_scan_protocol_test.sql
+
+      - name: Execute TASK-S07-002 document scan claim and fencing concurrency assertions
+        run: |
+          bash supabase/tests/document_scan_protocol_concurrency_test.sh
+
       - name: Reset local database for standalone bulk replay
         run: supabase db reset
 

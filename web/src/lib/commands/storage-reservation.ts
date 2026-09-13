@@ -69,6 +69,48 @@ export type RecordUploadCompletedData = {
   malware_scan_status: "PENDING";
 };
 
+export type RecordInspectedUploadInput = {
+  uploadReservationId: string;
+  actualSizeBytes: number;
+  detectedMimeType: string;
+  checksumSha256: string;
+  magicBytesVerified: boolean;
+};
+
+export type PendingDocumentScanData = {
+  kind: "PENDING_SCAN";
+  document_scan_request_id: string;
+  upload_reservation_id: string;
+};
+
+export type StagedDocumentScanData = {
+  kind: "STAGED";
+  change_id: string;
+};
+
+export type RequestCandidateDocumentScanInput = {
+  candidateFormSessionId: string;
+  uploadReservationId: string;
+  actionCode: "ADD" | "REPLACE";
+  targetLogicalDocumentId?: string | null;
+};
+
+export type ClaimedDocumentScanRequest = {
+  document_scan_request_id: string;
+  upload_reservation_id: string;
+  attempt_id: string;
+  fencing_token: string;
+  leased_until: string;
+};
+
+export type CompleteDocumentScanAttemptInput = {
+  documentScanRequestId: string;
+  attemptId: string;
+  fencingToken: string;
+  workerId: string;
+  outcome: "CLEAN" | "INFECTED" | "ERROR";
+  errorCode?: string | null;
+};
 export type AuthorizeCandidateUploadScanInput = {
   candidateFormSessionId: string;
   uploadReservationId: string;
@@ -105,21 +147,6 @@ export type CancelCandidateDocumentChangeData = {
   candidate_form_session_id: string;
   candidate_form_document_change_id: string;
   status_code: "CANCELLED";
-};
-
-export type ValidateAndScanUploadInput = {
-  uploadReservationId: string;
-  detectedMimeType: string;
-  actualSizeBytes: number;
-  malwareScanStatus: "CLEAN" | "INFECTED" | "ERROR";
-  magicBytesVerified: boolean;
-  checksumSha256?: string | null;
-};
-
-export type ScanResultData = {
-  upload_reservation_id: string;
-  status_code: "VALIDATED" | "REJECTED";
-  malware_scan_status: "CLEAN" | "INFECTED" | "ERROR";
 };
 
 export type ClaimedStorageCleanupJob = {
@@ -882,139 +909,6 @@ export function createCancelCandidateDocumentChangeCommand(
 }
 
 // -----------------------------------------------------------------------------
-// 6. Worker-Only Validate & Scan Command (Service Role Client)
-// -----------------------------------------------------------------------------
-
-// -----------------------------------------------------------------------------
-// 5. Worker-Only Validate & Scan Command (Service Role Client)
-// -----------------------------------------------------------------------------
-
-export function createValidateAndScanUploadCommand(
-  supabaseAdmin: SupabaseClient,
-): TrustedCommandDefinition<
-  ValidateAndScanUploadInput,
-  string | undefined,
-  ValidateAndScanUploadInput,
-  ScanResultData
-> {
-  return {
-    name: "validate_and_scan_upload_reservation",
-    extractTarget(input) {
-      return input.uploadReservationId;
-    },
-    authorize(actor) {
-      // Worker-only execution: requires SERVICE_ROLE or root admin
-      const isPrivileged =
-        actor.roles.includes("SERVICE_ROLE") ||
-        actor.roles.includes("ROOT_ADMIN") ||
-        actor.permissions.includes("admin.full");
-
-      if (!isPrivileged) {
-        return {
-          authorized: false,
-          code: CommandErrorCode.FORBIDDEN,
-          reason: "Trusted worker authorization required",
-        };
-      }
-
-      return { authorized: true };
-    },
-    validate(input) {
-      if (
-        !input.uploadReservationId ||
-        !UUID_REGEX.test(input.uploadReservationId)
-      ) {
-        return {
-          success: false,
-          error: "Invalid uploadReservationId UUID",
-        };
-      }
-
-      if (!input.detectedMimeType?.trim()) {
-        return {
-          success: false,
-          error: "detectedMimeType is required",
-        };
-      }
-
-      if (
-        typeof input.actualSizeBytes !== "number" ||
-        input.actualSizeBytes <= 0 ||
-        input.actualSizeBytes > 5242880
-      ) {
-        return {
-          success: false,
-          error: "actualSizeBytes must be between 1 and 5242880 bytes",
-        };
-      }
-
-      if (!["CLEAN", "INFECTED", "ERROR"].includes(input.malwareScanStatus)) {
-        return {
-          success: false,
-          error: "malwareScanStatus must be CLEAN, INFECTED, or ERROR",
-        };
-      }
-
-      if (typeof input.magicBytesVerified !== "boolean") {
-        return {
-          success: false,
-          error: "magicBytesVerified boolean flag is required",
-        };
-      }
-
-      return { success: true, data: input };
-    },
-    async execute(_actor, validated) {
-      const { data, error } = await supabaseAdmin.rpc(
-        "validate_and_scan_upload_reservation",
-        {
-          p_upload_reservation_id: validated.uploadReservationId,
-          p_detected_mime_type: validated.detectedMimeType,
-          p_actual_size_bytes: validated.actualSizeBytes,
-          p_malware_scan_status: validated.malwareScanStatus,
-          p_magic_bytes_verified: validated.magicBytesVerified,
-          p_checksum_sha256: validated.checksumSha256 ?? null,
-        },
-      );
-
-      if (error) {
-        throw new CommandExecutionError(
-          CommandErrorCode.INTERNAL_ERROR,
-          error.message,
-          error,
-        );
-      }
-
-      const result = data as {
-        success: boolean;
-        error_code?: string;
-        message?: string;
-        data?: ScanResultData;
-      };
-
-      if (!result.success || !result.data) {
-        const rawCode = result.error_code ? String(result.error_code) : "";
-        const code =
-          CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
-          CommandErrorCode.INTERNAL_ERROR;
-        return {
-          success: false,
-          error: {
-            code,
-            message: result.message || "Validation and scan failed",
-          },
-        };
-      }
-
-      return {
-        success: true,
-        data: result.data,
-      };
-    },
-  };
-}
-
-// -----------------------------------------------------------------------------
 // 6. Public Helper Functions
 // -----------------------------------------------------------------------------
 
@@ -1062,6 +956,125 @@ export async function recordCandidateUploadCompleted(
   return runner(createRecordCandidateUploadCompletedCommand(supabase), input);
 }
 
+type ScanRpcSuccess<T> = { success: true; data: T };
+type ScanRpcFailure = {
+  success: false;
+  error: { code: string; message: string };
+};
+
+async function runScanRpc<T>(
+  client: SupabaseClient,
+  functionName: string,
+  args: Record<string, unknown>,
+): Promise<ScanRpcSuccess<T> | ScanRpcFailure> {
+  const { data, error } = await client.rpc(functionName, args);
+  if (error) {
+    return {
+      success: false,
+      error: { code: CommandErrorCode.INTERNAL_ERROR, message: error.message },
+    };
+  }
+  const result = data as {
+    success?: boolean;
+    error_code?: string;
+    message?: string;
+    data?: T;
+  };
+  if (!result.success || !result.data) {
+    return {
+      success: false,
+      error: {
+        code: result.error_code ?? CommandErrorCode.INTERNAL_ERROR,
+        message: result.message ?? "Document scan command failed",
+      },
+    };
+  }
+  return { success: true, data: result.data };
+}
+
+export async function recordInspectedUploadReservation(
+  input: RecordInspectedUploadInput,
+  client: SupabaseClient,
+): Promise<ScanRpcSuccess<RecordUploadCompletedData> | ScanRpcFailure> {
+  return runScanRpc<RecordUploadCompletedData>(
+    client,
+    "record_inspected_upload_reservation",
+    {
+      p_upload_reservation_id: input.uploadReservationId,
+      p_actual_size_bytes: input.actualSizeBytes,
+      p_detected_mime_type: input.detectedMimeType,
+      p_checksum_sha256: input.checksumSha256,
+      p_magic_bytes_verified: input.magicBytesVerified,
+    },
+  );
+}
+
+export async function requestCandidateDocumentScan(
+  input: RequestCandidateDocumentScanInput,
+  client: SupabaseClient,
+): Promise<ScanRpcSuccess<PendingDocumentScanData> | ScanRpcFailure> {
+  return runScanRpc<PendingDocumentScanData>(
+    client,
+    "request_candidate_document_scan",
+    {
+      p_candidate_form_session_id: input.candidateFormSessionId,
+      p_upload_reservation_id: input.uploadReservationId,
+      p_action_code: input.actionCode,
+      p_target_logical_document_id: input.targetLogicalDocumentId ?? null,
+    },
+  );
+}
+
+export async function continueCleanCandidateDocumentScan(
+  candidateFormSessionId: string,
+  uploadReservationId: string,
+  client: SupabaseClient,
+): Promise<ScanRpcSuccess<StagedDocumentScanData> | ScanRpcFailure> {
+  return runScanRpc<StagedDocumentScanData>(
+    client,
+    "continue_clean_candidate_document_scan",
+    {
+      p_candidate_form_session_id: candidateFormSessionId,
+      p_upload_reservation_id: uploadReservationId,
+    },
+  );
+}
+
+export async function claimDocumentScanRequests(
+  workerId: string,
+  limit: number,
+  leaseSeconds: number,
+  workerClient: SupabaseClient,
+): Promise<ScanRpcSuccess<ClaimedDocumentScanRequest[]> | ScanRpcFailure> {
+  return runScanRpc<ClaimedDocumentScanRequest[]>(
+    workerClient,
+    "claim_document_scan_requests",
+    {
+      p_worker_id: workerId,
+      p_limit: limit,
+      p_lease_seconds: leaseSeconds,
+    },
+  );
+}
+
+export async function completeDocumentScanAttempt(
+  input: CompleteDocumentScanAttemptInput,
+  workerClient: SupabaseClient,
+): Promise<ScanRpcSuccess<{ status_code: string }> | ScanRpcFailure> {
+  return runScanRpc<{ status_code: string }>(
+    workerClient,
+    "complete_document_scan_attempt",
+    {
+      p_document_scan_request_id: input.documentScanRequestId,
+      p_attempt_id: input.attemptId,
+      p_fencing_token: input.fencingToken,
+      p_worker_id: input.workerId,
+      p_outcome: input.outcome,
+      p_error_code: input.errorCode ?? null,
+    },
+  );
+}
+
 export async function stageCandidateDocumentChange(
   input: StageCandidateDocumentChangeInput,
   deps: StorageReservationCommandDeps = {},
@@ -1081,26 +1094,6 @@ export async function cancelCandidateDocumentChange(
     deps.resolveActor ?? (() => defaultResolveActor(supabase));
   const runner = createCommandRunner({ resolveActor });
   return runner(createCancelCandidateDocumentChangeCommand(supabase), input);
-}
-
-export async function validateAndScanUploadReservation(
-  input: ValidateAndScanUploadInput,
-  deps: {
-    client: SupabaseClient; // Requires service role client
-    resolveActor?: () => Promise<VerifiedActor | null>;
-  },
-): Promise<CommandResult<ScanResultData>> {
-  const resolveActor =
-    deps.resolveActor ??
-    (async () => ({
-      authUserId: "00000000-0000-0000-0000-000000000000",
-      email: "service-worker@internal",
-      isActive: true,
-      roles: ["SERVICE_ROLE"],
-      permissions: ["admin.full"],
-    }));
-  const runner = createCommandRunner({ resolveActor });
-  return runner(createValidateAndScanUploadCommand(deps.client), input);
 }
 
 export async function claimDueStorageCleanupJobs(

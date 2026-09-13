@@ -3,13 +3,17 @@ import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   authorizeCandidateUploadScan,
+  claimDocumentScanRequests,
   claimDueStorageCleanupJobs,
+  completeDocumentScanAttempt,
   completeStorageCleanupJob,
+  continueCleanCandidateDocumentScan,
   createSignedUploadUrlForReservation,
   recordCandidateUploadCompleted,
+  recordInspectedUploadReservation,
+  requestCandidateDocumentScan,
   reserveCandidateFormUpload,
   stageCandidateDocumentChange,
-  validateAndScanUploadReservation,
 } from "@/lib/commands/storage-reservation";
 import { CommandErrorCode, type VerifiedActor } from "@/lib/commands/types";
 import { ensureQuarantineBucketExists } from "@/lib/storage/buckets";
@@ -657,129 +661,6 @@ test("13. CANDIDATE_QUARANTINE_READ_DENIED candidate has zero SELECT on quaranti
   );
 });
 
-test("14. CANDIDATE_CANNOT_SELF_ATTEST_SCAN_CLEAN upload completion leaves PENDING and candidate cannot call validate_and_scan", async () => {
-  const mockSupabase = createMockSupabase({
-    rpcHandlers: {
-      record_candidate_upload_completed: () => ({
-        success: true,
-        data: {
-          upload_reservation_id: "res-001",
-          status_code: "UPLOADED",
-          malware_scan_status: "PENDING", // Strictly PENDING
-        },
-      }),
-      validate_and_scan_upload_reservation: () => {
-        throw new Error(
-          "permission denied for function validate_and_scan_upload_reservation",
-        );
-      },
-    },
-  });
-
-  const completion = await recordCandidateUploadCompleted(
-    {
-      uploadReservationId: "11111111-1111-1111-1111-111111111111",
-      actualSizeBytes: 2048,
-    },
-    { client: mockSupabase, resolveActor: async () => activeCandidateActor },
-  );
-
-  assert.equal(completion.success, true);
-  if (completion.success) {
-    assert.equal(completion.data.status_code, "UPLOADED");
-    assert.equal(completion.data.malware_scan_status, "PENDING");
-  }
-
-  // Attempt direct call to worker validation by candidate -> forbidden
-  const candidateScanAttempt = await validateAndScanUploadReservation(
-    {
-      uploadReservationId: "11111111-1111-1111-1111-111111111111",
-      detectedMimeType: "application/pdf",
-      actualSizeBytes: 2048,
-      malwareScanStatus: "CLEAN",
-      magicBytesVerified: true,
-    },
-    {
-      client: mockSupabase,
-      resolveActor: async () => activeCandidateActor,
-    },
-  );
-
-  assert.equal(candidateScanAttempt.success, false);
-  if (!candidateScanAttempt.success) {
-    assert.equal(candidateScanAttempt.error.code, CommandErrorCode.FORBIDDEN);
-  }
-});
-
-test("15. AUTHORITATIVE_SCAN_EVIDENCE_REQUIRED validation fails if scan unverified or MIME mismatch", async () => {
-  const mockSupabase = createMockSupabase({
-    rpcHandlers: {
-      validate_and_scan_upload_reservation: (args: unknown) => {
-        const p = args as {
-          p_magic_bytes_verified?: boolean;
-          p_detected_mime_type?: string;
-        };
-        if (!p.p_magic_bytes_verified) {
-          return {
-            success: false,
-            error_code: "INVALID_CONTENT_SIGNATURE",
-            message: "File magic bytes do not match expected signature",
-          };
-        }
-        if (p.p_detected_mime_type === "application/x-msdownload") {
-          return {
-            success: false,
-            error_code: "INVALID_MIME_TYPE",
-            message: "Detected MIME type is unapproved",
-          };
-        }
-        return {
-          success: true,
-          data: {
-            upload_reservation_id: "res-001",
-            status_code: "VALIDATED",
-            malware_scan_status: "CLEAN",
-          },
-        };
-      },
-    },
-  });
-
-  // Test magic bytes false rejection
-  const badMagicResult = await validateAndScanUploadReservation(
-    {
-      uploadReservationId: "11111111-1111-1111-1111-111111111111",
-      detectedMimeType: "application/pdf",
-      actualSizeBytes: 2048,
-      malwareScanStatus: "CLEAN",
-      magicBytesVerified: false,
-    },
-    { client: mockSupabase, resolveActor: async () => serviceWorkerActor },
-  );
-
-  assert.equal(badMagicResult.success, false);
-  if (!badMagicResult.success) {
-    assert.equal(badMagicResult.error.code, "INVALID_CONTENT_SIGNATURE");
-  }
-
-  // Test MIME mismatch rejection
-  const badMimeResult = await validateAndScanUploadReservation(
-    {
-      uploadReservationId: "11111111-1111-1111-1111-111111111111",
-      detectedMimeType: "application/x-msdownload",
-      actualSizeBytes: 2048,
-      malwareScanStatus: "CLEAN",
-      magicBytesVerified: true,
-    },
-    { client: mockSupabase, resolveActor: async () => serviceWorkerActor },
-  );
-
-  assert.equal(badMimeResult.success, false);
-  if (!badMimeResult.success) {
-    assert.equal(badMimeResult.error.code, "INVALID_MIME_TYPE");
-  }
-});
-
 test("16. STORAGE_RLS_CANCELLED_SESSION_DENIAL direct INSERT fails if session is cancelled", async () => {
   function checkInsertPolicy(
     reservation: { status: string; expires_at: number },
@@ -1098,4 +979,116 @@ test("26. Declarative storage bucket setup helper", async () => {
   const mockSupabase = createMockSupabase({});
   const result = await ensureQuarantineBucketExists(mockSupabase);
   assert.equal(result.success, true);
+});
+
+test("27. PENDING_SCAN is distinct from staged completion and preserves only server-owned continuation", async () => {
+  const mockSupabase = createMockSupabase({
+    rpcHandlers: {
+      record_inspected_upload_reservation: () => ({
+        success: true,
+        data: {
+          upload_reservation_id: "11111111-1111-1111-1111-111111111111",
+          status_code: "UPLOADED",
+          malware_scan_status: "PENDING",
+        },
+      }),
+      request_candidate_document_scan: () => ({
+        success: true,
+        data: {
+          kind: "PENDING_SCAN",
+          document_scan_request_id: "33333333-3333-3333-3333-333333333333",
+          upload_reservation_id: "11111111-1111-1111-1111-111111111111",
+        },
+      }),
+      continue_clean_candidate_document_scan: () => ({
+        success: true,
+        data: {
+          kind: "STAGED",
+          change_id: "44444444-4444-4444-4444-444444444444",
+        },
+      }),
+    },
+  });
+
+  const recorded = await recordInspectedUploadReservation(
+    {
+      uploadReservationId: "11111111-1111-1111-1111-111111111111",
+      actualSizeBytes: 2048,
+      detectedMimeType: "application/pdf",
+      checksumSha256: "a".repeat(64),
+      magicBytesVerified: true,
+    },
+    mockSupabase,
+  );
+  assert.equal(recorded.success, true);
+
+  const pending = await requestCandidateDocumentScan(
+    {
+      candidateFormSessionId: "22222222-2222-2222-2222-222222222222",
+      uploadReservationId: "11111111-1111-1111-1111-111111111111",
+      actionCode: "REPLACE",
+      targetLogicalDocumentId: "55555555-5555-5555-5555-555555555555",
+    },
+    mockSupabase,
+  );
+  assert.equal(pending.success, true);
+  if (pending.success) {
+    assert.equal(pending.data.kind, "PENDING_SCAN");
+    assert.equal("change_id" in pending.data, false);
+  }
+
+  const staged = await continueCleanCandidateDocumentScan(
+    "22222222-2222-2222-2222-222222222222",
+    "11111111-1111-1111-1111-111111111111",
+    mockSupabase,
+  );
+  assert.equal(staged.success, true);
+  if (staged.success) {
+    assert.equal(staged.data.kind, "STAGED");
+    assert.equal(staged.data.change_id, "44444444-4444-4444-4444-444444444444");
+  }
+});
+
+test("28. document scan worker adapter preserves attempt and fencing identity", async () => {
+  const mockSupabase = createMockSupabase({
+    rpcHandlers: {
+      claim_document_scan_requests: () => ({
+        success: true,
+        data: [
+          {
+            document_scan_request_id: "11111111-1111-1111-1111-111111111111",
+            upload_reservation_id: "22222222-2222-2222-2222-222222222222",
+            attempt_id: "33333333-3333-3333-3333-333333333333",
+            fencing_token: "44444444-4444-4444-4444-444444444444",
+            leased_until: "2030-01-01T00:00:00Z",
+          },
+        ],
+      }),
+      complete_document_scan_attempt: () => ({
+        success: true,
+        data: { status_code: "CLEAN" },
+      }),
+    },
+  });
+  const claimed = await claimDocumentScanRequests(
+    "scan-worker-1",
+    1,
+    300,
+    mockSupabase,
+  );
+  assert.equal(claimed.success, true);
+  if (!claimed.success) return;
+  const item = claimed.data[0];
+  assert.ok(item);
+  const completed = await completeDocumentScanAttempt(
+    {
+      documentScanRequestId: item.document_scan_request_id,
+      attemptId: item.attempt_id,
+      fencingToken: item.fencing_token,
+      workerId: "scan-worker-1",
+      outcome: "CLEAN",
+    },
+    mockSupabase,
+  );
+  assert.equal(completed.success, true);
 });

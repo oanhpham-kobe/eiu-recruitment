@@ -17,13 +17,14 @@ import {
 import {
   authorizeCandidateUploadScan,
   cancelCandidateDocumentChange,
+  continueCleanCandidateDocumentScan,
   createSignedUploadUrlForReservation,
-  recordCandidateUploadCompleted,
+  recordInspectedUploadReservation,
+  requestCandidateDocumentScan,
   reserveCandidateFormUpload,
   stageCandidateDocumentChange,
-  validateAndScanUploadReservation,
 } from "@/lib/commands/storage-reservation";
-import { inspectAndScanUploadReservation } from "@/lib/storage/upload-scanner";
+import { inspectUploadReservation } from "@/lib/storage/upload-scanner";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -625,7 +626,7 @@ export async function completeAndStageUploadAction(input: {
   reservationId: string;
   intendedDocumentTypeId: string;
   actualSize: number;
-  actionCode?: "ADD" | "REPLACE" | "DELETE";
+  actionCode?: "ADD" | "REPLACE";
   targetLogicalDocumentId?: string;
   checksumSha256?: string;
   mimeType?: string;
@@ -646,88 +647,83 @@ export async function completeAndStageUploadAction(input: {
     };
   }
 
-  const inspected = await inspectAndScanUploadReservation(input.reservationId);
+  // The business request inspects private Storage but never contacts a scanner
+  // or supplies a verdict. Durable worker processing begins after commit.
+  const inspected = await inspectUploadReservation(input.reservationId);
   if (!inspected.success) {
+    return { success: false, error: inspected.error, code: inspected.code };
+  }
+  const admin = createAdminClient();
+  if (!admin) {
     return {
       success: false,
-      error: inspected.error,
-      code: inspected.code,
+      error: "Trusted upload inspection is not configured",
+      code: "UPLOAD_INSPECTION_REQUIRED",
     };
   }
-
-  // Record only server-derived bytes and checksum.
-  const recordRes = await recordCandidateUploadCompleted(
-    {
-      uploadReservationId: input.reservationId,
-      actualSizeBytes: inspected.data.actualSizeBytes,
-      checksumSha256: inspected.data.checksumSha256,
-    },
-    { client: supabase },
-  );
-
-  if (!recordRes.success) {
-    return {
-      success: false,
-      error: recordRes.error.message,
-      code: recordRes.error.code,
-    };
-  }
-
-  const supabaseAdmin = createAdminClient();
-  if (!supabaseAdmin) {
-    return {
-      success: false,
-      error: "Trusted upload scanner is not configured",
-      code: "MALWARE_SCAN_REQUIRED",
-    };
-  }
-
-  const scanRes = await validateAndScanUploadReservation(
+  const recorded = await recordInspectedUploadReservation(
     {
       uploadReservationId: input.reservationId,
       actualSizeBytes: inspected.data.actualSizeBytes,
       detectedMimeType: inspected.data.detectedMimeType,
-      malwareScanStatus: inspected.data.malwareScanStatus,
-      magicBytesVerified: inspected.data.magicBytesVerified,
       checksumSha256: inspected.data.checksumSha256,
+      magicBytesVerified: inspected.data.magicBytesVerified,
     },
-    { client: supabaseAdmin },
+    admin,
   );
-
-  if (!scanRes.success) {
+  if (!recorded.success) {
     return {
       success: false,
-      error: scanRes.error.message,
-      code: scanRes.error.code,
+      error: recorded.error.message,
+      code: recorded.error.code,
     };
   }
-
-  // 3. Stage candidate document change
-  const stageRes = await stageCandidateDocumentChange(
+  const requested = await requestCandidateDocumentScan(
     {
       candidateFormSessionId: input.sessionId,
-      actionCode: input.actionCode || "ADD",
-      intendedDocumentTypeId: input.intendedDocumentTypeId,
       uploadReservationId: input.reservationId,
+      actionCode: input.actionCode ?? "ADD",
       targetLogicalDocumentId: input.targetLogicalDocumentId,
     },
-    { client: supabase },
+    supabase,
   );
-
-  if (!stageRes.success) {
+  if (!requested.success) {
     return {
       success: false,
-      error: stageRes.error.message,
-      code: stageRes.error.code,
+      error: requested.error.message,
+      code: requested.error.code,
     };
   }
-
   return {
-    success: true,
+    success: true as const,
     data: {
-      changeId: stageRes.data.candidate_form_document_change_id,
+      kind: "PENDING_SCAN" as const,
+      requestId: requested.data.document_scan_request_id,
       reservationId: input.reservationId,
     },
+  };
+}
+
+export async function continueCleanDocumentScanAction(
+  sessionId: string,
+  reservationId: string,
+) {
+  const supabase = await createServerClient();
+  const result = await continueCleanCandidateDocumentScan(
+    sessionId,
+    reservationId,
+    supabase,
+  );
+  if (!result.success) {
+    return {
+      success: false as const,
+      error: result.error.message,
+      code: result.error.code,
+    };
+  }
+  return {
+    success: true as const,
+    data: { kind: "STAGED" as const, changeId: result.data.change_id },
   };
 }
 

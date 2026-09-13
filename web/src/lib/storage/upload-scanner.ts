@@ -19,14 +19,11 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   jpeg: "image/jpeg",
 };
 
-type MalwareScanStatus = "CLEAN" | "INFECTED" | "ERROR";
-
 export type InspectedUpload = {
   actualSizeBytes: number;
   checksumSha256: string;
   detectedMimeType: string;
   magicBytesVerified: boolean;
-  malwareScanStatus: MalwareScanStatus;
 };
 
 type ScanFailure = {
@@ -121,39 +118,7 @@ export function detectUploadMimeType(bytes: Uint8Array): string | null {
   return null;
 }
 
-async function requestMalwareVerdict(
-  bytes: Uint8Array,
-  filename: string,
-): Promise<MalwareScanStatus | null> {
-  const scannerUrl = process.env.MALWARE_SCANNER_URL?.trim();
-  if (!scannerUrl) return null;
-
-  const headers: Record<string, string> = {
-    "content-type": "application/octet-stream",
-    "x-original-filename": filename,
-  };
-  const scannerToken = process.env.MALWARE_SCANNER_TOKEN?.trim();
-  if (scannerToken) headers.authorization = `Bearer ${scannerToken}`;
-
-  try {
-    const response = await fetch(scannerUrl, {
-      method: "POST",
-      headers,
-      body: Buffer.from(bytes),
-      cache: "no-store",
-    });
-    if (!response.ok) return "ERROR";
-    const payload = (await response.json()) as { status?: unknown };
-    const status = String(payload.status ?? "").toUpperCase();
-    return status === "CLEAN" || status === "INFECTED" || status === "ERROR"
-      ? status
-      : "ERROR";
-  } catch {
-    return "ERROR";
-  }
-}
-
-export async function inspectAndScanUploadReservation(
+export async function inspectUploadReservation(
   reservationId: string,
 ): Promise<ScanSuccess | ScanFailure> {
   const admin = createAdminClient();
@@ -222,19 +187,6 @@ export async function inspectAndScanUploadReservation(
       isAllowedMimeForExtension(extension, detectedMimeType),
   );
   const checksumSha256 = createHash("sha256").update(bytes).digest("hex");
-  const malwareScanStatus = await requestMalwareVerdict(
-    bytes,
-    reservation.original_filename,
-  );
-
-  if (!malwareScanStatus) {
-    return {
-      success: false,
-      code: "MALWARE_SCAN_REQUIRED",
-      error: "Trusted malware scanner is not configured",
-    };
-  }
-
   return {
     success: true,
     data: {
@@ -242,7 +194,6 @@ export async function inspectAndScanUploadReservation(
       checksumSha256,
       detectedMimeType,
       magicBytesVerified,
-      malwareScanStatus,
     },
   };
 }
