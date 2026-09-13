@@ -47,8 +47,8 @@ integration:
   last_verified_control_plane_sha: "44f1d1d22d09a3b8bb0855324b6631e16256cefc"
   last_verified_control_plane_integration_ci_run: "34736028874"
   last_verified_control_plane_governance_ci_run: "34736028909"
-  current_reporting_head: "72b0e8b44601d8ec290e22f194357c55f32509f2"
-  current_reporting_governance_ci_run: "34758681936"
+  current_reporting_head: "93cd9942f928729ddd4e13179ccac0aafc734a51"
+  current_reporting_governance_ci_run: PENDING
   last_task_acceptance_attempt_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
   last_task_acceptance_integration_ci_run: "34735656146"
   last_task_acceptance_integration_ci_result: PASS
@@ -624,33 +624,50 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: ACCEPTANCE_CLOSED_AWAITING_FRONTIER_RESOLUTION
+  status: NEXT_TASK_PROMPT_REVIEW_PENDING
   accepted_task: TASK-S07-001
   accepted_checkpoint: checkpoint/S07-001-accepted-001
   accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
-  implementation_lifecycle: CLOSED
+  audit_release_sha: "93cd9942f928729ddd4e13179ccac0aafc734a51"
   external_acceptance_audit:
     reviewer: EXTERNAL_CHATGPT
     transport: OWNER_MESSAGE
     result: PASS
-    audited_reporting_sha: "72b0e8b44601d8ec290e22f194357c55f32509f2"
     source_reopen_required: false
     frontier_release: APPROVED
     evidence_persistence: "Owner-transported external audit only; no reviewer-native evidence is claimed."
-  next_task_assumed: false
+  frontier_resolution:
+    result: MATERIALIZED_ONE_TASK
+    source_reopen_required: false
+    selected_task: TASK-S07-002
+    selected_cut: "Durable document scan request and result-fencing trusted contracts."
+    later_domains_unmaterialized:
+      - scanner provider/runtime
+      - physical Storage cleanup worker
+      - email provider sender runtime
+      - manual email/history/activity/document UI
+      - archive/export/purge
+  task: TASK-S07-002
+  prompt: project_control/prompts/SLICE-07_TASK-002_v1.md
+  source_reconciliation: project_control/reviews/S07_002_SOURCE_RECONCILIATION_v1.md
+  prompt_review_work_id: S07-002-PROMPT-REVIEW-001
+  prompt_review_baseline_ref: checkpoint/pre-S07-002-001
+  prompt_review_status: PENDING
+  implementation_started: false
+  materialized_task_count: 1
 
 safe_frontier:
   eligible_tasks: []
-  skipped_due_to_dependency: []
+  skipped_due_to_dependency:
+    - "TASK-S07-002: independent pre-implementation prompt/source review is required."
   materialization_frontier: []
-  frontier_resolution: REQUIRED
-  execution_hold: null
+  execution_hold: "TASK-S07-002 is PLANNED; stop at its independent prompt-review gate before implementation dispatch."
 
 stop_gate:
-  status: FRONTIER_RESOLUTION_REQUIRED
-  type: POST_ACCEPTANCE_PROMPT_GATE
+  status: PRE_IMPLEMENTATION_PROMPT_REVIEW_REQUIRED
+  type: TASK_S07_002_PROMPT_GATE
   source_reopen_required: false
-  resume_on: "Resolve one canonical next Slice-07 task, freeze its prompt-review baseline, and stop before implementation dispatch."
+  resume_on: "Independent exact-baseline prompt/source review PASS, then ChatGPT implementation-dispatch decision."
 
-next_action: "Resolve the next Slice-07 prompt gate from canonical authority; do not start an Executor or materialize a second task."
+next_action: "Freeze the TASK-S07-002 prompt-review baseline, obtain independent eiu-reviewer PASS, and stop before implementation."
 

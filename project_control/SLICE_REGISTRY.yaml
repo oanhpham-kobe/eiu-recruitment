@@ -15,5 +15,5 @@ slices:
   SLICE-DS: {name: Production Design System Hardening / Responsive Convergence, status: DONE, current_task: TASK-DS-006}
   SLICE-05: {name: Interviewer Reports / HR Report / Final Decision, status: DONE, current_task: TASK-S05-002}
   SLICE-06: {name: Master Data / Users & Permissions, status: DONE, current_task: TASK-S06-002}
-  SLICE-07: {name: Email / Documents / Activity / Workers, status: IN_PROGRESS, current_task: TASK-S07-001}
+  SLICE-07: {name: Email / Documents / Activity / Workers, status: IN_PROGRESS, current_task: TASK-S07-002}
   SLICE-08: {name: Search / Performance / Ops / Release Hardening, status: NOT_STARTED}

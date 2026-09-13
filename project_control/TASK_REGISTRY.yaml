@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-07
-current_task: TASK-S07-001
+current_task: TASK-S07-002
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1265,3 +1265,26 @@ tasks:
     out_of_scope: "Provider runtime/deployment, UI, document/scan/storage workers, archive/purge, source reopen and second task."
     implementation_branch: oanhpham-kobe/TASK-S07-001-email-persistence
     notes: "External ChatGPT audit PASS and Owner dispatch approval received. Execute only reviewed task lifecycle; stop after immutable acceptance before next task."
+
+  TASK-S07-002:
+    title: "Document Scan Request and Result-Fencing Trusted Contracts"
+    slice: SLICE-07
+    status: PLANNED
+    lane: LANE_A
+    depends_on: [TASK-S02-003, TASK-S02-004, TASK-S04-002, TASK-S06-002, TASK-S07-001]
+    planning_baseline_sha: "93cd9942f928729ddd4e13179ccac0aafc734a51"
+    source_reconciliation: project_control/reviews/S07_002_SOURCE_RECONCILIATION_v1.md
+    prompt: project_control/prompts/SLICE-07_TASK-002_v1.md
+    source_authority: "review_pack 11 §§5-9; 37 §§3/10/16; 39; 41; 42; 47; 48; 55; 59; 63; 66; 73; 99; 100; app_spec.yaml"
+    acceptance:
+      - "One durable scan request binds exact reservation, private object identity and checksum; retry replays, mismatch fails closed."
+      - "Worker-only due claim/result transitions use bounded leases, retry and fencing; stale completion cannot alter a newer attempt."
+      - "Only trusted CLEAN may satisfy existing finalization guards; stale, missing, ERROR and INFECTED results remain non-finalizable."
+      - "Candidate request path cannot invoke scanner or forge result; minimal immutable Security Audit preserves privacy."
+      - "Focused scan protocol tests and crossed S02/S04/S06/S07-001 regressions pass without weakening accepted contracts."
+    out_of_scope: "Scanner provider/runtime/credentials, physical Storage cleanup worker, email provider runtime, UI, archive/export/purge, automatic retention, deployment and connected Supabase."
+    security_boundary: "Browser records no verdict or worker identity; trusted worker has narrow claim/result authority over exact private reservation/object identity."
+    concurrency_idempotency: "One logical request per reservation fingerprint; bounded SKIP LOCKED claims, lease fencing, finite retry and stale-result rejection."
+    verification: "Disposable local replay, focused SQL/RLS/staged concurrency and affected adapter tests; crossed S02/S04/S06/S07-001 regressions only when directly impacted."
+    review_gate: "Independent exact-baseline eiu-reviewer prompt/source PASS required before any implementation dispatch."
+    next_frontier_behavior: "STOP after prompt review PASS; do not start an Executor or materialize another Slice-07 task."

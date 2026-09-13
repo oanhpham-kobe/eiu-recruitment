@@ -2,17 +2,18 @@
 
 > DERIVED / NON-AUTHORITATIVE. Runtime: `AUTONOMY_RUN_STATE.yaml`; DAG: `TASK_REGISTRY.yaml` and `SLICE_REGISTRY.yaml`; exact code/history: Git.
 
-## TASK-S07-001 accepted
+## Slice-07 prompt-gate state
 
-`TASK-S07-001 — Email Outbox and History Trusted Persistence Contracts` remains accepted at application/checkpoint SHA `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
+`TASK-S07-001 — Email Outbox and History Trusted Persistence Contracts` remains accepted at `checkpoint/S07-001-accepted-001` → `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
 
-- Accepted checkpoint: `checkpoint/S07-001-accepted-001` at `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
-- External ChatGPT final acceptance audit: PASS, Owner-transported; source/task reopen is false and frontier release is approved. No `eiu-reviewer` evidence is claimed for that external audit.
-- Current reporting HEAD: `72b0e8b44601d8ec290e22f194357c55f32509f2`; Governance CI `34758681936` PASS. This reporting coordinate is distinct from the accepted application/checkpoint SHA.
-- S07-001 implementation lifecycle is closed. No Executor is active; the next task is not assumed pending canonical Frontier Resolution.
+- Owner-transported external ChatGPT final acceptance audit: PASS; source reopen false; frontier release approved. No reviewer-native evidence is claimed for that external audit.
+- Audit-release reconciliation SHA: `93cd9942f928729ddd4e13179ccac0aafc734a51`; prior exact reporting Governance CI remains `34758681936` PASS at `72b0e8b44601d8ec290e22f194357c55f32509f2`.
+- Exactly one next task is materialized: `TASK-S07-002 — Document Scan Request and Result-Fencing Trusted Contracts`.
+- S07-002 owns durable scan-request identity and trusted result fencing; it excludes scanner-provider runtime, physical Storage cleanup execution, email provider runtime, UI and archive/purge.
+- Prompt: `project_control/prompts/SLICE-07_TASK-002_v1.md`; source reconciliation: `project_control/reviews/S07_002_SOURCE_RECONCILIATION_v1.md`; review gate: `S07-002-PROMPT-REVIEW-001` against immutable `checkpoint/pre-S07-002-001`.
 
-No real provider delivery, production email, provider/SMTP credentials, document/scan worker, main mutation, PR merge, deployment, or connected Supabase action occurred.
+No Executor is active. No product implementation has started. Later Slice-07 domains remain unmaterialized.
 
-## Prompt-gate boundary
+## Stop boundary
 
-Resolve exactly one next Slice-07 task from canonical authority, freeze and independently review its prompt, then stop before implementation dispatch.
+Freeze the S07-002 prompt baseline, obtain independent `eiu-reviewer` PASS with no source reopen, then stop for ChatGPT implementation-dispatch decision.
