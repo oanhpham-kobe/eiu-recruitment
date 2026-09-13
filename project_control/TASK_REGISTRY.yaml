@@ -1269,10 +1269,13 @@ tasks:
   TASK-S07-002:
     title: "Document Scan Request and Result-Fencing Trusted Contracts"
     slice: SLICE-07
-    status: PLANNED
+    status: IN_PROGRESS
     lane: LANE_A
     depends_on: [TASK-S02-003, TASK-S02-004, TASK-S04-002, TASK-S06-002, TASK-S07-001]
     planning_baseline_sha: "93cd9942f928729ddd4e13179ccac0aafc734a51"
+    implementation_baseline_sha: "c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
+    pre_task_checkpoint: checkpoint/pre-S07-002-002
+    implementation_branch: oanhpham-kobe/TASK-S07-002-document-scan-request-and-result-fencing
     source_reconciliation: project_control/reviews/S07_002_SOURCE_RECONCILIATION_v1.md
     prompt: project_control/prompts/SLICE-07_TASK-002_v1.md
     source_authority: "review_pack 11 §§5-9; 37 §§3/10/16; 39; 41; 42; 47; 48; 55; 59; 63; 66; 73; 99; 100; app_spec.yaml"
@@ -1281,8 +1284,8 @@ tasks:
       - "Worker-only due claim/result transitions use bounded leases, retry and fencing; stale completion cannot alter a newer attempt."
       - "Only trusted CLEAN may satisfy existing finalization guards; stale, missing, ERROR and INFECTED results remain non-finalizable."
       - "Candidate request path cannot invoke scanner or forge result; minimal immutable Security Audit preserves privacy."
-      - "Focused scan protocol tests and crossed S02/S04/S06/S07-001 regressions pass without weakening accepted contracts."
-    out_of_scope: "Scanner provider/runtime/credentials, physical Storage cleanup worker, email provider runtime, UI, archive/export/purge, automatic retention, deployment and connected Supabase."
+      - "Focused scan protocol, pending/staged consumer and crossed S02/S04/S06/S07-001 regressions pass without weakening accepted contracts."
+    out_of_scope: "Scanner provider/runtime/credentials, physical Storage cleanup worker, email provider runtime, new document-management UI, archive/export/purge, automatic retention, deployment and connected Supabase."
     security_boundary: "Browser records no verdict or worker identity; trusted worker has narrow claim/result authority over exact private reservation/object identity."
     concurrency_idempotency: "One logical request per reservation fingerprint; bounded SKIP LOCKED claims, lease fencing, finite retry and stale-result rejection."
     verification: "Disposable local replay, focused SQL/RLS/staged concurrency and affected adapter tests; crossed S02/S04/S06/S07-001 regressions only when directly impacted."
@@ -1294,4 +1297,10 @@ tasks:
         source_reopen_required: false
         finding: "R1: existing upload consumer requires an explicit pending-to-staged continuation; pending cannot masquerade as staged success."
       repair_scope: "Preserve server-validated ADD/REPLACE intent through pending scan work; discriminate pending/staged results; stage exactly once after trusted CLEAN; safe pending cancellation/expiry."
-    next_frontier_behavior: "STOP after prompt review PASS; do not start an Executor or materialize another Slice-07 task."
+      r2:
+        work_id: S07-002-PROMPT-REVIEW-001-R2
+        reviewed_sha: "c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
+        result: PASS
+        source_reopen_required: false
+        evidence_persistence: "OMP task result S07PromptR2Reviewer; no GitHub-visible review artifact."
+    next_frontier_behavior: "TASK-S07-002 is the only authorized active Slice-07 implementation lifecycle; do not materialize another Slice-07 task."
