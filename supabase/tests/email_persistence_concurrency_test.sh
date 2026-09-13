@@ -87,8 +87,13 @@ participant_sql="begin; select set_config('request.jwt.claim.sub','$actor_auth',
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; select 1 from public.interviews where interview_id='$interview' for update; select pg_sleep(1); update public.interview_participants set is_current=false,removed_at=clock_timestamp() where interview_participant_id='$participant'; commit" >/tmp/s07-participant-holder.txt 2>/tmp/s07-participant-holder.err & p1=$!
 sleep 0.1
 participant_result="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$participant_sql" 2>/tmp/s07-participant-enqueue.err | tr -d '\r' | tail -n 1)"
-wait "$p1"; participant_status=$?
+set +e; wait "$p1"; participant_status=$?; set -e
 if [[ "$participant_status" -ne 0 ]]; then echo "S07 background failure: participant-holder pid=$p1 exit=$participant_status" >&2; cat /tmp/s07-participant-holder.txt /tmp/s07-participant-holder.err >&2; exit 1; fi
+if [[ -s /tmp/s07-participant-enqueue.err ]]; then echo 'S07 participant enqueue stderr:' >&2; cat /tmp/s07-participant-enqueue.err >&2; fi
+if ! jq -e '.success == false and (.error_code == "STALE_PREVIEW" or .error_code == "FORBIDDEN")' <<<"$participant_result" >/dev/null; then
+  echo 'participant change must invalidate concurrent enqueue' >&2; exit 1;
+fi
+call="select public.claim_email_outbox('worker-${suffix}',1)::text;"
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call" >/tmp/s07-worker-a.txt 2>/tmp/s07-worker-a.err & p1=$!
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call" >/tmp/s07-worker-b.txt 2>/tmp/s07-worker-b.err & p2=$!
 wait_pair worker-claim "$p1" "$p2" /tmp/s07-worker-a.txt /tmp/s07-worker-a.err /tmp/s07-worker-b.txt /tmp/s07-worker-b.err
