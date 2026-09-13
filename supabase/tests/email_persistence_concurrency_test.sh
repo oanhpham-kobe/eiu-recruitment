@@ -107,6 +107,11 @@ call="select public.claim_email_outbox('worker-${suffix}',1)::text;"
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call" >/tmp/s07-worker-a.txt 2>/tmp/s07-worker-a.err & p1=$!
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "$call" >/tmp/s07-worker-b.txt 2>/tmp/s07-worker-b.err & p2=$!
 wait_pair worker-claim "$p1" "$p2" /tmp/s07-worker-a.txt /tmp/s07-worker-a.err /tmp/s07-worker-b.txt /tmp/s07-worker-b.err
+claim_count="$(docker exec -i "$container_name" psql -qAt -U postgres -d postgres -c "select count(*) from public.email_outbox where actor_scope='s07:${suffix}' and status_code='SENDING'")"
+if [[ "$claim_count" -ne 1 ]]; then
+  echo "S07 claim diagnostic: worker-a=$(cat /tmp/s07-worker-a.txt) worker-b=$(cat /tmp/s07-worker-b.txt)" >&2
+  docker exec -i "$container_name" psql -U postgres -d postgres -c "select email_outbox_id,status_code,next_attempt_at,attempt_no,locked_until,request_fingerprint from public.email_outbox where actor_scope='s07:${suffix}'; select delivery_paused,delivery_not_before from private.email_configuration; select count(*) as claim_eligible from public.email_outbox where request_fingerprint is not null and ((status_code='QUEUED' or (status_code='FAILED' and next_attempt_at is not null)) and attempt_no<3 and coalesce(next_attempt_at,clock_timestamp())<=clock_timestamp() or (status_code='SENDING' and locked_until<=clock_timestamp()));" >&2
+fi
 psql_exec <<SQL
 do \$\$
 declare n integer;
