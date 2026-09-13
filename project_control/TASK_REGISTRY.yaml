@@ -1269,7 +1269,7 @@ tasks:
   TASK-S07-002:
     title: "Document Scan Request and Result-Fencing Trusted Contracts"
     slice: SLICE-07
-    status: PLANNED
+    status: IN_PROGRESS
     lane: LANE_A
     depends_on: [TASK-S02-003, TASK-S02-004, TASK-S04-002, TASK-S06-002, TASK-S07-001]
     planning_baseline_sha: "93cd9942f928729ddd4e13179ccac0aafc734a51"
@@ -1303,4 +1303,4 @@ tasks:
         result: PASS
         source_reopen_required: false
         evidence_persistence: "OMP task result S07PromptR2Reviewer; no GitHub-visible review artifact."
-    next_frontier_behavior: "STOP after prompt review PASS; do not start an Executor or materialize another Slice-07 task."
+    next_frontier_behavior: "TASK-S07-002 is the only authorized active Slice-07 implementation lifecycle; do not materialize another Slice-07 task."

@@ -2,7 +2,7 @@
 
 > DERIVED / NON-AUTHORITATIVE. Runtime: `AUTONOMY_RUN_STATE.yaml`; DAG: `TASK_REGISTRY.yaml` and `SLICE_REGISTRY.yaml`; exact code/history: Git.
 
-## Slice-07 prompt-gate state
+## Slice-07 implementation state
 
 `TASK-S07-001 — Email Outbox and History Trusted Persistence Contracts` remains accepted at `checkpoint/S07-001-accepted-001` → `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
 
@@ -14,8 +14,8 @@
 - Independent `eiu-reviewer` R2: `S07-002-PROMPT-REVIEW-001-R2` PASS at `c26c7bf183949117fe4901a62bf9e9d8a42c1dbb`; source reopen false; findings NONE. Its read-only OMP task result is retained by the runtime; no GitHub-visible review artifact exists.
 - Repaired immutable implementation baseline and task branch: `checkpoint/pre-S07-002-002` → `c26c7bf183949117fe4901a62bf9e9d8a42c1dbb`; `oanhpham-kobe/TASK-S07-002-document-scan-request-and-result-fencing` resolves exactly to that checkpoint.
 
-No Executor is active. No product implementation has started. Later Slice-07 domains remain unmaterialized.
+External ChatGPT implementation dispatch is approved for S07-002 only. The task is `IN_PROGRESS` on `oanhpham-kobe/TASK-S07-002-document-scan-request-and-result-fencing`; no second Slice-07 task or Executor is authorized.
 
-## Stop boundary
+## Scope boundary
 
-Stop. Await explicit ChatGPT implementation-dispatch decision for the reviewed S07-002 baseline. No Executor is authorized.
+Implement the reviewed durable scan-request/result-fencing protocol only. Stop after S07-002 acceptance; do not resolve the next frontier.

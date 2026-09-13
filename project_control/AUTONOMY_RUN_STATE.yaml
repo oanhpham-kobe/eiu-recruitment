@@ -624,7 +624,7 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: PROMPT_REVIEW_PASSED_STOPPED_FOR_OWNER_DISPATCH
+  status: IMPLEMENTATION_DISPATCH_APPROVED
   accepted_task: TASK-S07-001
   accepted_checkpoint: checkpoint/S07-001-accepted-001
   accepted_checkpoint_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
@@ -668,21 +668,27 @@ slice_07_planning:
     result: PASS
     source_reopen_required: false
     evidence_persistence: "OMP task result S07PromptR2Reviewer; reviewer assignment was read-only, with no GitHub-visible review artifact."
-  implementation_started: false
+  external_implementation_dispatch:
+    reviewer: EXTERNAL_CHATGPT
+    transport: OWNER_MESSAGE
+    decision: IMPLEMENTATION_DISPATCH_APPROVED
+    source_reopen_required: false
+    audited_reporting_head: "f353ced54a0ecc0a03cebf5101f3ceafe34327ea"
+  implementation_started: true
   materialized_task_count: 1
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-002: no Owner-authorized implementation dispatch exists."
+    - "TASK-S07-002: implementation lifecycle active in its one authorized task branch."
   materialization_frontier: []
-  execution_hold: "TASK-S07-002 remains PLANNED after prompt review PASS; stop for ChatGPT implementation-dispatch decision."
+  execution_hold: "No second Slice-07 task may be materialized while TASK-S07-002 is in implementation/review/CI lifecycle."
 
 stop_gate:
-  status: CHATGPT_IMPLEMENTATION_DISPATCH_REQUIRED
-  type: TASK_S07_002_PROMPT_GATE
+  status: NONE
+  type: TASK_S07_002_IMPLEMENTATION
   source_reopen_required: false
-  resume_on: "Explicit ChatGPT implementation-dispatch decision for TASK-S07-002."
+  resume_on: "Independent implementation review, serialization and exact-SHA CI lifecycle."
 
-next_action: "Stop. Await explicit ChatGPT implementation-dispatch decision for the reviewed TASK-S07-002 baseline."
+next_action: "Implement only TASK-S07-002 on its authorized task branch; do not materialize another Slice-07 task."
 
