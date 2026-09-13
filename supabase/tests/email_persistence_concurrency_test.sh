@@ -18,6 +18,7 @@ suffix="$(tr -d '-' < /proc/sys/kernel/random/uuid | cut -c1-12)"
 psql_exec <<SQL
 update public.email_outbox set next_attempt_at=clock_timestamp()+interval '1 day'
 where request_fingerprint is not null;
+do \$\$
 declare v_actor uuid:=gen_random_uuid(); v_auth uuid:=gen_random_uuid(); v_i uuid;
 declare v_cand uuid:=gen_random_uuid(); v_cand_auth uuid:=gen_random_uuid(); v_sub uuid:=gen_random_uuid();
 declare v_unit uuid; v_group uuid; v_pos uuid; v_app uuid;
