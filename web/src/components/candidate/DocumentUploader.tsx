@@ -178,7 +178,7 @@ export function DocumentUploader({
       // The worker owns the verdict; poll the server-owned continuation until
       // the scan is clean, then add the returned staged change locally.
       let stagedChangeId: string | null = null;
-      for (let attempt = 0; attempt < 30; attempt += 1) {
+      for (let attempt = 0; attempt < 240; attempt += 1) {
         const continuation = await continueCleanDocumentScanAction(
           sessionId,
           reservation.reservationId,
