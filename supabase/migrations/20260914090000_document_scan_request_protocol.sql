@@ -214,6 +214,7 @@ create or replace function public.continue_clean_candidate_document_scan(p_candi
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare v_auth uuid:=auth.uid(); v_cand public.candidates%rowtype; v_session public.candidate_form_sessions%rowtype;
  v_res public.upload_reservations%rowtype; v_q public.document_scan_requests%rowtype; v_result jsonb; v_change uuid;
+ v_now timestamptz; v_not_before timestamptz;
 begin
  if v_auth is null then return jsonb_build_object('success',false,'error_code','UNAUTHENTICATED'); end if;
  select * into v_cand from public.candidates where auth_user_id=v_auth and is_active;
@@ -228,6 +229,17 @@ begin
    where upload_reservation_id=v_res.upload_reservation_id and candidate_form_session_id=v_session.candidate_form_session_id for update;
  if not found then return jsonb_build_object('success',false,'error_code','NOT_FOUND'); end if;
  if v_q.staged_change_id is not null then return jsonb_build_object('success',true,'data',jsonb_build_object('kind','STAGED','change_id',v_q.staged_change_id)); end if;
+ v_now:=clock_timestamp();
+ if v_q.status_code='PROCESSING' and v_q.attempt_no>=3 and v_q.leased_until<=v_now then
+   update public.upload_reservations set status_code='REJECTED',malware_scan_status='ERROR' where upload_reservation_id=v_res.upload_reservation_id;
+   update public.document_scan_requests set status_code='ERROR',leased_until=null,next_attempt_at='infinity'::timestamptz,updated_at=v_now where document_scan_request_id=v_q.document_scan_request_id;
+   v_not_before:=greatest(v_res.expires_at,coalesce(v_res.signed_upload_expires_at,v_res.expires_at));
+   insert into public.storage_cleanup_queue(source_type,source_parent_id,source_upload_reservation_id,bucket_name,object_path,reason_code,status_code,not_before)
+   values('CANDIDATE_FORM',v_res.candidate_form_session_id,v_res.upload_reservation_id,v_res.temp_bucket,v_res.temp_path,'MALWARE_REJECTED','PENDING',v_not_before)
+   on conflict(bucket_name,object_path) do update set not_before=greatest(public.storage_cleanup_queue.not_before,excluded.not_before);
+   perform private.document_scan_audit('DOCUMENT_SCAN_RESULT',v_q.document_scan_request_id,'FAILED');
+   return jsonb_build_object('success',false,'error_code','SCAN_FAILED');
+ end if;
  if v_q.status_code='INFECTED' then return jsonb_build_object('success',false,'error_code','SCAN_REJECTED'); end if;
  if v_q.status_code='ERROR' and v_q.attempt_no>=3 then return jsonb_build_object('success',false,'error_code','SCAN_FAILED'); end if;
  if v_q.status_code='CANCELLED' then return jsonb_build_object('success',false,'error_code','SCAN_CANCELLED'); end if;

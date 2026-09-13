@@ -37,6 +37,14 @@ export type StagedDocumentItem = {
 
 type PendingDocumentItem = Omit<StagedDocumentItem, "changeId">;
 
+function isTerminalScanError(code: string | undefined): boolean {
+  return (
+    code === "SCAN_REJECTED" ||
+    code === "SCAN_FAILED" ||
+    code === "SCAN_CANCELLED"
+  );
+}
+
 interface DocumentUploaderProps {
   sessionId: string;
   attachedDocs: StagedDocumentItem[];
@@ -91,10 +99,14 @@ export function DocumentUploader({
               ...pending,
               changeId: continuation.data.changeId,
             });
-          } else if (continuation.code !== "SCAN_NOT_CLEAN") {
+          } else if (isTerminalScanError(continuation.code)) {
             resolvedReservationIds.add(pending.reservationId);
             setUploadError(
               continuation.error || "Không thể hoàn tất kiểm tra bảo mật tệp",
+            );
+          } else if (continuation.code !== "SCAN_NOT_CLEAN") {
+            setUploadError(
+              continuation.error || "Không thể kiểm tra trạng thái quét tệp",
             );
           }
         }
