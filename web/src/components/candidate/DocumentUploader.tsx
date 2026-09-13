@@ -79,7 +79,7 @@ export function DocumentUploader({
   const isMaxReached = attachedDocs.length + pendingDocs.length >= 5;
 
   useEffect(() => {
-    if (pendingDocs.length === 0) return;
+    if (uploading || pendingDocs.length === 0) return;
     let cancelled = false;
     let checking = false;
     const continuePendingScans = async () => {
@@ -130,7 +130,7 @@ export function DocumentUploader({
       cancelled = true;
       clearInterval(timer);
     };
-  }, [attachedDocs, onDocsChange, pendingDocs, sessionId]);
+  }, [attachedDocs, onDocsChange, pendingDocs, sessionId, uploading]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
