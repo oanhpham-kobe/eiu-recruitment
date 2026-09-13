@@ -55,14 +55,12 @@ begin
   assert public.request_candidate_document_scan(v_session,v_reservation,'ADD',null)=v_result, 'same request replays';
   execute 'reset role';
 
-  execute 'set local role document_scan_worker';
   v_claim:=public.claim_document_scan_requests('scan-worker',1,60);
   assert jsonb_array_length(v_claim->'data')=1, 'one worker claim';
   v_attempt:=(v_claim->'data'->0->>'attempt_id')::uuid;
   v_token:=(v_claim->'data'->0->>'fencing_token')::uuid;
   assert public.complete_document_scan_attempt(v_request,v_attempt,v_token,'scan-worker','CLEAN',null)->>'success'='true', 'current worker may persist CLEAN';
   assert public.complete_document_scan_attempt(v_request,v_attempt,v_token,'scan-worker','CLEAN',null)->>'error_code'='STALE_ATTEMPT', 'repeat completion is fenced';
-  execute 'reset role';
 
   execute 'set local role authenticated';
   v_result:=public.continue_clean_candidate_document_scan(v_session,v_reservation);
