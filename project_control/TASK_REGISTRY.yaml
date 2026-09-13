@@ -1235,7 +1235,7 @@ tasks:
   TASK-S07-001:
     title: "Email Outbox and History Trusted Persistence Contracts"
     slice: SLICE-07
-    status: IN_PROGRESS
+    status: DONE
     lane: LANE_A
     depends_on: [TASK-S06-001, TASK-S06-002]
     prompt: project_control/prompts/SLICE-07_TASK-001_v1.md
@@ -1248,6 +1248,10 @@ tasks:
       - "Worker-only leased claim/result persistence fences stale attempts and atomically records history/audit without promising exactly-once provider delivery."
       - "History view/cleanup enforces separate permissions, exact parent context, TEST/WRONG classification and immutable audit."
       - "Focused SQL/RLS/staged concurrency and retained cumulative regressions; exact independent implementation review and official CI before acceptance."
+      - "Independent exact-SHA repair re-review: PASS @ 8397be35d64a65f4a693811e4fc6b9e43287a7cd; no source reopen."
+      - "Focused verifier 34735225520: PASS; clean replay, contract SQL, and staged concurrency 3/3."
+      - "Candidate Integration CI 34735451324: PASS; serialized Integration CI 34735656146: PASS; Governance CI 34735941819: PASS."
+      - "Acceptance evidence: project_control/reviews/S07_001_IMPLEMENTATION_REVIEW_8397be3_v1.md."
     out_of_scope: "Provider runtime/deployment, UI, document/scan/storage workers, archive/purge, source reopen and second task."
     implementation_branch: oanhpham-kobe/TASK-S07-001-email-persistence
     notes: "External ChatGPT audit PASS and Owner dispatch approval received. Execute only reviewed task lifecycle; stop after immutable acceptance before next task."

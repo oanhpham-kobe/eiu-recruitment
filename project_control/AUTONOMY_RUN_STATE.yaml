@@ -38,17 +38,17 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
-  last_verified_application_ci_run: "34705634804"
+  last_verified_application_checkpoint: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+  last_verified_application_ci_run: "34735656146"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
   last_verified_control_plane_sha: "60e1f425d920ed9d76de68b49347188187054bd4"
   last_verified_control_plane_integration_ci_run: "34463405935"
   last_verified_control_plane_governance_ci_run: "34463405902"
-  last_task_acceptance_attempt_sha: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
-  last_task_acceptance_integration_ci_run: "34705634804"
+  last_task_acceptance_attempt_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+  last_task_acceptance_integration_ci_run: "34735656146"
   last_task_acceptance_integration_ci_result: PASS
-  last_task_acceptance_governance_ci_run: "34705634726"
+  last_task_acceptance_governance_ci_run: "34735941819"
   last_task_acceptance_governance_ci_result: PASS
   current_prompt_review_target_sha: "f757e76f3f97077c608dab29bad45b8bd2126dc3"
 
@@ -96,29 +96,24 @@ design_system_hardening:
   verified_web_candidate_sha: "cb42f0fe301fba70cdc32704d605872b05d12515"
   blocked_frontier_after_acceptance: TASK-S04-004
 
-active_workers:
+active_workers: []
+worker_settled_history:
   - task_id: TASK-S07-001
     lane: LANE_A
     role: EXECUTOR
-    branch: oanhpham-kobe/TASK-S07-001-email-persistence
-    worktree: .worktrees/s07-implementation
-    exact_sha: "7ffd71bb39b71e2dd67868b0bbf7df7acfe8c559"
-    state: STARTING
-    started_at: "2026-09-12T23:53:07Z"
-    last_observed_at: "2026-09-12T23:53:07Z"
-
+    result: PASS
+    exact_sha: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
+    settled_at: "2026-09-13T00:00:00Z"
 last_accepted_task:
-  id: TASK-S06-002
-  commit: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
+  id: TASK-S07-001
+  commit: "8397be35d64a65f4a693811e4fc6b9e43287a7cd"
   evidence:
-    - "prompt_review: PASS (S06-002-PROMPT-REVIEW-001)"
-    - "implementation_review: PASS (S06-002-IMPLEMENTATION-REVIEW-001-R5 @ 63f6feba352852af5826dd582d1c42159edd66d6)"
-    - "final_exact_sha_acceptance_review: PASS (S06-002-FINAL-INTEGRATION-EQUIVALENCE-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3)"
-    - "github_ci: VERIFIED (Integration CI 34705634804; Governance CI 34705634726; PASS)"
-    - "accepted_checkpoint: checkpoint/S06-002-accepted-001 @ 5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"
-    - "owner_transport_review_evidence: review/S06-002-FINAL-EQUIV-5f2b76c-v1 @ c7d9818263f5bbc49b89a2ab9dc672cf18e7c8a1"
+    - "implementation_review: PASS (S07-001 exact repair re-review @ 8397be35d64a65f4a693811e4fc6b9e43287a7cd)"
+    - "github_ci: VERIFIED (Integration CI 34735451324 and 34735656146; Governance CI 34735941819; PASS)"
+    - "acceptance_evidence: project_control/reviews/S07_001_IMPLEMENTATION_REVIEW_8397be3_v1.md"
 
 previous_accepted_tasks:
+  TASK-S06-002: {commit: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"}
   TASK-S06-001: {commit: "59be9b2c92906065b8e4baa902fcec1d4cbefa12"}
   TASK-S05-002: {commit: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"}
   TASK-S05-001: {commit: "ef0bd9e534dec0cc85ef6503fbe0369eda56d555"}
