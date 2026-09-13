@@ -15,6 +15,7 @@ declare
   v_attempt uuid;
   v_token uuid;
   v_change uuid;
+  v_infected uuid:=gen_random_uuid();
   v_other_path uuid:=gen_random_uuid();
 begin
   select document_type_id into v_doc_type from public.document_types where code='CV_RESUME' limit 1;
@@ -71,6 +72,22 @@ begin
   v_change:=(v_result->'data'->>'change_id')::uuid;
   assert public.continue_clean_candidate_document_scan(v_session,v_reservation)=v_result, 'repeat continuation replays one staged change';
   assert (select count(*)=1 from public.candidate_form_document_changes where candidate_form_document_change_id=v_change), 'one staged change retained';
+  execute 'reset role';
+
+  -- Terminal infected results fence staging and retain deferred cleanup intent.
+  insert into public.upload_reservations(upload_reservation_id,candidate_form_session_id,intended_document_type_id,temp_bucket,temp_path,original_filename,declared_mime_type,expected_max_size_bytes,actual_size_bytes,detected_mime_type,checksum_sha256,status_code,malware_scan_status,actor_auth_user_id,idempotency_key,expires_at)
+  values(v_infected,v_session,v_doc_type,'candidate-quarantine','scan/'||v_infected||'.pdf','infected.pdf','application/pdf',5242880,10,'application/pdf',repeat('c',64),'UPLOADED','PENDING',v_auth,gen_random_uuid(),clock_timestamp()+interval '1 hour');
+  execute 'set local role authenticated';
+  v_result:=public.request_candidate_document_scan(v_session,v_infected,'ADD',null);
+  v_request:=(v_result->'data'->>'document_scan_request_id')::uuid;
+  execute 'reset role';
+  v_claim:=public.claim_document_scan_requests('scan-worker',1,60);
+  v_attempt:=(v_claim->'data'->0->>'attempt_id')::uuid;
+  v_token:=(v_claim->'data'->0->>'fencing_token')::uuid;
+  assert public.complete_document_scan_attempt(v_request,v_attempt,v_token,'scan-worker','INFECTED',null)->>'success'='true', 'infected result is terminal';
+  assert exists(select 1 from public.storage_cleanup_queue where source_upload_reservation_id=v_infected and reason_code='MALWARE_REJECTED'), 'infected result enqueues deferred cleanup';
+  execute 'set local role authenticated';
+  assert public.continue_clean_candidate_document_scan(v_session,v_infected)->>'error_code'='SCAN_REJECTED', 'infected request cannot be staged';
   execute 'reset role';
 
   -- Cancellation fences a request before a late worker can write a result.

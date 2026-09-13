@@ -79,29 +79,32 @@ export function DocumentUploader({
       checking = true;
       try {
         const completed: StagedDocumentItem[] = [];
-        const completedReservationIds = new Set<string>();
+        const resolvedReservationIds = new Set<string>();
         for (const pending of pendingDocs) {
           const continuation = await continueCleanDocumentScanAction(
             sessionId,
             pending.reservationId,
           );
           if (continuation.success) {
-            completedReservationIds.add(pending.reservationId);
+            resolvedReservationIds.add(pending.reservationId);
             completed.push({
               ...pending,
               changeId: continuation.data.changeId,
             });
           } else if (continuation.code !== "SCAN_NOT_CLEAN") {
+            resolvedReservationIds.add(pending.reservationId);
             setUploadError(
               continuation.error || "Không thể hoàn tất kiểm tra bảo mật tệp",
             );
           }
         }
-        if (!cancelled && completed.length > 0) {
-          onDocsChange([...attachedDocs, ...completed]);
+        if (!cancelled && resolvedReservationIds.size > 0) {
+          if (completed.length > 0) {
+            onDocsChange([...attachedDocs, ...completed]);
+          }
           setPendingDocs((current) =>
             current.filter(
-              (pending) => !completedReservationIds.has(pending.reservationId),
+              (pending) => !resolvedReservationIds.has(pending.reservationId),
             ),
           );
         }
