@@ -62,6 +62,7 @@ begin
  if not exists(select 1 from public.email_outbox where email_outbox_id=v_id and context_fingerprint is not null) then
    raise exception 'S07 snapshot-bound fixture missing context fingerprint';
  end if;
+end\$\$;
 SQL
 actor_row="$(docker exec -i "$container_name" psql -qAt -F ' ' -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select u.app_user_id,u.auth_user_id,i.interview_id,a.application_id,a.submission_id from public.app_users u join public.app_user_permissions p on p.app_user_id=u.app_user_id join public.interviews i on i.is_active join public.applications a on a.application_id=i.application_id where p.permission_code='interviews.email' and u.is_active and a.is_active and a.hr_owner_id=u.app_user_id and not exists (select 1 from public.interview_participants ip join public.app_users pu on pu.app_user_id=ip.app_user_id where ip.interview_id=i.interview_id and ip.is_current and ip.removed_at is null and not pu.is_active) order by i.interview_id limit 1")"
 if [[ -z "$actor_row" ]]; then echo 'S07 setup failed: authenticated worker actor fixture missing' >&2; exit 1; fi
