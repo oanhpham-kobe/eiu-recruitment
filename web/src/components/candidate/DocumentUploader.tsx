@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   cancelDocumentChangeAction,
   completeAndStageUploadAction,
@@ -35,6 +35,8 @@ export type StagedDocumentItem = {
   isCv: boolean;
 };
 
+type PendingDocumentItem = Omit<StagedDocumentItem, "changeId">;
+
 interface DocumentUploaderProps {
   sessionId: string;
   attachedDocs: StagedDocumentItem[];
@@ -46,11 +48,6 @@ interface DocumentUploaderProps {
   ) => Promise<StagedDocumentItem>;
   disabled?: boolean;
 }
-function delay(milliseconds: number): Promise<void> {
-  const { promise, resolve } = Promise.withResolvers<void>();
-  setTimeout(resolve, milliseconds);
-  return promise;
-}
 export function DocumentUploader({
   sessionId,
   attachedDocs,
@@ -61,6 +58,7 @@ export function DocumentUploader({
 }: DocumentUploaderProps) {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
+  const [pendingDocs, setPendingDocs] = useState<PendingDocumentItem[]>([]);
   const [selectedType, setSelectedType] = useState<string>(
     documentTypes.find((d) => d.code === "CV_RESUME")?.id ||
       documentTypes[0]?.id ||
@@ -70,7 +68,54 @@ export function DocumentUploader({
   const hasCv = attachedDocs.some(
     (d) => d.isCv || d.documentTypeCode === "CV_RESUME",
   );
-  const isMaxReached = attachedDocs.length >= 5;
+  const isMaxReached = attachedDocs.length + pendingDocs.length >= 5;
+
+  useEffect(() => {
+    if (pendingDocs.length === 0) return;
+    let cancelled = false;
+    let checking = false;
+    const continuePendingScans = async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        const completed: StagedDocumentItem[] = [];
+        const completedReservationIds = new Set<string>();
+        for (const pending of pendingDocs) {
+          const continuation = await continueCleanDocumentScanAction(
+            sessionId,
+            pending.reservationId,
+          );
+          if (continuation.success) {
+            completedReservationIds.add(pending.reservationId);
+            completed.push({
+              ...pending,
+              changeId: continuation.data.changeId,
+            });
+          } else if (continuation.code !== "SCAN_NOT_CLEAN") {
+            setUploadError(
+              continuation.error || "Không thể hoàn tất kiểm tra bảo mật tệp",
+            );
+          }
+        }
+        if (!cancelled && completed.length > 0) {
+          onDocsChange([...attachedDocs, ...completed]);
+          setPendingDocs((current) =>
+            current.filter(
+              (pending) => !completedReservationIds.has(pending.reservationId),
+            ),
+          );
+        }
+      } finally {
+        checking = false;
+      }
+    };
+    void continuePendingScans();
+    const timer = setInterval(() => void continuePendingScans(), 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [attachedDocs, onDocsChange, pendingDocs, sessionId]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -175,43 +220,27 @@ export function DocumentUploader({
         throw new Error("Unexpected scan request state");
       }
 
-      // The worker owns the verdict; poll the server-owned continuation until
-      // the scan is clean, then add the returned staged change locally.
-      let stagedChangeId: string | null = null;
-      for (let attempt = 0; attempt < 240; attempt += 1) {
-        const continuation = await continueCleanDocumentScanAction(
-          sessionId,
-          reservation.reservationId,
-        );
-        if (continuation.success) {
-          stagedChangeId = continuation.data.changeId;
-          break;
-        }
-        if (continuation.code !== "SCAN_NOT_CLEAN") {
-          throw new Error(
-            continuation.error || "Không thể hoàn tất kiểm tra bảo mật tệp",
-          );
-        }
-        await delay(1000);
-      }
-      if (!stagedChangeId) {
-        throw new Error(
-          "Tệp vẫn đang chờ kiểm tra bảo mật / File is still pending security scan",
-        );
-      }
-      onDocsChange([
-        ...attachedDocs,
-        {
-          changeId: stagedChangeId,
-          reservationId: reservation.reservationId,
-          documentTypeCode: docType.code,
-          documentTypeName: docType.name,
-          filename: file.name,
-          fileSizeBytes: file.size,
-          documentTypeId: docType.id,
-          isCv: docType.code === "CV_RESUME",
-        },
-      ]);
+      // Keep pending work outside the staged-document collection. The effect
+      // retries the server-owned continuation until a trusted CLEAN result
+      // creates the single staged change.
+      setPendingDocs((current) =>
+        current.some(
+          (pending) => pending.reservationId === reservation.reservationId,
+        )
+          ? current
+          : [
+              ...current,
+              {
+                reservationId: reservation.reservationId,
+                documentTypeCode: docType.code,
+                documentTypeName: docType.name,
+                filename: file.name,
+                fileSizeBytes: file.size,
+                documentTypeId: docType.id,
+                isCv: docType.code === "CV_RESUME",
+              },
+            ],
+      );
       e.target.value = "";
     } catch (err) {
       setUploadError(
@@ -361,6 +390,24 @@ export function DocumentUploader({
 
       {/* Attached Files List */}
       <div className="uploader-box">
+        {pendingDocs.map((doc) => (
+          <div
+            key={doc.reservationId}
+            className="upload-card"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="upload-meta">
+              <div>
+                <strong>{doc.documentTypeName}</strong>: {doc.filename} (
+                {formatSize(doc.fileSizeBytes)})
+                <span style={{ marginLeft: "8px" }}>
+                  Đang kiểm tra bảo mật / Security scan pending
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
         {attachedDocs.map((doc, idx) => (
           <div
             key={

@@ -40,6 +40,8 @@ begin
   exception when insufficient_privilege then null; end;
   begin perform public.claim_document_scan_requests('forged',1,60); raise exception 'browser claim unexpectedly permitted';
   exception when insufficient_privilege then null; end;
+  begin perform private.document_scan_audit('FORGED',gen_random_uuid(),'SUCCESS'); raise exception 'browser audit unexpectedly permitted';
+  exception when insufficient_privilege then null; end;
   execute 'reset role';
 
   -- Trusted inspection contributes object evidence but never a CLEAN verdict.
@@ -48,6 +50,7 @@ begin
   assert (select status_code='UPLOADED' and malware_scan_status='PENDING' from public.upload_reservations where upload_reservation_id=v_reservation), 'inspection leaves pending scan';
 
   execute 'set local role authenticated';
+  assert (public.authorize_candidate_upload_scan(v_session,v_reservation)->>'success')::boolean, 'candidate retry authorization permits immutable inspected upload';
   v_result:=public.request_candidate_document_scan(v_session,v_reservation,'ADD',null);
   assert (v_result->>'success')::boolean and v_result->'data'->>'kind'='PENDING_SCAN', 'request is pending, not staged';
   v_request:=(v_result->'data'->>'document_scan_request_id')::uuid;
