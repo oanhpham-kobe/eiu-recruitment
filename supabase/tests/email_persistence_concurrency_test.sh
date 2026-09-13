@@ -125,6 +125,7 @@ end\$\$;
 SQL
 token="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select ea.attempt_id from private.email_attempts ea join public.email_outbox eo on eo.attempt_id=ea.attempt_id where eo.actor_scope='s07:${suffix}' and eo.status_code='SENDING'")"
 message="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select email_outbox_id from public.email_outbox where actor_scope='s07:${suffix}'")"
+docker exec -i "$container_name" psql -qAt -U postgres -d postgres -c "select email_outbox_id,status_code,attempt_id,worker_id,locked_until,next_attempt_at from public.email_outbox where email_outbox_id='$message'" >/tmp/s07-before-expiry.txt
 docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres -c "update public.email_outbox set locked_until=clock_timestamp()-interval '1 second' where email_outbox_id='$message'"
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; set local statement_timeout='10s'; select public.authorize_email_send('$message','$token','worker-${suffix}'); commit" >/tmp/s07-authorize-late.txt 2>/tmp/s07-authorize-late.err & p1=$!
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select public.claim_email_outbox('reclaim-${suffix}',1)" >/tmp/s07-reclaim.txt 2>/tmp/s07-reclaim.err & p2=$!
@@ -132,7 +133,10 @@ wait_pair reclaim-vs-late-auth "$p1" "$p2" /tmp/s07-authorize-late.txt /tmp/s07-
 token="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select ea.attempt_id from private.email_attempts ea join public.email_outbox eo on eo.attempt_id=ea.attempt_id where eo.actor_scope='s07:${suffix}' and eo.status_code='SENDING'")"
 if [[ -z "$token" ]]; then echo 'reclaim versus late authorization did not produce a live staged attempt' >&2; exit 1; fi
 auth_result="$(docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select public.authorize_email_send('$message','$token','reclaim-${suffix}')")"
-if ! jq -e '.success == true' <<<"$auth_result" >/dev/null; then echo 'reclaimed snapshot-bound attempt must authorize' >&2; exit 1; fi
+if ! jq -e '.success == true' <<<"$auth_result" >/dev/null; then
+  echo "S07 reclaim/auth diagnostic: before-expiry=$(cat /tmp/s07-before-expiry.txt) auth_result=$auth_result reclaim=$(cat /tmp/s07-reclaim.txt)" >&2
+  echo 'reclaimed snapshot-bound attempt must authorize' >&2; exit 1;
+fi
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "begin; set local statement_timeout='10s'; select public.complete_email_attempt('$message','$token','reclaim-${suffix}','SENT','s07-provider',null); commit" >/tmp/s07-complete.txt 2>/tmp/s07-complete.err & p1=$!
 docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c "select public.authorize_email_send('$message','$token','reclaim-${suffix}')" >/tmp/s07-authorize-complete.txt 2>/tmp/s07-authorize-complete.err & p2=$!
 wait_pair completion-vs-authorization "$p1" "$p2" /tmp/s07-complete.txt /tmp/s07-complete.err /tmp/s07-authorize-complete.txt /tmp/s07-authorize-complete.err
