@@ -632,7 +632,7 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: NEXT_PROMPT_PASS_AWAITING_EXTERNAL_AUDIT
+  status: S07_003_IMPLEMENTATION_AUTHORIZED
   accepted_checkpoint: checkpoint/S07-002-accepted-001
   accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
   accepted_task: TASK-S07-002
@@ -659,20 +659,31 @@ slice_07_planning:
   prompt_review_sha: "dfb5e5f1497904f2ebc4334e72c6ae898904d146"
   prompt_review_work_id: S07-003-PROMPT-REVIEW-001
   materialized_next_task_count: 1
-  implementation_started: false
+  implementation_started: true
+  implementation_dispatch:
+    reviewer: EXTERNAL_CHATGPT
+    transport: OWNER_MESSAGE
+    prompt_gate_audit: PASS
+    decision: IMPLEMENTATION_DISPATCH_APPROVED
+    source_reopen_required: false
+    implementation_review_mode: EXTERNAL_CHATGPT
+    implementation_review_status: IMPLEMENTATION_REVIEW_PENDING_EXTERNAL_CHATGPT
+    eiu_reviewer_required_for_task: false
+    producer: OMP
+    reason: Owner-authorized task-local producer/reviewer role separation
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-003 is dependency-ready but implementation awaits prompt audit and explicit Owner dispatch."
+    - "TASK-S07-003 implementation authorized; next task prohibited."
   materialization_frontier: []
-  execution_hold: "Implementation prohibited; continuation authorized only through one next Slice-07 prompt gate."
+  execution_hold: "Stop at exact candidate for external ChatGPT implementation review; no serialization or acceptance."
 
 stop_gate:
   status: ACTIVE
-  type: NEXT_SLICE_07_PROMPT_GATE_ONLY
+  type: S07_003_EXTERNAL_IMPLEMENTATION_REVIEW
   source_reopen_required: false
-  resume_on: "External prompt-gate audit and explicit implementation-dispatch decision."
+  resume_on: "Owner-transported ChatGPT implementation review decision."
 
-next_action: "Return this handoff to ChatGPT for prompt-gate audit and implementation-dispatch decision."
+next_action: "Implement only S07-003, verify focused gates, freeze exact candidate and return producer evidence to ChatGPT."
 
