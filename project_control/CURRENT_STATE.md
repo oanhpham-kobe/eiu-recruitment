@@ -16,7 +16,9 @@
 - The accepted scope provides durable scan-request identity, worker result fencing, candidate continuation and deferred cleanup intent. It does not implement scanner-provider runtime, a physical Storage-cleanup worker, deployment, or a connected Supabase operation.
 - Owner-transported external ChatGPT final audit: PASS, source reopen false; acceptance lifecycle CLOSED and prompt-gate-only frontier release recorded in `916febb43fb5ab87b1065de677bbcfaed4c74cf5`.
 - Exactly one next task is PLANNED: `TASK-S07-003 — Storage Cleanup Eligibility and Result-Fencing Trusted Contracts`. It hardens the existing DB cleanup eligibility/lease contract before a separately authorized physical runner; no provider selection required.
-- Reconciliation: `project_control/reviews/S07_003_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-003_v1.md`; immutable planned baseline ref: `checkpoint/pre-S07-003-001`; independent prompt review pending.
+- Reconciliation: `project_control/reviews/S07_003_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-003_v1.md`; immutable `checkpoint/pre-S07-003-001` → `dfb5e5f1497904f2ebc4334e72c6ae898904d146`.
+- Independent `eiu-reviewer` `S07-003-PROMPT-REVIEW-001`: PASS, source reopen false, findings none; read-only runtime result `agent://S07003PromptReviewer`, recorded by parent without claiming reviewer-authored Git persistence.
+- Exact prompt baseline Governance CI `34854913654` PASS; automatic impact Integration CI `34854913590` PASS (resolver only; Web/Database skipped). Both governance validators PASS.
 
 ## Scope boundary
 

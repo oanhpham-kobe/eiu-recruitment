@@ -1326,7 +1326,7 @@ tasks:
     pre_task_checkpoint: checkpoint/pre-S07-003-001
     prompt: project_control/prompts/SLICE-07_TASK-003_v1.md
     source_reconciliation: project_control/reviews/S07_003_SOURCE_RECONCILIATION_v1.md
-    prompt_review_status: PENDING
+    prompt_review_status: "PASS (S07-003-PROMPT-REVIEW-001 @ dfb5e5f1497904f2ebc4334e72c6ae898904d146; source reopen false)"
     source_authority: "review_pack 11/37/39/41/42/47/48/59/66/73 and app_spec; current source_registry"
     acceptance:
       - "Known expired reservation discovery captures durable intent idempotently with atomic audit and signed-window deferral."
