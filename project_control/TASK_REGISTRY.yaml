@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-07
-current_task: TASK-S07-002
+current_task: TASK-S07-003
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1315,4 +1315,24 @@ tasks:
         scanner_provider_runtime: NOT_IMPLEMENTED
         physical_storage_cleanup_worker: NOT_IMPLEMENTED
         deployment_or_connected_supabase: NOT_USED
-    next_frontier_behavior: "S07-002 is accepted. Do not materialize another Slice-07 task under this acceptance."
+    next_frontier_behavior: "Lifecycle CLOSED; Owner-transported final audit releases only one next prompt gate."
+  TASK-S07-003:
+    title: "Storage Cleanup Eligibility and Result-Fencing Trusted Contracts"
+    slice: SLICE-07
+    status: PLANNED
+    depends_on: [TASK-S02-003, TASK-S02-004, TASK-S04-002, TASK-S07-002]
+    planning_baseline_sha: "37b01169394378bf666a6baa440a2431407b22d6"
+    audit_release_commit: "916febb43fb5ab87b1065de677bbcfaed4c74cf5"
+    pre_task_checkpoint: checkpoint/pre-S07-003-001
+    prompt: project_control/prompts/SLICE-07_TASK-003_v1.md
+    source_reconciliation: project_control/reviews/S07_003_SOURCE_RECONCILIATION_v1.md
+    prompt_review_status: PENDING
+    source_authority: "review_pack 11/37/39/41/42/47/48/59/66/73 and app_spec; current source_registry"
+    acceptance:
+      - "Known expired reservation discovery captures durable intent idempotently with atomic audit and signed-window deferral."
+      - "Eligibility protects live reservations and all current/historical document references; ambiguous identity fails closed."
+      - "Narrow worker claim/authorization/completion fences stale attempts and handles finite retry/exhaustion."
+      - "Existing cleanup adapters and crossed producer regressions preserve S02/S04/S07 contracts."
+    out_of_scope: "Physical Storage deletion/runner/listing/scheduling, scanner/email providers, UI, archive/purge, deployment, connected Supabase and second task."
+    implementation_started: false
+    next_frontier_behavior: "Stop at independent prompt PASS for external audit and explicit implementation-dispatch decision."

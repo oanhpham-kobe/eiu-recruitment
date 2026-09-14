@@ -14,8 +14,10 @@
 - Checkpoint unchanged: annotated tag object `105506f6e68e1acb4e1b0cf732bbe5beb2b66136` peels to accepted commit `d99776aa6e07c0023ada9906211f6d1d4b17f5ed`. Existing reviews remain valid; no new review or product/test/migration changes for CI closure.
 - Reporting HEAD resolves from Git; accepted SHA → reporting HEAD is governance-only. Later automatic reporting CI is not the accepted product CI.
 - The accepted scope provides durable scan-request identity, worker result fencing, candidate continuation and deferred cleanup intent. It does not implement scanner-provider runtime, a physical Storage-cleanup worker, deployment, or a connected Supabase operation.
-- No next Slice-07 task is materialized or authorized.
+- Owner-transported external ChatGPT final audit: PASS, source reopen false; acceptance lifecycle CLOSED and prompt-gate-only frontier release recorded in `916febb43fb5ab87b1065de677bbcfaed4c74cf5`.
+- Exactly one next task is PLANNED: `TASK-S07-003 — Storage Cleanup Eligibility and Result-Fencing Trusted Contracts`. It hardens the existing DB cleanup eligibility/lease contract before a separately authorized physical runner; no provider selection required.
+- Reconciliation: `project_control/reviews/S07_003_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-003_v1.md`; immutable planned baseline ref: `checkpoint/pre-S07-003-001`; independent prompt review pending.
 
 ## Scope boundary
 
-Implement the reviewed durable scan-request/result-fencing protocol only. Stop after S07-002 acceptance; do not resolve the next frontier.
+Only the next prompt/source gate is authorized. Implementation has NOT started; no Executor active. Stop at prompt review PASS for external audit/dispatch. Remaining proposed branches are unnumbered/unmaterialized in the source reconciliation; no second task or Slice-08.

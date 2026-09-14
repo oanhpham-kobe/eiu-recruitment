@@ -632,7 +632,7 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: FRONTIER_RECONCILIATION_AUTHORIZED
+  status: NEXT_PROMPT_REVIEW_PENDING
   accepted_checkpoint: checkpoint/S07-002-accepted-001
   accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
   accepted_task: TASK-S07-002
@@ -651,11 +651,18 @@ slice_07_planning:
     scanner_provider_runtime: NOT_IMPLEMENTED
     physical_storage_cleanup_worker: NOT_IMPLEMENTED
     deployment_or_connected_supabase: NOT_USED
+  selected_task: TASK-S07-003
+  source_reconciliation: project_control/reviews/S07_003_SOURCE_RECONCILIATION_v1.md
+  prompt: project_control/prompts/SLICE-07_TASK-003_v1.md
+  prompt_checkpoint: checkpoint/pre-S07-003-001
+  prompt_review_status: PENDING
+  materialized_next_task_count: 1
+  implementation_started: false
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "Next task is not yet selected; canonical reconciliation authorized."
+    - "TASK-S07-003 is dependency-ready but implementation awaits prompt audit and explicit Owner dispatch."
   materialization_frontier: []
   execution_hold: "Implementation prohibited; continuation authorized only through one next Slice-07 prompt gate."
 
@@ -665,5 +672,5 @@ stop_gate:
   source_reopen_required: false
   resume_on: "External prompt-gate audit and explicit implementation-dispatch decision."
 
-next_action: "Reconcile remaining Slice-07 authority, materialize one task, freeze and independently review its prompt; stop at PASS."
+next_action: "Freeze and independently review TASK-S07-003 prompt; repair planning only until PASS, then stop for external audit."
 
