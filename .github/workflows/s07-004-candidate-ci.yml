@@ -1,0 +1,122 @@
+name: S07-004 Candidate CI
+
+on:
+  push:
+    branches:
+      - chatgpt/TASK-S07-004-physical-storage-cleanup-runner
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: s07-004-candidate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: S07-004 Web verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Ensure npm 11.19.0
+        run: |
+          if [ "$(npm --version)" != "11.19.0" ]; then npm install --global npm@11.19.0; fi
+          test "$(npm --version)" = "11.19.0"
+      - name: Install dependencies
+        run: npm ci
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+      - name: Design contract
+        run: npm run design:check
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Focused cleanup runner tests
+        run: node --conditions react-server --test --import tsx src/__tests__/storage-cleanup-runner.test.ts
+      - name: Full web tests
+        run: npm run test
+
+  database:
+    name: S07-004 Database + local Storage verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Ensure npm 11.19.0
+        run: |
+          if [ "$(npm --version)" != "11.19.0" ]; then npm install --global npm@11.19.0; fi
+          test "$(npm --version)" = "11.19.0"
+      - name: Install web dependencies for production runner integration
+        run: npm ci --prefix web
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Start disposable local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: S07-003 cleanup SQL contract regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/storage_cleanup_contract_test.sql
+      - name: S07-003 cleanup concurrency and fencing regression
+        env:
+          CONTAINER_NAME: supabase_db_eiu-recruitment-dev
+        run: bash supabase/tests/storage_cleanup_contract_concurrency_test.sh
+      - name: S07-003 upgrade-path regression
+        env:
+          CONTAINER_NAME: supabase_db_eiu-recruitment-dev
+        run: bash supabase/tests/storage_cleanup_upgrade_path_test.sh
+      - name: Crossed S02 regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
+      - name: Crossed S04 Interview lifecycle regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_lifecycle_test.sql
+      - name: Crossed S04 Interview copy regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
+      - name: Crossed S07-002 scan protocol regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/document_scan_protocol_test.sql
+      - name: Crossed S07-002 scan concurrency regression
+        run: bash supabase/tests/document_scan_protocol_concurrency_test.sh
+      - name: Reset before S07-004 physical Storage integration
+        run: supabase db reset
+      - name: S07-004 worker capability binding regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/storage_cleanup_worker_binding_test.sql
+      - name: S07-004 real local physical Storage integration
+        env:
+          CONTAINER_NAME: supabase_db_eiu-recruitment-dev
+        run: bash supabase/tests/storage_cleanup_local_storage_test.sh
+      - name: Database lint
+        run: supabase db lint --local --level error
+      - name: Stop disposable local Supabase
+        if: always()
+        run: supabase stop
+
+  governance:
+    name: S07-004 Governance verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Validate control plane
+        run: python project_control/validate_control_plane.py
+      - name: Validate OMP-native governance
+        run: python project_control/validate_omp_native.py
+      - name: Diff hygiene
+        run: git diff --check HEAD^
