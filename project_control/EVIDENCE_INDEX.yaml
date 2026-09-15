@@ -1395,17 +1395,20 @@ implementation_evidence:
     evidence_persistence: "Owner-transported message only; no reviewer-native persistence claimed."
   S07-004-PROMPT-GATE-001:
     task: TASK-S07-004
-    status: PASS
+    status: IN_PROGRESS
     source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
     prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
-    pre_task_checkpoint: checkpoint/pre-S07-004-001
+    prior_checkpoint: checkpoint/pre-S07-004-001
+    pre_task_checkpoint: checkpoint/pre-S07-004-002
+    superseded_checkpoints: [checkpoint/pre-S07-004-001]
     implementation_started: false
     materialized_next_task_count: 1
-    reviewed_sha: "e19bd3713e27a3a7ccd30da2110c90b68f51dae8"
-    work_id: S07-004-PROMPT-REVIEW-001
-    reviewer: eiu-reviewer
-    verdict: PASS
-    source_reopen_required: false
-    findings: []
-    evidence_persistence: "Read-only OMP task result agent://S07004PromptReviewer; this is a parent-recorded receipt, not a reviewer-authored Git artifact."
-    prompt_review_status: PASS
+    prior_prompt_review:
+      work_id: S07-004-PROMPT-REVIEW-001
+      reviewed_sha: "e19bd3713e27a3a7ccd30da2110c90b68f51dae8"
+      reviewer: eiu-reviewer
+      verdict: PASS
+      source_reopen_required: false
+      evidence_persistence: "Read-only OMP task result agent://S07004PromptReviewer"
+    prompt_repair_scope: "R1 independent review equivalence across per-job skip wording; R2 correct DB worker capability binding (local superuser SET ROLE test, PostgREST JWT disposition); R3 behavior-driven provider absence semantics; R4 candidate-quarantine and interview-quarantine dual bucket coverage."
+    rereview_status: PENDING

@@ -25,7 +25,7 @@
 - The accepted scope hardens existing database cleanup eligibility and lease fencing contracts. It does not implement a physical Storage-cleanup worker/runner, scanner/email provider runtimes, deployment, or connected Supabase operations.
 - Owner-transported external ChatGPT final acceptance audit: PASS, source reopen false, implementation reopen false; acceptance lifecycle CLOSED.
 - `TASK-S07-004 — Physical Storage Cleanup Runner and Local Storage Integration` is PLANNED and prompt-gate authorized under Owner dispatch. Source reconciliation: `project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-004_v1.md`.
-- Independent prompt review by eiu-reviewer (S07-004-PROMPT-REVIEW-001 @ e19bd3713e27a3a7ccd30da2110c90b68f51dae8): PASS, source reopen false; stopped for external ChatGPT prompt audit; implementation has NOT started; no Executor is active.
+- Pre-task prompt and source reconciliation repaired under Owner blocking audit (R1 equivalence, R2 DB worker binding, R3 behavior-driven absence, R4 candidate+interview bucket coverage); fresh independent prompt review pending against repaired baseline.
 - No task beyond S07-004 is materialized; physical cleanup runner execution, scanner/email provider runtimes, deployment, and connected Supabase operations remain strictly out of scope.
 
 ## Scope boundary

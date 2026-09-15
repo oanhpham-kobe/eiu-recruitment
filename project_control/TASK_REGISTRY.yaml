@@ -1367,10 +1367,11 @@ tasks:
     depends_on: [TASK-S07-003]
     planning_baseline_sha: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
     audit_release_commit: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
-    pre_task_checkpoint: checkpoint/pre-S07-004-001
+    pre_task_checkpoint: checkpoint/pre-S07-004-002
+    superseded_checkpoints: [checkpoint/pre-S07-004-001]
     prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
     source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
-    prompt_review_status: "PASS (S07-004-PROMPT-REVIEW-001 @ e19bd3713e27a3a7ccd30da2110c90b68f51dae8; source reopen false)"
+    prompt_review_status: PENDING
     source_authority: "review_pack 11/37/39/41/42/47/48/59/66/73 and app_spec; current source_registry"
     acceptance:
       - "Server-only physical cleanup runner decouples database authorization from Storage provider deletion."

@@ -4,7 +4,7 @@
 
 This is an implementation prompt for future Owner dispatch, NOT current implementation authority. Current continuation stops after independent prompt/source PASS. Execution is permitted only after external prompt audit and explicit dispatch.
 
-Repository: `oanhpham-kobe/eiu-recruitment`. Integration: `autonomy/continuous-integration-20260905-01`. Starting reporting HEAD: `f536c839e0999e66b498dbfcd40d321539a7b4cd`. Governed implementation baseline is the exact peeled commit of immutable `checkpoint/pre-S07-004-001`, or the latest independently PASS numbered replacement recorded in TASK_REGISTRY before dispatch. Resolve the ref and compare with the review's REVIEWED_SHA; never use a moving integration HEAD as a substitute. The baseline commit contains this prompt, so its own SHA is recorded by immutable ref and later evidence, not a fabricated self-hash.
+Repository: `oanhpham-kobe/eiu-recruitment`. Integration: `autonomy/continuous-integration-20260905-01`. Starting reporting HEAD: `f536c839e0999e66b498dbfcd40d321539a7b4cd`. Governed implementation baseline is the exact peeled commit of immutable `checkpoint/pre-S07-004-002`, or the latest independently PASS numbered replacement recorded in TASK_REGISTRY before dispatch (superseding `checkpoint/pre-S07-004-001`). Resolve the ref and compare with the review's REVIEWED_SHA; never use a moving integration HEAD as a substitute. The baseline commit contains this prompt, so its own SHA is recorded by immutable ref and later evidence, not a fabricated self-hash.
 
 Accepted predecessors:
 - `checkpoint/S07-001-accepted-001` → `8397be35d64a65f4a693811e4fc6b9e43287a7cd`
@@ -29,19 +29,27 @@ Effective ordered migrations and actual callers outrank starter schema and histo
 
 ## Bounded outcome
 
-Provide a bounded, server-only physical storage cleanup runner and local Supabase Storage integration that consumes the accepted S07-003 database cleanup contracts. This task owns the physical deletion runner, the separation between DB cleanup authorization and Storage provider deletion, crash/timeout recovery semantics, object-not-found idempotency, and real local Storage verification. It does not own bucket sweeps, provider daemon hosting, production scheduling, or production deployment.
+Provide a bounded, server-only physical storage cleanup runner and local Supabase Storage integration that consumes the accepted S07-003 database cleanup contracts. This task owns the physical deletion runner, the separation between DB cleanup authorization and Storage provider deletion, crash/timeout recovery semantics, behavior-driven provider absence mapping, and real local Storage verification across both managed quarantine buckets (`candidate-quarantine` and `interview-quarantine`). It does not own bucket sweeps, provider daemon hosting, production scheduling, or production deployment.
 
 ### A. Narrow database worker capability binding
 
-Accepted S07-003 establishes `storage_cleanup_worker` as `NOLOGIN NOINHERIT` with execute rights on cleanup RPCs revoked from `public`, `anon`, `authenticated`, and `service_role`.
+Accepted S07-003 establishes `storage_cleanup_worker` as `NOLOGIN NOINHERIT` with execute rights on cleanup RPCs revoked from `public`, `anon`, `authenticated`, and `service_role`. The S07-003 migration created `storage_cleanup_worker` and granted cleanup RPCs to it, but did NOT grant the role to `postgres` or `authenticator`.
 - The runner must execute cleanup RPCs under this narrow role capability, not through `service_role` privilege broadening.
-- **Runtime postgrest/client binding**:
-  If connecting via PostgREST client, establish the custom role bridge by adding a small forward migration:
-  `grant storage_cleanup_worker to authenticator;`
-  This enables server-only creation of a worker client signed by `SUPABASE_JWT_SECRET` containing `{ "role": "storage_cleanup_worker" }`. PostgREST assumes `storage_cleanup_worker` via `SET LOCAL ROLE`. Browser roles (`anon`, `authenticated`) have zero access; `service_role` remains revoked from cleanup RPCs.
-- **Direct connection binding**:
-  In local scripts or database integration harnesses, direct connection via `DATABASE_URL` as user `postgres` (which is a member of `storage_cleanup_worker`) may assume the role directly via `SET ROLE storage_cleanup_worker;`.
-- Both approaches keep the DB capability narrow, server-only, non-browser, and locally testable without production secrets.
+- **Local direct-DB worker binding (S07-004 scope)**:
+  In the disposable local Supabase / administrative test environment, user `postgres` can execute `SET ROLE storage_cleanup_worker;` by virtue of its superuser / database-admin capability in PostgreSQL, NOT because of any explicit predecessor membership.
+  - S07-004 requires a focused test proving:
+    * A direct local session can assume `storage_cleanup_worker` via `SET ROLE storage_cleanup_worker;` when intended;
+    * While operating under `storage_cleanup_worker`, cleanup RPCs succeed;
+    * Calling the cleanup RPCs under `anon`, `authenticated`, or `service_role` remains denied;
+    * Resetting the role (`RESET ROLE`) returns the session to base privileges and does not leave worker authority accidentally active.
+  - Because S07-004 scope is strictly local Storage integration and production deployment is out of scope, this proven local direct-DB worker binding is sufficient for this task. It avoids inventing production secrets or premature deployment infrastructure.
+- **PostgREST / Custom-JWT path (Future hosted architecture)**:
+  If a future hosted service requires invoking cleanup RPCs over PostgREST:
+  - In Supabase, PostgREST connects as the `authenticator` role. For PostgREST to assume `storage_cleanup_worker` upon receiving a worker JWT, a separate forward migration must explicitly execute `GRANT storage_cleanup_worker TO authenticator;`.
+  - Modern Supabase supports JWT Signing Keys and custom JWTs (legacy `SUPABASE_JWT_SECRET` is backward-compatible but not mandated as the only runtime design).
+  - Custom worker JWTs must be minted only by a server-controlled signing mechanism accepted by the project's current Supabase JWT configuration, with short expiry, `role = storage_cleanup_worker`, and separate API key header as required by current client/API semantics.
+  - The PostgREST bridge must never expose worker credentials to browsers, must never grant cleanup RPCs to `service_role`, and must be accompanied by explicit role-denial regressions confirming `anon` and `authenticated` cannot assume the worker role.
+  - Hosted token provisioning is deferred to operational deployment readiness; no production secrets or cloud credentials are provisioned in S07-004.
 
 ### B. Storage-provider capability seam & destructive sequence
 
@@ -61,16 +69,18 @@ Physical deletion of a private object requires a separate Storage provider capab
 
 Handle all failure windows safely:
 - **Window 1 (Auth commits, crash before delete)**: Queue remains `PROCESSING` with `tombstoned_at` set. After lease expiry, subsequent claim reclaims the job with a new `attempt_id`/`fencing_token`. Re-authorization succeeds (`tombstone_cleanup_id == p_q.storage_cleanup_id`). New worker deletes object.
-- **Window 2 (Delete succeeds, crash before DB complete)**: Object removed from Storage, but queue remains `PROCESSING`. After lease expiry, reclaimed attempt authorizes and calls provider delete. Provider returns `OBJECT_NOT_FOUND` (404). Under Section D policy, absent object completes as `success: true`. Queue settles `DONE`.
-- **Window 3 (Provider timeout / ambiguous outcome)**: Worker records `PROVIDER_TIMEOUT` or lease expires. Reclaimed attempt re-executes. If object was deleted $\rightarrow$ 404 $\rightarrow$ `DONE`. If not deleted $\rightarrow$ provider deletes $\rightarrow$ `DONE`. 5-attempt ceiling prevents infinite loop.
+- **Window 2 (Delete succeeds, crash before DB complete)**: Object removed from Storage, but queue remains `PROCESSING`. After lease expiry, reclaimed attempt authorizes and calls provider delete. Provider reports the object already absent. Under Section D policy, absent object completes as `success: true`. Queue settles `DONE`.
+- **Window 3 (Provider timeout / ambiguous outcome)**: Worker records `PROVIDER_TIMEOUT` or lease expires. Reclaimed attempt re-executes. If object was deleted $\rightarrow$ absent $\rightarrow$ `DONE`. If not deleted $\rightarrow$ provider deletes $\rightarrow$ `DONE`. 5-attempt ceiling prevents infinite loop.
 - **Window 4 (Lease expires in flight)**: Old worker attempting completion after lease expiry or reclaim receives `STALE_ATTEMPT`. It cannot overwrite newer attempts.
 - **Window 5 (Reclaim during stale execution)**: Stale worker's credentials are invalidated. Reclaim owns the exclusive lease.
 
-### D. Object-not-found semantics
+### D. Object-not-found / provider absence semantics
 
-When the Storage provider returns `OBJECT_NOT_FOUND` (HTTP 404) for an exact authorized `(bucket_name, object_path)`:
-- The runner treats the absent object as desired terminal state achieved and calls `completeStorageCleanupAttempt(..., success: true)`.
-- Rationale: DB authorization proved the object had terminal provenance and zero business references. An already-absent object satisfies the cleanup objective and cannot be resurrected (tombstone remains in provenance). This ensures self-healing crash recovery (Window 2) without false historical metrics.
+When the Storage provider returns a response indicating an exact authorized object `(bucket_name, object_path)` is already absent:
+- **Policy**: An already-absent authorized object achieves the desired terminal end-state (object does not exist in Storage).
+- **Behavior-Driven Mapping**: The implementation must NOT hardcode an assumption that absence manifests solely as HTTP 404. Local integration tests must inspect the actual local Supabase Storage client `remove()` response for an already-absent object (e.g. empty data array, specific status, or error code) and authoritatively map that absence result to successful cleanup (`success: true`).
+- **Strict Error Discrimination**: Permission failures, missing bucket, invalid credentials, malformed requests, network errors, or ambiguous provider responses MUST NOT be collapsed into "object absent". They remain reportable errors.
+- **Rationale**: The database authorization step already proved that the object has terminal provenance and zero live/historical business references. An already-absent object cannot harm retention and cannot be resurrected (tombstone remains in provenance). Completing as success allows self-healing after crash-after-delete (Window 2) and idempotent replays without fabricating deletion metrics.
 
 ### E. Network/transaction separation
 
@@ -82,7 +92,7 @@ When the Storage provider returns `OBJECT_NOT_FOUND` (HTTP 404) for an exact aut
 ### F. Retention and safety invariants
 
 Retain all S07-003 safeguards:
-- Restricted to private managed temp buckets (`candidate-quarantine`, `interview-quarantine`).
+- Restricted to private managed temp buckets (`candidate-quarantine` and `interview-quarantine`). Both buckets must be explicitly provisioned in the local environment and covered by integration tests.
 - Current or historical Candidate document references block cleanup (`RETAINED_REFERENCE`).
 - Current or historical Interview document references block cleanup (`RETAINED_REFERENCE`).
 - Live reservations block cleanup (`LIVE_RESERVATION`).
@@ -92,26 +102,27 @@ Retain all S07-003 safeguards:
 
 ## Local storage integration test requirements
 
-The implementation must verify real physical provider behavior against a disposable local Supabase environment covering at least 12 test cases:
-1. **Authorized deletion**: An authorized temp object is physically deleted from the quarantine bucket.
-2. **Neighbor isolation**: A neighboring object in the same bucket/prefix is untouched and remains in Storage.
-3. **No-authorization refusal**: A job where authorization was not obtained or was withheld causes zero Storage deletes.
-4. **Retained current reference protection**: A reservation whose path is referenced by a current document causes zero Storage deletes.
-5. **Retained historical reference protection**: A reservation whose path is referenced by a historical document causes zero Storage deletes.
-6. **Stale attempt rejection**: A worker holding an expired lease or stale attempt cannot delete or complete.
-7. **Terminal eligible object removal**: An expired/cancelled reservation past its signed window is authorized, deleted from Storage, and completed as `DONE`.
-8. **Delete-success crash recovery**: Simulating a crash after provider delete causes subsequent reclaim to complete successfully upon encountering 404.
-9. **Already-absent idempotency**: An already-absent authorized object (404) completes cleanly as `DONE`.
-10. **Provider error / retry**: A temporary provider error records `errorCode` and leaves the queue row eligible for retry under the 5-attempt ceiling.
-11. **Stale completion fence**: A reclaimed job rejects completion from the old worker attempt.
+The implementation must verify real physical provider behavior against a disposable local Supabase environment covering both `candidate-quarantine` and `interview-quarantine`:
+1. **Candidate-quarantine authorized deletion**: An authorized temp object in `candidate-quarantine` is physically deleted from Storage.
+2. **Interview-quarantine authorized deletion**: An authorized temp object in `interview-quarantine` is physically deleted from Storage (ensuring both managed buckets are provisioned and proven).
+3. **Neighbor isolation**: A neighboring object in the same bucket/prefix is untouched and remains in Storage.
+4. **No-authorization refusal**: A job where authorization was not obtained or was withheld causes zero Storage deletes.
+5. **Retained current reference protection**: A reservation whose path is referenced by a current document causes zero Storage deletes.
+6. **Retained historical reference protection**: A reservation whose path is referenced by a historical document causes zero Storage deletes.
+7. **Stale attempt rejection**: A worker holding an expired lease or stale attempt cannot delete or complete.
+8. **Terminal eligible object removal**: An expired/cancelled reservation past its signed window is authorized, deleted from Storage, and completed as `DONE`.
+9. **Delete-success crash recovery**: Simulating a crash after provider delete causes subsequent reclaim to complete successfully upon encountering the absent object.
+10. **Already-absent idempotency**: An already-absent authorized object completes cleanly as `DONE` under behavior-driven absence mapping.
+11. **Provider error / retry**: A temporary provider error records `errorCode`, leaves queue row eligible for retry under the 5-attempt ceiling, and does NOT collapse into success.
 12. **Targeted non-sweep execution**: Deletion operates strictly on exact authorized `(bucket, path)` pairs without bucket listing or prefix sweeps.
+13. **Local worker capability verification**: Direct local session proves `SET ROLE storage_cleanup_worker` can invoke cleanup RPCs, `RESET ROLE` clears authority, and `anon`/`authenticated`/`service_role` remain denied.
 
 ## Expected implementation shape
 
 - `web/src/lib/storage/cleanup-runner.ts`: Server-only runner module implementing single-job execution and bounded batch iteration.
 - `web/src/lib/storage/storage-provider.ts`: Storage provider abstraction (with real Supabase Storage implementation and mock implementation for unit tests).
 - `web/src/__tests__/storage-cleanup-runner.test.ts`: Unit tests verifying runner state machine, retry policy, error mapping, and crash window handling using mock providers.
-- `supabase/tests/storage_cleanup_local_storage_test.sh`: Integration harness executing real physical object creation and deletion against local Supabase Storage containers.
+- `supabase/tests/storage_cleanup_local_storage_test.sh`: Integration harness executing real physical object creation and deletion against local Supabase Storage containers covering both `candidate-quarantine` and `interview-quarantine`.
 
 ## Implementation out of scope
 
@@ -130,7 +141,7 @@ The implementation must verify real physical provider behavior against a disposa
 
 Focused verification for future implementation:
 - Unit tests: Runner state machine, mock provider tests, retry policy, error mapping (`npm run test -- src/__tests__/storage-cleanup-runner.test.ts`).
-- Local integration tests: Physical Storage object lifecycle in local Supabase Storage (`supabase/tests/storage_cleanup_local_storage_test.sh`).
+- Local integration tests: Physical Storage object lifecycle in local Supabase Storage covering both buckets and role assumption (`supabase/tests/storage_cleanup_local_storage_test.sh`).
 - Predecessor regressions: S07-003 SQL contract, S07-003 concurrency/fencing, S07-003 upgrade path, S02, S04, S07-002 regressions.
 - Web verification: lint, typecheck, build.
 - Governance validators: `validate_control_plane.py`, `validate_omp_native.py`.
