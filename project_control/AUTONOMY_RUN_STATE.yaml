@@ -632,20 +632,22 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: S07_003_IMPLEMENTATION_AUTHORIZED
-  accepted_checkpoint: checkpoint/S07-002-accepted-001
-  accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
-  accepted_task: TASK-S07-002
-  accepted_scope: "Durable document scan request and result-fencing trusted contracts."
+  status: S07_003_ACCEPTED_STOPPED_AT_FRONTIER
+  accepted_checkpoint: checkpoint/S07-003-accepted-001
+  accepted_checkpoint_sha: "7317138779270087e3e425f48b13785923b17f42"
+  accepted_task: TASK-S07-003
+  accepted_scope: "Storage cleanup eligibility and result-fencing trusted contracts."
   source_reopen_required: false
+  implementation_reopen_required: false
   lifecycle: CLOSED
   external_final_acceptance_audit:
+    work_id: S07-003-EXTERNAL-FINAL-ACCEPTANCE-AUDIT-001
     reviewer: EXTERNAL_CHATGPT
     transport: OWNER_MESSAGE
-    decision: FINAL_ACCEPTANCE_PASS_AND_FRONTIER_RELEASE
-    accepted_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
-    audited_reporting_head: "37b01169394378bf666a6baa440a2431407b22d6"
+    decision: FINAL_ACCEPTANCE_PASS_AND_FRONTIER_HOLD
+    accepted_sha: "7317138779270087e3e425f48b13785923b17f42"
     source_reopen_required: false
+    implementation_reopen_required: false
     evidence_persistence: "Owner-transported message; no reviewer-native persistence claimed."
   external_boundaries:
     scanner_provider_runtime: NOT_IMPLEMENTED
@@ -658,7 +660,7 @@ slice_07_planning:
   prompt_review_status: PASS
   prompt_review_sha: "dfb5e5f1497904f2ebc4334e72c6ae898904d146"
   prompt_review_work_id: S07-003-PROMPT-REVIEW-001
-  materialized_next_task_count: 1
+  materialized_next_task_count: 0
   implementation_started: true
   implementation_dispatch:
     reviewer: EXTERNAL_CHATGPT
@@ -667,23 +669,21 @@ slice_07_planning:
     decision: IMPLEMENTATION_DISPATCH_APPROVED
     source_reopen_required: false
     implementation_review_mode: EXTERNAL_CHATGPT
-    implementation_review_status: IMPLEMENTATION_REVIEW_PENDING_EXTERNAL_CHATGPT
+    implementation_review_status: PASS
     eiu_reviewer_required_for_task: false
     producer: OMP
     reason: Owner-authorized task-local producer/reviewer role separation
 
 safe_frontier:
   eligible_tasks: []
-  skipped_due_to_dependency:
-    - "TASK-S07-003 implementation authorized; next task prohibited."
+  skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "Stop at exact candidate for external ChatGPT implementation review; no serialization or acceptance."
+  execution_hold: "Stop at accepted TASK-S07-003 frontier; no S07-004 materialized; next task requires governed prompt review."
 
 stop_gate:
   status: ACTIVE
-  type: S07_003_EXTERNAL_IMPLEMENTATION_REVIEW
+  type: SLICE_07_NEXT_FRONTIER_HOLD
   source_reopen_required: false
-  resume_on: "Owner-transported ChatGPT implementation review decision."
+  resume_on: "Owner-authorized next prompt review or next slice planning decision."
 
-next_action: "Implement only S07-003, verify focused gates, freeze exact candidate and return producer evidence to ChatGPT."
-
+next_action: "Stop at accepted S07-003 checkpoint; no further execution authorized in current continuation."

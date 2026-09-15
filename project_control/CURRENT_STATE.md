@@ -15,12 +15,17 @@
 - Reporting HEAD resolves from Git; accepted SHA → reporting HEAD is governance-only. Later automatic reporting CI is not the accepted product CI.
 - The accepted scope provides durable scan-request identity, worker result fencing, candidate continuation and deferred cleanup intent. It does not implement scanner-provider runtime, a physical Storage-cleanup worker, deployment, or a connected Supabase operation.
 - Owner-transported external ChatGPT final audit: PASS, source reopen false; acceptance lifecycle CLOSED and prompt-gate-only frontier release recorded in `916febb43fb5ab87b1065de677bbcfaed4c74cf5`.
-- TASK-S07-003 (`Storage Cleanup Eligibility and Result-Fencing Trusted Contracts`) implementation was Owner-dispatched and is currently `IN_PROGRESS`. It hardens existing database cleanup eligibility and lease fencing contracts; physical cleanup runner, provider runtimes, deployment, and connected Supabase remain strictly out of scope.
-- Reconciliation: `project_control/reviews/S07_003_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-003_v1.md`; immutable `checkpoint/pre-S07-003-001` → `dfb5e5f1497904f2ebc4334e72c6ae898904d146`.
-- Independent `eiu-reviewer` `S07-003-PROMPT-REVIEW-001`: PASS, source reopen false, findings none; read-only runtime result `agent://S07003PromptReviewer`, recorded by parent without claiming reviewer-authored Git persistence. Exact prompt baseline Governance CI `34854913654` PASS; automatic impact Integration CI `34854913590` PASS (resolver only; Web/Database skipped). Both governance validators PASS.
-- Implementation and review roles: OMP is producer; External ChatGPT is independent implementation reviewer for this task under an Owner-authorized task-local role override. No `eiu-reviewer` implementation review is required for this task-local override.
-- Candidate review status: implementation candidate review is currently blocking on external review/repair. No serialization has happened; no accepted S07-003 checkpoint exists; no S07-004 exists.
+`TASK-S07-003 — Storage Cleanup Eligibility and Result-Fencing Trusted Contracts` is accepted at `checkpoint/S07-003-accepted-001` → `7317138779270087e3e425f48b13785923b17f42`.
+
+- Candidate implementation reviewed by External ChatGPT: PASS (`c150603d9e9de4731e5b4e6215126de637bfe7e3`). Final acceptance SHA: `7317138779270087e3e425f48b13785923b17f42` (with accepted CI wiring in `.github/workflows/integration-ci.yml`).
+- Final acceptance Integration CI [34979021250](https://github.com/oanhpham-kobe/eiu-recruitment/actions/runs/34979021250) at exact `7317138779270087e3e425f48b13785923b17f42`: PASS. Resolver, Web verification, Database integration with all three S07-003 gates (SQL contract, concurrency/fencing, upgrade path), crossed regressions, and DB lint all PASS.
+- Final acceptance Governance CI [34979021519](https://github.com/oanhpham-kobe/eiu-recruitment/actions/runs/34979021519) at exact `7317138779270087e3e425f48b13785923b17f42`: PASS.
+- Checkpoint verified: annotated tag object `a2702995bb1b475d003ad8e85d4a2c58b7fcd75c` peels to accepted commit `7317138779270087e3e425f48b13785923b17f42`.
+- Roles & Reviewers: OMP was producer; External ChatGPT was independent implementation and final acceptance reviewer under an Owner-authorized task-local override. No `eiu-reviewer` implementation review was used.
+- The accepted scope hardens existing database cleanup eligibility and lease fencing contracts. It does not implement a physical Storage-cleanup worker/runner, scanner/email provider runtimes, deployment, or connected Supabase operations.
+- Owner-transported external ChatGPT final acceptance audit: PASS, source reopen false, implementation reopen false; acceptance lifecycle CLOSED.
+- No accepted checkpoint exists for S07-004; no S07-004 task exists or has been materialized.
 
 ## Scope boundary
 
-S07-003 implementation was Owner-dispatched with OMP as producer and External ChatGPT as independent implementation reviewer. Implementation candidate review is currently blocking on external review/repair; no `eiu-reviewer` implementation review is required for this task-local override. No serialization has happened, no accepted S07-003 checkpoint exists, and no S07-004 exists. Physical cleanup runner, scanner/email provider runtimes, deployment, and connected Supabase operations remain strictly out of scope. Remaining proposed branches in the source reconciliation remain unmaterialized/unnumbered; no second task or Slice-08.
+TASK-S07-003 acceptance lifecycle is CLOSED. Execution is stopped at the governed Slice-07 frontier hold. No TASK-S07-004 exists; physical cleanup runner, provider runtimes, deployment, and connected Supabase operations remain strictly out of scope.

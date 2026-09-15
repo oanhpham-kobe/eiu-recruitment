@@ -1357,3 +1357,39 @@ implementation_evidence:
     governance_ci: "34854913654 PASS @ dfb5e5f1497904f2ebc4334e72c6ae898904d146"
     impact_integration_ci: "34854913590 PASS @ dfb5e5f1497904f2ebc4334e72c6ae898904d146; resolver PASS, Web/Database skipped"
     validators: "validate_omp_native.py PASS; validate_control_plane.py PASS"
+  S07-003-ACCEPTANCE-001:
+    task: TASK-S07-003
+    operation: STORAGE_CLEANUP_ELIGIBILITY_AND_RESULT_FENCING_TRUSTED_CONTRACTS
+    status: ACCEPTED
+    accepted_sha: "7317138779270087e3e425f48b13785923b17f42"
+    accepted_checkpoint: checkpoint/S07-003-accepted-001
+    candidate_review:
+      work_id: S07-003-EXTERNAL-IMPLEMENTATION-REVIEW-001
+      reviewer: EXTERNAL_CHATGPT
+      transport: OWNER_MESSAGE
+      status: PASS
+      reviewed_sha: "c150603d9e9de4731e5b4e6215126de637bfe7e3"
+      source_reopen_required: false
+      implementation_reopen_required: false
+      evidence_persistence: "Owner-transported message; no reviewer-native persistence claimed."
+    ci:
+      integration_ci: "34979021250 PASS @ 7317138779270087e3e425f48b13785923b17f42; resolver, Web, Database and all S07-003 DB gates PASS"
+      governance_ci: "34979021519 PASS @ 7317138779270087e3e425f48b13785923b17f42"
+      storage_cleanup_sql_contract: "PASS (34979021250, Database job 104414208520)"
+      storage_cleanup_concurrency: "PASS (34979021250, Database job 104414208520)"
+      storage_cleanup_upgrade_path: "PASS (34979021250, Database job 104414208520)"
+      checkpoint_tag_object_sha: "a2702995bb1b475d003ad8e85d4a2c58b7fcd75c"
+      checkpoint_peeled_target_sha: "7317138779270087e3e425f48b13785923b17f42"
+    external_boundaries:
+      scanner_provider_runtime: NOT_IMPLEMENTED
+      physical_storage_cleanup_worker: NOT_IMPLEMENTED
+      deployment_or_connected_supabase: NOT_USED
+  S07-003-EXTERNAL-FINAL-AUDIT-001:
+    reviewer: EXTERNAL_CHATGPT
+    transport: OWNER_MESSAGE
+    work_id: S07-003-EXTERNAL-FINAL-ACCEPTANCE-AUDIT-001
+    decision: FINAL_ACCEPTANCE_PASS_AND_FRONTIER_HOLD
+    accepted_sha: "7317138779270087e3e425f48b13785923b17f42"
+    source_reopen_required: false
+    implementation_reopen_required: false
+    evidence_persistence: "Owner-transported message only; no reviewer-native persistence claimed."

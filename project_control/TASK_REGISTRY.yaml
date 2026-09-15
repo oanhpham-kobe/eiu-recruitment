@@ -1319,7 +1319,7 @@ tasks:
   TASK-S07-003:
     title: "Storage Cleanup Eligibility and Result-Fencing Trusted Contracts"
     slice: SLICE-07
-    status: IN_PROGRESS
+    status: DONE
     depends_on: [TASK-S02-003, TASK-S02-004, TASK-S04-002, TASK-S07-002]
     planning_baseline_sha: "37b01169394378bf666a6baa440a2431407b22d6"
     audit_release_commit: "916febb43fb5ab87b1065de677bbcfaed4c74cf5"
@@ -1338,11 +1338,25 @@ tasks:
     implementation_baseline_sha: "dfb5e5f1497904f2ebc4334e72c6ae898904d146"
     implementation_branch: oanhpham-kobe/TASK-S07-003-storage-cleanup-contracts
     implementation_review_mode: EXTERNAL_CHATGPT
-    implementation_review_status: IMPLEMENTATION_REVIEW_PENDING_EXTERNAL_CHATGPT
+    implementation_review_status: PASS
     review_role_override:
       reviewer: EXTERNAL_CHATGPT
       transport: OWNER_MESSAGE
       eiu_reviewer_required_for_task: false
       reason: Owner-authorized task-local producer/reviewer role separation
       producer: OMP
-    next_frontier_behavior: "Freeze candidate for external ChatGPT review; no integration, formal acceptance CI, accepted checkpoint or next task."
+    implementation_acceptance:
+      accepted_sha: "7317138779270087e3e425f48b13785923b17f42"
+      accepted_checkpoint: checkpoint/S07-003-accepted-001
+      final_external_reviewer: EXTERNAL_CHATGPT
+      transport: OWNER_MESSAGE
+      final_external_acceptance_result: PASS
+      source_reopen_required: false
+      implementation_reopen_required: false
+      formal_integration_ci: "34979021250 PASS @ 7317138779270087e3e425f48b13785923b17f42; resolver, Web, Database and all S07-003 DB gates PASS"
+      formal_governance_ci: "34979021519 PASS @ 7317138779270087e3e425f48b13785923b17f42"
+      external_boundaries:
+        scanner_provider_runtime: NOT_IMPLEMENTED
+        physical_storage_cleanup_worker: NOT_IMPLEMENTED
+        deployment_or_connected_supabase: NOT_USED
+    next_frontier_behavior: "Lifecycle CLOSED; Owner-transported final acceptance audit releases frontier hold; no next task materialized."
