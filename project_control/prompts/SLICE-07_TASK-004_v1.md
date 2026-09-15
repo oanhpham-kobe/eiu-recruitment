@@ -51,7 +51,7 @@ Physical deletion of a private object requires a separate Storage provider capab
 - The runner executes the exact sequential lifecycle:
   1. **Claim**: Call `claimStorageCleanupJobs(workerId, limit, leaseSeconds, dbClient)`. Retain exact `storage_cleanup_id`, `worker_id`, `attempt_id`, and `fencing_token`.
   2. **Authorize**: Call `authorizeStorageCleanupAttempt({ storageCleanupId, attemptId, fencingToken, workerId }, dbClient)`.
-     - If authorization returns `{ success: false, error_code: ... }` (e.g. `CLEANUP_WITHHELD`, `STALE_ATTEMPT`, `NOT_FOUND`): Stop immediately. Do NOT call the Storage provider.
+     - If authorization returns `{ success: false, error_code: ... }` (e.g. `CLEANUP_WITHHELD`, `STALE_ATTEMPT`, `NOT_FOUND`): Do NOT call the Storage provider for this job; record the withheld/error outcome and skip to the next claimed job in the batch.
      - If authorization returns `{ success: true, data: ... }`: Extract the exact authorized `bucket_name` and `object_path`.
   3. **Physical Provider Delete**: Call `storageProvider.removeObject(authorized.bucket_name, authorized.object_path)` using the exact authorized pair.
   4. **Complete**: Report outcome via `completeStorageCleanupAttempt({ storageCleanupId, attemptId, fencingToken, workerId, success, errorCode }, dbClient)`.

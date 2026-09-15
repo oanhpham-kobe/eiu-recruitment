@@ -632,7 +632,7 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: S07_004_PROMPT_REVIEW_PENDING
+  status: S07_004_PROMPT_PASS_AWAITING_EXTERNAL_AUDIT
   accepted_checkpoint: checkpoint/S07-003-accepted-001
   accepted_checkpoint_sha: "7317138779270087e3e425f48b13785923b17f42"
   accepted_task: TASK-S07-003
@@ -657,21 +657,23 @@ slice_07_planning:
   source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
   prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
   prompt_checkpoint: checkpoint/pre-S07-004-001
-  prompt_review_status: PENDING
+  prompt_review_status: PASS
+  prompt_review_sha: "e19bd3713e27a3a7ccd30da2110c90b68f51dae8"
+  prompt_review_work_id: S07-004-PROMPT-REVIEW-001
   materialized_next_task_count: 1
   implementation_started: false
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-004 prompt review pending; implementation prohibited."
+    - "TASK-S07-004 prompt review PASS; awaiting external audit and implementation dispatch."
   materialization_frontier: []
   execution_hold: "Stop at prompt review PASS for external audit and explicit implementation dispatch; implementation not authorized."
 
 stop_gate:
   status: ACTIVE
-  type: S07_004_PROMPT_REVIEW_GATE
+  type: S07_004_EXTERNAL_PROMPT_AUDIT_GATE
   source_reopen_required: false
-  resume_on: "Independent prompt review decision."
+  resume_on: "Owner-transported ChatGPT prompt audit decision."
 
-next_action: "Execute independent prompt review of TASK-S07-004; implementation strictly prohibited."
+next_action: "Freeze pre-task checkpoint and return S07-004 prompt packet to ChatGPT for audit; implementation strictly prohibited."
