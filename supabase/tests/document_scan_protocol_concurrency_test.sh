@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-container_name="supabase_db_eiu-recruitment-dev"
+container_name="${CONTAINER_NAME:-supabase_db_eiu-recruitment-dev}"
 psql_exec() { docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
 suffix="$(uuidgen | tr -d '-')"
 ids="$(psql_exec -c "select gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid()")"

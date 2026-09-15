@@ -158,6 +158,25 @@ export type ClaimedStorageCleanupJob = {
   attempts: number;
   not_before: string;
   leased_until: string;
+  attempt_id: string;
+  fencing_token: string;
+};
+
+export type AuthorizeStorageCleanupAttemptInput = {
+  storageCleanupId: string;
+  attemptId: string;
+  fencingToken: string;
+  workerId: string;
+};
+
+export type AuthorizedStorageCleanupJob = {
+  storage_cleanup_id: string;
+  bucket_name: string;
+  object_path: string;
+  reason_code: string;
+  attempt_id: string;
+  fencing_token: string;
+  leased_until: string;
 };
 
 export type StorageReservationCommandDeps = {
@@ -1096,47 +1115,89 @@ export async function cancelCandidateDocumentChange(
   return runner(createCancelCandidateDocumentChangeCommand(supabase), input);
 }
 
-export async function claimDueStorageCleanupJobs(
+type StorageCleanupRpcSuccess<T> = { success: true; data: T };
+type StorageCleanupRpcFailure = {
+  success: false;
+  error_code?: string;
+};
+
+async function runStorageCleanupRpc<T>(
+  workerClient: SupabaseClient,
+  functionName: string,
+  args: Record<string, unknown>,
+): Promise<T> {
+  const { data, error } = await workerClient.rpc(functionName, args);
+  if (error) {
+    throw new Error(`${functionName} error: RPC_FAILURE`);
+  }
+  const result = data as StorageCleanupRpcSuccess<T> | StorageCleanupRpcFailure;
+  if (!result.success) {
+    throw new Error(`${functionName} error: ${result.error_code ?? "UNKNOWN"}`);
+  }
+  return result.data;
+}
+
+export async function discoverExpiredStorageCleanup(
+  limit = 50,
+  workerClient: SupabaseClient,
+): Promise<{ captured_count: number }> {
+  return runStorageCleanupRpc<{ captured_count: number }>(
+    workerClient,
+    "discover_expired_storage_cleanup",
+    { p_limit: limit },
+  );
+}
+
+export async function claimStorageCleanupJobs(
+  workerId: string,
   limit = 10,
   leaseSeconds = 300,
-  supabaseServiceClient: SupabaseClient,
+  workerClient: SupabaseClient,
 ): Promise<ClaimedStorageCleanupJob[]> {
-  const { data, error } = await supabaseServiceClient.rpc(
-    "claim_due_storage_cleanup_jobs",
+  return runStorageCleanupRpc<ClaimedStorageCleanupJob[]>(
+    workerClient,
+    "claim_storage_cleanup_jobs",
     {
+      p_worker_id: workerId,
       p_limit: limit,
       p_lease_seconds: leaseSeconds,
     },
   );
-
-  if (error) {
-    throw new Error(`claim_due_storage_cleanup_jobs error: ${error.message}`);
-  }
-
-  const result = data as {
-    success: boolean;
-    data?: ClaimedStorageCleanupJob[];
-  };
-
-  return result.data ?? [];
 }
 
-export async function completeStorageCleanupJob(
-  storageCleanupId: string,
-  success: boolean,
-  errorText: string | null = null,
-  supabaseServiceClient: SupabaseClient,
-): Promise<void> {
-  const { error } = await supabaseServiceClient.rpc(
-    "complete_storage_cleanup_job",
+export async function authorizeStorageCleanupAttempt(
+  input: AuthorizeStorageCleanupAttemptInput,
+  workerClient: SupabaseClient,
+): Promise<AuthorizedStorageCleanupJob> {
+  return runStorageCleanupRpc<AuthorizedStorageCleanupJob>(
+    workerClient,
+    "authorize_storage_cleanup_attempt",
     {
-      p_storage_cleanup_id: storageCleanupId,
-      p_success: success,
-      p_error: errorText,
+      p_storage_cleanup_id: input.storageCleanupId,
+      p_attempt_id: input.attemptId,
+      p_fencing_token: input.fencingToken,
+      p_worker_id: input.workerId,
     },
   );
+}
 
-  if (error) {
-    throw new Error(`complete_storage_cleanup_job error: ${error.message}`);
-  }
+export async function completeStorageCleanupAttempt(
+  input: AuthorizeStorageCleanupAttemptInput & {
+    success: boolean;
+    errorCode?: string | null;
+  },
+  workerClient: SupabaseClient,
+): Promise<{ status_code: string; replay?: boolean }> {
+  return runStorageCleanupRpc<{ status_code: string; replay?: boolean }>(
+    workerClient,
+    "complete_storage_cleanup_attempt",
+    {
+      p_storage_cleanup_id: input.storageCleanupId,
+      p_attempt_id: input.attemptId,
+      p_fencing_token: input.fencingToken,
+      p_worker_id: input.workerId,
+      p_success: input.success,
+      p_error_code: input.errorCode ?? null,
+    },
+  );
 }

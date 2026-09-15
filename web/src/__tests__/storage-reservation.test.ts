@@ -3,10 +3,11 @@ import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   authorizeCandidateUploadScan,
+  authorizeStorageCleanupAttempt,
   claimDocumentScanRequests,
-  claimDueStorageCleanupJobs,
+  claimStorageCleanupJobs,
   completeDocumentScanAttempt,
-  completeStorageCleanupJob,
+  completeStorageCleanupAttempt,
   continueCleanCandidateDocumentScan,
   createSignedUploadUrlForReservation,
   recordCandidateUploadCompleted,
@@ -878,100 +879,119 @@ test("22. EDIT_SESSION_SUBMISSION_NO_LONGER_NEW_DENIAL rejects when target is no
   assert.equal(stage.success, false);
 });
 
-test("23. COMPETING_TRANSITION_CONCURRENCY_TEST deterministic lock hierarchy prevents deadlocks", async () => {
-  // Simulating lock acquisition order
-  // Both paths lock: 1) Session, 2) Submission, 3) Reservation
-  const acquiredLocks: string[] = [];
-
-  function acquireLock(resource: string) {
-    acquiredLocks.push(resource);
-  }
-
-  acquireLock("candidate_form_sessions:sess-001");
-  acquireLock("submissions:sub-001");
-  acquireLock("upload_reservations:res-001");
-
-  assert.deepEqual(acquiredLocks, [
-    "candidate_form_sessions:sess-001",
-    "submissions:sub-001",
-    "upload_reservations:res-001",
-  ]);
-});
-
-test("24. TWO_WORKER_CLEANUP_EXCLUSIVITY_TEST claims disjoint sets via FOR UPDATE SKIP LOCKED", async () => {
-  const queue = [
-    { storage_cleanup_id: "q-1", status_code: "PENDING", attempts: 0 },
-    { storage_cleanup_id: "q-2", status_code: "PENDING", attempts: 0 },
-  ];
-
+test("23. cleanup worker adapter fences authorization and completion without a Storage action", async () => {
+  const calls: Array<{ name: string; args: unknown }> = [];
   const mockSupabase = createMockSupabase({
     rpcHandlers: {
-      claim_due_storage_cleanup_jobs: (args: unknown) => {
-        const p = args as { p_limit: number };
-        const available = queue
-          .filter((q) => q.status_code === "PENDING")
-          .slice(0, p.p_limit);
-        for (const item of available) {
-          item.status_code = "PROCESSING";
-          item.attempts += 1;
-        }
-        return { success: true, data: available };
+      claim_storage_cleanup_jobs: (args: unknown) => {
+        calls.push({ name: "claim_storage_cleanup_jobs", args });
+        return {
+          success: true,
+          data: [
+            {
+              storage_cleanup_id: "11111111-1111-1111-1111-111111111111",
+              source_type: "CANDIDATE_FORM",
+              bucket_name: "candidate-quarantine",
+              object_path:
+                "temp/22222222-2222-2222-2222-222222222222/33333333-3333-3333-3333-333333333333/expired.pdf",
+              reason_code: "RESERVATION_EXPIRED",
+              attempts: 1,
+              not_before: "2026-09-15T00:00:00Z",
+              leased_until: "2030-01-01T00:00:00Z",
+              attempt_id: "44444444-4444-4444-4444-444444444444",
+              fencing_token: "55555555-5555-5555-5555-555555555555",
+            },
+          ],
+        };
+      },
+      authorize_storage_cleanup_attempt: (args: unknown) => {
+        calls.push({ name: "authorize_storage_cleanup_attempt", args });
+        return {
+          success: true,
+          data: {
+            storage_cleanup_id: "11111111-1111-1111-1111-111111111111",
+            bucket_name: "candidate-quarantine",
+            object_path:
+              "temp/22222222-2222-2222-2222-222222222222/33333333-3333-3333-3333-333333333333/expired.pdf",
+            reason_code: "RESERVATION_EXPIRED",
+            attempt_id: "44444444-4444-4444-4444-444444444444",
+            fencing_token: "55555555-5555-5555-5555-555555555555",
+            leased_until: "2030-01-01T00:00:00Z",
+          },
+        };
+      },
+      complete_storage_cleanup_attempt: (args: unknown) => {
+        calls.push({ name: "complete_storage_cleanup_attempt", args });
+        return { success: true, data: { status_code: "DONE" } };
       },
     },
   });
 
-  const worker1 = await claimDueStorageCleanupJobs(1, 300, mockSupabase);
-  const worker2 = await claimDueStorageCleanupJobs(1, 300, mockSupabase);
-
-  assert.equal(worker1.length, 1);
-  assert.equal(worker2.length, 1);
-  assert.notEqual(
-    worker1[0].storage_cleanup_id,
-    worker2[0].storage_cleanup_id,
-    "Workers must receive disjoint sets of claimed jobs",
-  );
-});
-
-test("25. CRASH_AFTER_CLAIM_LEASE_RECOVERY_TEST reclaims expired leased_until row", async () => {
-  const job = {
-    storage_cleanup_id: "q-crashed-1",
-    status_code: "PROCESSING",
-    leased_until: "2026-09-05T09:00:00Z", // Past lease
-    attempts: 1,
-  };
-
-  const mockSupabase = createMockSupabase({
-    rpcHandlers: {
-      claim_due_storage_cleanup_jobs: () => {
-        // Condition: (status_code = 'PROCESSING' and leased_until <= now() and attempts < 5)
-        if (job.status_code === "PROCESSING" && job.attempts < 5) {
-          job.attempts += 1;
-          job.status_code = "PROCESSING";
-          return { success: true, data: [job] };
-        }
-        return { success: true, data: [] };
-      },
-      complete_storage_cleanup_job: () => {
-        job.status_code = "DONE";
-        return { success: true };
-      },
-    },
-  });
-
-  const claimed = await claimDueStorageCleanupJobs(1, 300, mockSupabase);
-  assert.equal(claimed.length, 1);
-  assert.equal(claimed[0].attempts, 2, "Attempts should increment on reclaim");
-
-  await completeStorageCleanupJob(
-    claimed[0].storage_cleanup_id,
-    true,
-    null,
+  const [claimed] = await claimStorageCleanupJobs(
+    "cleanup-worker-1",
+    1,
+    300,
     mockSupabase,
   );
-  assert.equal(
-    job.status_code,
-    "DONE",
-    "Job completes successfully after recovery",
+  assert.ok(claimed);
+  await authorizeStorageCleanupAttempt(
+    {
+      storageCleanupId: claimed.storage_cleanup_id,
+      attemptId: claimed.attempt_id,
+      fencingToken: claimed.fencing_token,
+      workerId: "cleanup-worker-1",
+    },
+    mockSupabase,
+  );
+  const completed = await completeStorageCleanupAttempt(
+    {
+      storageCleanupId: claimed.storage_cleanup_id,
+      attemptId: claimed.attempt_id,
+      fencingToken: claimed.fencing_token,
+      workerId: "cleanup-worker-1",
+      success: true,
+    },
+    mockSupabase,
+  );
+
+  assert.equal(completed.status_code, "DONE");
+  assert.deepEqual(
+    calls.map((call) => call.name),
+    [
+      "claim_storage_cleanup_jobs",
+      "authorize_storage_cleanup_attempt",
+      "complete_storage_cleanup_attempt",
+    ],
+  );
+  assert.deepEqual(calls[1]?.args, {
+    p_storage_cleanup_id: claimed.storage_cleanup_id,
+    p_attempt_id: claimed.attempt_id,
+    p_fencing_token: claimed.fencing_token,
+    p_worker_id: "cleanup-worker-1",
+  });
+});
+
+test("24. cleanup worker adapter exposes safe stale-attempt failures", async () => {
+  const mockSupabase = createMockSupabase({
+    rpcHandlers: {
+      authorize_storage_cleanup_attempt: () => ({
+        success: false,
+        error_code: "STALE_ATTEMPT",
+      }),
+    },
+  });
+
+  await assert.rejects(
+    authorizeStorageCleanupAttempt(
+      {
+        storageCleanupId: "11111111-1111-1111-1111-111111111111",
+        attemptId: "22222222-2222-2222-2222-222222222222",
+        fencingToken: "33333333-3333-3333-3333-333333333333",
+        workerId: "cleanup-worker-1",
+      },
+      mockSupabase,
+    ),
+    /authorize_storage_cleanup_attempt error: STALE_ATTEMPT/,
   );
 });
 
