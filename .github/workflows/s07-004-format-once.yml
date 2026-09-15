@@ -1,0 +1,52 @@
+name: S07-004 One-shot Formatter
+
+on:
+  push:
+    branches:
+      - chatgpt/TASK-S07-004-physical-storage-cleanup-runner
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: ${{ !contains(github.event.head_commit.message, 'style(storage): biome format S07-004') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Ensure npm 11.19.0
+        run: |
+          if [ "$(npm --version)" != "11.19.0" ]; then npm install --global npm@11.19.0; fi
+          test "$(npm --version)" = "11.19.0"
+      - run: npm ci
+      - name: Format only S07-004 TypeScript scope
+        run: |
+          npx biome check --write \
+            src/__tests__/storage-cleanup-local.integration.ts \
+            src/__tests__/storage-cleanup-runner.test.ts \
+            src/lib/storage/cleanup-runner.ts \
+            src/lib/storage/cleanup-worker-client.ts \
+            src/lib/storage/storage-provider.ts
+      - name: Commit formatting if needed
+        working-directory: .
+        run: |
+          if git diff --quiet -- web/src/__tests__/storage-cleanup-local.integration.ts web/src/__tests__/storage-cleanup-runner.test.ts web/src/lib/storage/cleanup-runner.ts web/src/lib/storage/cleanup-worker-client.ts web/src/lib/storage/storage-provider.ts; then
+            echo 'No formatting changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/src/__tests__/storage-cleanup-local.integration.ts web/src/__tests__/storage-cleanup-runner.test.ts web/src/lib/storage/cleanup-runner.ts web/src/lib/storage/cleanup-worker-client.ts web/src/lib/storage/storage-provider.ts
+          git commit -m 'style(storage): biome format S07-004'
+          git push origin HEAD:chatgpt/TASK-S07-004-physical-storage-cleanup-runner
