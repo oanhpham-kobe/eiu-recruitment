@@ -56,23 +56,26 @@ Accepted S07-003 establishes a strictly capability-bounded database security pos
 - Only `storage_cleanup_worker` possesses `GRANT EXECUTE` on the cleanup RPCs.
 - The S07-003 migration created `storage_cleanup_worker` and granted cleanup RPCs to it, but did NOT grant `storage_cleanup_worker` to `postgres` or `authenticator`.
 
-**Runtime Binding Mechanisms Evaluated**:
-1. **Local integration tests and standalone harness (Direct-DB path)**:
-   In the disposable local Supabase / administrative test environment, connecting via `DATABASE_URL` as user `postgres` allows the test session to execute `SET ROLE storage_cleanup_worker;` by virtue of `postgres` being a PostgreSQL database superuser/admin, NOT because of any explicit predecessor membership.
+**Runtime Binding Mechanisms and Runner Transport Obligations**:
+The runner implementation must explicitly supply the database transport it actually uses:
+1. **PostgREST / Custom-JWT path (Recommended for TypeScript SupabaseClient runner)**:
+   All accepted cleanup adapters in `web/src/lib/commands/storage-reservation.ts` take `workerClient: SupabaseClient` and invoke `workerClient.rpc()`, which routes through PostgREST.
+   - In Supabase, PostgREST connects to PostgreSQL as the `authenticator` role. For PostgREST to switch to `storage_cleanup_worker` upon receiving a worker JWT, a narrow forward migration must execute:
+     `GRANT storage_cleanup_worker TO authenticator;`
+   - This enables server-only creation of a worker client using a custom worker JWT signed by a server-controlled signing mechanism accepted by the project's current Supabase JWT configuration (not mandating legacy `SUPABASE_JWT_SECRET`), with short expiry, `role = storage_cleanup_worker`, and separate API key header as required by current client/API semantics.
+   - This path allows the existing typed `SupabaseClient` adapters (`claimStorageCleanupJobs`, `authorizeStorageCleanupAttempt`, `completeStorageCleanupAttempt`) to run natively without shims.
+   - The PostgREST bridge must never expose worker credentials to browsers, must never grant cleanup RPCs to `service_role`, and must be accompanied by explicit role-denial regressions confirming `anon` and `authenticated` cannot assume the worker role.
+2. **Direct connection path (Alternative direct-DB runner adapter)**:
+   In local scripts or database integration harnesses, connecting via `DATABASE_URL` as user `postgres` allows assuming `storage_cleanup_worker` via `SET ROLE storage_cleanup_worker;` by virtue of `postgres` being a PostgreSQL database superuser/admin in local Supabase, NOT because of any explicit predecessor membership.
+   - If the runner chooses a direct database connection instead of PostgREST, it must implement an explicit direct-DB runner adapter that executes `SET ROLE storage_cleanup_worker;`, runs cleanup RPCs in independent transactions, and guarantees `RESET ROLE;`.
+   - A raw PostgreSQL connection cannot be passed unchanged to the accepted `SupabaseClient` adapters.
    - S07-004 requires a focused test proving:
-     * A direct local session can assume `storage_cleanup_worker` via `SET ROLE storage_cleanup_worker;` when intended;
+     * Direct local session can assume `storage_cleanup_worker` via `SET ROLE storage_cleanup_worker;` when intended;
      * While operating under `storage_cleanup_worker`, cleanup RPCs succeed;
      * Calling the cleanup RPCs under `anon`, `authenticated`, or `service_role` remains denied;
      * Resetting the role (`RESET ROLE`) returns the session to base privileges and does not leave worker authority accidentally active.
-   - Because S07-004 scope is strictly local Storage integration and production deployment is out of scope, this proven local direct-DB worker binding is sufficient for this task. It avoids inventing production secrets or premature deployment infrastructure.
-2. **PostgREST / Custom-JWT path (Future hosted architecture)**:
-   If a future hosted service requires invoking cleanup RPCs over PostgREST:
-   - In Supabase, PostgREST connects as the `authenticator` role. For PostgREST to assume `storage_cleanup_worker` upon receiving a worker JWT, a separate forward migration must explicitly execute `GRANT storage_cleanup_worker TO authenticator;`.
-   - Modern Supabase supports JWT Signing Keys and custom JWTs (legacy `SUPABASE_JWT_SECRET` is backward-compatible but not mandated as the only runtime design).
-   - Custom worker JWTs must be minted only by a server-controlled signing mechanism accepted by the project's current Supabase JWT configuration, with short expiry, `role = storage_cleanup_worker`, and separate API key header as required by current client/API semantics.
-   - The PostgREST bridge must never expose worker credentials to browsers, must never grant cleanup RPCs to `service_role`, and must be accompanied by explicit role-denial regressions confirming `anon` and `authenticated` cannot assume the worker role.
-   - This hosted token provisioning is deferred to operational deployment readiness; no production secrets or cloud credentials are provisioned in S07-004.
 
+Under either chosen transport, the implementation must provide the actual transport used by the runner and test it end-to-end against local Supabase, proving the narrow role capability is truly bound and enforced, not merely tested in a detached harness. Hosted token provisioning for production is deferred to operational deployment readiness; no production secrets or cloud credentials are provisioned in S07-004.
 ### B. Storage-provider capability
 
 Physical deletion of private objects from Storage requires a distinct provider capability (Storage Admin API / `storage.from(bucket).remove([path])`):
@@ -91,11 +94,12 @@ The runner must execute the following sequential protocol without deviation:
    Invoke `claimStorageCleanupJobs(workerId, limit, leaseSeconds, dbClient)`.
    Receive `ClaimedStorageCleanupJob[]`. Each claimed item contains `storage_cleanup_id`, `worker_id`, `attempt_id`, and `fencing_token`.
 3. **Authorization**:
-   For each claimed job in the batch, invoke `authorize_storage_cleanup_attempt({ storageCleanupId, attemptId, fencingToken, workerId }, dbClient)`.
-   - If authorization returns `{ success: false, error_code: ... }` (e.g. `CLEANUP_WITHHELD`, `STALE_ATTEMPT`, `NOT_FOUND`):
-     Record the withheld/error outcome; do NOT touch Storage; skip to the next claimed job in the batch.
-   - If authorization returns `{ success: true, data: ... }`:
-     Extract the authorized `bucket_name` and `object_path`.
+   For each claimed job in the batch, invoke `authorizeStorageCleanupAttempt({ storageCleanupId, attemptId, fencingToken, workerId }, dbClient)`.
+   - **Envelope vs Adapter Contract**: Distinguish the raw SQL RPC return envelope (`{ success: true, data: ... }` / `{ success: false, error_code: ... }`) from the accepted TypeScript adapter contract (`authorizeStorageCleanupAttempt` in `web/src/lib/commands/storage-reservation.ts` returns `Promise<AuthorizedStorageCleanupJob>`, while `runStorageCleanupRpc` throws on RPC errors and on `{ success: false, error_code: ... }`).
+   - **Per-Job Exception Handling**: In the TypeScript runner, invoke `authorizeStorageCleanupAttempt` within per-job try/catch exception handling:
+     * On success: directly consume the returned `AuthorizedStorageCleanupJob` (extracting `bucket_name`, `object_path`, `attempt_id`, `fencing_token`).
+     * On failure / denial: `authorizeStorageCleanupAttempt` throws an Error (e.g. `authorize_storage_cleanup_attempt error: CLEANUP_WITHHELD`, `STALE_ATTEMPT`, `NOT_FOUND`). Catch the error, extract the safe failure code, perform zero Storage provider calls for this job, record the withheld/error outcome, and skip to the next claimed job in the batch.
+   - **Batch Regression Requirement**: Require a batch regression test in unit/integration tests with a denied first job and a subsequent eligible job proving the batch continues cleanly without calling the provider on the denied job.
 4. **Provider Deletion**:
    Invoke `storageProvider.removeObject(authorized.bucket_name, authorized.object_path)`.
    Run outside of any database transaction.
