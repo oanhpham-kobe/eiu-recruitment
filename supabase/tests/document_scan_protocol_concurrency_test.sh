@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if ! command -v jq >/dev/null 2>&1; then
+  if command -v jq.exe >/dev/null 2>&1; then
+    jq() { jq.exe "$@" | tr -d '\r'; }
+  fi
+else
+  _raw_jq="$(command -v jq)"
+  jq() { "$_raw_jq" "$@" | tr -d '\r'; }
+fi
+
 container_name="${CONTAINER_NAME:-supabase_db_eiu-recruitment-dev}"
 psql_exec() { docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"; }
 suffix="$(uuidgen | tr -d '-')"
@@ -18,11 +27,15 @@ values('$reservation'::uuid,'$session'::uuid,'$doc_type'::uuid,'candidate-quaran
 insert into public.document_scan_requests(document_scan_request_id,upload_reservation_id,candidate_form_session_id,action_code,intended_document_type_id,bucket_name,object_path,checksum_sha256,object_fingerprint,detected_mime_type,actual_size_bytes)
 values('$request'::uuid,'$reservation'::uuid,'$session'::uuid,'ADD','$doc_type'::uuid,'candidate-quarantine','scan-race/${suffix}.pdf',repeat('c',64),repeat('d',64),'application/pdf',10);
 SQL
+psql_exec -c "delete from public.document_scan_requests where status_code in ('PENDING', 'PROCESSING') and document_scan_request_id <> '$request'::uuid;"
 claim="begin; select public.claim_document_scan_requests('race-worker',1,60); commit"
-psql_exec -c "$claim" >/tmp/s07-scan-a.txt & a=$!
-psql_exec -c "$claim" >/tmp/s07-scan-b.txt & b=$!
+tmp_scan_a=".tmp_scan_a_${suffix}.txt"
+tmp_scan_b=".tmp_scan_b_${suffix}.txt"
+trap 'rm -f "$tmp_scan_a" "$tmp_scan_b"' EXIT
+psql_exec -c "$claim" >"$tmp_scan_a" & a=$!
+psql_exec -c "$claim" >"$tmp_scan_b" & b=$!
 wait "$a"; wait "$b"
-combined="$(cat /tmp/s07-scan-a.txt /tmp/s07-scan-b.txt | tr -d '\r')"
+combined="$(cat "$tmp_scan_a" "$tmp_scan_b" | tr -d '\r')"
 if [[ "$(jq -s 'map(.data|length)|add' <<<"$combined")" != "1" ]]; then echo 'concurrent claims must yield one live owner' >&2; exit 1; fi
 attempt="$(jq -r 'select(.data|length==1).data[0].attempt_id' <<<"$combined")"
 token="$(jq -r 'select(.data|length==1).data[0].fencing_token' <<<"$combined")"

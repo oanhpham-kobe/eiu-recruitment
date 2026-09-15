@@ -151,6 +151,48 @@ create trigger upload_reservation_deleted_cleanup_provenance
 before delete on public.upload_reservations
 for each row execute function private.capture_deleted_upload_provenance();
 
+-- Forward-migration provenance backfill for authoritative pre-existing upload reservations.
+-- Derives strictly from existing upload_reservations rows; applies the same managed bucket/path validation;
+-- preserves exact reservation identity, source type, parent, and expiries with idempotent conflict handling.
+insert into private.storage_cleanup_provenance (
+  bucket_name,
+  object_path,
+  upload_reservation_id,
+  source_type,
+  source_parent_id,
+  reservation_expires_at,
+  signed_upload_expires_at
+)
+select
+  r.temp_bucket,
+  r.temp_path,
+  r.upload_reservation_id,
+  case when r.candidate_form_session_id is not null then 'CANDIDATE_FORM' else 'INTERVIEW_UPLOAD' end,
+  coalesce(r.candidate_form_session_id, r.interview_id),
+  r.expires_at,
+  r.signed_upload_expires_at
+from public.upload_reservations r
+where (
+  (r.temp_bucket = 'candidate-quarantine' and r.temp_path ~ '^temp/[0-9a-f-]{36}/[0-9a-f-]{36}/[A-Za-z0-9._-]+$')
+  or
+  (r.temp_bucket = 'interview-quarantine' and r.temp_path ~ '^temp/interview/[0-9a-f-]{36}/[0-9a-f-]{36}$')
+)
+and (r.candidate_form_session_id is not null or r.interview_id is not null)
+on conflict (bucket_name, object_path) do update set
+  upload_reservation_id = coalesce(private.storage_cleanup_provenance.upload_reservation_id, excluded.upload_reservation_id),
+  source_parent_id = coalesce(private.storage_cleanup_provenance.source_parent_id, excluded.source_parent_id),
+  reservation_expires_at = case
+    when private.storage_cleanup_provenance.reservation_expires_at is null then excluded.reservation_expires_at
+    when excluded.reservation_expires_at is null then private.storage_cleanup_provenance.reservation_expires_at
+    else greatest(private.storage_cleanup_provenance.reservation_expires_at, excluded.reservation_expires_at)
+  end,
+  signed_upload_expires_at = case
+    when private.storage_cleanup_provenance.signed_upload_expires_at is null then excluded.signed_upload_expires_at
+    when excluded.signed_upload_expires_at is null then private.storage_cleanup_provenance.signed_upload_expires_at
+    else greatest(private.storage_cleanup_provenance.signed_upload_expires_at, excluded.signed_upload_expires_at)
+  end,
+  detached_at = coalesce(private.storage_cleanup_provenance.detached_at, excluded.detached_at);
+
 create or replace function private.reject_cleanup_reservation_resurrection()
 returns trigger
 language plpgsql

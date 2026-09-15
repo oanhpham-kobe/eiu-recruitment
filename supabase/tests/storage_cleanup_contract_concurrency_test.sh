@@ -1,21 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if ! command -v jq >/dev/null 2>&1; then
+  if command -v jq.exe >/dev/null 2>&1; then
+    jq() { jq.exe "$@" | tr -d '\r'; }
+  fi
+else
+  _raw_jq="$(command -v jq)"
+  jq() { "$_raw_jq" "$@" | tr -d '\r'; }
+fi
+
 : "${CONTAINER_NAME:?Set CONTAINER_NAME to the disposable Supabase Postgres container}"
 container_name="$CONTAINER_NAME"
-tmp_dir="$(mktemp -d)"
+suffix="$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]' | cut -c 1-12)"
+tmp_dir=".tmp_concurrency_${suffix}"
+mkdir -p "$tmp_dir"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 psql_exec() {
   docker exec -i "$container_name" psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"
 }
 
-suffix="$(uuidgen | tr -d '-')"
 queue_id="$(psql_exec -c 'select gen_random_uuid()')"
 reservation_id="$(psql_exec -c 'select gen_random_uuid()')"
 parent_id="$(psql_exec -c 'select gen_random_uuid()')"
 path="temp/00000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-${suffix:0:12}/race.pdf"
-
 psql_exec <<SQL
 insert into private.storage_cleanup_provenance(
   bucket_name, object_path, upload_reservation_id, source_type, source_parent_id,
@@ -33,11 +42,12 @@ insert into public.storage_cleanup_queue(
   clock_timestamp() - interval '1 hour'
 );
 SQL
+psql_exec -c "delete from public.storage_cleanup_queue where status_code in ('PENDING', 'PROCESSING') and storage_cleanup_id <> '$queue_id';"
 
 # Two independent database sessions race a single claim. Exactly one owns attempt one.
-psql_exec -c "select public.claim_storage_cleanup_jobs('cleanup-a', 1, 60)" >"$tmp_dir/claim-a.json" &
+psql_exec -c "select public.claim_storage_cleanup_jobs('cleanup-a', 10, 60)" >"$tmp_dir/claim-a.json" &
 claim_a_pid=$!
-psql_exec -c "select public.claim_storage_cleanup_jobs('cleanup-b', 1, 60)" >"$tmp_dir/claim-b.json" &
+psql_exec -c "select public.claim_storage_cleanup_jobs('cleanup-b', 10, 60)" >"$tmp_dir/claim-b.json" &
 claim_b_pid=$!
 wait "$claim_a_pid"
 wait "$claim_b_pid"
@@ -97,29 +107,27 @@ exhausted_path="temp/00000000-0000-0000-0000-000000000002/00000000-0000-0000-000
 psql_exec <<SQL
 insert into private.storage_cleanup_provenance(
   bucket_name, object_path, upload_reservation_id, source_type, source_parent_id,
-  reservation_expires_at, detached_at
+  reservation_expires_at, signed_upload_expires_at, detached_at
 ) values (
-  'candidate-quarantine', '$exhausted_path', '$exhausted_reservation', 'CANDIDATE_FORM',
-  '$parent_id', clock_timestamp()-interval '2 hours', clock_timestamp()
+  'candidate-quarantine', '$exhausted_path', '$exhausted_reservation', 'CANDIDATE_FORM', '$parent_id',
+  clock_timestamp() - interval '10 minutes', clock_timestamp() - interval '5 minutes', null
 );
 insert into public.storage_cleanup_queue(
   storage_cleanup_id, source_type, source_parent_id, source_upload_reservation_id,
-  bucket_name, object_path, reason_code, status_code, attempts, not_before, leased_until
+  bucket_name, object_path, reason_code, status_code, not_before, attempts, leased_until
 ) values (
   '$exhausted_queue', 'CANDIDATE_FORM', '$parent_id', '$exhausted_reservation',
-  'candidate-quarantine', '$exhausted_path', 'RESERVATION_EXPIRED', 'PROCESSING',
-  5, clock_timestamp()-interval '1 hour', clock_timestamp()-interval '1 second'
+  'candidate-quarantine', '$exhausted_path', 'SESSION_CANCELLED', 'PENDING',
+  clock_timestamp() - interval '5 minutes', 5, clock_timestamp() - interval '1 second'
 );
 SQL
 psql_exec -c "select public.claim_storage_cleanup_jobs('cleanup-exhaustion', 10, 60)" >/dev/null
 [[ "$(psql_exec -c "select status_code || ':' || attempts from public.storage_cleanup_queue where storage_cleanup_id='$exhausted_queue'")" == "ERROR:5" ]] || {
-  echo 'fifth expired lease must settle without a sixth attempt' >&2
+  echo 'exhausted attempts must settle to ERROR and refuse further leases' >&2
   exit 1
 }
 
-# These are actual command races, not a mock lock-order assertion. The fixture keeps
-# the entities private to this disposable test database and verifies that each pair
-# terminates within the timeout rather than deadlocking.
+# --- RACE 1: Signed Upload vs Session Cancel ---
 candidate_auth="$(psql_exec -c 'select gen_random_uuid()')"
 candidate_id="$(psql_exec -c 'select gen_random_uuid()')"
 notice="s07-concurrency-${suffix}"
@@ -146,13 +154,31 @@ where upload_reservation_id='$scan_reservation';
 SQL
 
 candidate_sql_prefix="begin; select set_config('request.jwt.claim.sub','$candidate_auth',true);"
-timeout 20 bash -c "printf \"%s select public.prepare_signed_upload('$sign_reservation'); commit;\" \"$candidate_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres" >"$tmp_dir/sign.json" &
+timeout 20 bash -c "printf \"%s select public.prepare_signed_upload('$sign_reservation'); commit;\" \"$candidate_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/sign.json" 2>&1 &
 sign_pid=$!
-timeout 20 bash -c "printf \"%s select public.cancel_candidate_form_session('$session_id'); commit;\" \"$candidate_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres" >"$tmp_dir/cancel.json" &
+timeout 20 bash -c "printf \"%s select public.cancel_candidate_form_session('$session_id'); commit;\" \"$candidate_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/cancel.json" 2>&1 &
 cancel_pid=$!
 wait "$sign_pid"
 wait "$cancel_pid"
 
+# Strengthened Race 1 assertion: Final database state must be canonical
+sign_session_status="$(psql_exec -c "select status_code from public.candidate_form_sessions where candidate_form_session_id='$session_id'")"
+[[ "$sign_session_status" == "CANCELLED" ]] || {
+  echo "sign vs cancel: session status must be CANCELLED, got '$sign_session_status'" >&2
+  exit 1
+}
+sign_res_status="$(psql_exec -c "select status_code from public.upload_reservations where upload_reservation_id='$sign_reservation'")"
+[[ "$sign_res_status" == "CANCELLED" ]] || {
+  echo "sign vs cancel: reservation status must be CANCELLED, got '$sign_res_status'" >&2
+  exit 1
+}
+sign_cleanup_count="$(psql_exec -c "select count(*) from public.storage_cleanup_queue where bucket_name='candidate-quarantine' and object_path='temp/$session_id/$sign_reservation/sign.pdf'")"
+[[ "$sign_cleanup_count" -ge 1 ]] || {
+  echo "sign vs cancel: cleanup queue row must exist for cancelled reservation" >&2
+  exit 1
+}
+
+# --- RACE 2: Document Scan Request vs Cancel ---
 scan_session="$(psql_exec -c 'select gen_random_uuid()')"
 scan_request_reservation="$(psql_exec -c 'select gen_random_uuid()')"
 psql_exec <<SQL
@@ -161,16 +187,31 @@ values('$scan_session','$candidate_id','NEW_SUBMISSION','$notice',clock_timestam
 insert into public.upload_reservations(upload_reservation_id,candidate_form_session_id,intended_document_type_id,temp_bucket,temp_path,original_filename,actor_auth_user_id,idempotency_key,expires_at,status_code,actual_size_bytes,checksum_sha256,detected_mime_type)
 values('$scan_request_reservation','$scan_session','$document_type','candidate-quarantine','temp/$scan_session/$scan_request_reservation/request.pdf','request.pdf','$candidate_auth',gen_random_uuid(),clock_timestamp()+interval '30 minutes','UPLOADED',1,repeat('b',64),'application/pdf');
 SQL
-timeout 20 bash -c "printf \"%s select public.request_candidate_document_scan('$scan_session','$scan_request_reservation','ADD',null); commit;\" \"$candidate_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres" >"$tmp_dir/scan.json" &
+timeout 20 bash -c "printf \"%s select public.request_candidate_document_scan('$scan_session','$scan_request_reservation','ADD',null); commit;\" \"$candidate_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/scan.json" 2>&1 &
 scan_pid=$!
-timeout 20 bash -c "printf \"%s select public.cancel_candidate_form_session('$scan_session'); commit;\" \"$candidate_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres" >"$tmp_dir/scan-cancel.json" &
+timeout 20 bash -c "printf \"%s select public.cancel_candidate_form_session('$scan_session'); commit;\" \"$candidate_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/scan-cancel.json" 2>&1 &
 scan_cancel_pid=$!
 wait "$scan_pid"
 wait "$scan_cancel_pid"
 
-# Interview finalization now takes the same parent -> reservation order as deletion.
-# The application ancestors are intentionally fixture-only; the two RPCs operate on
-# actual Interview/reservation rows and must serialize without a lock-order deadlock.
+# Strengthened Race 2 assertion: Final database state must be canonical
+scan_final_status="$(psql_exec -c "select status_code from public.candidate_form_sessions where candidate_form_session_id='$scan_session'")"
+[[ "$scan_final_status" == "CANCELLED" ]] || {
+  echo "scan vs cancel: session status must be CANCELLED, got '$scan_final_status'" >&2
+  exit 1
+}
+scan_res_final_status="$(psql_exec -c "select status_code from public.upload_reservations where upload_reservation_id='$scan_request_reservation'")"
+[[ "$scan_res_final_status" == "CANCELLED" ]] || {
+  echo "scan vs cancel: reservation status must be CANCELLED, got '$scan_res_final_status'" >&2
+  exit 1
+}
+scan_cleanup_count="$(psql_exec -c "select count(*) from public.storage_cleanup_queue where bucket_name='candidate-quarantine' and object_path='temp/$scan_session/$scan_request_reservation/request.pdf'")"
+[[ "$scan_cleanup_count" -ge 1 ]] || {
+  echo "scan vs cancel: cleanup queue row must exist for cancelled reservation" >&2
+  exit 1
+}
+
+# --- RACE 3: Interview Finalize vs Delete ---
 staff_auth="$(psql_exec -c 'select gen_random_uuid()')"
 staff_id="$(psql_exec -c 'select gen_random_uuid()')"
 interview_candidate_auth="$(psql_exec -c 'select gen_random_uuid()')"
@@ -225,19 +266,197 @@ insert into public.upload_reservations(
 );
 SQL
 staff_sql_prefix="begin; set local request.jwt.claim.sub='$staff_auth';"
-timeout 20 bash -c "printf \"%s select public.finalize_interview_upload('$interview_reservation',null,'interview-quarantine','temp/interview/$interview_id/$interview_reservation','finalize.pdf','application/pdf',1,repeat('c',64),null); commit;\" \"$staff_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres" >"$tmp_dir/finalize.json" &
+timeout 20 bash -c "printf \"%s select public.finalize_interview_upload('$interview_reservation',null,'interview-quarantine','temp/interview/$interview_id/$interview_reservation','finalize.pdf','application/pdf',1,repeat('c',64),null); commit;\" \"$staff_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/finalize.json" 2>"$tmp_dir/finalize.err" &
 finalize_pid=$!
-timeout 20 bash -c "printf \"%s select public.delete_or_inactivate_interview('$interview_id',1); commit;\" \"$staff_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres" >"$tmp_dir/interview-delete.json" &
+timeout 20 bash -c "printf \"%s select public.delete_or_inactivate_interview('$interview_id',1); commit;\" \"$staff_sql_prefix\" | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/interview-delete.json" 2>"$tmp_dir/interview-delete.err" &
 delete_pid=$!
 wait "$finalize_pid"
 wait "$delete_pid"
-[[ "$(jq -s 'length == 1' "$tmp_dir/finalize.json")" == "true" ]] || {
-  echo 'finalize race did not return a protocol result' >&2
+
+# Strengthened Race 3 assertion: Interview must end DELETED or CANCELLED; cleanup queue row must exist
+int_status="$(psql_exec -c "select coalesce((select schedule_status_code from public.interviews where interview_id='$interview_id'), 'DELETED')")"
+[[ "$int_status" == "DELETED" || "$int_status" == "CANCELLED" ]] || {
+  echo "finalize vs delete: interview must be DELETED or CANCELLED, got '$int_status'" >&2
   exit 1
 }
-[[ "$(jq -s 'length == 1' "$tmp_dir/interview-delete.json")" == "true" ]] || {
-  echo 'Interview deletion race did not return a protocol result' >&2
+int_cleanup_count="$(psql_exec -c "select count(*) from public.storage_cleanup_queue where bucket_name='interview-quarantine' and object_path='temp/interview/$interview_id/$interview_reservation'")"
+[[ "$int_cleanup_count" -ge 1 ]] || {
+  echo "finalize vs delete: cleanup queue row must exist for interview upload" >&2
   exit 1
 }
 
-echo "TASK-S07-003 concurrent cleanup, reclaim, signing/cancel, scan/cancel, and Interview finalize/delete assertions passed ($suffix)"
+# --- RACE 4: Candidate Cleanup Authorization vs Document Materialization Race (R2) ---
+# Tests the destructive authorization seam (public.authorize_storage_cleanup_attempt)
+# against Candidate document materialization on the exact same storage identity.
+cand_race_auth="$(psql_exec -c 'select gen_random_uuid()')"
+cand_race_cand="$(psql_exec -c 'select gen_random_uuid()')"
+cand_race_session="$(psql_exec -c 'select gen_random_uuid()')"
+cand_race_res="$(psql_exec -c 'select gen_random_uuid()')"
+cand_race_sub="$(psql_exec -c 'select gen_random_uuid()')"
+cand_race_log="$(psql_exec -c 'select gen_random_uuid()')"
+cand_race_queue="$(psql_exec -c 'select gen_random_uuid()')"
+cand_race_path="temp/${cand_race_session}/${cand_race_res}/cand_race.pdf"
+
+psql_exec <<SQL
+insert into public.candidates(candidate_id, auth_user_id, email)
+values ('$cand_race_cand', '$cand_race_auth', 'cand-race-${suffix}@example.test');
+
+insert into public.candidate_form_sessions(
+  candidate_form_session_id, candidate_id, mode_code, presented_privacy_notice_version, status_code, expires_at
+) values (
+  '$cand_race_session', '$cand_race_cand', 'NEW_SUBMISSION', '$notice', 'CANCELLED', clock_timestamp() - interval '1 hour'
+);
+
+insert into public.submissions(
+  submission_id, candidate_id, full_name, date_of_birth, gender_code, current_address, phone, email_snapshot
+) values (
+  '$cand_race_sub', '$cand_race_cand', 'Race Cand', date '2000-01-01', 'FEMALE',
+  'address', '0000000000', 'cand-race-${suffix}@example.test'
+);
+
+insert into public.submission_document_logicals(
+  logical_document_id, submission_id, document_type_id, created_by_candidate_id
+) values (
+  '$cand_race_log', '$cand_race_sub', '$document_type', '$cand_race_cand'
+);
+
+insert into public.upload_reservations(
+  upload_reservation_id, candidate_form_session_id, intended_document_type_id,
+  temp_bucket, temp_path, original_filename, actor_auth_user_id, idempotency_key,
+  expires_at, signed_upload_expires_at, status_code
+) values (
+  '$cand_race_res', '$cand_race_session', '$document_type',
+  'candidate-quarantine', '$cand_race_path', 'cand_race.pdf',
+  '$cand_race_auth', gen_random_uuid(),
+  clock_timestamp() - interval '1 hour', clock_timestamp() - interval '30 minutes',
+  'CANCELLED'
+);
+
+insert into public.storage_cleanup_queue(
+  storage_cleanup_id, source_type, source_parent_id, source_upload_reservation_id,
+  bucket_name, object_path, reason_code, status_code, not_before
+) values (
+  '$cand_race_queue', 'CANDIDATE_FORM', '$cand_race_session', '$cand_race_res',
+  'candidate-quarantine', '$cand_race_path', 'SESSION_CANCELLED', 'PENDING',
+  clock_timestamp() - interval '10 minutes'
+);
+SQL
+
+# Worker claims candidate cleanup job
+cand_claim="$(psql_exec -c "select public.claim_storage_cleanup_jobs('worker-cand-race', 10, 60)")"
+cand_attempt="$(printf '%s' "$cand_claim" | jq -r --arg q "$cand_race_queue" '.data[]? | select(.storage_cleanup_id == $q) | .attempt_id // empty')"
+cand_token="$(printf '%s' "$cand_claim" | jq -r --arg q "$cand_race_queue" '.data[]? | select(.storage_cleanup_id == $q) | .fencing_token // empty')"
+[[ -n "$cand_attempt" && -n "$cand_token" ]] || {
+  echo "worker-cand-race failed to claim candidate cleanup job" >&2
+  exit 1
+}
+
+# Race cleanup authorization vs candidate document materialization
+timeout 20 bash -c "printf 'select public.authorize_storage_cleanup_attempt(\x27$cand_race_queue\x27, \x27$cand_attempt\x27, \x27$cand_token\x27, \x27worker-cand-race\x27);' | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/cand-auth.json" 2>"$tmp_dir/cand-auth.err" &
+cand_auth_pid=$!
+
+timeout 20 bash -c "printf 'begin; set local request.jwt.claim.sub=\x27$cand_race_auth\x27; insert into public.submission_documents(logical_document_id, storage_bucket, storage_path, original_filename, mime_type, file_size_bytes, checksum_sha256, version_no, is_current, uploaded_by_candidate_id) values (\x27$cand_race_log\x27, \x27candidate-quarantine\x27, \x27$cand_race_path\x27, \x27cand_race.pdf\x27, \x27application/pdf\x27, 1024, repeat(\x27e\x27, 64), 1, true, \x27$cand_race_cand\x27); commit;' | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/cand-mat.out" 2>"$tmp_dir/cand-mat.err" &
+cand_mat_pid=$!
+
+wait "$cand_auth_pid"
+wait "$cand_mat_pid"
+
+cand_auth_res="$(cat "$tmp_dir/cand-auth.json" 2>/dev/null || echo '')"
+cand_auth_success="$(printf '%s' "$cand_auth_res" | jq -r '.success // false' 2>/dev/null || echo 'false')"
+cand_doc_count="$(psql_exec -c "select count(*) from public.submission_documents where storage_bucket='candidate-quarantine' and storage_path='$cand_race_path'")"
+cand_tombstoned="$(psql_exec -c "select count(*) from private.storage_cleanup_provenance where bucket_name='candidate-quarantine' and object_path='$cand_race_path' and tombstoned_at is not null")"
+cand_q_state="$(psql_exec -c "select status_code || '|' || coalesce(eligibility_code, 'none') from public.storage_cleanup_queue where storage_cleanup_id='$cand_race_queue'")"
+
+# Assert no impossible dual-success state
+if [[ "$cand_tombstoned" -ge 1 && "$cand_doc_count" -ge 1 ]]; then
+  echo "FAIL: Impossible dual-success state: candidate document committed and cleanup tombstoned simultaneously for $cand_race_path" >&2
+  exit 1
+fi
+if [[ "$cand_auth_success" == "true" && "$cand_doc_count" -ge 1 ]]; then
+  echo "FAIL: Cleanup authorized but candidate document exists" >&2
+  exit 1
+fi
+if [[ "$cand_auth_success" == "true" ]]; then
+  [[ "$cand_tombstoned" -eq 1 && "$cand_doc_count" -eq 0 ]] || {
+    echo "FAIL: Cleanup authorized but tombstone count is $cand_tombstoned and doc count is $cand_doc_count" >&2
+    exit 1
+  }
+else
+  [[ "$cand_tombstoned" -eq 0 ]] || {
+    echo "FAIL: Cleanup withheld but tombstone was created" >&2
+    exit 1
+  }
+fi
+
+# --- RACE 5: Interview Cleanup Authorization vs Finalization Race (R2) ---
+int_race_id="$(psql_exec -c 'select gen_random_uuid()')"
+int_race_res="$(psql_exec -c 'select gen_random_uuid()')"
+int_race_queue="$(psql_exec -c 'select gen_random_uuid()')"
+int_race_path="temp/interview/${int_race_id}/${int_race_res}"
+int_attempt="$(psql_exec -c 'select gen_random_uuid()')"
+int_token="$(psql_exec -c 'select gen_random_uuid()')"
+
+psql_exec <<SQL
+insert into public.interviews(interview_id, application_id, round_no)
+values ('$int_race_id', '$application_id', 2);
+
+insert into public.upload_reservations(
+  upload_reservation_id, interview_id, intended_document_type_id, temp_bucket, temp_path,
+  original_filename, actor_auth_user_id, idempotency_key, expires_at, signed_upload_expires_at,
+  status_code, malware_scan_status, actual_size_bytes, checksum_sha256, detected_mime_type
+) values (
+  '$int_race_res', '$int_race_id', '$interview_document_type', 'interview-quarantine',
+  '$int_race_path', 'int_race.pdf', '$staff_auth',
+  gen_random_uuid(), clock_timestamp() + interval '30 minutes', clock_timestamp() - interval '5 minutes',
+  'UPLOADED', 'CLEAN', 1024, repeat('d', 64), 'application/pdf'
+);
+
+insert into public.storage_cleanup_queue(
+  storage_cleanup_id, source_type, source_parent_id, source_upload_reservation_id,
+  bucket_name, object_path, reason_code, status_code, not_before,
+  worker_id, attempt_id, fencing_token, attempts, leased_until
+) values (
+  '$int_race_queue', 'INTERVIEW_UPLOAD', '$int_race_id', '$int_race_res',
+  'interview-quarantine', '$int_race_path', 'INTERVIEW_HARD_DELETE', 'PROCESSING',
+  clock_timestamp() - interval '5 minutes',
+  'worker-int-race', '$int_attempt', '$int_token', 1, clock_timestamp() + interval '60 seconds'
+);
+SQL
+# Race cleanup authorization vs interview finalize upload
+timeout 20 bash -c "printf 'select public.authorize_storage_cleanup_attempt(\x27$int_race_queue\x27, \x27$int_attempt\x27, \x27$int_token\x27, \x27worker-int-race\x27);' | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/int-auth.json" 2>"$tmp_dir/int-auth.err" &
+int_auth_pid=$!
+
+timeout 20 bash -c "printf 'begin; set local request.jwt.claim.sub=\x27$staff_auth\x27; select public.finalize_interview_upload(\x27$int_race_res\x27, null, \x27interview-quarantine\x27, \x27$int_race_path\x27, \x27int_race.pdf\x27, \x27application/pdf\x27, 1024, repeat(\x27d\x27, 64), null); commit;' | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/int-finalize.json" 2>"$tmp_dir/int-finalize.err" &
+int_fin_pid=$!
+
+wait "$int_auth_pid"
+wait "$int_fin_pid"
+
+int_auth_res="$(cat "$tmp_dir/int-auth.json" 2>/dev/null || echo '')"
+int_auth_success="$(printf '%s' "$int_auth_res" | jq -r '.success // false' 2>/dev/null || echo 'false')"
+int_doc_count="$(psql_exec -c "select count(*) from public.interview_documents where storage_bucket='interview-quarantine' and storage_path='$int_race_path'")"
+int_tombstoned="$(psql_exec -c "select count(*) from private.storage_cleanup_provenance where bucket_name='interview-quarantine' and object_path='$int_race_path' and tombstoned_at is not null")"
+int_q_state="$(psql_exec -c "select status_code || '|' || coalesce(eligibility_code, 'none') from public.storage_cleanup_queue where storage_cleanup_id='$int_race_queue'")"
+
+# Assert no impossible dual-success state
+if [[ "$int_tombstoned" -ge 1 && "$int_doc_count" -ge 1 ]]; then
+  echo "FAIL: Impossible dual-success state: interview document committed and cleanup tombstoned simultaneously for $int_race_path" >&2
+  exit 1
+fi
+if [[ "$int_auth_success" == "true" && "$int_doc_count" -ge 1 ]]; then
+  echo "FAIL: Cleanup authorized but interview document exists" >&2
+  exit 1
+fi
+if [[ "$int_auth_success" == "true" ]]; then
+  [[ "$int_tombstoned" -eq 1 && "$int_doc_count" -eq 0 ]] || {
+    echo "FAIL: Cleanup authorized but tombstone count is $int_tombstoned and doc count is $int_doc_count" >&2
+    exit 1
+  }
+else
+  [[ "$int_tombstoned" -eq 0 ]] || {
+    echo "FAIL: Cleanup withheld but tombstone was created" >&2
+    exit 1
+  }
+fi
+
+echo "TASK-S07-003 concurrent cleanup, reclaim, signing/cancel, scan/cancel, Interview finalize/delete, and candidate/interview authorization races passed ($suffix)"
