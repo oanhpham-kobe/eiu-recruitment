@@ -1393,3 +1393,14 @@ implementation_evidence:
     source_reopen_required: false
     implementation_reopen_required: false
     evidence_persistence: "Owner-transported message only; no reviewer-native persistence claimed."
+  S07-004-PROMPT-GATE-001:
+    task: TASK-S07-004
+    status: PENDING
+    source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
+    prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
+    pre_task_checkpoint: checkpoint/pre-S07-004-001
+    implementation_started: false
+    materialized_next_task_count: 1
+    reviewer: eiu-reviewer
+    source_reopen_required: false
+    prompt_review_status: PENDING

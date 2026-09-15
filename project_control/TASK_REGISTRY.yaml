@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-07
-current_task: TASK-S07-003
+current_task: TASK-S07-004
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1360,3 +1360,23 @@ tasks:
         physical_storage_cleanup_worker: NOT_IMPLEMENTED
         deployment_or_connected_supabase: NOT_USED
     next_frontier_behavior: "Lifecycle CLOSED; Owner-transported final acceptance audit releases frontier hold; no next task materialized."
+  TASK-S07-004:
+    title: "Physical Storage Cleanup Runner and Local Storage Integration"
+    slice: SLICE-07
+    status: PLANNED
+    depends_on: [TASK-S07-003]
+    planning_baseline_sha: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
+    audit_release_commit: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
+    pre_task_checkpoint: checkpoint/pre-S07-004-001
+    prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
+    source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
+    prompt_review_status: PENDING
+    source_authority: "review_pack 11/37/39/41/42/47/48/59/66/73 and app_spec; current source_registry"
+    acceptance:
+      - "Server-only physical cleanup runner decouples database authorization from Storage provider deletion."
+      - "Exact authorized (bucket, path) deletion proves 12 physical provider test cases against local Supabase Storage."
+      - "Crash recovery, idempotency on 404, and stale attempt fences handle asynchronous failure windows safely."
+      - "All predecessor S07-003 contracts, migrations, and crossed regressions remain intact."
+    out_of_scope: "Production deployment, connected Supabase mutations, cron/scheduler, continuous daemon, sweeps, scanner/email runtime, UI, archive/purge, second next task."
+    implementation_started: false
+    next_frontier_behavior: "Stop at independent prompt PASS for external audit and explicit implementation-dispatch decision."

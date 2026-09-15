@@ -24,8 +24,10 @@
 - Roles & Reviewers: OMP was producer; External ChatGPT was independent implementation and final acceptance reviewer under an Owner-authorized task-local override. No `eiu-reviewer` implementation review was used.
 - The accepted scope hardens existing database cleanup eligibility and lease fencing contracts. It does not implement a physical Storage-cleanup worker/runner, scanner/email provider runtimes, deployment, or connected Supabase operations.
 - Owner-transported external ChatGPT final acceptance audit: PASS, source reopen false, implementation reopen false; acceptance lifecycle CLOSED.
-- No accepted checkpoint exists for S07-004; no S07-004 task exists or has been materialized.
+- `TASK-S07-004 — Physical Storage Cleanup Runner and Local Storage Integration` is PLANNED and prompt-gate authorized under Owner dispatch. Source reconciliation: `project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-004_v1.md`.
+- Prompt review is PENDING under repository independent reviewer (`eiu-reviewer`); implementation has NOT started; no Executor is active.
+- No task beyond S07-004 is materialized; physical cleanup runner execution, scanner/email provider runtimes, deployment, and connected Supabase operations remain strictly out of scope.
 
 ## Scope boundary
 
-TASK-S07-003 acceptance lifecycle is CLOSED. Execution is stopped at the governed Slice-07 frontier hold. No TASK-S07-004 exists; physical cleanup runner, provider runtimes, deployment, and connected Supabase operations remain strictly out of scope.
+Current execution is authorized for TASK-S07-004 planning, prompt materialization, and independent prompt review ONLY. Implementation has NOT started; no Executor is active. Execution stops at prompt review PASS for external audit and explicit dispatch. No subsequent tasks exist.

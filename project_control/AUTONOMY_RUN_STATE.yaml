@@ -38,10 +38,10 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
-  last_verified_application_ci_run: "34765432362"
-  accepted_checkpoint: checkpoint/S07-002-accepted-001
-  accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
+  last_verified_application_checkpoint: "7317138779270087e3e425f48b13785923b17f42"
+  last_verified_application_ci_run: "34979021250"
+  accepted_checkpoint: checkpoint/S07-003-accepted-001
+  accepted_checkpoint_sha: "7317138779270087e3e425f48b13785923b17f42"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
   last_verified_control_plane_sha: "44f1d1d22d09a3b8bb0855324b6631e16256cefc"
@@ -632,7 +632,7 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: S07_003_ACCEPTED_STOPPED_AT_FRONTIER
+  status: S07_004_PROMPT_REVIEW_PENDING
   accepted_checkpoint: checkpoint/S07-003-accepted-001
   accepted_checkpoint_sha: "7317138779270087e3e425f48b13785923b17f42"
   accepted_task: TASK-S07-003
@@ -644,7 +644,7 @@ slice_07_planning:
     work_id: S07-003-EXTERNAL-FINAL-ACCEPTANCE-AUDIT-001
     reviewer: EXTERNAL_CHATGPT
     transport: OWNER_MESSAGE
-    decision: FINAL_ACCEPTANCE_PASS_AND_FRONTIER_HOLD
+    decision: FINAL_ACCEPTANCE_PASS_AND_FRONTIER_RELEASE
     accepted_sha: "7317138779270087e3e425f48b13785923b17f42"
     source_reopen_required: false
     implementation_reopen_required: false
@@ -653,37 +653,25 @@ slice_07_planning:
     scanner_provider_runtime: NOT_IMPLEMENTED
     physical_storage_cleanup_worker: NOT_IMPLEMENTED
     deployment_or_connected_supabase: NOT_USED
-  selected_task: TASK-S07-003
-  source_reconciliation: project_control/reviews/S07_003_SOURCE_RECONCILIATION_v1.md
-  prompt: project_control/prompts/SLICE-07_TASK-003_v1.md
-  prompt_checkpoint: checkpoint/pre-S07-003-001
-  prompt_review_status: PASS
-  prompt_review_sha: "dfb5e5f1497904f2ebc4334e72c6ae898904d146"
-  prompt_review_work_id: S07-003-PROMPT-REVIEW-001
-  materialized_next_task_count: 0
-  implementation_started: true
-  implementation_dispatch:
-    reviewer: EXTERNAL_CHATGPT
-    transport: OWNER_MESSAGE
-    prompt_gate_audit: PASS
-    decision: IMPLEMENTATION_DISPATCH_APPROVED
-    source_reopen_required: false
-    implementation_review_mode: EXTERNAL_CHATGPT
-    implementation_review_status: PASS
-    eiu_reviewer_required_for_task: false
-    producer: OMP
-    reason: Owner-authorized task-local producer/reviewer role separation
+  selected_task: TASK-S07-004
+  source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
+  prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
+  prompt_checkpoint: checkpoint/pre-S07-004-001
+  prompt_review_status: PENDING
+  materialized_next_task_count: 1
+  implementation_started: false
 
 safe_frontier:
   eligible_tasks: []
-  skipped_due_to_dependency: []
+  skipped_due_to_dependency:
+    - "TASK-S07-004 prompt review pending; implementation prohibited."
   materialization_frontier: []
-  execution_hold: "Stop at accepted TASK-S07-003 frontier; no S07-004 materialized; next task requires governed prompt review."
+  execution_hold: "Stop at prompt review PASS for external audit and explicit implementation dispatch; implementation not authorized."
 
 stop_gate:
   status: ACTIVE
-  type: SLICE_07_NEXT_FRONTIER_HOLD
+  type: S07_004_PROMPT_REVIEW_GATE
   source_reopen_required: false
-  resume_on: "Owner-authorized next prompt review or next slice planning decision."
+  resume_on: "Independent prompt review decision."
 
-next_action: "Stop at accepted S07-003 checkpoint; no further execution authorized in current continuation."
+next_action: "Execute independent prompt review of TASK-S07-004; implementation strictly prohibited."
