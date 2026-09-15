@@ -230,10 +230,10 @@ values('$staff_id','$staff_auth','s07-$staff_id@eiu.edu.vn','S07 concurrency');
 insert into public.app_user_roles(app_user_id,role_code)
 values('$staff_id','HR');
 insert into public.permissions(permission_code,description)
-values('interviews.manage','S07 test permission'),('interviews.view','S07 test permission')
+values('interviews.manage','S07 test permission'),('interviews.view','S07 test permission'),('interviews.documents','S07 test permission')
 on conflict(permission_code) do nothing;
 insert into public.app_user_permissions(app_user_id,permission_code)
-values('$staff_id','interviews.manage'),('$staff_id','interviews.view');
+values('$staff_id','interviews.manage'),('$staff_id','interviews.view'),('$staff_id','interviews.documents');
 insert into public.candidates(candidate_id,auth_user_id,email)
 values('$interview_candidate_id','$interview_candidate_auth','s07-$interview_candidate_id@example.test');
 insert into public.submissions(
@@ -273,17 +273,25 @@ delete_pid=$!
 wait "$finalize_pid"
 wait "$delete_pid"
 
-# Strengthened Race 3 assertion: Interview must end DELETED or CANCELLED; cleanup queue row must exist
-int_status="$(psql_exec -c "select coalesce((select schedule_status_code from public.interviews where interview_id='$interview_id'), 'DELETED')")"
-[[ "$int_status" == "DELETED" || "$int_status" == "CANCELLED" ]] || {
-  echo "finalize vs delete: interview must be DELETED or CANCELLED, got '$int_status'" >&2
+# Strengthened Race 3 assertion: Interview must end DELETED or INACTIVATED; cleanup queue row must exist
+int_status="$(psql_exec -c "select coalesce((select case when not is_active then 'INACTIVATED' else schedule_status_code end from public.interviews where interview_id='$interview_id'), 'DELETED')")"
+[[ "$int_status" == "DELETED" || "$int_status" == "INACTIVATED" || "$int_status" == "CANCELLED" ]] || {
+  echo "finalize vs delete: interview must be DELETED, INACTIVATED, or CANCELLED, got '$int_status'" >&2
   exit 1
 }
 int_cleanup_count="$(psql_exec -c "select count(*) from public.storage_cleanup_queue where bucket_name='interview-quarantine' and object_path='temp/interview/$interview_id/$interview_reservation'")"
-[[ "$int_cleanup_count" -ge 1 ]] || {
-  echo "finalize vs delete: cleanup queue row must exist for interview upload" >&2
-  exit 1
-}
+int_doc_exists="$(psql_exec -c "select count(*) from public.interview_documents where storage_bucket='interview-quarantine' and storage_path='temp/interview/$interview_id/$interview_reservation'")"
+if [[ "$int_status" == "DELETED" ]]; then
+  [[ "$int_cleanup_count" -ge 1 && "$int_doc_exists" -eq 0 ]] || {
+    echo "finalize vs delete: deleted interview must enqueue cleanup and have no documents" >&2
+    exit 1
+  }
+else
+  [[ "$int_doc_exists" -ge 1 ]] || {
+    echo "finalize vs delete: inactivated interview must retain finalized document" >&2
+    exit 1
+  }
+fi
 
 # --- RACE 4: Candidate Cleanup Authorization vs Document Materialization Race (R2) ---
 # Tests the destructive authorization seam (public.authorize_storage_cleanup_attempt)
@@ -386,9 +394,19 @@ else
     echo "FAIL: Cleanup withheld but tombstone was created" >&2
     exit 1
   }
+  if [[ "$cand_doc_count" -ge 1 ]]; then
+    [[ "$cand_q_state" == "ERROR|RETAINED_REFERENCE" ]] || {
+      echo "FAIL: When candidate document won, queue must be ERROR|RETAINED_REFERENCE, got '$cand_q_state'" >&2
+      exit 1
+    }
+  fi
 fi
 
 # --- RACE 5: Interview Cleanup Authorization vs Finalization Race (R2) ---
+# Tests the destructive authorization seam (public.authorize_storage_cleanup_attempt)
+# against public.finalize_interview_upload on the exact same Interview storage identity.
+# A finalizable live Interview reservation is itself canonically sufficient to deny
+# destructive cleanup authorization (mutual exclusion).
 int_race_id="$(psql_exec -c 'select gen_random_uuid()')"
 int_race_res="$(psql_exec -c 'select gen_random_uuid()')"
 int_race_queue="$(psql_exec -c 'select gen_random_uuid()')"
@@ -422,6 +440,7 @@ insert into public.storage_cleanup_queue(
   'worker-int-race', '$int_attempt', '$int_token', 1, clock_timestamp() + interval '60 seconds'
 );
 SQL
+
 # Race cleanup authorization vs interview finalize upload
 timeout 20 bash -c "printf 'select public.authorize_storage_cleanup_attempt(\x27$int_race_queue\x27, \x27$int_attempt\x27, \x27$int_token\x27, \x27worker-int-race\x27);' | docker exec -i '$container_name' psql -qAt -v ON_ERROR_STOP=0 -U postgres -d postgres" >"$tmp_dir/int-auth.json" 2>"$tmp_dir/int-auth.err" &
 int_auth_pid=$!
@@ -434,29 +453,133 @@ wait "$int_fin_pid"
 
 int_auth_res="$(cat "$tmp_dir/int-auth.json" 2>/dev/null || echo '')"
 int_auth_success="$(printf '%s' "$int_auth_res" | jq -r '.success // false' 2>/dev/null || echo 'false')"
+int_auth_err="$(printf '%s' "$int_auth_res" | jq -r '.error_code // empty' 2>/dev/null || echo '')"
+int_fin_res="$(cat "$tmp_dir/int-finalize.json" 2>/dev/null || echo '')"
+int_fin_success="$(printf '%s' "$int_fin_res" | jq -r '.success // false' 2>/dev/null || echo 'false')"
 int_doc_count="$(psql_exec -c "select count(*) from public.interview_documents where storage_bucket='interview-quarantine' and storage_path='$int_race_path'")"
 int_tombstoned="$(psql_exec -c "select count(*) from private.storage_cleanup_provenance where bucket_name='interview-quarantine' and object_path='$int_race_path' and tombstoned_at is not null")"
-int_q_state="$(psql_exec -c "select status_code || '|' || coalesce(eligibility_code, 'none') from public.storage_cleanup_queue where storage_cleanup_id='$int_race_queue'")"
+int_q_status="$(psql_exec -c "select status_code from public.storage_cleanup_queue where storage_cleanup_id='$int_race_queue'")"
+int_q_eligibility="$(psql_exec -c "select coalesce(eligibility_code, 'none') from public.storage_cleanup_queue where storage_cleanup_id='$int_race_queue'")"
 
-# Assert no impossible dual-success state
+# Assertion 1: Cleanup authorization must NOT succeed against a finalizable live reservation
+[[ "$int_auth_success" == "false" ]] || {
+  echo "FAIL: Cleanup authorization must not succeed while a finalizable live reservation exists" >&2
+  exit 1
+}
+[[ "$int_auth_err" == "CLEANUP_WITHHELD" ]] || {
+  echo "FAIL: Expected error_code CLEANUP_WITHHELD, got '$int_auth_err'" >&2
+  exit 1
+}
+
+# Assertion 2: No cleanup tombstone may be created
+[[ "$int_tombstoned" -eq 0 ]] || {
+  echo "FAIL: Cleanup tombstone must not be created for live finalizable reservation" >&2
+  exit 1
+}
+
+# Assertion 3 & 4: Queue must settle to expected protected state with canonical eligibility reason
+# (SIGNED_WINDOW because expires_at > clock_timestamp(), or LIVE_RESERVATION/RETAINED_REFERENCE)
+[[ "$int_q_status" == "PENDING" || "$int_q_status" == "ERROR" ]] || {
+  echo "FAIL: Queue status must settle to PENDING or ERROR, got '$int_q_status'" >&2
+  exit 1
+}
+[[ "$int_q_eligibility" == "SIGNED_WINDOW" || "$int_q_eligibility" == "LIVE_RESERVATION" || "$int_q_eligibility" == "RETAINED_REFERENCE" ]] || {
+  echo "FAIL: Expected canonical eligibility protection (SIGNED_WINDOW, LIVE_RESERVATION, or RETAINED_REFERENCE), got '$int_q_eligibility'" >&2
+  exit 1
+}
+
+# Assertion 5 & 6: Finalize succeeds and exactly one interview document exists
+[[ "$int_fin_success" == "true" ]] || {
+  echo "FAIL: Finalize interview upload should succeed under valid business state, got '$int_fin_res'" >&2
+  exit 1
+}
+[[ "$int_doc_count" -eq 1 ]] || {
+  echo "FAIL: Exactly one interview document must exist after finalization, got '$int_doc_count'" >&2
+  exit 1
+}
+
+# Assertion 7: There must be no impossible dual-success state
 if [[ "$int_tombstoned" -ge 1 && "$int_doc_count" -ge 1 ]]; then
-  echo "FAIL: Impossible dual-success state: interview document committed and cleanup tombstoned simultaneously for $int_race_path" >&2
+  echo "FAIL: Impossible dual-success state: interview document committed and cleanup tombstoned simultaneously" >&2
   exit 1
 fi
-if [[ "$int_auth_success" == "true" && "$int_doc_count" -ge 1 ]]; then
-  echo "FAIL: Cleanup authorized but interview document exists" >&2
+
+# --- PHASE 5B: Terminal Interview Reservation Cleanup Authorization & Tombstone ---
+# Proves that once an Interview reservation is legitimately terminal/detached (non-finalizable),
+# cleanup authorization succeeds, records a tombstone, and prevents any subsequent resurrection.
+int_term_id="$(psql_exec -c 'select gen_random_uuid()')"
+int_term_res="$(psql_exec -c 'select gen_random_uuid()')"
+int_term_queue="$(psql_exec -c 'select gen_random_uuid()')"
+int_term_path="temp/interview/${int_term_id}/${int_term_res}"
+int_term_attempt="$(psql_exec -c 'select gen_random_uuid()')"
+int_term_token="$(psql_exec -c 'select gen_random_uuid()')"
+
+psql_exec <<SQL
+insert into public.interviews(interview_id, application_id, round_no)
+values ('$int_term_id', '$application_id', 3);
+
+insert into public.upload_reservations(
+  upload_reservation_id, interview_id, intended_document_type_id, temp_bucket, temp_path,
+  original_filename, actor_auth_user_id, idempotency_key, expires_at, signed_upload_expires_at,
+  status_code, malware_scan_status, actual_size_bytes, checksum_sha256, detected_mime_type
+) values (
+  '$int_term_res', '$int_term_id', '$interview_document_type', 'interview-quarantine',
+  '$int_term_path', 'term.pdf', '$staff_auth',
+  gen_random_uuid(), clock_timestamp() - interval '20 minutes', clock_timestamp() - interval '10 minutes',
+  'CANCELLED', 'CLEAN', 1024, repeat('d', 64), 'application/pdf'
+);
+
+insert into public.storage_cleanup_queue(
+  storage_cleanup_id, source_type, source_parent_id, source_upload_reservation_id,
+  bucket_name, object_path, reason_code, status_code, not_before,
+  worker_id, attempt_id, fencing_token, attempts, leased_until
+) values (
+  '$int_term_queue', 'INTERVIEW_UPLOAD', '$int_term_id', '$int_term_res',
+  'interview-quarantine', '$int_term_path', 'INTERVIEW_HARD_DELETE', 'PROCESSING',
+  clock_timestamp() - interval '10 minutes',
+  'worker-term-race', '$int_term_attempt', '$int_term_token', 1, clock_timestamp() + interval '60 seconds'
+);
+SQL
+
+# Authorize cleanup on terminal reservation
+term_auth="$(psql_exec -c "select public.authorize_storage_cleanup_attempt('$int_term_queue', '$int_term_attempt', '$int_term_token', 'worker-term-race');")"
+term_auth_success="$(printf '%s' "$term_auth" | jq -r '.success // false')"
+term_tombstoned="$(psql_exec -c "select count(*) from private.storage_cleanup_provenance where bucket_name='interview-quarantine' and object_path='$int_term_path' and tombstoned_at is not null")"
+
+[[ "$term_auth_success" == "true" ]] || {
+  echo "FAIL: Terminal reservation cleanup authorization must succeed, got '$term_auth'" >&2
   exit 1
-fi
-if [[ "$int_auth_success" == "true" ]]; then
-  [[ "$int_tombstoned" -eq 1 && "$int_doc_count" -eq 0 ]] || {
-    echo "FAIL: Cleanup authorized but tombstone count is $int_tombstoned and doc count is $int_doc_count" >&2
-    exit 1
-  }
-else
-  [[ "$int_tombstoned" -eq 0 ]] || {
-    echo "FAIL: Cleanup withheld but tombstone was created" >&2
-    exit 1
-  }
-fi
+}
+[[ "$term_tombstoned" -eq 1 ]] || {
+  echo "FAIL: Terminal reservation cleanup must record tombstone, got count '$term_tombstoned'" >&2
+  exit 1
+}
+
+# Subsequent attempt to insert a document for this tombstoned identity must be rejected by trigger
+term_resurrect_err="$(psql_exec -c "
+do \$\$
+begin
+  insert into public.interview_documents(
+    logical_document_id, storage_bucket, storage_path, original_filename,
+    mime_type, file_size_bytes, checksum_sha256, version_no, is_current, uploaded_by
+  ) values (
+    (select logical_document_id from public.interview_document_logicals where interview_id='$int_term_id' limit 1),
+    'interview-quarantine', '$int_term_path', 'term.pdf',
+    'application/pdf', 1024, repeat('d', 64), 1, true, '$staff_auth'
+  );
+exception when others then
+  raise notice 'RESURRECTION_REJECTED: %', sqlerrm;
+end;
+\$\$;
+" 2>&1 || true)"
+[[ "$term_resurrect_err" == *"STORAGE_CLEANUP_IDENTITY_TOMBSTONED"* ]] || {
+  echo "FAIL: Document resurrection against tombstoned identity must raise STORAGE_CLEANUP_IDENTITY_TOMBSTONED, got '$term_resurrect_err'" >&2
+  exit 1
+}
+term_doc_count="$(psql_exec -c "select count(*) from public.interview_documents where storage_bucket='interview-quarantine' and storage_path='$int_term_path'")"
+[[ "$term_doc_count" -eq 0 ]] || {
+  echo "FAIL: Tombstoned identity must have 0 documents, got '$term_doc_count'" >&2
+  exit 1
+}
 
 echo "TASK-S07-003 concurrent cleanup, reclaim, signing/cancel, scan/cancel, Interview finalize/delete, and candidate/interview authorization races passed ($suffix)"
