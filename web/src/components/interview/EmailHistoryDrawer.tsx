@@ -17,6 +17,7 @@ import {
   formatEmailHistoryRecipients,
 } from "@/lib/interview/email-ui";
 import { DeleteEmailHistoryDialog } from "./DeleteEmailHistoryDialog";
+import styles from "./EmailUi.module.css";
 
 function formatTimestamp(value: string): string {
   return new Intl.DateTimeFormat("vi-VN", {
@@ -127,14 +128,14 @@ export function EmailHistoryDrawer({
       setDeleteOpen(false);
       const refreshed = await loadHistory(false);
       if (!refreshed) return;
-      if (failure) {
-        setMessage({ kind: "error", text: failure });
-      } else {
-        setMessage({
-          kind: "success",
-          text: `Đã xóa ${deleted} bản ghi Email History. Security audit vẫn được giữ nguyên.`,
-        });
-      }
+      setMessage(
+        failure
+          ? { kind: "error", text: failure }
+          : {
+              kind: "success",
+              text: `Đã xóa ${deleted} bản ghi Email History. Security audit vẫn được giữ nguyên.`,
+            },
+      );
     } catch {
       await loadHistory(false);
       setMessage({
@@ -175,7 +176,7 @@ export function EmailHistoryDrawer({
           </div>
         }
       >
-        <div className="interview-email-history">
+        <div className={styles.history}>
           <p className="interview-field-hint">
             Email History chỉ hiển thị kết quả giao nhận đã hoàn tất. Trạng thái
             hàng đợi QUEUED thuộc Email Outbox và không được tổng hợp vào đây.
@@ -188,8 +189,8 @@ export function EmailHistoryDrawer({
             <p>Chưa có Email History cho Interview này.</p>
           ) : null}
           {rows.length ? (
-            <div className="interview-email-history__table-scroll">
-              <table className="interview-email-history__table">
+            <div className={styles.tableScroll}>
+              <table className={styles.table}>
                 <caption className="sr-only">
                   Email History của Interview hiện tại
                 </caption>
