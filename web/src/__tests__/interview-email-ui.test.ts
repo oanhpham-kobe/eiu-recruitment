@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import { build } from "esbuild";
+import { type Browser, chromium, type Page } from "playwright";
 import type { EmailHistoryEntry } from "@/lib/commands/email-commands";
 import {
   emailHistoryStatusTone,
@@ -9,10 +10,6 @@ import {
   formatEmailHistoryRecipients,
   validateEmailHistoryDeletion,
 } from "@/lib/interview/email-ui";
-
-function source(path: string): string {
-  return readFileSync(resolve(process.cwd(), path), "utf8");
-}
 
 const baseHistory: EmailHistoryEntry = {
   email_history_id: "10000000-0000-0000-0000-000000000001",
@@ -27,6 +24,66 @@ const baseHistory: EmailHistoryEntry = {
   status_code: "SENT",
   error_code: null,
 };
+
+async function bundleHarness() {
+  const actionsMock = resolve(
+    process.cwd(),
+    "src/__tests__/fixtures/interview-actions-browser-mock.ts",
+  );
+  const bundle = await build({
+    absWorkingDir: process.cwd(),
+    bundle: true,
+    entryPoints: ["src/__tests__/fixtures/interview-email-ui-harness.tsx"],
+    format: "iife",
+    outdir: "interview-email-ui-fixture",
+    platform: "browser",
+    conditions: ["browser"],
+    write: false,
+    plugins: [
+      {
+        name: "interview-actions-browser-mock",
+        setup(esbuild) {
+          esbuild.onResolve(
+            { filter: /^@\/app\/interviews\/actions$/ },
+            () => ({ path: actionsMock }),
+          );
+        },
+      },
+    ],
+  });
+  const script = bundle.outputFiles.find((file) =>
+    file.path.endsWith(".js"),
+  )?.text;
+  const style = bundle.outputFiles.find((file) =>
+    file.path.endsWith(".css"),
+  )?.text;
+  if (!script || !style)
+    throw new Error("Interview email browser acceptance fixture did not bundle");
+  return { script, style };
+}
+
+async function openHarness(
+  browser: Browser,
+  assets: { script: string; style: string },
+  mode: "page" | "preview-stale" | "history",
+): Promise<{ page: Page; errors: string[] }> {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.setContent('<div id="root"></div>');
+  await page.evaluate((value) => {
+    document.body.dataset.harness = value;
+  }, mode);
+  await page.addStyleTag({ content: assets.style });
+  await page.addScriptTag({ content: assets.script });
+  await page
+    .locator(`[data-harness-ready="${mode}"]`)
+    .waitFor({ state: "visible", timeout: 5_000 });
+  return { page, errors };
+}
 
 test("email history UI maps only accepted completed statuses", () => {
   assert.equal(emailHistoryStatusTone("SENT"), "success");
@@ -58,7 +115,11 @@ test("delete validation enforces TEST environment and WRONG_RECORD reason", () =
     /yêu cầu lý do/i,
   );
   assert.equal(
-    validateEmailHistoryDeletion("WRONG_RECORD", "Wrong operational record", false),
+    validateEmailHistoryDeletion(
+      "WRONG_RECORD",
+      "Wrong operational record",
+      false,
+    ),
     null,
   );
   assert.match(
@@ -67,65 +128,278 @@ test("delete validation enforces TEST environment and WRONG_RECORD reason", () =
   );
 });
 
-test("preview UI keeps preview fingerprint fencing and stale-preview refresh without interview status mutation", () => {
-  const preview = source("src/components/interview/EmailPreviewDialog.tsx");
-  assert.match(preview, /preview_fingerprint: preview\.preview_fingerprint/);
-  assert.match(preview, /STALE_PREVIEW/);
-  assert.match(preview, /await loadPreview\(/);
-  assert.match(preview, /Đã đưa vào hàng đợi|onQueued/);
-  assert.doesNotMatch(preview, /changeInterviewStatusAction/);
-  assert.doesNotMatch(preview, /schedule_status_code/);
-});
+test(
+  "InterviewPage supports multi-row preview-fenced bulk email without participant subsetting",
+  { timeout: 120_000 },
+  async () => {
+    const assets = await bundleHarness();
+    let browser: Browser | undefined;
+    try {
+      browser = await chromium.launch();
+      const { page, errors } = await openHarness(browser, assets, "page");
 
-test("email actions expose history independently from send permission", () => {
-  const actions = source("src/components/interview/InterviewEmailActions.tsx");
-  assert.match(actions, /canSend: boolean/);
-  assert.match(actions, /canViewHistory: boolean/);
-  assert.match(actions, /canDeleteHistory: boolean/);
-  assert.match(actions, /!capabilities\.canSend &&\s*!capabilities\.canViewHistory/);
-  assert.match(actions, /Lịch sử gửi thư/);
-  assert.match(actions, /EmailHistoryDrawer/);
-});
+      await page.getByLabel("Chọn Nguyễn Thị An").check();
+      assert.equal(
+        await page.getByRole("button", { name: "Tạo lịch / Chi tiết" }).isDisabled(),
+        false,
+      );
+      await page.getByLabel("Chọn Trần Minh Bình").check();
+      assert.equal(
+        await page.getByRole("button", { name: "Tạo lịch / Chi tiết" }).isDisabled(),
+        true,
+        "single-Interview lifecycle actions must disable while multiple rows are selected",
+      );
 
-test("table-row shortcuts reuse preview-before-send and server-derived recipient authority", () => {
-  const rowActions = source("src/components/interview/InterviewRowEmailActions.tsx");
-  const page = source("src/components/interview/InterviewPage.tsx");
-  assert.match(rowActions, /EmailPreviewDialog/);
-  assert.match(rowActions, /INTERVIEW_INVITATION/);
-  assert.match(rowActions, /INTERVIEW_PARTICIPANT_INVITATION/);
-  assert.match(rowActions, /hasCurrentParticipants/);
-  assert.match(rowActions, /application\.candidateEmail/);
-  assert.doesNotMatch(rowActions, /participantIds|recipientIds|email_outbox/);
-  assert.match(page, /InterviewRowEmailActions/);
-  assert.match(page, /application=\{application\}/);
-  assert.match(page, /round=\{latest\}/);
-  assert.match(page, /round=\{round\}/);
-});
+      await page
+        .getByText("2 Interview đã chọn cho email", { exact: true })
+        .waitFor({ state: "visible" });
+      await page
+        .getByRole("button", { name: "Gửi thư ứng viên đã chọn" })
+        .click();
 
-test("history drawer stays on email_history projection and renders accessible completed-history controls", () => {
-  const history = source("src/components/interview/EmailHistoryDrawer.tsx");
-  assert.match(history, /loadInterviewEmailHistoryAction/);
-  assert.match(history, /StatusBadge/);
-  assert.match(history, /aria-label="Chọn tất cả Email History"/);
-  assert.match(history, /<caption className="sr-only">/);
-  assert.match(history, /<th scope="col">/);
-  assert.match(history, /QUEUED thuộc Email Outbox và không được tổng hợp vào đây/);
-  assert.doesNotMatch(history, /from\(["']email_outbox["']\)/);
-});
+      const candidateDialog = page.getByRole("dialog", {
+        name: "Bản xem trước email ứng viên — 2 Interview",
+      });
+      await candidateDialog.waitFor({ state: "visible" });
+      assert.equal(
+        await candidateDialog.locator("[data-interview-id]").count(),
+        2,
+      );
+      await candidateDialog.getByText("an@example.com", { exact: true }).waitFor();
+      await candidateDialog
+        .getByText("binh@example.com", { exact: true })
+        .waitFor();
+      assert.match(
+        await candidateDialog.textContent(),
+        /Server body — Nguyễn Thị An/,
+      );
+      assert.match(
+        await candidateDialog.textContent(),
+        /Server body — Trần Minh Bình/,
+      );
 
-test("history deletion dialog preserves cleanup classification and immutable-audit messaging", () => {
-  const deletion = source("src/components/interview/DeleteEmailHistoryDialog.tsx");
-  assert.match(deletion, /TEST_RECORD/);
-  assert.match(deletion, /WRONG_RECORD/);
-  assert.match(deletion, /disabled=!\{?testRecordAllowed\}?|disabled=\{!testRecordAllowed\}/);
-  assert.match(deletion, /maxLength=\{1000\}/);
-  assert.match(deletion, /required/);
-  assert.match(deletion, /security audit.*bất biến/is);
-});
+      const candidatePreviewCalls = await page.evaluate(
+        () => window.__interviewEmailHarness?.previewCalls ?? [],
+      );
+      assert.equal(candidatePreviewCalls.length, 2);
+      assert.deepEqual(
+        candidatePreviewCalls.map((call) => call.emailType),
+        ["INTERVIEW_INVITATION", "INTERVIEW_INVITATION"],
+      );
 
-test("email UI polish keeps long content scrollable instead of overflowing drawers", () => {
-  const css = source("src/components/interview/EmailUi.module.css");
-  assert.match(css, /overflow-x:\s*auto/);
-  assert.match(css, /white-space:\s*pre-wrap/);
-  assert.match(css, /overflow-wrap:\s*anywhere/);
-});
+      await candidateDialog
+        .getByRole("button", { name: "Xác nhận gửi 2 email" })
+        .click();
+      await candidateDialog
+        .getByText("Đã đưa 2 email vào hàng đợi gửi thư.", { exact: true })
+        .waitFor({ state: "visible" });
+
+      const bulkCalls = await page.evaluate(
+        () => window.__interviewEmailHarness?.bulkCalls ?? [],
+      );
+      assert.equal(bulkCalls.length, 1);
+      const bulkCall = bulkCalls[0];
+      assert.ok(bulkCall);
+      assert.equal(bulkCall.requests.length, 2);
+      for (const request of bulkCall.requests) {
+        assert.deepEqual(Object.keys(request).sort(), [
+          "application_id",
+          "email_type",
+          "interview_id",
+          "preview_fingerprint",
+          "submission_id",
+        ]);
+        assert.equal(request.preview_fingerprint.length, 64);
+        assert.equal("participantIds" in request, false);
+        assert.equal("recipientIds" in request, false);
+      }
+      assert.match(
+        bulkCall.idempotencyKey,
+        /^[0-9a-f-]{36}$/i,
+        "bulk action must receive a client-generated UUID idempotency key",
+      );
+      assert.equal(
+        await page.evaluate(
+          () => window.__interviewEmailHarness?.interviewStatusMutations ?? -1,
+        ),
+        0,
+        "email send must not mutate Interview schedule status",
+      );
+
+      await candidateDialog.getByRole("button", { name: "Đóng" }).click();
+      await candidateDialog.waitFor({ state: "detached" });
+      await page
+        .getByRole("button", { name: "Gửi thư người tham dự đã chọn" })
+        .click();
+      const participantDialog = page.getByRole("dialog", {
+        name: "Bản xem trước email người tham dự — 2 Interview",
+      });
+      await participantDialog.waitFor({ state: "visible" });
+      await participantDialog
+        .getByText("interviewer.one@example.com", { exact: true })
+        .waitFor();
+      await participantDialog
+        .getByText("interviewer.two@example.com", { exact: true })
+        .waitFor();
+      const allPreviewCalls = await page.evaluate(
+        () => window.__interviewEmailHarness?.previewCalls ?? [],
+      );
+      assert.deepEqual(
+        allPreviewCalls.slice(-2).map((call) => call.emailType),
+        [
+          "INTERVIEW_PARTICIPANT_INVITATION",
+          "INTERVIEW_PARTICIPANT_INVITATION",
+        ],
+      );
+
+      await page
+        .getByRole("button", { name: "Gửi thư ứng viên Nguyễn Thị An" })
+        .waitFor({ state: "visible" });
+      await page
+        .getByRole("button", { name: "Gửi thư người tham dự Vòng 1" })
+        .waitFor({ state: "visible" });
+      assert.deepEqual(errors, [], "page bulk-email browser console/page errors");
+      await page.close();
+    } finally {
+      await browser?.close();
+    }
+  },
+);
+
+test(
+  "preview dialog retains fingerprint, refreshes STALE_PREVIEW, and queues without status mutation",
+  { timeout: 120_000 },
+  async () => {
+    const assets = await bundleHarness();
+    let browser: Browser | undefined;
+    try {
+      browser = await chromium.launch();
+      const { page, errors } = await openHarness(
+        browser,
+        assets,
+        "preview-stale",
+      );
+      const dialog = page.getByRole("dialog", {
+        name: "Bản xem trước email — Ứng viên",
+      });
+      await dialog.waitFor({ state: "visible" });
+      await dialog.getByText("an@example.com", { exact: true }).waitFor();
+      assert.match(await dialog.textContent(), /Server subject — Nguyễn Thị An/);
+      assert.match(await dialog.textContent(), /Server body — Nguyễn Thị An/);
+
+      await dialog.getByRole("button", { name: "Xác nhận gửi" }).click();
+      await dialog
+        .getByText(
+          "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
+          { exact: true },
+        )
+        .waitFor({ state: "visible" });
+
+      const staleState = await page.evaluate(() => ({
+        previewCalls: window.__interviewEmailHarness?.previewCalls ?? [],
+        enqueueCalls: window.__interviewEmailHarness?.enqueueCalls ?? [],
+      }));
+      assert.equal(staleState.previewCalls.length, 2);
+      assert.equal(staleState.enqueueCalls.length, 1);
+      assert.equal(
+        staleState.enqueueCalls[0]?.request.preview_fingerprint,
+        staleState.previewCalls[0]
+          ? `${"a".repeat(63)}${staleState.previewCalls[0].interviewId.at(-1)}`
+          : "",
+      );
+
+      await dialog.getByRole("button", { name: "Xác nhận gửi" }).click();
+      await page.waitForFunction(
+        () => (window.__interviewEmailHarness?.queuedNotices ?? 0) === 1,
+      );
+      const finalState = await page.evaluate(() => ({
+        queuedNotices: window.__interviewEmailHarness?.queuedNotices ?? 0,
+        enqueueCalls: window.__interviewEmailHarness?.enqueueCalls ?? [],
+        statusMutations:
+          window.__interviewEmailHarness?.interviewStatusMutations ?? -1,
+      }));
+      assert.equal(finalState.queuedNotices, 1);
+      assert.equal(finalState.enqueueCalls.length, 2);
+      assert.equal(finalState.statusMutations, 0);
+      assert.deepEqual(errors, [], "preview browser console/page errors");
+      await page.close();
+    } finally {
+      await browser?.close();
+    }
+  },
+);
+
+test(
+  "history drawer renders completed statuses and executes validated deletion behavior",
+  { timeout: 120_000 },
+  async () => {
+    const assets = await bundleHarness();
+    let browser: Browser | undefined;
+    try {
+      browser = await chromium.launch();
+      const { page, errors } = await openHarness(browser, assets, "history");
+      const drawer = page.getByRole("dialog", {
+        name: "Lịch sử gửi thư — Nguyễn Thị An — Vòng 1",
+      });
+      await drawer.waitFor({ state: "visible" });
+
+      assert.deepEqual(
+        await drawer.locator(".ui-status-badge").allTextContents(),
+        ["SENT", "FAILED", "CANCELLED", "ABANDONED"],
+      );
+      assert.equal(
+        (await drawer.locator(".ui-status-badge").allTextContents()).includes(
+          "QUEUED",
+        ),
+        false,
+      );
+      await drawer.getByLabel("Chọn tất cả Email History").check();
+      await drawer
+        .getByRole("button", { name: "Xóa đã chọn (4)" })
+        .click();
+
+      const deleteDialog = page.getByRole("dialog", {
+        name: "Xóa Email History",
+      });
+      await deleteDialog.waitFor({ state: "visible" });
+      assert.match(
+        await deleteDialog.textContent(),
+        /security audit đã ghi nhận thao tác vẫn bất biến/i,
+      );
+      const classification = deleteDialog.getByLabel("Phân loại xóa");
+      assert.equal(
+        await classification.locator('option[value="TEST_RECORD"]').isDisabled(),
+        true,
+        "TEST_RECORD must be unavailable for a mixed TEST/PRODUCTION selection",
+      );
+      const deleteButton = deleteDialog.getByRole("button", {
+        name: "Xóa 4 bản ghi",
+      });
+      assert.equal(await deleteButton.isDisabled(), true);
+      await deleteDialog.getByLabel("Lý do xóa").fill("  Wrong imported records  ");
+      assert.equal(await deleteButton.isDisabled(), false);
+      await deleteButton.click();
+
+      await drawer
+        .getByText("Đã xóa 4 bản ghi Email History. Security audit vẫn được giữ nguyên.", {
+          exact: true,
+        })
+        .waitFor({ state: "visible" });
+      const deleteCalls = await page.evaluate(
+        () => window.__interviewEmailHarness?.deleteCalls ?? [],
+      );
+      assert.equal(deleteCalls.length, 4);
+      assert.ok(
+        deleteCalls.every(
+          (call) =>
+            call.classification === "WRONG_RECORD" &&
+            call.reason === "Wrong imported records",
+        ),
+      );
+      assert.deepEqual(errors, [], "history browser console/page errors");
+      await page.close();
+    } finally {
+      await browser?.close();
+    }
+  },
+);
