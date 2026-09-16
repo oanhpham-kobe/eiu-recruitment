@@ -87,6 +87,21 @@ test("email actions expose history independently from send permission", () => {
   assert.match(actions, /EmailHistoryDrawer/);
 });
 
+test("table-row shortcuts reuse preview-before-send and server-derived recipient authority", () => {
+  const rowActions = source("src/components/interview/InterviewRowEmailActions.tsx");
+  const page = source("src/components/interview/InterviewPage.tsx");
+  assert.match(rowActions, /EmailPreviewDialog/);
+  assert.match(rowActions, /INTERVIEW_INVITATION/);
+  assert.match(rowActions, /INTERVIEW_PARTICIPANT_INVITATION/);
+  assert.match(rowActions, /hasCurrentParticipants/);
+  assert.match(rowActions, /application\.candidateEmail/);
+  assert.doesNotMatch(rowActions, /participantIds|recipientIds|email_outbox/);
+  assert.match(page, /InterviewRowEmailActions/);
+  assert.match(page, /application=\{application\}/);
+  assert.match(page, /round=\{latest\}/);
+  assert.match(page, /round=\{round\}/);
+});
+
 test("history drawer stays on email_history projection and renders accessible completed-history controls", () => {
   const history = source("src/components/interview/EmailHistoryDrawer.tsx");
   assert.match(history, /loadInterviewEmailHistoryAction/);
