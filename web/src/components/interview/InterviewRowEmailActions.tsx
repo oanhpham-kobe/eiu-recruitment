@@ -16,7 +16,10 @@ let capabilitiesPromise:
   | null = null;
 
 function loadCapabilities() {
-  capabilitiesPromise ??= getInterviewEmailCapabilitiesAction();
+  capabilitiesPromise ??= getInterviewEmailCapabilitiesAction().catch((error) => {
+    capabilitiesPromise = null;
+    throw error;
+  });
   return capabilitiesPromise;
 }
 
@@ -57,16 +60,15 @@ export function InterviewRowEmailActions({
     [round.participants],
   );
   const operational = application.isActive && round.isActive;
-  const blocked = disabled || !operational || !resolved || !canSend;
   const contextSummary = `Vòng ${round.roundNo} · ${formatInterviewTime(round.startAt, round.endAt)}`;
 
-  if (resolved && !canSend) return null;
+  if (!resolved || !canSend) return null;
 
   return (
     <>
       <Button
         variant="ghost"
-        disabled={blocked || !application.candidateEmail}
+        disabled={disabled || !operational || !application.candidateEmail}
         aria-label={`Gửi thư ứng viên ${application.candidateName}`}
         onClick={() => {
           setNotice(null);
@@ -77,7 +79,7 @@ export function InterviewRowEmailActions({
       </Button>
       <Button
         variant="ghost"
-        disabled={blocked || !hasCurrentParticipants}
+        disabled={disabled || !operational || !hasCurrentParticipants}
         aria-label={`Gửi thư người tham dự Vòng ${round.roundNo}`}
         onClick={() => {
           setNotice(null);
