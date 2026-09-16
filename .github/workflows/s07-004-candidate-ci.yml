@@ -44,6 +44,8 @@ jobs:
         run: npm run typecheck
       - name: Build
         run: npm run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
       - name: Focused cleanup runner tests
         run: node --conditions react-server --test --import tsx src/__tests__/storage-cleanup-runner.test.ts
       - name: Full web tests
