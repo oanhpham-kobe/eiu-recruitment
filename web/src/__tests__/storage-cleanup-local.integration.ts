@@ -1,9 +1,13 @@
 import "server-only";
 
 import assert from "node:assert/strict";
-import { createHmac, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { createHmac, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import type {
+  AuthorizeStorageCleanupAttemptInput,
+  ClaimedStorageCleanupJob,
+} from "@/lib/commands/storage-reservation";
 import {
   createStorageCleanupDbPort,
   runStorageCleanupBatch,
@@ -16,20 +20,18 @@ import {
   type StorageCleanupProvider,
   StorageCleanupProviderError,
 } from "@/lib/storage/storage-provider";
-import type {
-  AuthorizeStorageCleanupAttemptInput,
-  ClaimedStorageCleanupJob,
-} from "@/lib/commands/storage-reservation";
 
 const apiUrl = mustEnv("SUPABASE_LOCAL_API_URL");
 const anonKey = mustEnv("SUPABASE_LOCAL_ANON_KEY");
 const serviceRoleKey = mustEnv("SUPABASE_LOCAL_SERVICE_ROLE_KEY");
 const jwtSecret = mustEnv("SUPABASE_LOCAL_JWT_SECRET");
-const containerName = process.env.CONTAINER_NAME || "supabase_db_eiu-recruitment-dev";
+const containerName =
+  process.env.CONTAINER_NAME || "supabase_db_eiu-recruitment-dev";
 
 function mustEnv(name: string): string {
   const value = process.env[name]?.trim();
-  if (!value) throw new Error(`Missing required local integration env: ${name}`);
+  if (!value)
+    throw new Error(`Missing required local integration env: ${name}`);
   return value;
 }
 
@@ -74,7 +76,11 @@ function q(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
-function candidatePath(parentId: string, reservationId: string, name: string): string {
+function candidatePath(
+  parentId: string,
+  reservationId: string,
+  name: string,
+): string {
   return `temp/${parentId}/${reservationId}/${name}`;
 }
 
@@ -83,7 +89,9 @@ function interviewPath(parentId: string, reservationId: string): string {
 }
 
 function sourceType(bucket: string): "CANDIDATE_FORM" | "INTERVIEW_UPLOAD" {
-  return bucket === "interview-quarantine" ? "INTERVIEW_UPLOAD" : "CANDIDATE_FORM";
+  return bucket === "interview-quarantine"
+    ? "INTERVIEW_UPLOAD"
+    : "CANDIDATE_FORM";
 }
 
 type SeededQueue = {
@@ -148,7 +156,9 @@ function queueState(queueId: string): string {
 }
 
 function expireLease(queueId: string): void {
-  psql(`update public.storage_cleanup_queue set leased_until = clock_timestamp() - interval '1 second' where storage_cleanup_id = ${q(queueId)}::uuid;`);
+  psql(
+    `update public.storage_cleanup_queue set leased_until = clock_timestamp() - interval '1 second' where storage_cleanup_id = ${q(queueId)}::uuid;`,
+  );
 }
 
 function makeCountingProvider(base: StorageCleanupProvider) {
@@ -170,14 +180,28 @@ const workerClient = createStorageCleanupWorkerClient({
 });
 const workerDb = createStorageCleanupDbPort(workerClient);
 const serviceClient = createClient(apiUrl, serviceRoleKey, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
 });
 const anonClient = createClient(apiUrl, anonKey, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
 });
 const authenticatedClient = createClient(apiUrl, anonKey, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  global: { headers: { Authorization: `Bearer ${mintRoleJwt("authenticated")}` } },
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+  global: {
+    headers: { Authorization: `Bearer ${mintRoleJwt("authenticated")}` },
+  },
 });
 const realProvider = createSupabaseStorageCleanupProvider(serviceClient);
 const createdObjects: Array<[string, string]> = [];
@@ -190,12 +214,19 @@ async function ensureBucket(bucket: string): Promise<void> {
     fileSizeLimit: 5 * 1024 * 1024,
     allowedMimeTypes: ["application/pdf"],
   });
-  if (created.error && !created.error.message.toLowerCase().includes("already")) {
+  if (
+    created.error &&
+    !created.error.message.toLowerCase().includes("already")
+  ) {
     throw created.error;
   }
 }
 
-async function upload(bucket: string, path: string, body = "s07-004"): Promise<void> {
+async function upload(
+  bucket: string,
+  path: string,
+  body = "s07-004",
+): Promise<void> {
   const result = await serviceClient.storage
     .from(bucket)
     .upload(path, new Blob([body], { type: "application/pdf" }), {
@@ -235,18 +266,28 @@ async function assertRoleBoundary(): Promise<void> {
       p_limit: 1,
       p_lease_seconds: 60,
     });
-    assert.ok(denied.error, `${label} must remain denied cleanup RPC execution`);
+    assert.ok(
+      denied.error,
+      `${label} must remain denied cleanup RPC execution`,
+    );
   }
   const allowed = await workerClient.rpc("claim_storage_cleanup_jobs", {
     p_worker_id: "worker-boundary",
     p_limit: 1,
     p_lease_seconds: 60,
   });
-  assert.equal(allowed.error, null, "worker JWT must reach cleanup RPC through PostgREST");
+  assert.equal(
+    allowed.error,
+    null,
+    "worker JWT must reach cleanup RPC through PostgREST",
+  );
   assert.equal((allowed.data as { success?: boolean })?.success, true);
 }
 
-function seedReferencedQueues(): { current: SeededQueue; historical: SeededQueue } {
+function seedReferencedQueues(): {
+  current: SeededQueue;
+  historical: SeededQueue;
+} {
   const candidateId = randomUUID();
   const authId = randomUUID();
   const documentTypeId = randomUUID();
@@ -322,7 +363,13 @@ function seedTerminalReservation(): SeededQueue {
       'candidate-quarantine', ${q(path)}, 'SESSION_CANCELLED', 'PENDING', clock_timestamp() - interval '1 hour'
     );
   `);
-  return { queueId, parentId: sessionId, reservationId, bucket: "candidate-quarantine", path };
+  return {
+    queueId,
+    parentId: sessionId,
+    reservationId,
+    bucket: "candidate-quarantine",
+    path,
+  };
 }
 
 async function main(): Promise<void> {
@@ -330,7 +377,11 @@ async function main(): Promise<void> {
   await ensureBucket("interview-quarantine");
   await assertRoleBoundary();
 
-  const absenceProbe = candidatePath(randomUUID(), randomUUID(), "absent-probe.pdf");
+  const absenceProbe = candidatePath(
+    randomUUID(),
+    randomUUID(),
+    "absent-probe.pdf",
+  );
   const absenceObservation = await serviceClient.storage
     .from("candidate-quarantine")
     .remove([absenceProbe]);
@@ -348,7 +399,11 @@ async function main(): Promise<void> {
   // 1 + 3 + 12: Candidate deletion, neighbor isolation, exact targeted provider call.
   retireActiveQueues();
   const candidate = seedDetachedQueue({ bucket: "candidate-quarantine" });
-  const neighbor = candidatePath(candidate.parentId, randomUUID(), "neighbor.pdf");
+  const neighbor = candidatePath(
+    candidate.parentId,
+    randomUUID(),
+    "neighbor.pdf",
+  );
   await upload(candidate.bucket, candidate.path, "candidate-target");
   await upload(candidate.bucket, neighbor, "candidate-neighbor");
   const candidateCounted = makeCountingProvider(realProvider);
@@ -362,7 +417,9 @@ async function main(): Promise<void> {
   assert.equal(candidateResult.jobs[0]?.result, "DONE");
   assert.equal(await exists(candidate.bucket, candidate.path), false);
   assert.equal(await exists(candidate.bucket, neighbor), true);
-  assert.deepEqual(candidateCounted.calls, [[candidate.bucket, candidate.path]]);
+  assert.deepEqual(candidateCounted.calls, [
+    [candidate.bucket, candidate.path],
+  ]);
   assert.match(queueState(candidate.queueId), /^DONE\|ELIGIBLE\|1\|/);
 
   // 2: Interview-quarantine physical deletion using its accepted managed path shape.
@@ -379,7 +436,9 @@ async function main(): Promise<void> {
   });
   assert.equal(interviewResult.jobs[0]?.result, "DONE");
   assert.equal(await exists(interview.bucket, interview.path), false);
-  assert.deepEqual(interviewCounted.calls, [[interview.bucket, interview.path]]);
+  assert.deepEqual(interviewCounted.calls, [
+    [interview.bucket, interview.path],
+  ]);
 
   // 4: No authorization -> zero provider calls and object remains.
   retireActiveQueues();
@@ -399,7 +458,10 @@ async function main(): Promise<void> {
   assert.equal(withheldResult.claimedCount, 0);
   assert.equal(withheldCounted.calls.length, 0);
   assert.equal(await exists(withheld.bucket, withheld.path), true);
-  assert.match(queueState(withheld.queueId), /^ERROR\|RETAINED_REPLACEMENT\|0\|/);
+  assert.match(
+    queueState(withheld.queueId),
+    /^ERROR\|RETAINED_REPLACEMENT\|0\|/,
+  );
 
   // 5 + 6: Current and historical document references both block physical deletion.
   retireActiveQueues();
@@ -417,9 +479,18 @@ async function main(): Promise<void> {
   assert.equal(refsResult.claimedCount, 0);
   assert.equal(refsCounted.calls.length, 0);
   assert.equal(await exists(refs.current.bucket, refs.current.path), true);
-  assert.equal(await exists(refs.historical.bucket, refs.historical.path), true);
-  assert.match(queueState(refs.current.queueId), /^ERROR\|RETAINED_REFERENCE\|0\|/);
-  assert.match(queueState(refs.historical.queueId), /^ERROR\|RETAINED_REFERENCE\|0\|/);
+  assert.equal(
+    await exists(refs.historical.bucket, refs.historical.path),
+    true,
+  );
+  assert.match(
+    queueState(refs.current.queueId),
+    /^ERROR\|RETAINED_REFERENCE\|0\|/,
+  );
+  assert.match(
+    queueState(refs.historical.queueId),
+    /^ERROR\|RETAINED_REFERENCE\|0\|/,
+  );
 
   // 7: Stale attempt is rejected before provider I/O.
   retireActiveQueues();
@@ -483,7 +554,10 @@ async function main(): Promise<void> {
     workerId: "crash-worker-a",
   };
   const crashAuthorized = await workerDb.authorizeAttempt(crashInput);
-  await realProvider.removeObject(crashAuthorized.bucket_name, crashAuthorized.object_path);
+  await realProvider.removeObject(
+    crashAuthorized.bucket_name,
+    crashAuthorized.object_path,
+  );
   assert.equal(await exists(crash.bucket, crash.path), false);
   expireLease(crash.queueId);
   const crashRecovery = await runStorageCleanupBatch({
@@ -516,7 +590,10 @@ async function main(): Promise<void> {
   await upload(retry.bucket, retry.path, "retry");
   const failingProvider: StorageCleanupProvider = {
     async removeObject() {
-      throw new StorageCleanupProviderError("PROVIDER_TIMEOUT", "simulated timeout");
+      throw new StorageCleanupProviderError(
+        "PROVIDER_TIMEOUT",
+        "simulated timeout",
+      );
     },
   };
   const firstRetry = await runStorageCleanupBatch({
@@ -529,8 +606,13 @@ async function main(): Promise<void> {
   assert.equal(firstRetry.jobs[0]?.result, "RETRY_RECORDED");
   assert.equal(firstRetry.jobs[0]?.errorCode, "PROVIDER_TIMEOUT");
   assert.equal(await exists(retry.bucket, retry.path), true);
-  assert.match(queueState(retry.queueId), /^PENDING\|WORKER_RETRY\|1\|PROVIDER_TIMEOUT$/);
-  psql(`update public.storage_cleanup_queue set not_before = clock_timestamp() - interval '1 second' where storage_cleanup_id = ${q(retry.queueId)}::uuid;`);
+  assert.match(
+    queueState(retry.queueId),
+    /^PENDING\|WORKER_RETRY\|1\|PROVIDER_TIMEOUT$/,
+  );
+  psql(
+    `update public.storage_cleanup_queue set not_before = clock_timestamp() - interval '1 second' where storage_cleanup_id = ${q(retry.queueId)}::uuid;`,
+  );
   const secondRetry = await runStorageCleanupBatch({
     workerId: "retry-worker-b",
     db: workerDb,
@@ -540,9 +622,14 @@ async function main(): Promise<void> {
   });
   assert.equal(secondRetry.jobs[0]?.result, "DONE");
   assert.equal(await exists(retry.bucket, retry.path), false);
-  assert.match(queueState(retry.queueId), /^DONE\|ELIGIBLE\|2\|PROVIDER_TIMEOUT$/);
+  assert.match(
+    queueState(retry.queueId),
+    /^DONE\|ELIGIBLE\|2\|PROVIDER_TIMEOUT$/,
+  );
 
-  console.log("PASS: S07-004 physical local Storage integration cases 1-12 succeeded.");
+  console.log(
+    "PASS: S07-004 physical local Storage integration cases 1-12 succeeded.",
+  );
 }
 
 try {

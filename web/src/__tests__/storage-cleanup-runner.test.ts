@@ -7,9 +7,9 @@ import type {
   ClaimedStorageCleanupJob,
 } from "@/lib/commands/storage-reservation";
 import {
-  type StorageCleanupDbPort,
   extractStorageCleanupFailureCode,
   runStorageCleanupBatch,
+  type StorageCleanupDbPort,
 } from "@/lib/storage/cleanup-runner";
 import {
   createSupabaseStorageCleanupProvider,
@@ -105,7 +105,9 @@ test("runner skips denied first job and continues with exact authorized target",
     claimed: [first, second],
     async authorize(input) {
       if (input.storageCleanupId === first.storage_cleanup_id) {
-        throw new Error("authorize_storage_cleanup_attempt error: CLEANUP_WITHHELD");
+        throw new Error(
+          "authorize_storage_cleanup_attempt error: CLEANUP_WITHHELD",
+        );
       }
       return authorizedJob(second);
     },
@@ -135,11 +137,12 @@ test("runner skips denied first job and continues with exact authorized target",
     },
     { storageCleanupId: second.storage_cleanup_id, result: "DONE" },
   ]);
-  assert.deepEqual(providerCalls, [
-    [second.bucket_name, second.object_path],
-  ]);
+  assert.deepEqual(providerCalls, [[second.bucket_name, second.object_path]]);
   assert.equal(completionInputs.length, 1);
-  assert.equal(completionInputs[0]?.storageCleanupId, second.storage_cleanup_id);
+  assert.equal(
+    completionInputs[0]?.storageCleanupId,
+    second.storage_cleanup_id,
+  );
   assert.equal(completionInputs[0]?.success, true);
 });
 
@@ -232,7 +235,11 @@ test("runner validates the accepted claim bounds before DB work", async () => {
     runStorageCleanupBatch({
       workerId: "bad worker id",
       db,
-      provider: { async removeObject() { return { status: "REMOVED_OR_ABSENT" }; } },
+      provider: {
+        async removeObject() {
+          return { status: "REMOVED_OR_ABSENT" };
+        },
+      },
     }),
     /Invalid storage cleanup workerId/,
   );
@@ -240,7 +247,11 @@ test("runner validates the accepted claim bounds before DB work", async () => {
     runStorageCleanupBatch({
       workerId: "worker-ok",
       db,
-      provider: { async removeObject() { return { status: "REMOVED_OR_ABSENT" }; } },
+      provider: {
+        async removeObject() {
+          return { status: "REMOVED_OR_ABSENT" };
+        },
+      },
       limit: 101,
     }),
     /limit must be an integer between 1 and 100/,
@@ -249,7 +260,11 @@ test("runner validates the accepted claim bounds before DB work", async () => {
     runStorageCleanupBatch({
       workerId: "worker-ok",
       db,
-      provider: { async removeObject() { return { status: "REMOVED_OR_ABSENT" }; } },
+      provider: {
+        async removeObject() {
+          return { status: "REMOVED_OR_ABSENT" };
+        },
+      },
       leaseSeconds: 29,
     }),
     /leaseSeconds must be an integer between 30 and 3600/,

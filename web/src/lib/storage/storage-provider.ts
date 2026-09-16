@@ -12,7 +12,10 @@ export type StorageRemovalResult = {
 };
 
 export interface StorageCleanupProvider {
-  removeObject(bucketName: string, objectPath: string): Promise<StorageRemovalResult>;
+  removeObject(
+    bucketName: string,
+    objectPath: string,
+  ): Promise<StorageRemovalResult>;
 }
 
 export class StorageCleanupProviderError extends Error {

@@ -2,11 +2,11 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  authorizeStorageCleanupAttempt,
   type AuthorizedStorageCleanupJob,
   type AuthorizeStorageCleanupAttemptInput,
-  claimStorageCleanupJobs,
+  authorizeStorageCleanupAttempt,
   type ClaimedStorageCleanupJob,
+  claimStorageCleanupJobs,
   completeStorageCleanupAttempt,
 } from "@/lib/commands/storage-reservation";
 import {
@@ -92,7 +92,9 @@ function validateBatchInput(
     throw new Error("Invalid storage cleanup workerId");
   }
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
-    throw new Error("Storage cleanup limit must be an integer between 1 and 100");
+    throw new Error(
+      "Storage cleanup limit must be an integer between 1 and 100",
+    );
   }
   if (
     !Number.isInteger(leaseSeconds) ||
@@ -123,11 +125,7 @@ export async function runStorageCleanupBatch(input: {
   const leaseSeconds = input.leaseSeconds ?? 300;
   validateBatchInput(input.workerId, limit, leaseSeconds);
 
-  const claimed = await input.db.claimJobs(
-    input.workerId,
-    limit,
-    leaseSeconds,
-  );
+  const claimed = await input.db.claimJobs(input.workerId, limit, leaseSeconds);
   const jobs: StorageCleanupJobResult[] = [];
 
   for (const job of claimed) {
