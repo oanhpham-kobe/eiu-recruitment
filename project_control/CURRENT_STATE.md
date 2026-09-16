@@ -33,8 +33,10 @@
 - Roles & Boundaries: ChatGPT was implementation producer/executor; OMP/`eiu-reviewer` was independent implementation and final acceptance reviewer. ChatGPT did not self-accept. Physical Storage integration proven against disposable local Supabase storage buckets (`candidate-quarantine`, `interview-quarantine`).
 - Out of scope: production deployment, connected Supabase operations, scanner/email provider runtimes, and production scheduler/daemon remain strictly out of scope.
 - `TASK-S07-005 — Email History Projection and Manual Email Outbox UI Consumers` is PLANNED and prompt-gate authorized following Slice-07 closing composition review (`SLICE-07-CLOSING-REVIEW-001`, finding `S07-CLOSING-001`), which confirmed manual email actions and Email History UI are source-required Slice-07 consumers of accepted S07-001 database contracts. Source reconciliation: `project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-005_v1.md`.
-- Prompt review is PENDING under repository independent reviewer (`eiu-reviewer`); implementation has NOT started; no Executor is active.
+- Pre-task prompt checkpoint: `checkpoint/pre-S07-005-002` (`44de446cef58d75507324664f4b36a47c3fc7e5c`), superseding `checkpoint/pre-S07-005-001` (`0d5973ee245b1c4f35b41489cbdf62cdd12dfed2`).
+- Independent prompt and source reconciliation review (R2) by OMP/`eiu-reviewer` (`S07-005-PROMPT-REVIEW-002` @ `44de446cef58d75507324664f4b36a47c3fc7e5c`): PASS, zero blocking findings, finding `S07-005-PROMPT-001` verified resolved, `SOURCE_REOPEN_REQUIRED: false`, `IMPLEMENTATION_AUTHORIZED: false`.
+- Implementation has NOT started; no Executor is active; execution stops at prompt review PASS.
 
 ## Scope boundary
 
-SLICE-07 remains IN_PROGRESS. TASK-S07-004 is accepted at `checkpoint/S07-004-accepted-001`. Current execution is authorized for TASK-S07-005 planning, prompt materialization, and independent prompt review ONLY. Implementation has NOT started; no Executor is active. Execution stops at prompt review PASS for external audit and explicit dispatch.
+SLICE-07 remains IN_PROGRESS. TASK-S07-004 is accepted at `checkpoint/S07-004-accepted-001`. TASK-S07-005 independent prompt review is PASS at `checkpoint/pre-S07-005-002`. Implementation has NOT started; no Executor is active. Execution stops at prompt review PASS for external audit and explicit Owner implementation dispatch.
