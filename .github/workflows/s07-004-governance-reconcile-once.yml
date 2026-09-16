@@ -21,8 +21,8 @@ jobs:
         run: python project_control/validators/reconcile_s07_004_review_gate_once.py
       - name: Validate reconciled control plane
         run: |
-          python project_control/validators/validate_control_plane.py
-          python project_control/validators/validate_omp_native.py
+          python project_control/validate_control_plane.py
+          python project_control/validate_omp_native.py
           git diff --check
       - name: Commit governance reconciliation
         run: |
