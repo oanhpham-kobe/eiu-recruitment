@@ -11,9 +11,9 @@ import { Drawer } from "@/components/ui/Drawer";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { EmailHistoryEntry } from "@/lib/commands/email-commands";
 import {
+  type EmailHistoryDeleteClassification,
   emailHistoryStatusTone,
   emailHistoryTimestamp,
-  type EmailHistoryDeleteClassification,
   formatEmailHistoryRecipients,
 } from "@/lib/interview/email-ui";
 import { DeleteEmailHistoryDialog } from "./DeleteEmailHistoryDialog";
