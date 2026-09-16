@@ -29,31 +29,35 @@ export function InterviewEmailActions({
 
   if (!permissions.canEmail && !permissions.canViewEmailHistory) return null;
 
+  const controls = (
+    <>
+      {permissions.canEmail && operational ? (
+        <Button
+          variant="ghost"
+          onClick={() => setEmailType("INTERVIEW_INVITATION")}
+        >
+          {compact ? "Gửi ứng viên" : "Gửi thư ứng viên"}
+        </Button>
+      ) : null}
+      {permissions.canEmail && operational && hasParticipants ? (
+        <Button
+          variant="ghost"
+          onClick={() => setEmailType("INTERVIEW_PARTICIPANT_INVITATION")}
+        >
+          {compact ? "Gửi tham dự" : "Gửi thư người tham dự"}
+        </Button>
+      ) : null}
+      {permissions.canViewEmailHistory ? (
+        <Button variant="ghost" onClick={() => setHistoryOpen(true)}>
+          {compact ? "Lịch sử thư" : "Lịch sử gửi thư / Email History"}
+        </Button>
+      ) : null}
+    </>
+  );
+
   return (
     <>
-      <div className={compact ? "interview-row-actions" : "interview-drawer-actions"}>
-        {permissions.canEmail && operational ? (
-          <Button
-            variant="ghost"
-            onClick={() => setEmailType("INTERVIEW_INVITATION")}
-          >
-            {compact ? "Gửi ứng viên" : "Gửi thư ứng viên"}
-          </Button>
-        ) : null}
-        {permissions.canEmail && operational && hasParticipants ? (
-          <Button
-            variant="ghost"
-            onClick={() => setEmailType("INTERVIEW_PARTICIPANT_INVITATION")}
-          >
-            {compact ? "Gửi tham dự" : "Gửi thư người tham dự"}
-          </Button>
-        ) : null}
-        {permissions.canViewEmailHistory ? (
-          <Button variant="ghost" onClick={() => setHistoryOpen(true)}>
-            {compact ? "Lịch sử thư" : "Lịch sử gửi thư / Email History"}
-          </Button>
-        ) : null}
-      </div>
+      {compact ? controls : <div className="interview-drawer-actions">{controls}</div>}
 
       {emailType ? (
         <EmailPreviewDialog
