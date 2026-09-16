@@ -657,12 +657,16 @@ slice_07_planning:
   source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md
   prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
   prompt_checkpoint: checkpoint/pre-S07-005-004
-  prompt_review_status: PENDING_R4
+  prompt_review_status: PASS
+  prompt_review_work_id: S07-005-PROMPT-REVIEW-004
+  prompt_review_commit: "9492293bfe0125acdfd4c26921247d1e6151424d"
+  prompt_review_artifact: project_control/reviews/S07_005_PROMPT_REVIEW_9492293_v4.md
   external_producer_repair:
     work_id: S07-005-EXTERNAL-R3-REPAIR-001
     role: EXTERNAL_CHATGPT_PRODUCER
     finding: S07-005-R3-001
-    disposition: REPAIRED_AWAITING_INDEPENDENT_R4_VERIFICATION
+    disposition: RESOLVED_BY_INDEPENDENT_R4_REVIEW
+    review_work_id: S07-005-PROMPT-REVIEW-004
     artifact: project_control/reviews/S07_005_EXTERNAL_R3_REPAIR_DECISION.md
   prior_independent_prompt_reviews:
     - work_id: S07-005-PROMPT-REVIEW-002
@@ -693,14 +697,14 @@ slice_07_planning:
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-005 R4 prompt review pending; implementation prohibited."
+    - "TASK-S07-005 prompt review PASS at checkpoint/pre-S07-005-004; awaiting explicit Owner implementation dispatch."
   materialization_frontier: []
   execution_hold: "Stop at prompt review PASS for TASK-S07-005; implementation not authorized."
 
 stop_gate:
   status: ACTIVE
-  type: S07_005_PROMPT_GATE
+  type: S07_005_PROMPT_REVIEW_PASS_AWAITING_OWNER_DISPATCH
   source_reopen_required: false
-  resume_on: "Independent R4 prompt review decision."
+  resume_on: "Explicit Owner implementation dispatch for TASK-S07-005."
 
-next_action: "Execute independent R4 prompt review of TASK-S07-005; implementation strictly prohibited."
+next_action: "Stop at prompt review PASS; await explicit Owner implementation dispatch for TASK-S07-005."
