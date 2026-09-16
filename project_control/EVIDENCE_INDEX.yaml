@@ -1453,3 +1453,14 @@ implementation_evidence:
     source_reopen_required: false
     implementation_reopen_required: false
     evidence_persistence: "Owner-transported OMP final acceptance audit; verified exact-SHA CI on candidate and serialized integration branches; authorized checkpoint/S07-004-accepted-001."
+  S07-005-PROMPT-GATE-001:
+    task: TASK-S07-005
+    status: PENDING
+    source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md
+    prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
+    pre_task_checkpoint: checkpoint/pre-S07-005-001
+    implementation_started: false
+    materialized_next_task_count: 1
+    reviewer: eiu-reviewer
+    source_reopen_required: false
+    prompt_review_status: PENDING

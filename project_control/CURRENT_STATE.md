@@ -31,8 +31,10 @@
 - Verified exact-SHA CI on `2c42533733257caa3567cd6c8cae80e13b3092b8`: Candidate CI [35040828903](https://github.com/oanhpham-kobe/eiu-recruitment/actions/runs/35040828903) PASS; formal Integration CI [35046185306](https://github.com/oanhpham-kobe/eiu-recruitment/actions/runs/35046185306) PASS; formal Governance CI [35046185309](https://github.com/oanhpham-kobe/eiu-recruitment/actions/runs/35046185309) PASS.
 - Checkpoint verified: annotated tag object `a0c9ed0e051b74c1db887e119064e022340ddc26` peels to accepted commit `2c42533733257caa3567cd6c8cae80e13b3092b8`.
 - Roles & Boundaries: ChatGPT was implementation producer/executor; OMP/`eiu-reviewer` was independent implementation and final acceptance reviewer. ChatGPT did not self-accept. Physical Storage integration proven against disposable local Supabase storage buckets (`candidate-quarantine`, `interview-quarantine`).
-- Out of scope: production deployment, connected Supabase operations, scanner/email provider runtimes, production scheduler/daemon, and TASK-S07-005 remain strictly out of scope.
+- Out of scope: production deployment, connected Supabase operations, scanner/email provider runtimes, and production scheduler/daemon remain strictly out of scope.
+- `TASK-S07-005 — Email History Projection and Manual Email Outbox UI Consumers` is PLANNED and prompt-gate authorized following Slice-07 closing composition review (`SLICE-07-CLOSING-REVIEW-001`, finding `S07-CLOSING-001`), which confirmed manual email actions and Email History UI are source-required Slice-07 consumers of accepted S07-001 database contracts. Source reconciliation: `project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-005_v1.md`.
+- Prompt review is PENDING under repository independent reviewer (`eiu-reviewer`); implementation has NOT started; no Executor is active.
 
 ## Scope boundary
 
-TASK-S07-004 acceptance lifecycle is CLOSED. The repository is in AUTONOMOUS mode executing the mandatory post-CI continuation gate. Reconciling remaining Slice-07 canonical responsibilities or proceeding through the Slice-07 closing process; no TASK-S07-005 is materialized without source authority.
+SLICE-07 remains IN_PROGRESS. TASK-S07-004 is accepted at `checkpoint/S07-004-accepted-001`. Current execution is authorized for TASK-S07-005 planning, prompt materialization, and independent prompt review ONLY. Implementation has NOT started; no Executor is active. Execution stops at prompt review PASS for external audit and explicit dispatch.

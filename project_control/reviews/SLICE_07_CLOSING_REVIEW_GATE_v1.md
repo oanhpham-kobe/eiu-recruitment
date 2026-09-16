@@ -111,22 +111,28 @@ Verify the four accepted tasks compose correctly as the unified Slice-07 subsyst
      * Email delivery provider selection / runtime (SMTP/SendGrid/Resend): deferred to preproduction/operations.
      * Production cron / scheduler / daemon hosting: deferred to deployment operations.
      * `DATA-RETENTION-001` (archive/purge/retention implementation): `DEFER_UNTIL_FEATURE` under Module 42/66.
-     * Email History / Activity UI: assigned to future administrative feature cuts or Slice-08 hardening.
      * Production deployment & connected Supabase mutation: strictly prohibited.
 
-7. **Slice Completeness**
-   - Confirm that accepted tasks `TASK-S07-001`, `TASK-S07-002`, `TASK-S07-003`, and `TASK-S07-004` collectively satisfy all in-scope requirements for `SLICE-07 — Email / Documents / Activity / Workers`.
-   - Zero unsatisfied, dependency-safe implementation tasks remain in SLICE-07.
-   - Slice-07 is ready for authoritative closure upon passing this review.
+7. **Slice Completeness Assessment**
+   - Independent review finding `S07-CLOSING-001` (severity: HIGH, disposition: `BLOCKING_REPAIR`):
+     * Review of canonical `review_pack/11_EMAIL_DOCUMENTS_AND_ACTIVITY_LOG.md` §§1 & 3 confirmed that manual Candidate/Participant email actions with preview and user-facing Email History with selection/deletion are source-required user/business features of Slice-07.
+     * Accepted task S07-001 implemented the underlying database RPCs (`preview_email`, `enqueue_email`, `bulk_enqueue_email`, `delete_email_history`, and RLS policies), but no frontend/server consumers exist yet in `web/src`.
+     * Blanket deferral of these consumers to future administrative cuts or Slice-08 would record a backend prerequisite set as a completed business slice.
+     * Therefore, SLICE-07 cannot close as `DONE` and remains `IN_PROGRESS`.
 
 ---
 
-## Frontier resolution
+## Independent review verdict & frontier routing
 
-Upon PASS of this closing composition review:
-1. `SLICE-07` transitions to `status: DONE` in `project_control/SLICE_REGISTRY.yaml`.
-2. Annotated slice closing checkpoint tag `checkpoint/SLICE-07-accepted-001` is created targeting `80690a60a1ee09497bd3fd4114fcb790ea2a0e11`.
-3. The next frontier transitions to `SLICE-08 — Search / Performance / Ops / Release Hardening` according to canonical repository governance.
+- WORK_ID: `SLICE-07-CLOSING-REVIEW-001`
+- REVIEWED_SHA: `2270ec01343e4b1dedc4c617d42e0b0679831cc5`
+- REVIEWER: `eiu-reviewer`
+- VERDICT: `BLOCKING_REPAIR`
+- FINDINGS: `[S07-CLOSING-001]`
+- SOURCE_REOPEN_REQUIRED: `false`
 
-`SOURCE_REOPEN_REQUIRED: false`.
-No canonical invariant requires reopening any accepted predecessor or earlier slice.
+### Frontier Routing Decision
+1. `SLICE-07` remains `status: IN_PROGRESS` in `project_control/SLICE_REGISTRY.yaml`.
+2. Materialize `TASK-S07-005 — Email History Projection and Manual Email Outbox UI Consumers` as the dependency-safe consumer of accepted S07-001 contracts.
+3. Prompt review gate is active for `TASK-S07-005`; implementation has NOT started.
+4. No slice closing checkpoint is created; Slice-08 advancement is held until Slice-07 completes legitimately.

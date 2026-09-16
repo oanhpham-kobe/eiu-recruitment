@@ -653,33 +653,25 @@ slice_07_planning:
     scanner_provider_runtime: NOT_IMPLEMENTED
     physical_storage_cleanup_worker: IMPLEMENTED_TASK_BRANCH_DISPOSABLE_LOCAL_VERIFIED_NOT_DEPLOYED
     deployment_or_connected_supabase: NOT_USED
-  selected_task: TASK-S07-004
-  source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
-  prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
-  prompt_checkpoint: checkpoint/pre-S07-004-002
-  prompt_review_status: PASS
-  prompt_review_sha: "06f8635da5438424a69e0cff12e91fc2389dfd48"
-  prompt_review_work_id: S07-004-PROMPT-REVIEW-003
-  materialized_next_task_count: 0
-  implementation_started: true
-  implementation_baseline_sha: "9af517c0f83af1c3337f6e7b12dd50595aaea9f0"
-  implementation_branch: chatgpt/TASK-S07-004-physical-storage-cleanup-runner
-  producer: EXTERNAL_CHATGPT
-  independent_implementation_reviewer: OMP_EIU_REVIEWER
-  implementation_review_status: PASS
-  producer_verified_product_sha: "7a9026b180aaf964d98bab7a099c30bd5785246d"
-  producer_candidate_ci: "35039933000 PASS @ 7a9026b180aaf964d98bab7a099c30bd5785246d"
+  selected_task: TASK-S07-005
+  source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md
+  prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
+  prompt_checkpoint: checkpoint/pre-S07-005-001
+  prompt_review_status: PENDING
+  materialized_next_task_count: 1
+  implementation_started: false
 
 safe_frontier:
   eligible_tasks: []
-  skipped_due_to_dependency: []
+  skipped_due_to_dependency:
+    - "TASK-S07-005 prompt review pending; implementation prohibited."
   materialization_frontier: []
-  execution_hold: "Reconcile Slice-07 canonical frontier or execute Slice-07 closing process; no TASK-S07-005 currently materialized."
+  execution_hold: "Stop at prompt review PASS for TASK-S07-005; implementation not authorized."
 
 stop_gate:
   status: ACTIVE
-  type: SLICE_07_POST_S04_CONTINUATION_GATE
+  type: S07_005_PROMPT_GATE
   source_reopen_required: false
-  resume_on: "Frontier reconciliation / Slice-07 closing gate."
+  resume_on: "Independent prompt review decision."
 
-next_action: "Reconcile canonical sources across remaining Slice-07 responsibilities; do not materialize tasks without source authority."
+next_action: "Execute independent prompt review of TASK-S07-005; implementation strictly prohibited."
