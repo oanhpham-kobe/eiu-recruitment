@@ -182,7 +182,10 @@ test(
       await candidateDialog
         .getByText("binh@example.com", { exact: true })
         .waitFor();
-      assert.match(await candidateDialog.innerText(), /Server body — Nguyễn Thị An/);
+      assert.match(
+        await candidateDialog.innerText(),
+        /Server body — Nguyễn Thị An/,
+      );
       assert.match(
         await candidateDialog.innerText(),
         /Server body — Trần Minh Bình/,
@@ -294,7 +297,10 @@ test(
       });
       await dialog.waitFor({ state: "visible" });
       await dialog.getByText("an@example.com", { exact: true }).waitFor();
-      assert.match(await dialog.innerText(), /Server subject — Nguyễn Thị An/);
+      assert.match(
+        await dialog.innerText(),
+        /Server subject — Nguyễn Thị An/,
+      );
       assert.match(await dialog.innerText(), /Server body — Nguyễn Thị An/);
 
       await dialog.getByRole("button", { name: "Xác nhận gửi" }).click();
