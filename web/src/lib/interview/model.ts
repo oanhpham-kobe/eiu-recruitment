@@ -118,6 +118,9 @@ export interface InterviewPermissions {
   canManage: boolean;
   canChangeStatus: boolean;
   canManageParticipants: boolean;
+  canEmail: boolean;
+  canViewEmailHistory: boolean;
+  canDeleteEmailHistory: boolean;
   canCreateApplication: boolean;
   canReactivateApplication: boolean;
   canDeleteApplication: boolean;
