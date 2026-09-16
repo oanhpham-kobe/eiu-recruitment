@@ -140,12 +140,16 @@ test(
 
       await page.getByLabel("Chọn Nguyễn Thị An").check();
       assert.equal(
-        await page.getByRole("button", { name: "Tạo lịch / Chi tiết" }).isDisabled(),
+        await page
+          .getByRole("button", { name: "Tạo lịch / Chi tiết" })
+          .isDisabled(),
         false,
       );
       await page.getByLabel("Chọn Trần Minh Bình").check();
       assert.equal(
-        await page.getByRole("button", { name: "Tạo lịch / Chi tiết" }).isDisabled(),
+        await page
+          .getByRole("button", { name: "Tạo lịch / Chi tiết" })
+          .isDisabled(),
         true,
         "single-Interview lifecycle actions must disable while multiple rows are selected",
       );
@@ -165,7 +169,9 @@ test(
         await candidateDialog.locator("[data-interview-id]").count(),
         2,
       );
-      await candidateDialog.getByText("an@example.com", { exact: true }).waitFor();
+      await candidateDialog
+        .getByText("an@example.com", { exact: true })
+        .waitFor();
       await candidateDialog
         .getByText("binh@example.com", { exact: true })
         .waitFor();
@@ -297,15 +303,22 @@ test(
 
       const staleState = await page.evaluate(() => ({
         previewCalls: window.__interviewEmailHarness?.previewCalls ?? [],
+        previewFingerprints:
+          window.__interviewEmailHarness?.previewFingerprints ?? [],
         enqueueCalls: window.__interviewEmailHarness?.enqueueCalls ?? [],
       }));
       assert.equal(staleState.previewCalls.length, 2);
+      assert.equal(staleState.previewFingerprints.length, 2);
       assert.equal(staleState.enqueueCalls.length, 1);
       assert.equal(
         staleState.enqueueCalls[0]?.request.preview_fingerprint,
-        staleState.previewCalls[0]
-          ? `${"a".repeat(63)}${staleState.previewCalls[0].interviewId.at(-1)}`
-          : "",
+        staleState.previewFingerprints[0],
+        "first enqueue must carry the fingerprint the user reviewed",
+      );
+      assert.notEqual(
+        staleState.previewFingerprints[0],
+        staleState.previewFingerprints[1],
+        "STALE_PREVIEW refresh must produce a new preview fingerprint in the harness",
       );
 
       await dialog.getByRole("button", { name: "Xác nhận gửi" }).click();
@@ -314,12 +327,19 @@ test(
       );
       const finalState = await page.evaluate(() => ({
         queuedNotices: window.__interviewEmailHarness?.queuedNotices ?? 0,
+        previewFingerprints:
+          window.__interviewEmailHarness?.previewFingerprints ?? [],
         enqueueCalls: window.__interviewEmailHarness?.enqueueCalls ?? [],
         statusMutations:
           window.__interviewEmailHarness?.interviewStatusMutations ?? -1,
       }));
       assert.equal(finalState.queuedNotices, 1);
       assert.equal(finalState.enqueueCalls.length, 2);
+      assert.equal(
+        finalState.enqueueCalls[1]?.request.preview_fingerprint,
+        finalState.previewFingerprints[1],
+        "second confirmation must use the refreshed fingerprint, not the stale one",
+      );
       assert.equal(finalState.statusMutations, 0);
       assert.deepEqual(errors, [], "preview browser console/page errors");
       await page.close();
@@ -368,7 +388,9 @@ test(
       );
       const classification = deleteDialog.getByLabel("Phân loại xóa");
       assert.equal(
-        await classification.locator('option[value="TEST_RECORD"]').isDisabled(),
+        await classification
+          .locator('option[value="TEST_RECORD"]')
+          .isDisabled(),
         true,
         "TEST_RECORD must be unavailable for a mixed TEST/PRODUCTION selection",
       );
@@ -376,14 +398,17 @@ test(
         name: "Xóa 4 bản ghi",
       });
       assert.equal(await deleteButton.isDisabled(), true);
-      await deleteDialog.getByLabel("Lý do xóa").fill("  Wrong imported records  ");
+      await deleteDialog
+        .getByLabel("Lý do xóa")
+        .fill("  Wrong imported records  ");
       assert.equal(await deleteButton.isDisabled(), false);
       await deleteButton.click();
 
       await drawer
-        .getByText("Đã xóa 4 bản ghi Email History. Security audit vẫn được giữ nguyên.", {
-          exact: true,
-        })
+        .getByText(
+          "Đã xóa 4 bản ghi Email History. Security audit vẫn được giữ nguyên.",
+          { exact: true },
+        )
         .waitFor({ state: "visible" });
       const deleteCalls = await page.evaluate(
         () => window.__interviewEmailHarness?.deleteCalls ?? [],
