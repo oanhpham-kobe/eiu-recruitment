@@ -656,11 +656,27 @@ slice_07_planning:
   selected_task: TASK-S07-005
   source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md
   prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
-  prompt_checkpoint: checkpoint/pre-S07-005-003
-  prompt_review_status: BLOCKING_REPAIR
-  prompt_review_work_id: S07-005-PROMPT-REVIEW-003
-  prompt_review_commit: "0c9646ecfc71665fdeba1a41023b36ec0e5c0e9a"
-  prompt_review_finding: "S07-005-R3-001: tasks.TASK-S07-005.acceptance fourth criterion requires interviews.manage instead of interviews.email."
+  prompt_checkpoint: checkpoint/pre-S07-005-004
+  prompt_review_status: PENDING_R4
+  external_producer_repair:
+    work_id: S07-005-EXTERNAL-R3-REPAIR-001
+    role: EXTERNAL_CHATGPT_PRODUCER
+    finding: S07-005-R3-001
+    disposition: REPAIRED_AWAITING_INDEPENDENT_R4_VERIFICATION
+    artifact: project_control/reviews/S07_005_EXTERNAL_R3_REPAIR_DECISION.md
+  prior_independent_prompt_reviews:
+    - work_id: S07-005-PROMPT-REVIEW-002
+      reviewed_sha: "44de446cef58d75507324664f4b36a47c3fc7e5c"
+      checkpoint: checkpoint/pre-S07-005-002
+      verdict: PASS
+      classification: HISTORICAL_SUPERSEDED_FOR_IMPLEMENTATION_BASELINE
+      artifact: project_control/reviews/S07_005_PROMPT_REVIEW_44de446_v2.md
+    - work_id: S07-005-PROMPT-REVIEW-003
+      reviewed_sha: "0c9646ecfc71665fdeba1a41023b36ec0e5c0e9a"
+      checkpoint: checkpoint/pre-S07-005-003
+      verdict: BLOCKING_REPAIR
+      finding: S07-005-R3-001
+      artifact: project_control/reviews/S07_005_PROMPT_REVIEW_0c9646e_v3.md
   external_prompt_audit:
     work_id: S07-005-EXTERNAL-PROMPT-AUDIT-001
     auditor_role: EXTERNAL_CHATGPT
@@ -671,27 +687,20 @@ slice_07_planning:
     source_reopen_required: false
     implementation_authorized: false
     artifact: project_control/reviews/S07_005_EXTERNAL_PROMPT_AUDIT_R2.md
-  prior_independent_prompt_review:
-    work_id: S07-005-PROMPT-REVIEW-002
-    reviewed_sha: "44de446cef58d75507324664f4b36a47c3fc7e5c"
-    checkpoint: checkpoint/pre-S07-005-002
-    verdict: PASS
-    classification: HISTORICAL_SUPERSEDED_FOR_IMPLEMENTATION_BASELINE
-    artifact: project_control/reviews/S07_005_PROMPT_REVIEW_44de446_v2.md
   materialized_next_task_count: 1
   implementation_started: false
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-005 prompt review BLOCKING_REPAIR on finding S07-005-R3-001; awaiting repair by Owner / External ChatGPT producer."
+    - "TASK-S07-005 R4 prompt review pending; implementation prohibited."
   materialization_frontier: []
-  execution_hold: "Stop at prompt review BLOCKING_REPAIR for TASK-S07-005; implementation strictly prohibited."
+  execution_hold: "Stop at prompt review PASS for TASK-S07-005; implementation not authorized."
 
 stop_gate:
   status: ACTIVE
-  type: S07_005_PROMPT_BLOCKING_REPAIR
+  type: S07_005_PROMPT_GATE
   source_reopen_required: false
-  resume_on: "Repair of finding S07-005-R3-001 by Owner / External ChatGPT producer."
+  resume_on: "Independent R4 prompt review decision."
 
-next_action: "Stop at prompt review BLOCKING_REPAIR; return finding package to Owner / External ChatGPT producer."
+next_action: "Execute independent R4 prompt review of TASK-S07-005; implementation strictly prohibited."

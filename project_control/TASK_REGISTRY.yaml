@@ -1419,14 +1419,17 @@ tasks:
     depends_on: [TASK-S07-001, TASK-S04-001, TASK-S04-002, TASK-S04-003, TASK-S07-004]
     planning_baseline_sha: "570ffb6c4d5e560b6c5c858a859003683bb7890e"
     audit_release_commit: "570ffb6c4d5e560b6c5c858a859003683bb7890e"
-    pre_task_checkpoint: checkpoint/pre-S07-005-003
-    superseded_checkpoints: [checkpoint/pre-S07-005-001, checkpoint/pre-S07-005-002]
+    pre_task_checkpoint: checkpoint/pre-S07-005-004
+    superseded_checkpoints: [checkpoint/pre-S07-005-001, checkpoint/pre-S07-005-002, checkpoint/pre-S07-005-003]
     prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
     source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md
-    prompt_review_status: BLOCKING_REPAIR
-    prompt_review_work_id: "S07-005-PROMPT-REVIEW-003"
-    prompt_review_commit: "0c9646ecfc71665fdeba1a41023b36ec0e5c0e9a"
-    prompt_review_artifact: project_control/reviews/S07_005_PROMPT_REVIEW_0c9646e_v3.md
+    prompt_review_status: PENDING_R4
+    external_producer_repair:
+      work_id: "S07-005-EXTERNAL-R3-REPAIR-001"
+      role: EXTERNAL_CHATGPT_PRODUCER
+      finding: "S07-005-R3-001"
+      disposition: REPAIRED_AWAITING_INDEPENDENT_R4_VERIFICATION
+      artifact: project_control/reviews/S07_005_EXTERNAL_R3_REPAIR_DECISION.md
     external_prompt_audit:
       work_id: "S07-005-EXTERNAL-PROMPT-AUDIT-001"
       auditor_role: EXTERNAL_CHATGPT
@@ -1448,12 +1451,18 @@ tasks:
         verdict: PASS
         classification: HISTORICAL_SUPERSEDED_FOR_IMPLEMENTATION_BASELINE
         artifact: project_control/reviews/S07_005_PROMPT_REVIEW_44de446_v2.md
+      - work_id: "S07-005-PROMPT-REVIEW-003"
+        reviewed_sha: "0c9646ecfc71665fdeba1a41023b36ec0e5c0e9a"
+        checkpoint: checkpoint/pre-S07-005-003
+        verdict: BLOCKING_REPAIR
+        finding: "S07-005-R3-001: tasks.TASK-S07-005.acceptance fourth criterion requires interviews.manage instead of interviews.email."
+        artifact: project_control/reviews/S07_005_PROMPT_REVIEW_0c9646e_v3.md
     source_authority: "review_pack 11/37/39/47/48/59/73 and app_spec; current source_registry"
     acceptance:
       - "Typed server command adapters wrap accepted S07-001 email preview, enqueue, and history deletion RPCs."
       - "Manual email actions on Interview surface enforce preview-before-send without altering interview status."
       - "User-facing Email History view supports filtering and deletion with classification and mandatory reason."
-      - "Contextual permissions (emails.history_view, emails.history_delete, interviews.manage) and RLS are strictly enforced."
+      - "Contextual permissions (interviews.email, emails.history_view, emails.history_delete) and RLS are strictly enforced, with accepted parent-context read predicates applied separately."
     out_of_scope: "Live external email provider credentials (SMTP/SendGrid), background email sending daemon, scanner runtime, deployment, connected Supabase mutations, S07-006."
     implementation_started: false
     next_frontier_behavior: "Stop at independent prompt PASS for external audit and explicit implementation-dispatch decision."
