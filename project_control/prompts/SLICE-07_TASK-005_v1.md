@@ -2,9 +2,9 @@
 
 ## Dispatch gate and exact baseline
 
-This is an implementation prompt for future Owner dispatch, NOT current implementation authority. Current continuation stops after independent prompt/source PASS. Execution is permitted only after external prompt audit and explicit dispatch.
+This is an implementation prompt for future Owner dispatch, NOT current implementation authority. The prior R2 prompt review PASS at `checkpoint/pre-S07-005-002` remains immutable historical evidence, but an external prompt audit found one blocking contract mismatch in authentication-error semantics after that review. Implementation is prohibited until this repaired prompt is captured by a new immutable numbered pre-task checkpoint, independently re-reviewed PASS on that exact peeled SHA, recorded as the governed implementation baseline, and explicitly dispatched by the Owner.
 
-Governed implementation baseline is the exact peeled commit of immutable `checkpoint/pre-S07-005-002`, or the latest independently PASS numbered replacement recorded in TASK_REGISTRY before dispatch (superseding `checkpoint/pre-S07-005-001`). Resolve the ref and compare with the review's REVIEWED_SHA; never use a moving integration HEAD as a substitute. The baseline commit contains this prompt, so its own SHA is recorded by immutable ref and later evidence, not a fabricated self-hash.
+The governed implementation baseline is therefore NOT `checkpoint/pre-S07-005-002`. Use only the latest independently PASS numbered replacement recorded in TASK_REGISTRY after this external-audit repair. The expected next replacement is `checkpoint/pre-S07-005-003` if that ref remains unused; never move or overwrite `checkpoint/pre-S07-005-001` or `checkpoint/pre-S07-005-002`. Resolve the chosen immutable ref and compare its peeled SHA with the independent review's `REVIEWED_SHA`; never use a moving integration HEAD as a substitute. The baseline commit contains this prompt, so its own SHA is recorded by immutable ref and later evidence, not a fabricated self-hash.
 
 Accepted predecessors:
 - `checkpoint/S07-001-accepted-001` → `8397be35d64a65f4a693811e4fc6b9e43287a7cd`
@@ -17,7 +17,7 @@ Dependencies: `TASK-S07-001`, `TASK-S04-001`, `TASK-S04-002`, `TASK-S04-003`, `T
 
 ## Source authority and preflight
 
-Read `project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md`, accepted S07_001 source reconciliation, REVIEW.md, and canonical current sections:
+Read `project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md`, accepted S07_001 source reconciliation, REVIEW.md, the latest external prompt-audit artifact for this task, and canonical current sections:
 - `review_pack/11_EMAIL_DOCUMENTS_AND_ACTIVITY_LOG.md` §1 (Manual email actions) and §3 (Email History vs Security Audit);
 - `review_pack/37_BACKEND_COMMAND_CONTRACTS.md` §§3, 10, 16 (trusted server commands, actor resolution);
 - `review_pack/39_SECURITY_RLS_MATRIX.md`, `59_RLS_POLICY_BLUEPRINT.md` (`interviews.email`, `emails.history_view`, `emails.history_delete`);
@@ -26,7 +26,7 @@ Read `project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md`, accepted S07
 - `recruitment_webapp/design_system/` (components, dialogs, drawers, accessibility, i18n);
 - `app_spec.yaml` email actions, outbox, and history specifications.
 
-Inspect accepted S07-001 database migration `20260913010000_email_persistence_contracts.sql` and its trusted RPCs (`preview_email`, `enqueue_email`, `bulk_enqueue_email`, `delete_email_history`). Do not modify accepted database migrations; this task is a pure consumer. Use symbol references before changing exported adapters. Parent owns Todo and integration.
+Inspect accepted S07-001 database migration `20260913010000_email_persistence_contracts.sql` and its trusted RPCs (`preview_email`, `enqueue_email`, `bulk_enqueue_email`, `delete_email_history`). Also inspect the accepted definition of `private.interview_command_actor(...)` in the Interview lifecycle contracts. Do not modify accepted database migrations; this task is a pure consumer. Use symbol references before changing exported adapters. Parent owns Todo and integration.
 
 ## Bounded outcome
 
@@ -130,7 +130,7 @@ Create `web/src/components/interview/EmailHistoryDrawer.tsx`:
 - `preview_email`, `enqueue_email`, `bulk_enqueue_email` require `interviews.email` permission (or Root Admin) enforced via `private.interview_command_actor('interviews.email')`.
 - `email_history` query requires `emails.history_view` and parent contextual authorization under RLS policy `email_history_select`.
 - `delete_email_history` requires `emails.history_view` AND `emails.history_delete` enforced by RPC and `private.interview_command_actor('emails.history_delete')`.
-- Unauthenticated callers receive `UNAUTHENTICATED`; unauthorized callers receive `FORBIDDEN`.
+- **Accepted backend error semantics are fail-closed `FORBIDDEN` for these email RPCs when actor resolution fails.** `private.interview_command_actor(...)` returns `NULL` when `auth.uid()` is absent, when no active internal app user resolves, or when required permission is missing. `preview_email`, `enqueue_email`, `bulk_enqueue_email`, and `delete_email_history` then return `FORBIDDEN`; these accepted RPCs do NOT distinguish unauthenticated callers with an `UNAUTHENTICATED` error code. A server action/UI may separately detect a missing session and present login UX, but it must not misstate or change the trusted RPC contract.
 - All operations execute via server actions / RPCs; no direct database writes from browser.
 
 ### E. Design System and UX conventions
@@ -149,6 +149,7 @@ Create `web/src/components/interview/EmailHistoryDrawer.tsx`:
    - `bulkEnqueueInterviewEmails`: sends array of 1..100 complete request objects carrying `preview_fingerprint`, maps per-item results.
    - `deleteEmailHistoryEntry`: validates classification, requires non-empty trimmed reason for `WRONG_RECORD`, passes to RPC.
    - `loadInterviewEmailHistory`: queries history under RLS with interview scoping, asserts accepted statuses only.
+   - Authentication/authorization contract: verifies adapters preserve backend `FORBIDDEN` for email RPC actor-resolution failures and do not fabricate an `UNAUTHENTICATED` RPC result; any separate missing-session UX remains an adapter/UI concern.
 2. **Component / browser tests (`web/src/__tests__/interview-email-ui.test.ts`)**:
    - Preview modal renders recipients, subject, and body before send.
    - Retains `preview_fingerprint` and passes it on confirmation.
@@ -183,7 +184,7 @@ Create `web/src/components/interview/EmailHistoryDrawer.tsx`:
 
 ## Stop conditions and source reopen
 
-Stop immediately at prompt review PASS. Do not begin implementation. Do not dispatch an executor.
+Stop immediately after the new independent prompt/source re-review PASS has been persisted. Do not begin implementation and do not dispatch an executor until the Owner explicitly dispatches TASK-S07-005.
 
 `SOURCE_REOPEN_REQUIRED: false`.
-No canonical invariant requires modifying any accepted predecessor. TASK-S07-005 is a pure consumer of accepted S07-001 database contracts.
+The external audit defect concerns prompt-level error-code semantics only. No canonical invariant requires modifying any accepted predecessor; TASK-S07-005 remains a pure consumer of accepted S07-001 database contracts.
