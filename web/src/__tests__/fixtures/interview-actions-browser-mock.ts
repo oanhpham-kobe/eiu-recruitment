@@ -11,9 +11,10 @@ function findTarget(interviewId: string) {
   return null;
 }
 
-function fingerprintFor(interviewId: string): string {
+function fingerprintFor(interviewId: string, revision: number): string {
   const suffix = interviewId.at(-1) ?? "0";
-  return `${"a".repeat(63)}${suffix}`;
+  const revisionHex = (revision % 16).toString(16);
+  return `${"a".repeat(62)}${suffix}${revisionHex}`;
 }
 
 export async function getInterviewEmailCapabilitiesAction() {
@@ -32,6 +33,11 @@ export async function previewInterviewEmailAction(input: {
 }) {
   const state = interviewEmailHarnessState();
   state.previewCalls.push(input);
+  const previewFingerprint = fingerprintFor(
+    input.interviewId,
+    state.previewCalls.length,
+  );
+  state.previewFingerprints.push(previewFingerprint);
   const target = findTarget(input.interviewId);
   if (!target) {
     return {
@@ -54,7 +60,7 @@ export async function previewInterviewEmailAction(input: {
       template_version: "test-1",
       environment_code: "TEST" as const,
       context_fingerprint: "b".repeat(64),
-      preview_fingerprint: fingerprintFor(input.interviewId),
+      preview_fingerprint: previewFingerprint,
       email_type: input.emailType,
       interview_id: input.interviewId,
       application_id: input.applicationId,
