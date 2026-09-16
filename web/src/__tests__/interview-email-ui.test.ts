@@ -73,7 +73,14 @@ async function openHarness(
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await page.setContent('<div id="root"></div>');
+  await page.route("http://localhost/harness", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: '<div id="root"></div>',
+    });
+  });
+  await page.goto("http://localhost/harness");
   await page.evaluate((value) => {
     document.body.dataset.harness = value;
   }, mode);
@@ -81,7 +88,7 @@ async function openHarness(
   await page.addScriptTag({ content: assets.script });
   await page
     .locator(`[data-harness-ready="${mode}"]`)
-    .waitFor({ state: "visible", timeout: 5_000 });
+    .waitFor({ state: "attached", timeout: 5_000 });
   return { page, errors };
 }
 
@@ -175,12 +182,9 @@ test(
       await candidateDialog
         .getByText("binh@example.com", { exact: true })
         .waitFor();
+      assert.match(await candidateDialog.innerText(), /Server body — Nguyễn Thị An/);
       assert.match(
-        await candidateDialog.textContent(),
-        /Server body — Nguyễn Thị An/,
-      );
-      assert.match(
-        await candidateDialog.textContent(),
+        await candidateDialog.innerText(),
         /Server body — Trần Minh Bình/,
       );
 
@@ -290,8 +294,8 @@ test(
       });
       await dialog.waitFor({ state: "visible" });
       await dialog.getByText("an@example.com", { exact: true }).waitFor();
-      assert.match(await dialog.textContent(), /Server subject — Nguyễn Thị An/);
-      assert.match(await dialog.textContent(), /Server body — Nguyễn Thị An/);
+      assert.match(await dialog.innerText(), /Server subject — Nguyễn Thị An/);
+      assert.match(await dialog.innerText(), /Server body — Nguyễn Thị An/);
 
       await dialog.getByRole("button", { name: "Xác nhận gửi" }).click();
       await dialog
@@ -383,7 +387,7 @@ test(
       });
       await deleteDialog.waitFor({ state: "visible" });
       assert.match(
-        await deleteDialog.textContent(),
+        await deleteDialog.innerText(),
         /security audit đã ghi nhận thao tác vẫn bất biến/i,
       );
       const classification = deleteDialog.getByLabel("Phân loại xóa");
