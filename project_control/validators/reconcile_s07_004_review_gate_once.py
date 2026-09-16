@@ -1,0 +1,146 @@
+from pathlib import Path
+
+PRODUCT_SHA = "7a9026b180aaf964d98bab7a099c30bd5785246d"
+PRODUCT_CI = "35039933000"
+BASELINE_SHA = "9af517c0f83af1c3337f6e7b12dd50595aaea9f0"
+BRANCH = "chatgpt/TASK-S07-004-physical-storage-cleanup-runner"
+
+
+def one(text: str, old: str, new: str, label: str) -> str:
+    count = text.count(old)
+    if count != 1:
+        raise SystemExit(f"{label}: expected exactly one match, found {count}")
+    return text.replace(old, new)
+
+
+registry_path = Path("project_control/TASK_REGISTRY.yaml")
+registry = registry_path.read_text()
+start = registry.index("  TASK-S07-004:\n")
+block = registry[start:]
+block = one(block, "    status: PLANNED\n", "    status: IN_PROGRESS\n", "registry status")
+block = one(
+    block,
+    '      - "Exact authorized (bucket, path) deletion proves 12 physical provider test cases against local Supabase Storage."\n',
+    '      - "Exact authorized (bucket, path) deletion proves 12 physical provider test cases against local Supabase Storage plus the separate worker-capability binding case."\n',
+    "registry physical acceptance",
+)
+block = one(
+    block,
+    '      - "Crash recovery, idempotency on 404, and stale attempt fences handle asynchronous failure windows safely."\n',
+    '      - "Crash recovery, behavior-driven already-absent idempotency, retry settlement, and stale attempt fences handle asynchronous failure windows safely."\n',
+    "registry async acceptance",
+)
+block = one(
+    block,
+    "    implementation_started: false\n",
+    f'''    implementation_started: true
+    implementation_baseline_sha: "{BASELINE_SHA}"
+    implementation_branch: {BRANCH}
+    implementation_review_mode: OMP_EIU_REVIEWER
+    implementation_review_status: PENDING
+    review_role_override:
+      producer: EXTERNAL_CHATGPT
+      reviewer: OMP_EIU_REVIEWER
+      transport: OWNER_MESSAGE
+      chatgpt_self_accept_allowed: false
+      reason: Owner-authorized task-local producer/reviewer role separation
+    producer_verification:
+      product_candidate_sha: "{PRODUCT_SHA}"
+      candidate_ci: "{PRODUCT_CI} PASS @ {PRODUCT_SHA}; Web, governance, predecessor DB regressions, worker binding, real local physical Storage integration, and DB lint PASS"
+      source_reopen_required: false
+''',
+    "registry implementation metadata",
+)
+block = one(
+    block,
+    '    next_frontier_behavior: "Stop at independent prompt PASS for external audit and explicit implementation-dispatch decision."',
+    '    next_frontier_behavior: "HARD STOP at exact verified task-branch candidate for OMP/eiu-reviewer independent implementation review; no serialization, accepted checkpoint, deployment, connected Supabase mutation, or next task before reviewer verdict."',
+    "registry frontier",
+)
+registry_path.write_text(registry[:start] + block)
+
+runtime_path = Path("project_control/AUTONOMY_RUN_STATE.yaml")
+runtime = runtime_path.read_text()
+start = runtime.index("slice_07_planning:\n")
+tail = runtime[start:]
+tail = one(
+    tail,
+    "  status: S07_004_PROMPT_PASS_AWAITING_EXTERNAL_AUDIT\n",
+    "  status: S07_004_IMPLEMENTATION_COMPLETE_AWAITING_INDEPENDENT_REVIEW\n",
+    "runtime status",
+)
+tail = one(tail, "  lifecycle: CLOSED\n", "  lifecycle: ACTIVE\n", "runtime lifecycle")
+tail = one(
+    tail,
+    "    physical_storage_cleanup_worker: NOT_IMPLEMENTED\n",
+    "    physical_storage_cleanup_worker: IMPLEMENTED_TASK_BRANCH_DISPOSABLE_LOCAL_VERIFIED_NOT_DEPLOYED\n",
+    "runtime physical boundary",
+)
+tail = one(
+    tail,
+    "  implementation_started: false\n",
+    f'''  implementation_started: true
+  implementation_baseline_sha: "{BASELINE_SHA}"
+  implementation_branch: {BRANCH}
+  producer: EXTERNAL_CHATGPT
+  independent_implementation_reviewer: OMP_EIU_REVIEWER
+  implementation_review_status: PENDING
+  producer_verified_product_sha: "{PRODUCT_SHA}"
+  producer_candidate_ci: "{PRODUCT_CI} PASS @ {PRODUCT_SHA}"
+''',
+    "runtime implementation metadata",
+)
+tail = one(
+    tail,
+    '    - "TASK-S07-004 prompt review PASS; awaiting external audit and implementation dispatch."\n',
+    '    - "TASK-S07-004 implementation candidate verified by producer; awaiting OMP/eiu-reviewer independent implementation review."\n',
+    "runtime frontier reason",
+)
+tail = one(
+    tail,
+    '  execution_hold: "Stop at prompt review PASS for external audit and explicit implementation dispatch; implementation not authorized."\n',
+    '  execution_hold: "HARD STOP at exact verified S07-004 candidate pending independent OMP/eiu-reviewer implementation verdict."\n',
+    "runtime execution hold",
+)
+tail = one(
+    tail,
+    "  type: S07_004_EXTERNAL_PROMPT_AUDIT_GATE\n",
+    "  type: S07_004_INDEPENDENT_IMPLEMENTATION_REVIEW_GATE\n",
+    "runtime gate type",
+)
+tail = one(
+    tail,
+    '  resume_on: "Owner-transported ChatGPT prompt audit decision."\n',
+    '  resume_on: "Owner-transported OMP/eiu-reviewer PASS or BLOCKING_REPAIR verdict for the exact frozen candidate SHA."\n',
+    "runtime resume gate",
+)
+tail = one(
+    tail,
+    'next_action: "Freeze pre-task checkpoint pre-S07-004-002 and return S07-004 prompt packet to ChatGPT for audit; implementation strictly prohibited."',
+    'next_action: "Return the exact verified S07-004 task-branch candidate and evidence packet to OMP/eiu-reviewer; no serialization, accepted checkpoint, deployment, connected Supabase mutation, or TASK-S07-005 before reviewer verdict."',
+    "runtime next action",
+)
+runtime_path.write_text(runtime[:start] + tail)
+
+state_path = Path("project_control/CURRENT_STATE.md")
+state = state_path.read_text()
+state = one(
+    state,
+    '- `TASK-S07-004 — Physical Storage Cleanup Runner and Local Storage Integration` is now IN_PROGRESS after Owner-authorized implementation dispatch. Source reconciliation: `project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-004_v1.md`; immutable implementation baseline: `checkpoint/pre-S07-004-002` → `9af517c0f83af1c3337f6e7b12dd50595aaea9f0`.\n',
+    '- `TASK-S07-004 — Physical Storage Cleanup Runner and Local Storage Integration` remains IN_PROGRESS; implementation production is complete and the independent review gate is active. Source reconciliation: `project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-004_v1.md`; immutable implementation baseline: `checkpoint/pre-S07-004-002` → `9af517c0f83af1c3337f6e7b12dd50595aaea9f0`.\n',
+    "current state task status",
+)
+anchor = f'- Owner role override `S07-004-OWNER-ROLE-OVERRIDE-001`: ChatGPT is implementation producer/executor; OMP/`eiu-reviewer` is independent implementation reviewer. ChatGPT may not self-accept S07-004. Implementation branch: `{BRANCH}`.\n'
+insertion = (
+    anchor
+    + f'- Producer product verification: exact product SHA `{PRODUCT_SHA}`; Candidate CI `{PRODUCT_CI}` PASS for Web, governance, zero-to-head/predecessor DB regressions, narrow worker binding, real disposable-local physical Storage integration across managed quarantine buckets, and DB lint. Local already-absent behavior was observed as `remove()` returning no error with an empty data result and is handled without treating missing buckets or generic provider errors as absence.\n'
+    + "- Governance reconciliation intentionally does not embed a self-referential final candidate SHA. The external OMP handoff must name the exact task-branch HEAD after reconciliation and require a fresh exact-SHA Candidate CI before independent review.\n"
+)
+state = one(state, anchor, insertion, "current state producer evidence")
+state = one(
+    state,
+    "Current execution is authorized only for TASK-S07-004 implementation on the dedicated task branch, using disposable local Supabase for physical Storage integration. ChatGPT is the producer/executor and must stop at an exact candidate for OMP independent review. No serialization, accepted checkpoint, deployment, connected Supabase mutation, `main` mutation, PR merge, or subsequent task is authorized in this phase.",
+    "TASK-S07-004 is at the independent implementation review gate. ChatGPT has completed producer execution and must not self-accept. OMP/`eiu-reviewer` must review the exact frozen task-branch candidate. No serialization, accepted checkpoint, deployment, connected Supabase mutation, `main` mutation, PR merge, or subsequent task is authorized before that reviewer verdict.",
+    "current state scope boundary",
+)
+state_path.write_text(state)
