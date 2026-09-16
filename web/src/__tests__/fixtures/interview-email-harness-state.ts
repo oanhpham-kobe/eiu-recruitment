@@ -8,6 +8,7 @@ import type { InterviewPageData } from "@/lib/interview/model";
 export interface InterviewEmailHarnessState {
   pageData: InterviewPageData;
   previewCalls: EmailPreviewInput[];
+  previewFingerprints: string[];
   enqueueCalls: Array<{
     request: EmailEnqueueInput;
     idempotencyKey: string;
@@ -40,6 +41,7 @@ export function installInterviewEmailHarnessState(
   const state: InterviewEmailHarnessState = {
     pageData,
     previewCalls: [],
+    previewFingerprints: [],
     enqueueCalls: [],
     bulkCalls: [],
     deleteCalls: [],
@@ -54,6 +56,7 @@ export function installInterviewEmailHarnessState(
 
 export function interviewEmailHarnessState(): InterviewEmailHarnessState {
   const state = window.__interviewEmailHarness;
-  if (!state) throw new Error("Interview email browser harness state is not installed");
+  if (!state)
+    throw new Error("Interview email browser harness state is not installed");
   return state;
 }
