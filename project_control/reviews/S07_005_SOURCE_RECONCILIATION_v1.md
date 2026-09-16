@@ -2,7 +2,7 @@
 
 WORK_ID: S07-005-SOURCE-RECONCILIATION-001
 PRODUCER: OMP
-STARTING_REPORTING_HEAD: 80690a60a1ee09497bd3fd4114fcb790ea2a0e11
+STARTING_REPORTING_HEAD: 570ffb6c4d5e560b6c5c858a859003683bb7890e
 ACCEPTED_PREDECESSORS:
 - TASK-S07-001 @ 8397be35d64a65f4a693811e4fc6b9e43287a7cd (checkpoint/S07-001-accepted-001)
 - TASK-S07-002 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed (checkpoint/S07-002-accepted-001)
@@ -19,16 +19,18 @@ Materialize **TASK-S07-005 — Email History Projection and Manual Email Outbox 
 Following the independent Slice-07 closing review (`SLICE-07-CLOSING-REVIEW-001`, finding `S07-CLOSING-001`), SLICE-07 cannot be closed as `DONE` through unapproved deferrals while source-required, dependency-safe feature consumers of accepted database contracts remain unimplemented.
 
 TASK-S07-005 consumes the accepted database contracts delivered by `TASK-S07-001`:
-1. `public.preview_email(p_email_type, p_source_entity_type, p_source_entity_id, p_recipient_type, p_recipient_id)`
-2. `public.enqueue_email(p_email_type, p_source_entity_type, p_source_entity_id, p_recipient_type, p_recipient_id, p_idempotency_key)`
-3. `public.bulk_enqueue_email(p_items)`
-4. `public.delete_email_history(p_email_history_id, p_classification, p_reason)`
+1. `public.preview_email(p_email_type, p_interview_id, p_application_id, p_submission_id) -> jsonb`
+2. `public.enqueue_email(p_request, p_idempotency_key) -> jsonb`
+3. `public.bulk_enqueue_email(p_requests, p_idempotency_key) -> jsonb`
+4. `public.delete_email_history(p_email_history_id, p_classification, p_reason) -> jsonb`
 5. `public.email_history` contextual query view under existing RLS policies.
 
 Direct dependencies:
 - `TASK-S07-001` (email outbox & history persistence contracts) — DONE (`checkpoint/S07-001-accepted-001`)
 - `TASK-S04-001` / `TASK-S04-002` / `TASK-S04-003` (Interview UI & lifecycle surfaces) — DONE
 - `TASK-S07-004` (physical storage cleanup runner) — DONE (`checkpoint/S07-004-accepted-001`)
+
+---
 
 ## Canonical authority and current implementation
 
@@ -53,13 +55,88 @@ Current review-pack authority (source_registry v1.18):
 - `app_spec.yaml`:
   * `email_outbox`, `email_history`, and interview email actions specifications.
 
-Current implementation reality:
-- `supabase/migrations/20260913010000_email_persistence_contracts.sql`:
-  Full database layer is accepted and active: tables `public.email_outbox`, `public.email_history`, `public.email_templates`, RLS policies, audit functions, and trusted RPCs (`preview_email`, `enqueue_email`, `bulk_enqueue_email`, `delete_email_history`).
-- `web/src/components/interview/InterviewPage.tsx` and `InterviewDrawer.tsx`:
-  Interview page and drawer display interview metadata, participants, status, and notes, but do not yet wire the manual email preview/enqueue actions.
-- `web/src/lib/`:
-  No typed command runners or server actions currently wrap `preview_email`, `enqueue_email`, or `delete_email_history`.
+Current implementation reality (`supabase/migrations/20260913010000_email_persistence_contracts.sql`):
+Full database layer is accepted and active. A pre-review audit reconciled the concrete RPC contracts:
+
+### 1. Trusted Email Preview Contract (`public.preview_email`)
+```sql
+public.preview_email(
+  p_email_type text,
+  p_interview_id uuid,
+  p_application_id uuid,
+  p_submission_id uuid
+) returns jsonb
+```
+- **Allowed manual email types**: `INTERVIEW_INVITATION`, `INTERVIEW_PARTICIPANT_INVITATION`.
+- **Actor verification**: Enforced via `private.interview_command_actor('interviews.email')`.
+- **Authoritative derivation**: Recipients, subject, and body text are rendered strictly server-side from current authoritative database records:
+  * `INTERVIEW_INVITATION`: recipient is candidate's `email_snapshot`.
+  * `INTERVIEW_PARTICIPANT_INVITATION`: recipients are server-aggregated from all active current participants of the interview (`public.interview_participants`). The RPC does NOT accept arbitrary client-selected participant IDs.
+- **Return payload structure**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "recipients": { "to": ["..."], "cc": [] },
+      "subject": "...",
+      "body_text": "...",
+      "template_version": "...",
+      "environment_code": "...",
+      "context_fingerprint": "...",
+      "email_type": "...",
+      "interview_id": "...",
+      "application_id": "...",
+      "submission_id": "...",
+      "preview_fingerprint": "..."
+    }
+  }
+  ```
+- **Important**: The RPC does NOT return a `sender` field. Contextual interview summary fields (e.g. date/time/room/meeting link) are rendered into `body_text` server-side and may be shown contextually in the dialog from the authorized interview projection, but are not send authority.
+
+### 2. Trusted Email Enqueue Contract (`public.enqueue_email`)
+```sql
+public.enqueue_email(
+  p_request jsonb,
+  p_idempotency_key uuid
+) returns jsonb
+```
+- **Strict request payload validation**: `p_request` is restricted to EXACTLY five keys:
+  `email_type`, `interview_id`, `application_id`, `submission_id`, `preview_fingerprint`.
+  Any extra key raises `VALIDATION_ERROR` (errcode `P0701`).
+- **Mandatory preview-fingerprint fencing**: The RPC re-derives `email_snapshot` in the transaction and compares `preview_fingerprint`. If interview schedule, participants, or candidate details changed since preview was rendered, the RPC raises `STALE_PREVIEW`.
+- **Return payload**:
+  `{ "success": true, "data": { "email_outbox_id": "..." } }`
+- **Important**: The RPC returns the created `email_outbox_id`. It does NOT return a `status: "QUEUED"` property. Enqueueing into the transactional outbox implies queued status for delivery, but `QUEUED` is an outbox state, not a history state.
+
+### 3. Trusted Bulk Enqueue Contract (`public.bulk_enqueue_email`)
+```sql
+public.bulk_enqueue_email(
+  p_requests jsonb,
+  p_idempotency_key uuid
+) returns jsonb
+```
+- `p_requests` must be a JSON array of 1..100 complete request objects.
+- Each item must carry the exact 5 keys (`email_type`, `interview_id`, `application_id`, `submission_id`, and its own `preview_fingerprint`).
+- Bulk enqueue operates across multiple selected Interview rows.
+- It does NOT accept arbitrary participant-subset selections within a single interview. "Send to Participants" enqueues an invitation snapshot targeting all current active participants of that interview.
+
+### 4. Email History Lifecycle & Statuses (`public.email_history`)
+- Under accepted migration `20260913010000_email_persistence_contracts.sql` line 38, `email_history.status_code` is strictly constrained to:
+  `SENT`, `FAILED`, `CANCELLED`, `ABANDONED`.
+- `QUEUED` is NOT an email_history status code (`email_outbox != email_history`). An outbox item only creates/updates `email_history` once an attempt is executed or settled by the worker.
+- The UI Email History view queries `public.email_history` under RLS (`emails.history_view`) and must display only the accepted history statuses (`SENT`, `FAILED`, `CANCELLED`, `ABANDONED`).
+
+### 5. Trusted Email History Deletion Contract (`public.delete_email_history`)
+```sql
+public.delete_email_history(
+  p_email_history_id uuid,
+  p_classification text,
+  p_reason text default null
+) returns jsonb
+```
+- **Actor verification**: Enforced via `private.interview_command_actor('emails.history_delete')` and requires `emails.history_view`.
+- **Classification validation**: Must be `'TEST_RECORD'` (valid only when `environment_code = 'TEST'`) or `'WRONG_RECORD'` (requires non-empty trimmed `p_reason` string up to 1000 characters).
+- **Audit & deletion**: Inserts `EMAIL_HISTORY_DELETED` into `public.security_audit_log` with actor, classification, and reason, then deletes the row from `public.email_history`.
 
 ---
 
@@ -68,35 +145,37 @@ Current implementation reality:
 TASK-S07-005 delivers the missing user-facing consumers over the accepted S07-001 database contracts:
 
 1. **Server Actions & Command Adapters (`web/src/lib/commands/email-commands.ts`)**:
-   - `previewInterviewEmail(interviewId, recipientType, recipientId)` $\rightarrow$ calls `public.preview_email`.
-   - `enqueueInterviewEmail(interviewId, recipientType, recipientId, idempotencyKey)` $\rightarrow$ calls `public.enqueue_email`.
-   - `bulkEnqueueInterviewEmails(items)` $\rightarrow$ calls `public.bulk_enqueue_email`.
-   - `deleteEmailHistoryEntry(emailHistoryId, classification, reason)` $\rightarrow$ calls `public.delete_email_history`.
-   - `loadEmailHistory(filters)` $\rightarrow$ queries `public.email_history` under RLS.
+   - `previewInterviewEmail({ emailType, interviewId, applicationId, submissionId }, client?)`:
+     Calls `public.preview_email`. Returns typed preview data including `preview_fingerprint`.
+   - `enqueueInterviewEmail({ emailType, interviewId, applicationId, submissionId, previewFingerprint }, idempotencyKey, client?)`:
+     Calls `public.enqueue_email` with the exact 5-key request object. Handles `STALE_PREVIEW` gracefully. Returns `{ email_outbox_id }`.
+   - `bulkEnqueueInterviewEmails(items, idempotencyKey, client?)`:
+     Calls `public.bulk_enqueue_email` with array of complete preview-fenced request objects across selected interviews.
+   - `deleteEmailHistoryEntry(emailHistoryId, classification, reason, client?)`:
+     Calls `public.delete_email_history` with classification and mandatory reason validation.
+   - `loadInterviewEmailHistory(interviewId, client?)`:
+     Queries `public.email_history` under contextual RLS for the interview.
 
 2. **Manual Email Actions on Interview Surface (`web/src/components/interview/EmailDialogs.tsx`)**:
-   - **Send to Candidate**: Opens preview dialog showing sender, recipient email, subject, rendered body, and interview summary. User confirms send $\rightarrow$ enqueues outbox message with idempotency key. Toast notification on success.
-   - **Send to Participants**: Multi-select participant list or individual participant send with preview before enqueue.
-   - Preview-before-send is strictly enforced; send does not alter interview status.
+   - **Send to Candidate**: Action in Interview drawer / row menu. Opens preview modal loading `preview_email` with `INTERVIEW_INVITATION`.
+   - **Send to Participants**: Action in Interview drawer / row menu. Opens preview modal loading `preview_email` with `INTERVIEW_PARTICIPANT_INVITATION` targeting current participants.
+   - **Mandatory Preview-Before-Send Flow**:
+     User clicks send action $\rightarrow$ dialog fetches server preview $\rightarrow$ displays authoritative recipients, subject, and rendered body $\rightarrow$ user reviews $\rightarrow$ confirms send $\rightarrow$ enqueues outbox message using the server-returned `preview_fingerprint` and client-generated idempotency key.
+   - Invariant: Send does NOT alter interview status (`schedule_status_code` remains untouched).
 
 3. **Email History Projection & Management View (`web/src/components/interview/EmailHistoryDrawer.tsx`)**:
-   - Displays history records for the selected Interview (subject, recipient email, sent/queued timestamp, status, template code).
-   - Multi-select checkbox selection.
-   - Delete action opening confirmation modal requiring:
-     * Classification selection (`TEST_RECORD` if test environment, or `WRONG_RECORD`).
-     * Mandatory reason text for `WRONG_RECORD`.
-   - Calls `deleteEmailHistoryEntry`; table refreshes on completion; deleted record is removed from operational view while remaining audited in Security Audit.
+   - Accessible via "Lịch sử gửi thư / Email History" button.
+   - Displays history records for the interview: recipient email, subject, status (`SENT`, `FAILED`, `CANCELLED`, `ABANDONED`), sent/attempt timestamp, error code if failed.
+   - Row deletion action opening confirmation modal:
+     * Radio: `TEST_RECORD` (disabled if production environment) or `WRONG_RECORD`.
+     * Mandatory trimmed reason textarea for `WRONG_RECORD`.
+     * Deletion calls `deleteEmailHistoryEntry`; row disappears from operational view while security audit remains.
 
-4. **Permissions & Contextual Access Control**:
-   - Manual send requires `interviews.manage` (or `emails.send` where configured).
-   - Email History view requires `emails.history_view`.
-   - Email History delete requires `emails.history_delete`.
-   - Unauthenticated and unauthorized users receive clean permission rejection.
-
-5. **Testing & Verification**:
-   - Unit tests for command runners, input validation, and error mapping (`web/src/__tests__/email-commands.test.ts`).
-   - Component / browser smoke tests verifying preview render, send confirmation, history listing, and deletion dialog with reason validation (`web/src/__tests__/interview-email-ui.test.ts`).
-   - S07-001 predecessor database regressions re-verified.
+4. **Permissions & Security Separation**:
+   - Manual preview and enqueue check `interviews.email` through `private.interview_command_actor('interviews.email')`.
+   - Email History view requires `emails.history_view` under RLS.
+   - Email History delete requires `emails.history_view + emails.history_delete`.
+   - All mutations route through server actions / RPCs; no direct database writes from browser.
 
 ---
 
@@ -108,6 +187,7 @@ TASK-S07-005 delivers the missing user-facing consumers over the accepted S07-00
 - Production deployment (Vercel / Supabase).
 - Connected Supabase migrations or operations.
 - General data archive/export/purge (`DATA-RETENTION-001`).
+- Arbitrary participant subsetting within a single interview.
 - S07-006 or next slice tasks.
 
 ---

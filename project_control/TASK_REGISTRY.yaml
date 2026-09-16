@@ -1417,8 +1417,8 @@ tasks:
     slice: SLICE-07
     status: PLANNED
     depends_on: [TASK-S07-001, TASK-S04-001, TASK-S04-002, TASK-S04-003, TASK-S07-004]
-    planning_baseline_sha: "2270ec01343e4b1dedc4c617d42e0b0679831cc5"
-    audit_release_commit: "2270ec01343e4b1dedc4c617d42e0b0679831cc5"
+    planning_baseline_sha: "570ffb6c4d5e560b6c5c858a859003683bb7890e"
+    audit_release_commit: "570ffb6c4d5e560b6c5c858a859003683bb7890e"
     pre_task_checkpoint: checkpoint/pre-S07-005-001
     prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
     source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md

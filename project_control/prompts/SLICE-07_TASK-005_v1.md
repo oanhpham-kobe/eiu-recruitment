@@ -4,7 +4,7 @@
 
 This is an implementation prompt for future Owner dispatch, NOT current implementation authority. Current continuation stops after independent prompt/source PASS. Execution is permitted only after external prompt audit and explicit dispatch.
 
-Repository: `oanhpham-kobe/eiu-recruitment`. Integration: `autonomy/continuous-integration-20260905-01`. Starting reporting HEAD: `2270ec01343e4b1dedc4c617d42e0b0679831cc5`. Governed implementation baseline is the exact peeled commit of immutable `checkpoint/pre-S07-005-001`, or the latest independently PASS numbered replacement recorded in TASK_REGISTRY before dispatch. Resolve the ref and compare with the review's REVIEWED_SHA; never use a moving integration HEAD as a substitute. The baseline commit contains this prompt, so its own SHA is recorded by immutable ref and later evidence, not a fabricated self-hash.
+Repository: `oanhpham-kobe/eiu-recruitment`. Integration: `autonomy/continuous-integration-20260905-01`. Starting reporting HEAD: `570ffb6c4d5e560b6c5c858a859003683bb7890e`. Governed implementation baseline is the exact peeled commit of immutable `checkpoint/pre-S07-005-001`, or the latest independently PASS numbered replacement recorded in TASK_REGISTRY before dispatch. Resolve the ref and compare with the review's REVIEWED_SHA; never use a moving integration HEAD as a substitute. The baseline commit contains this prompt, so its own SHA is recorded by immutable ref and later evidence, not a fabricated self-hash.
 
 Accepted predecessors:
 - `checkpoint/S07-001-accepted-001` → `8397be35d64a65f4a693811e4fc6b9e43287a7cd`
@@ -20,7 +20,7 @@ Dependencies: `TASK-S07-001`, `TASK-S04-001`, `TASK-S04-002`, `TASK-S04-003`, `T
 Read `project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md`, accepted S07_001 source reconciliation, REVIEW.md, and canonical current sections:
 - `review_pack/11_EMAIL_DOCUMENTS_AND_ACTIVITY_LOG.md` §1 (Manual email actions) and §3 (Email History vs Security Audit);
 - `review_pack/37_BACKEND_COMMAND_CONTRACTS.md` §§3, 10, 16 (trusted server commands, actor resolution);
-- `review_pack/39_SECURITY_RLS_MATRIX.md`, `59_RLS_POLICY_BLUEPRINT.md` (`emails.history_view`, `emails.history_delete`);
+- `review_pack/39_SECURITY_RLS_MATRIX.md`, `59_RLS_POLICY_BLUEPRINT.md` (`interviews.email`, `emails.history_view`, `emails.history_delete`);
 - `review_pack/47_AUDIT_LOGGING_SPEC.md` §1 (Business Activity Log vs Security Audit);
 - `review_pack/48_IDEMPOTENCY_CONCURRENCY_SPEC.md` (idempotent enqueue keys);
 - `recruitment_webapp/design_system/` (components, dialogs, drawers, accessibility, i18n);
@@ -31,68 +31,111 @@ Inspect accepted S07-001 database migration `20260913010000_email_persistence_co
 ## Bounded outcome
 
 Deliver the user-facing consumers of the accepted S07-001 email persistence contracts:
-1. Typed command runners and server actions for manual email preview, enqueue, and history deletion.
-2. Manual email actions on the Interview surface ("Gửi thư ứng viên" / "Gửi thư người tham dự") with preview-before-send dialogs.
+1. Typed command runners and server actions wrapping the accepted database RPCs with exact parameter matching.
+2. Manual email actions on the Interview surface ("Gửi thư ứng viên" / "Gửi thư người tham dự") with preview-before-send dialogs and mandatory preview-fingerprint fencing.
 3. User-facing Email History projection view and management drawer with multi-select and classification-based deletion (`TEST_RECORD` / `WRONG_RECORD` with mandatory reason).
-4. Strict enforcement of contextual permissions (`emails.history_view`, `emails.history_delete`, `interviews.manage`) and RLS.
+4. Strict enforcement of contextual permissions (`interviews.email`, `emails.history_view`, `emails.history_delete`) and RLS.
 
 ### A. Typed command runners and server actions
 
 Create `web/src/lib/commands/email-commands.ts` wrapping accepted S07-001 RPCs:
-- `previewInterviewEmail(interviewId, recipientType, recipientId, client?)`:
-  Calls `public.preview_email`. Validates inputs (UUIDs, allowed recipient types). Returns rendered subject, body, sender snapshot, and recipient address.
-- `enqueueInterviewEmail(interviewId, recipientType, recipientId, idempotencyKey, client?)`:
-  Calls `public.enqueue_email`. Generates client-side idempotency key if not provided. Enqueues outbox message transactionally. Returns outbox ID and status `QUEUED`.
-- `bulkEnqueueInterviewEmails(items, client?)`:
-  Calls `public.bulk_enqueue_email`. Bounded batch (max 100 items). Idempotent enqueue across selected participants.
+
+- `previewInterviewEmail(input, client?)`:
+  Calls `public.preview_email(p_email_type, p_interview_id, p_application_id, p_submission_id)`.
+  * `input` shape:
+    ```ts
+    {
+      emailType: "INTERVIEW_INVITATION" | "INTERVIEW_PARTICIPANT_INVITATION";
+      interviewId: string;
+      applicationId: string;
+      submissionId: string;
+    }
+    ```
+  * Validates UUIDs and email type. Returns server snapshot data: `recipients` (`{ to: string[], cc: string[] }`), `subject`, `body_text`, `template_version`, `environment_code`, `context_fingerprint`, and `preview_fingerprint`.
+  * Note: The RPC does NOT return a `sender` field. Body text is rendered strictly server-side.
+
+- `enqueueInterviewEmail(input, idempotencyKey, client?)`:
+  Calls `public.enqueue_email(p_request, p_idempotency_key)`.
+  * `input` request object is strictly bounded to EXACTLY five keys:
+    ```ts
+    {
+      email_type: "INTERVIEW_INVITATION" | "INTERVIEW_PARTICIPANT_INVITATION";
+      interview_id: string;
+      application_id: string;
+      submission_id: string;
+      preview_fingerprint: string;
+    }
+    ```
+    No extra keys are permitted (backend raises `VALIDATION_ERROR` on unrecognized keys).
+  * Passes client-generated UUID `idempotencyKey`.
+  * Handles `STALE_PREVIEW` gracefully: When the server snapshot changed between preview and send, returns a structured error instructing the UI to refresh the preview.
+  * On success, returns `{ email_outbox_id: string }`.
+  * Note: The RPC returns the created `email_outbox_id`; it does not return `status: "QUEUED"`. Successful enqueue means the item is queued in the transactional outbox for worker delivery.
+
+- `bulkEnqueueInterviewEmails(requests, idempotencyKey, client?)`:
+  Calls `public.bulk_enqueue_email(p_requests, p_idempotency_key)`.
+  * `requests`: Array of 1..100 complete 5-key request objects, each carrying its own `preview_fingerprint`.
+  * Operates across multiple selected Interview rows.
+  * For `INTERVIEW_PARTICIPANT_INVITATION`, recipients are derived server-side from all current active participants of that interview. Client-side arbitrary participant-subset selection is prohibited by the trusted contract.
+
 - `deleteEmailHistoryEntry(emailHistoryId, classification, reason, client?)`:
-  Calls `public.delete_email_history`. Validates classification (`TEST_RECORD` or `WRONG_RECORD`) and requires non-empty reason text for `WRONG_RECORD`. Deletes operational history row while leaving immutable audit intact.
+  Calls `public.delete_email_history(p_email_history_id, p_classification, p_reason)`.
+  * Validates classification: must be `'TEST_RECORD'` (valid only in TEST environment) or `'WRONG_RECORD'` (requires non-empty trimmed `reason` string $\le 1000$ characters).
+  * Returns `{ email_history_id: string }`.
+
 - `loadInterviewEmailHistory(interviewId, client?)`:
-  Queries `public.email_history` under contextual RLS for the interview. Returns paginated/ordered list of sent/queued emails.
+  Queries `public.email_history` under contextual RLS for the given interview. Returns history records.
+  * Note: `public.email_history.status_code` values are strictly: `SENT`, `FAILED`, `CANCELLED`, `ABANDONED`.
+  * `QUEUED` is an outbox state, NOT an email_history status code. Do not attempt to query `email_outbox` directly or synthesize `QUEUED` history rows.
 
 ### B. Manual email actions on Interview surface
 
 Update `web/src/components/interview/InterviewPage.tsx` and `InterviewDrawer.tsx`:
-- Add action buttons on Interview drawer / table row actions:
-  * **Gửi thư ứng viên / Send to Candidate**: Available when interview has an application/candidate.
-  * **Gửi thư người tham dự / Send to Participants**: Available when interview has participants. Allows selecting all or subset of participants.
-- **Preview Dialog (`web/src/components/interview/EmailPreviewDialog.tsx`)**:
-  * Preview-before-send is mandatory: User clicks action $\rightarrow$ dialog opens $\rightarrow$ loads preview from `previewInterviewEmail`.
-  * Dialog displays: Sender, Recipient email, Subject line, Formatted body preview, and Interview date/time/location summary.
-  * Confirm button: "Xác nhận gửi / Confirm send" $\rightarrow$ calls `enqueueInterviewEmail`.
-  * Toast notification upon successful enqueue: "Đã đưa vào hàng đợi gửi thư / Queued for delivery".
-  * Invariant: Manual email send does NOT alter interview status (`schedule_status_code` remains unchanged).
+- Add action triggers on Interview drawer and table row menus:
+  * **Gửi thư ứng viên / Send to Candidate**: Available when interview has an associated candidate.
+  * **Gửi thư người tham dự / Send to Participants**: Available when interview has participants. Targets all active current participants of the interview.
+- **Preview-Before-Send Dialog (`web/src/components/interview/EmailPreviewDialog.tsx`)**:
+  * Mandatory flow: User clicks action $\rightarrow$ dialog opens $\rightarrow$ calls `previewInterviewEmail`.
+  * Displays:
+    - Authoritative recipients list (To: candidate email or participant email list).
+    - Subject line.
+    - Rendered body preview (showing interview date, time, format, and meeting link as formatted server-side).
+  * Retains the server-returned `preview_fingerprint`.
+  * User reviews $\rightarrow$ clicks "Xác nhận gửi / Confirm send" $\rightarrow$ calls `enqueueInterviewEmail` with the exact 5 keys and the retained `preview_fingerprint`.
+  * If the interview was rescheduled or modified while preview was open, server returns `STALE_PREVIEW`; dialog catches this, displays notification ("Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước"), and refreshes the preview.
+  * Toast notification on successful enqueue: "Đã đưa vào hàng đợi gửi thư".
+  * Invariant: Manual email send does NOT alter interview status (`schedule_status_code` remains untouched).
 
 ### C. User-facing Email History projection and management
 
 Create `web/src/components/interview/EmailHistoryDrawer.tsx`:
 - Accessible from Interview page / drawer via "Lịch sử gửi thư / Email History" button.
-- Displays table of email history records for the interview:
-  * Recipient email / name
+- Displays history table for the interview:
+  * Recipient email
   * Subject
-  * Template code / type
-  * Status (`QUEUED`, `SENT`, `FAILED`)
-  * Sent / created timestamp
+  * Template type
+  * Status badge (`SENT`, `FAILED`, `CANCELLED`, `ABANDONED`)
+  * Sent / attempt timestamp
+  * Error description if `FAILED`
 - **Deletion of wrong/test records**:
   * Row action or multi-select checkbox: "Xóa / Delete".
-  * Opens confirmation modal (`web/src/components/interview/DeleteEmailHistoryDialog.tsx`):
-    - Explains that deletion removes the record from operational history while audit remains immutable.
-    - Classification radio/select: `TEST_RECORD` (if test record) or `WRONG_RECORD` (wrong recipient/content).
-    - Mandatory reason textarea when `WRONG_RECORD` is selected (must not be empty/whitespace).
-    - Confirm button calls `deleteEmailHistoryEntry`.
-    - Table refreshes on success; toast confirmation displayed.
+  * Confirmation dialog (`web/src/components/interview/DeleteEmailHistoryDialog.tsx`):
+    - Explains that operational history is removed while security audit remains immutable.
+    - Classification selection: `TEST_RECORD` (disabled in production environment) or `WRONG_RECORD`.
+    - Mandatory reason textarea when `WRONG_RECORD` is selected (must not be blank or whitespace-only, max 1000 characters).
+    - Confirms deletion $\rightarrow$ calls `deleteEmailHistoryEntry` $\rightarrow$ table refreshes on success.
 
 ### D. Security and contextual permissions
 
-- `preview_email`, `enqueue_email`, `bulk_enqueue_email` require `interviews.manage` permission and active user session.
-- `email_history` query requires `emails.history_view` and parent contextual authorization.
-- `delete_email_history` requires `emails.history_view + emails.history_delete`.
+- `preview_email`, `enqueue_email`, `bulk_enqueue_email` require `interviews.email` permission (or Root Admin) enforced via `private.interview_command_actor('interviews.email')`.
+- `email_history` query requires `emails.history_view` and parent contextual authorization under RLS policy `email_history_select`.
+- `delete_email_history` requires `emails.history_view` AND `emails.history_delete` enforced by RPC and `private.interview_command_actor('emails.history_delete')`.
 - Unauthenticated callers receive `UNAUTHENTICATED`; unauthorized callers receive `FORBIDDEN`.
-- All operations execute via server actions / RPCs; no direct business table writes from browser.
+- All operations execute via server actions / RPCs; no direct database writes from browser.
 
 ### E. Design System and UX conventions
 
-- Match existing Design System (Dialog, Drawer, Button, StatusBadge, Toast).
+- Match existing Design System components (Dialog, Drawer, Button, StatusBadge, Toast).
 - Keyboard accessibility: Escape closes dialogs/drawers; focus trapped in modals and restored on close.
 - Vietnamese default text with standard system chrome:
   * "Gửi thư ứng viên", "Gửi thư người tham dự", "Lịch sử gửi thư", "Bản xem trước email", "Xác nhận gửi", "Lý do xóa".
@@ -101,15 +144,17 @@ Create `web/src/components/interview/EmailHistoryDrawer.tsx`:
 ## Local integration & unit test requirements
 
 1. **Unit tests (`web/src/__tests__/email-commands.test.ts`)**:
-   - `previewInterviewEmail`: validates input, handles RPC response, returns rendered preview.
-   - `enqueueInterviewEmail`: enforces idempotency key, handles success, maps errors.
-   - `bulkEnqueueInterviewEmails`: handles batch array, maps errors.
-   - `deleteEmailHistoryEntry`: requires classification, validates non-empty reason for `WRONG_RECORD`, calls RPC.
-   - `loadInterviewEmailHistory`: queries history under RLS with interview scoping.
+   - `previewInterviewEmail`: sends exact 4 parameters (`p_email_type`, `p_interview_id`, `p_application_id`, `p_submission_id`), handles RPC response, returns `preview_fingerprint`.
+   - `enqueueInterviewEmail`: sends exact 5-key request object (`email_type`, `interview_id`, `application_id`, `submission_id`, `preview_fingerprint`), supplies idempotency key, handles `STALE_PREVIEW`, extracts `email_outbox_id`.
+   - `bulkEnqueueInterviewEmails`: sends array of 1..100 complete request objects carrying `preview_fingerprint`, maps per-item results.
+   - `deleteEmailHistoryEntry`: validates classification, requires non-empty trimmed reason for `WRONG_RECORD`, passes to RPC.
+   - `loadInterviewEmailHistory`: queries history under RLS with interview scoping, asserts accepted statuses only.
 2. **Component / browser tests (`web/src/__tests__/interview-email-ui.test.ts`)**:
-   - Preview modal renders sender, recipient, subject, and body before send.
-   - Confirming send calls enqueue and displays success toast.
-   - Email history drawer lists sent emails with correct status badges.
+   - Preview modal renders recipients, subject, and body before send.
+   - Retains `preview_fingerprint` and passes it on confirmation.
+   - Handles `STALE_PREVIEW` by displaying notification and re-fetching preview.
+   - Confirming send calls enqueue and displays success toast without changing interview status.
+   - Email history drawer lists sent emails with correct status badges (`SENT`, `FAILED`, `CANCELLED`, `ABANDONED`) and no synthetic `QUEUED`.
    - Delete dialog enforces classification and reason validation before deletion.
 3. **Predecessor regressions**:
    - S07-001 database outbox and history tests pass.
@@ -124,6 +169,7 @@ Create `web/src/components/interview/EmailHistoryDrawer.tsx`:
 - Production deployment (Vercel / Supabase).
 - Connected Supabase migrations or operations.
 - General data archive/export/purge (`DATA-RETENTION-001`).
+- Arbitrary participant subsetting within a single interview.
 - `TASK-S07-006` or Slice-08 tasks.
 
 ## Verification plan
