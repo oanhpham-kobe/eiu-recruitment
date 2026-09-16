@@ -38,10 +38,10 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "7317138779270087e3e425f48b13785923b17f42"
-  last_verified_application_ci_run: "34979021250"
-  accepted_checkpoint: checkpoint/S07-003-accepted-001
-  accepted_checkpoint_sha: "7317138779270087e3e425f48b13785923b17f42"
+  last_verified_application_checkpoint: "2c42533733257caa3567cd6c8cae80e13b3092b8"
+  last_verified_application_ci_run: "35046185306"
+  accepted_checkpoint: checkpoint/S07-004-accepted-001
+  accepted_checkpoint_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
   last_verified_control_plane_sha: "44f1d1d22d09a3b8bb0855324b6631e16256cefc"
@@ -632,23 +632,23 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: S07_004_IMPLEMENTATION_COMPLETE_AWAITING_INDEPENDENT_REVIEW
-  accepted_checkpoint: checkpoint/S07-003-accepted-001
-  accepted_checkpoint_sha: "7317138779270087e3e425f48b13785923b17f42"
-  accepted_task: TASK-S07-003
-  accepted_scope: "Storage cleanup eligibility and result-fencing trusted contracts."
+  status: S07_004_ACCEPTED_POST_CI_CONTINUATION
+  accepted_checkpoint: checkpoint/S07-004-accepted-001
+  accepted_checkpoint_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
+  accepted_task: TASK-S07-004
+  accepted_scope: "Physical storage cleanup runner and local Storage integration."
   source_reopen_required: false
   implementation_reopen_required: false
   lifecycle: ACTIVE
-  external_final_acceptance_audit:
-    work_id: S07-003-EXTERNAL-FINAL-ACCEPTANCE-AUDIT-001
-    reviewer: EXTERNAL_CHATGPT
-    transport: OWNER_MESSAGE
-    decision: FINAL_ACCEPTANCE_PASS_AND_FRONTIER_RELEASE
-    accepted_sha: "7317138779270087e3e425f48b13785923b17f42"
+  independent_final_acceptance_audit:
+    work_id: S07-004-OMP-FINAL-ACCEPTANCE-AUDIT-001
+    reviewer: OMP_EIU_REVIEWER
+    transport: OWNER_TRANSPORTED
+    decision: FINAL_ACCEPTANCE_PASS
+    accepted_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
     source_reopen_required: false
     implementation_reopen_required: false
-    evidence_persistence: "Owner-transported message; no reviewer-native persistence claimed."
+    evidence_persistence: "Owner-transported OMP audit decision based on exact-SHA candidate CI 35040828903, serialized integration CI 35046185306, and governance CI 35046185309."
   external_boundaries:
     scanner_provider_runtime: NOT_IMPLEMENTED
     physical_storage_cleanup_worker: IMPLEMENTED_TASK_BRANCH_DISPOSABLE_LOCAL_VERIFIED_NOT_DEPLOYED
@@ -660,27 +660,26 @@ slice_07_planning:
   prompt_review_status: PASS
   prompt_review_sha: "06f8635da5438424a69e0cff12e91fc2389dfd48"
   prompt_review_work_id: S07-004-PROMPT-REVIEW-003
-  materialized_next_task_count: 1
+  materialized_next_task_count: 0
   implementation_started: true
   implementation_baseline_sha: "9af517c0f83af1c3337f6e7b12dd50595aaea9f0"
   implementation_branch: chatgpt/TASK-S07-004-physical-storage-cleanup-runner
   producer: EXTERNAL_CHATGPT
   independent_implementation_reviewer: OMP_EIU_REVIEWER
-  implementation_review_status: PENDING
+  implementation_review_status: PASS
   producer_verified_product_sha: "7a9026b180aaf964d98bab7a099c30bd5785246d"
   producer_candidate_ci: "35039933000 PASS @ 7a9026b180aaf964d98bab7a099c30bd5785246d"
 
 safe_frontier:
   eligible_tasks: []
-  skipped_due_to_dependency:
-    - "TASK-S07-004 implementation candidate verified by producer; awaiting OMP/eiu-reviewer independent implementation review."
+  skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "HARD STOP at exact verified S07-004 candidate pending independent OMP/eiu-reviewer implementation verdict."
+  execution_hold: "Reconcile Slice-07 canonical frontier or execute Slice-07 closing process; no TASK-S07-005 currently materialized."
 
 stop_gate:
   status: ACTIVE
-  type: S07_004_INDEPENDENT_IMPLEMENTATION_REVIEW_GATE
+  type: SLICE_07_POST_S04_CONTINUATION_GATE
   source_reopen_required: false
-  resume_on: "Owner-transported OMP/eiu-reviewer PASS or BLOCKING_REPAIR verdict for the exact frozen candidate SHA."
+  resume_on: "Frontier reconciliation / Slice-07 closing gate."
 
-next_action: "Return the exact verified S07-004 task-branch candidate and evidence packet to OMP/eiu-reviewer; no serialization, accepted checkpoint, deployment, connected Supabase mutation, or TASK-S07-005 before reviewer verdict."
+next_action: "Reconcile canonical sources across remaining Slice-07 responsibilities; do not materialize tasks without source authority."

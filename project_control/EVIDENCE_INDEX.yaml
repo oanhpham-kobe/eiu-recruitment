@@ -1420,3 +1420,36 @@ implementation_evidence:
       findings: []
       evidence_persistence: "Read-only OMP task result agent://S07004PromptR3Reviewer; this is a parent-recorded receipt, not a reviewer-authored Git artifact."
     prompt_review_status: PASS
+  S07-004-ACCEPTANCE-001:
+    task: TASK-S07-004
+    operation: PHYSICAL_STORAGE_CLEANUP_RUNNER_AND_LOCAL_STORAGE_INTEGRATION
+    status: ACCEPTED
+    accepted_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
+    accepted_checkpoint: checkpoint/S07-004-accepted-001
+    candidate_review:
+      work_id: S07-004-OMP-INDEPENDENT-IMPLEMENTATION-REVIEW-001
+      reviewer: OMP_EIU_REVIEWER
+      status: PASS
+      reviewed_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
+      source_reopen_required: false
+      implementation_reopen_required: false
+      evidence_persistence: "OMP independent implementation review session report; zero blocking findings."
+    ci:
+      candidate_ci: "35040828903 PASS @ 2c42533733257caa3567cd6c8cae80e13b3092b8; governance, Web, and Database + local Storage verification PASS"
+      integration_ci: "35046185306 PASS @ 2c42533733257caa3567cd6c8cae80e13b3092b8; resolver, Web, and Database integration PASS"
+      governance_ci: "35046185309 PASS @ 2c42533733257caa3567cd6c8cae80e13b3092b8"
+      checkpoint_tag_object_sha: "a0c9ed0e051b74c1db887e119064e022340ddc26"
+      checkpoint_peeled_target_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
+    external_boundaries:
+      scanner_provider_runtime: NOT_IMPLEMENTED
+      physical_storage_cleanup_worker: IMPLEMENTED_TASK_BRANCH_DISPOSABLE_LOCAL_VERIFIED_NOT_DEPLOYED
+      deployment_or_connected_supabase: NOT_USED
+  S07-004-FINAL-AUDIT-001:
+    reviewer: OMP_EIU_REVIEWER
+    transport: OWNER_MESSAGE
+    work_id: S07-004-OMP-FINAL-ACCEPTANCE-AUDIT-001
+    decision: FINAL_ACCEPTANCE_PASS
+    accepted_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
+    source_reopen_required: false
+    implementation_reopen_required: false
+    evidence_persistence: "Owner-transported OMP final acceptance audit; verified exact-SHA CI on candidate and serialized integration branches; authorized checkpoint/S07-004-accepted-001."

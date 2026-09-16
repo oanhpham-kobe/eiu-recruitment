@@ -1363,7 +1363,7 @@ tasks:
   TASK-S07-004:
     title: "Physical Storage Cleanup Runner and Local Storage Integration"
     slice: SLICE-07
-    status: IN_PROGRESS
+    status: DONE
     depends_on: [TASK-S07-003]
     planning_baseline_sha: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
     audit_release_commit: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
@@ -1383,7 +1383,7 @@ tasks:
     implementation_baseline_sha: "9af517c0f83af1c3337f6e7b12dd50595aaea9f0"
     implementation_branch: chatgpt/TASK-S07-004-physical-storage-cleanup-runner
     implementation_review_mode: OMP_EIU_REVIEWER
-    implementation_review_status: PENDING
+    implementation_review_status: PASS
     review_role_override:
       producer: EXTERNAL_CHATGPT
       reviewer: OMP_EIU_REVIEWER
@@ -1394,4 +1394,21 @@ tasks:
       product_candidate_sha: "7a9026b180aaf964d98bab7a099c30bd5785246d"
       candidate_ci: "35039933000 PASS @ 7a9026b180aaf964d98bab7a099c30bd5785246d; Web, governance, predecessor DB regressions, worker binding, real local physical Storage integration, and DB lint PASS"
       source_reopen_required: false
-    next_frontier_behavior: "HARD STOP at exact verified task-branch candidate for OMP/eiu-reviewer independent implementation review; no serialization, accepted checkpoint, deployment, connected Supabase mutation, or next task before reviewer verdict."
+    implementation_acceptance:
+      accepted_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
+      accepted_checkpoint: checkpoint/S07-004-accepted-001
+      independent_reviewer: OMP_EIU_REVIEWER
+      implementation_review_work_id: S07-004-OMP-INDEPENDENT-IMPLEMENTATION-REVIEW-001
+      implementation_review_verdict: PASS
+      final_acceptance_work_id: S07-004-OMP-FINAL-ACCEPTANCE-AUDIT-001
+      final_acceptance_verdict: PASS
+      source_reopen_required: false
+      implementation_reopen_required: false
+      candidate_ci: "35040828903 PASS @ 2c42533733257caa3567cd6c8cae80e13b3092b8"
+      formal_integration_ci: "35046185306 PASS @ 2c42533733257caa3567cd6c8cae80e13b3092b8"
+      formal_governance_ci: "35046185309 PASS @ 2c42533733257caa3567cd6c8cae80e13b3092b8"
+      external_boundaries:
+        scanner_provider_runtime: NOT_IMPLEMENTED
+        physical_storage_cleanup_worker: IMPLEMENTED_TASK_BRANCH_DISPOSABLE_LOCAL_VERIFIED_NOT_DEPLOYED
+        deployment_or_connected_supabase: NOT_USED
+    next_frontier_behavior: "Lifecycle CLOSED; independent final acceptance audit completes task; resolve next frontier according to autonomous continuation policy."
