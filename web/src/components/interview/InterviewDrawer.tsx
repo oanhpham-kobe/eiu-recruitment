@@ -16,6 +16,7 @@ import {
   type InterviewScheduleStatus,
   type InterviewUserOption,
 } from "@/lib/interview/model";
+import { InterviewEmailActions } from "./InterviewEmailActions";
 
 const STATUS_OPTIONS = Object.entries(INTERVIEW_STATUS_LABEL).map(
   ([value, label]) => ({ value, label }),
@@ -255,6 +256,18 @@ export function InterviewDrawer({
         <dt>HR phụ trách</dt>
         <dd>{application.hrOwnerName}</dd>
       </dl>
+
+      <section
+        className="interview-drawer-section"
+        aria-labelledby="interview-email-heading"
+      >
+        <h3 id="interview-email-heading">Email</h3>
+        <InterviewEmailActions
+          application={application}
+          round={round}
+          permissions={permissions}
+        />
+      </section>
 
       <section
         className="interview-drawer-section"
