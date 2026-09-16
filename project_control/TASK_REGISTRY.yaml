@@ -1423,7 +1423,10 @@ tasks:
     superseded_checkpoints: [checkpoint/pre-S07-005-001, checkpoint/pre-S07-005-002]
     prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
     source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md
-    prompt_review_status: PENDING_R3
+    prompt_review_status: BLOCKING_REPAIR
+    prompt_review_work_id: "S07-005-PROMPT-REVIEW-003"
+    prompt_review_commit: "0c9646ecfc71665fdeba1a41023b36ec0e5c0e9a"
+    prompt_review_artifact: project_control/reviews/S07_005_PROMPT_REVIEW_0c9646e_v3.md
     external_prompt_audit:
       work_id: "S07-005-EXTERNAL-PROMPT-AUDIT-001"
       auditor_role: EXTERNAL_CHATGPT

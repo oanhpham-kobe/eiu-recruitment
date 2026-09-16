@@ -657,7 +657,10 @@ slice_07_planning:
   source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md
   prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
   prompt_checkpoint: checkpoint/pre-S07-005-003
-  prompt_review_status: PENDING_R3
+  prompt_review_status: BLOCKING_REPAIR
+  prompt_review_work_id: S07-005-PROMPT-REVIEW-003
+  prompt_review_commit: "0c9646ecfc71665fdeba1a41023b36ec0e5c0e9a"
+  prompt_review_finding: "S07-005-R3-001: tasks.TASK-S07-005.acceptance fourth criterion requires interviews.manage instead of interviews.email."
   external_prompt_audit:
     work_id: S07-005-EXTERNAL-PROMPT-AUDIT-001
     auditor_role: EXTERNAL_CHATGPT
@@ -681,14 +684,14 @@ slice_07_planning:
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-005 R3 prompt review pending; implementation prohibited."
+    - "TASK-S07-005 prompt review BLOCKING_REPAIR on finding S07-005-R3-001; awaiting repair by Owner / External ChatGPT producer."
   materialization_frontier: []
-  execution_hold: "Stop at prompt review PASS for TASK-S07-005; implementation not authorized."
+  execution_hold: "Stop at prompt review BLOCKING_REPAIR for TASK-S07-005; implementation strictly prohibited."
 
 stop_gate:
   status: ACTIVE
-  type: S07_005_PROMPT_GATE
+  type: S07_005_PROMPT_BLOCKING_REPAIR
   source_reopen_required: false
-  resume_on: "Independent R3 prompt review decision."
+  resume_on: "Repair of finding S07-005-R3-001 by Owner / External ChatGPT producer."
 
-next_action: "Execute independent R3 prompt review of TASK-S07-005; implementation strictly prohibited."
+next_action: "Stop at prompt review BLOCKING_REPAIR; return finding package to Owner / External ChatGPT producer."

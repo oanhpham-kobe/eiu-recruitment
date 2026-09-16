@@ -1492,4 +1492,15 @@ implementation_evidence:
       implementation_authorized: false
       artifact: project_control/reviews/S07_005_EXTERNAL_PROMPT_AUDIT_R2.md
     prompt_repair_scope: "S07-005-EXTERNAL-AUDIT-001: Align email RPC authentication/authorization error semantics with accepted S07-001 contracts (fail-closed FORBIDDEN); add adapter test requirement."
-    prompt_review_status: PENDING_R3
+    prompt_r3_review:
+      work_id: S07-005-PROMPT-REVIEW-003
+      reviewed_sha: "0c9646ecfc71665fdeba1a41023b36ec0e5c0e9a"
+      checkpoint: checkpoint/pre-S07-005-003
+      reviewer: eiu-reviewer
+      verdict: BLOCKING_REPAIR
+      finding: "S07-005-R3-001: tasks.TASK-S07-005.acceptance fourth criterion requires interviews.manage instead of interviews.email."
+      source_reopen_required: false
+      implementation_authorized: false
+      review_artifact: project_control/reviews/S07_005_PROMPT_REVIEW_0c9646e_v3.md
+      evidence_persistence: "Read-only OMP task result agent://S07005PromptR3Reviewer"
+    prompt_review_status: BLOCKING_REPAIR
