@@ -11,6 +11,7 @@ import type {
   EmailPreviewData,
   InterviewEmailType,
 } from "@/lib/commands/email-commands";
+import styles from "./EmailUi.module.css";
 
 export interface EmailPreviewDialogProps {
   open: boolean;
@@ -116,7 +117,7 @@ export function EmailPreviewDialog({
     <Dialog
       open={open}
       title={title}
-      onClose={onClose}
+      onClose={sending ? () => undefined : onClose}
       footer={
         <div className="interview-drawer-actions">
           <Button variant="ghost" disabled={sending} onClick={onClose}>
@@ -146,12 +147,16 @@ export function EmailPreviewDialog({
             {message}
           </p>
         ) : null}
-        {loading ? <p className="interview-form-span">Đang tạo bản xem trước…</p> : null}
+        {loading ? (
+          <p className="interview-form-span" role="status">
+            Đang tạo bản xem trước…
+          </p>
+        ) : null}
         {preview ? (
           <>
             <div className="interview-form-span">
               <strong>To</strong>
-              <ul>
+              <ul className={styles.recipientList}>
                 {preview.recipients.to.map((recipient) => (
                   <li key={recipient}>{recipient}</li>
                 ))}
@@ -160,7 +165,7 @@ export function EmailPreviewDialog({
             {preview.recipients.cc.length ? (
               <div className="interview-form-span">
                 <strong>CC</strong>
-                <ul>
+                <ul className={styles.recipientList}>
                   {preview.recipients.cc.map((recipient) => (
                     <li key={recipient}>{recipient}</li>
                   ))}
@@ -172,7 +177,7 @@ export function EmailPreviewDialog({
             </p>
             <div className="interview-form-span">
               <strong>Nội dung</strong>
-              <pre className="interview-email-preview-body">{preview.body_text}</pre>
+              <pre className={styles.previewBody}>{preview.body_text}</pre>
             </div>
             <p className="interview-field-hint interview-form-span">
               Template {preview.template_version} · {preview.environment_code}
