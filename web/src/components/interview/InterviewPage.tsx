@@ -47,6 +47,7 @@ import {
   CopyScheduleDialog,
 } from "./InterviewDialogs";
 import { InterviewDrawer } from "./InterviewDrawer";
+import { InterviewEmailActions } from "./InterviewEmailActions";
 
 const STATUS_OPTIONS = Object.entries(INTERVIEW_STATUS_LABEL).map(
   ([value, label]) => ({ value, label }),
@@ -715,6 +716,7 @@ export function InterviewPage({
                   expanded={expanded}
                   selectedInterviewId={selectedInterviewId}
                   busy={busy}
+                  permissions={data.permissions}
                   canManage={data.permissions.canManage}
                   canReactivateApplication={
                     data.permissions.canReactivateApplication
@@ -1040,6 +1042,7 @@ function ApplicationRows({
   expanded,
   selectedInterviewId,
   busy,
+  permissions,
   canManage,
   canReactivateApplication,
   canDeleteApplication,
@@ -1058,6 +1061,7 @@ function ApplicationRows({
   expanded: boolean;
   selectedInterviewId: string | null;
   busy: boolean;
+  permissions: InterviewPageData["permissions"];
   canManage: boolean;
   canReactivateApplication: boolean;
   canDeleteApplication: boolean;
@@ -1141,6 +1145,14 @@ function ApplicationRows({
                 Mở
               </Button>
             ) : null}
+            {latest ? (
+              <InterviewEmailActions
+                application={application}
+                round={latest}
+                permissions={permissions}
+                compact
+              />
+            ) : null}
             {canManage && canCreateNextRound(application) ? (
               <Button variant="ghost" disabled={busy} onClick={onCreateNext}>
                 + Vòng
@@ -1207,6 +1219,12 @@ function ApplicationRows({
                   >
                     Chi tiết
                   </Button>
+                  <InterviewEmailActions
+                    application={application}
+                    round={round}
+                    permissions={permissions}
+                    compact
+                  />
                   {canManage && application.isActive && round.isActive ? (
                     <Button
                       variant="ghost"
