@@ -89,7 +89,7 @@ export function InterviewRowEmailActions({
         Gửi NTG
       </Button>
       {notice ? (
-        <span className="sr-only" role="status" aria-live="polite">
+        <span className="interview-field-hint" role="status" aria-live="polite">
           {notice}
         </span>
       ) : null}
