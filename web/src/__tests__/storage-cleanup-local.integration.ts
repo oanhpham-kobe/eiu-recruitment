@@ -624,7 +624,7 @@ async function main(): Promise<void> {
   assert.equal(await exists(retry.bucket, retry.path), false);
   assert.match(
     queueState(retry.queueId),
-    /^DONE\|AUTHORIZED\|2\|PROVIDER_TIMEOUT$/,
+    /^DONE\|AUTHORIZED\|2\|$/,
   );
 
   console.log(
