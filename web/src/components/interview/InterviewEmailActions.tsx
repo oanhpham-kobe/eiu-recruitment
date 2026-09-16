@@ -9,7 +9,14 @@ import {
   type InterviewApplicationGroup,
   type InterviewRound,
 } from "@/lib/interview/model";
+import { EmailHistoryDrawer } from "./EmailHistoryDrawer";
 import { EmailPreviewDialog } from "./EmailPreviewDialog";
+
+type EmailCapabilities = {
+  canSend: boolean;
+  canViewHistory: boolean;
+  canDeleteHistory: boolean;
+};
 
 export function InterviewEmailActions({
   application,
@@ -20,18 +27,24 @@ export function InterviewEmailActions({
   round: InterviewRound;
   pending: boolean;
 }) {
-  const [canSend, setCanSend] = useState<boolean | null>(null);
+  const [capabilities, setCapabilities] = useState<EmailCapabilities | null>(null);
   const [emailType, setEmailType] = useState<InterviewEmailType | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     void getInterviewEmailCapabilitiesAction()
-      .then((capabilities) => {
-        if (active) setCanSend(capabilities.canSend);
+      .then((next) => {
+        if (active) setCapabilities(next);
       })
       .catch(() => {
-        if (active) setCanSend(false);
+        if (active)
+          setCapabilities({
+            canSend: false,
+            canViewHistory: false,
+            canDeleteHistory: false,
+          });
       });
     return () => {
       active = false;
@@ -43,10 +56,15 @@ export function InterviewEmailActions({
     [round.participants],
   );
   const operational = application.isActive && round.isActive;
-  const disabled = pending || canSend !== true || !operational;
+  const sendDisabled = pending || capabilities?.canSend !== true || !operational;
   const contextSummary = `Vòng ${round.roundNo} · ${formatInterviewTime(round.startAt, round.endAt)}`;
 
-  if (canSend === false) return null;
+  if (
+    capabilities &&
+    !capabilities.canSend &&
+    !capabilities.canViewHistory
+  )
+    return null;
 
   return (
     <section
@@ -59,28 +77,37 @@ export function InterviewEmailActions({
         vào hàng đợi. Gửi thư không thay đổi trạng thái Interview.
       </p>
       <div className="interview-drawer-actions">
-        <Button
-          disabled={disabled || !application.candidateEmail}
-          onClick={() => {
-            setNotice(null);
-            setEmailType("INTERVIEW_INVITATION");
-          }}
-        >
-          Gửi thư ứng viên
-        </Button>
-        <Button
-          disabled={disabled || !hasCurrentParticipants}
-          onClick={() => {
-            setNotice(null);
-            setEmailType("INTERVIEW_PARTICIPANT_INVITATION");
-          }}
-        >
-          Gửi thư người tham dự
-        </Button>
+        {capabilities?.canSend ? (
+          <>
+            <Button
+              disabled={sendDisabled || !application.candidateEmail}
+              onClick={() => {
+                setNotice(null);
+                setEmailType("INTERVIEW_INVITATION");
+              }}
+            >
+              Gửi thư ứng viên
+            </Button>
+            <Button
+              disabled={sendDisabled || !hasCurrentParticipants}
+              onClick={() => {
+                setNotice(null);
+                setEmailType("INTERVIEW_PARTICIPANT_INVITATION");
+              }}
+            >
+              Gửi thư người tham dự
+            </Button>
+          </>
+        ) : null}
+        {capabilities?.canViewHistory ? (
+          <Button disabled={pending} onClick={() => setHistoryOpen(true)}>
+            Lịch sử gửi thư
+          </Button>
+        ) : null}
       </div>
-      {canSend === null ? (
+      {capabilities === null ? (
         <p className="interview-field-hint" role="status">
-          Đang kiểm tra quyền gửi thư…
+          Đang kiểm tra quyền email…
         </p>
       ) : null}
       {notice ? (
@@ -102,6 +129,15 @@ export function InterviewEmailActions({
           contextSummary={contextSummary}
           onClose={() => setEmailType(null)}
           onQueued={() => setNotice("Đã đưa vào hàng đợi gửi thư")}
+        />
+      ) : null}
+      {capabilities?.canViewHistory ? (
+        <EmailHistoryDrawer
+          open={historyOpen}
+          interviewId={round.interviewId}
+          title={`${application.candidateName} — Vòng ${round.roundNo}`}
+          canDelete={capabilities.canDeleteHistory}
+          onClose={() => setHistoryOpen(false)}
         />
       ) : null}
     </section>
