@@ -1455,12 +1455,21 @@ implementation_evidence:
     evidence_persistence: "Owner-transported OMP final acceptance audit; verified exact-SHA CI on candidate and serialized integration branches; authorized checkpoint/S07-004-accepted-001."
   S07-005-PROMPT-GATE-001:
     task: TASK-S07-005
-    status: PENDING
+    status: IN_PROGRESS
     source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md
     prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
-    pre_task_checkpoint: checkpoint/pre-S07-005-001
+    prior_checkpoint: checkpoint/pre-S07-005-001
+    pre_task_checkpoint: checkpoint/pre-S07-005-002
+    superseded_checkpoints: [checkpoint/pre-S07-005-001]
     implementation_started: false
     materialized_next_task_count: 1
-    reviewer: eiu-reviewer
-    source_reopen_required: false
-    prompt_review_status: PENDING
+    prior_prompt_review:
+      work_id: S07-005-PROMPT-REVIEW-001
+      reviewed_sha: "0d5973ee245b1c4f35b41489cbdf62cdd12dfed2"
+      reviewer: eiu-reviewer
+      verdict: BLOCKING_REPAIR
+      finding: "S07-005-PROMPT-001: body_text preview requirement and reconciliation description incorrectly claimed format and room were rendered server-side into body_text."
+      source_reopen_required: false
+      evidence_persistence: "Read-only OMP task result agent://S07005PromptReviewer"
+    prompt_repair_scope: "S07-005-PROMPT-001: Display returned body_text unchanged; describe format/room/date/time summary as presentation-only context from authorized Interview projection."
+    rereview_status: PENDING

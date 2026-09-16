@@ -4,7 +4,7 @@
 
 This is an implementation prompt for future Owner dispatch, NOT current implementation authority. Current continuation stops after independent prompt/source PASS. Execution is permitted only after external prompt audit and explicit dispatch.
 
-Repository: `oanhpham-kobe/eiu-recruitment`. Integration: `autonomy/continuous-integration-20260905-01`. Starting reporting HEAD: `570ffb6c4d5e560b6c5c858a859003683bb7890e`. Governed implementation baseline is the exact peeled commit of immutable `checkpoint/pre-S07-005-001`, or the latest independently PASS numbered replacement recorded in TASK_REGISTRY before dispatch. Resolve the ref and compare with the review's REVIEWED_SHA; never use a moving integration HEAD as a substitute. The baseline commit contains this prompt, so its own SHA is recorded by immutable ref and later evidence, not a fabricated self-hash.
+Governed implementation baseline is the exact peeled commit of immutable `checkpoint/pre-S07-005-002`, or the latest independently PASS numbered replacement recorded in TASK_REGISTRY before dispatch (superseding `checkpoint/pre-S07-005-001`). Resolve the ref and compare with the review's REVIEWED_SHA; never use a moving integration HEAD as a substitute. The baseline commit contains this prompt, so its own SHA is recorded by immutable ref and later evidence, not a fabricated self-hash.
 
 Accepted predecessors:
 - `checkpoint/S07-001-accepted-001` → `8397be35d64a65f4a693811e4fc6b9e43287a7cd`
@@ -52,7 +52,7 @@ Create `web/src/lib/commands/email-commands.ts` wrapping accepted S07-001 RPCs:
     }
     ```
   * Validates UUIDs and email type. Returns server snapshot data: `recipients` (`{ to: string[], cc: string[] }`), `subject`, `body_text`, `template_version`, `environment_code`, `context_fingerprint`, and `preview_fingerprint`.
-  * Note: The RPC does NOT return a `sender` field. Body text is rendered strictly server-side.
+  * Note: The RPC does NOT return a `sender` field. Under accepted S07-001 contracts (`private.email_snapshot`), the server renders Start, End, Meeting link, and Topic into `body_text` appended to the template body; format and room IDs enter the context fingerprint, but are not rendered into `body_text`.
 
 - `enqueueInterviewEmail(input, idempotencyKey, client?)`:
   Calls `public.enqueue_email(p_request, p_idempotency_key)`.
@@ -99,7 +99,7 @@ Update `web/src/components/interview/InterviewPage.tsx` and `InterviewDrawer.tsx
   * Displays:
     - Authoritative recipients list (To: candidate email or participant email list).
     - Subject line.
-    - Rendered body preview (showing interview date, time, format, and meeting link as formatted server-side).
+    - Rendered body preview: Displays the returned `body_text` verbatim and unchanged as formatted server-side (which includes Start, End, Meeting link, and Topic appended to the template body). Any format, room, or additional interview details displayed in the dialog header/summary are presentation-only context from the authorized Interview projection, never additional RPC-returned fields or send authority.
   * Retains the server-returned `preview_fingerprint`.
   * User reviews $\rightarrow$ clicks "Xác nhận gửi / Confirm send" $\rightarrow$ calls `enqueueInterviewEmail` with the exact 5 keys and the retained `preview_fingerprint`.
   * If the interview was rescheduled or modified while preview was open, server returns `STALE_PREVIEW`; dialog catches this, displays notification ("Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước"), and refreshes the preview.

@@ -656,7 +656,7 @@ slice_07_planning:
   selected_task: TASK-S07-005
   source_reconciliation: project_control/reviews/S07_005_SOURCE_RECONCILIATION_v1.md
   prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
-  prompt_checkpoint: checkpoint/pre-S07-005-001
+  prompt_checkpoint: checkpoint/pre-S07-005-002
   prompt_review_status: PENDING
   materialized_next_task_count: 1
   implementation_started: false

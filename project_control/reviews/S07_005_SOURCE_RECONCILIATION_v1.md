@@ -91,7 +91,7 @@ public.preview_email(
     }
   }
   ```
-- **Important**: The RPC does NOT return a `sender` field. Contextual interview summary fields (e.g. date/time/room/meeting link) are rendered into `body_text` server-side and may be shown contextually in the dialog from the authorized interview projection, but are not send authority.
+- **Important**: The RPC does NOT return a `sender` field. Under accepted S07-001 contracts (`private.email_snapshot`), the server renders Start, End, Meeting link, and Topic into `body_text` appended to the template body; room and format IDs enter `v_context` and its fingerprint, but are NOT rendered into `body_text`. The UI displays the returned `body_text` verbatim and unchanged; any format, room, or date/time summary shown in the dialog header comes from the authorized Interview projection for presentation only, never as additional RPC-returned fields or send authority.
 
 ### 2. Trusted Email Enqueue Contract (`public.enqueue_email`)
 ```sql
