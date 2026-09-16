@@ -622,10 +622,7 @@ async function main(): Promise<void> {
   });
   assert.equal(secondRetry.jobs[0]?.result, "DONE");
   assert.equal(await exists(retry.bucket, retry.path), false);
-  assert.match(
-    queueState(retry.queueId),
-    /^DONE\|AUTHORIZED\|2\|$/,
-  );
+  assert.match(queueState(retry.queueId), /^DONE\|AUTHORIZED\|2\|$/);
 
   console.log(
     "PASS: S07-004 physical local Storage integration cases 1-12 succeeded.",
