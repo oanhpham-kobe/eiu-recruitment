@@ -1,0 +1,227 @@
+name: S07-004 One-shot Governance Reconciliation
+
+on:
+  push:
+    branches:
+      - chatgpt/TASK-S07-004-physical-storage-cleanup-runner
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 2
+      - name: Reconcile S07-004 authoritative and derived state for independent review handoff
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          registry = Path('project_control/TASK_REGISTRY.yaml')
+          text = registry.read_text()
+          old = '''  TASK-S07-004:
+            title: "Physical Storage Cleanup Runner and Local Storage Integration"
+            slice: SLICE-07
+            status: PLANNED
+            depends_on: [TASK-S07-003]
+            planning_baseline_sha: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
+            audit_release_commit: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
+            pre_task_checkpoint: checkpoint/pre-S07-004-002
+            superseded_checkpoints: [checkpoint/pre-S07-004-001]
+            prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
+            source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
+            prompt_review_status: "PASS (S07-004-PROMPT-REVIEW-003 @ 06f8635da5438424a69e0cff12e91fc2389dfd48; source reopen false)"
+            source_authority: "review_pack 11/37/39/41/42/47/48/59/66/73 and app_spec; current source_registry"
+            acceptance:
+              - "Server-only physical cleanup runner decouples database authorization from Storage provider deletion."
+              - "Exact authorized (bucket, path) deletion proves 12 physical provider test cases against local Supabase Storage."
+              - "Crash recovery, idempotency on 404, and stale attempt fences handle asynchronous failure windows safely."
+              - "All predecessor S07-003 contracts, migrations, and crossed regressions remain intact."
+            out_of_scope: "Production deployment, connected Supabase mutations, cron/scheduler, continuous daemon, sweeps, scanner/email runtime, UI, archive/purge, second next task."
+            implementation_started: false
+            next_frontier_behavior: "Stop at independent prompt PASS for external audit and explicit implementation-dispatch decision."'''
+          new = '''  TASK-S07-004:
+            title: "Physical Storage Cleanup Runner and Local Storage Integration"
+            slice: SLICE-07
+            status: IN_PROGRESS
+            depends_on: [TASK-S07-003]
+            planning_baseline_sha: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
+            audit_release_commit: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
+            pre_task_checkpoint: checkpoint/pre-S07-004-002
+            superseded_checkpoints: [checkpoint/pre-S07-004-001]
+            prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
+            source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
+            prompt_review_status: "PASS (S07-004-PROMPT-REVIEW-003 @ 06f8635da5438424a69e0cff12e91fc2389dfd48; source reopen false)"
+            source_authority: "review_pack 11/37/39/41/42/47/48/59/66/73 and app_spec; current source_registry"
+            acceptance:
+              - "Server-only physical cleanup runner decouples database authorization from Storage provider deletion."
+              - "Exact authorized (bucket, path) deletion proves 12 physical provider test cases against local Supabase Storage plus the separate worker-capability binding case."
+              - "Crash recovery, behavior-driven already-absent idempotency, retry settlement, and stale attempt fences handle asynchronous failure windows safely."
+              - "All predecessor S07-003 contracts, migrations, and crossed regressions remain intact."
+            out_of_scope: "Production deployment, connected Supabase mutations, cron/scheduler, continuous daemon, sweeps, scanner/email runtime, UI, archive/purge, second next task."
+            implementation_started: true
+            implementation_baseline_sha: "9af517c0f83af1c3337f6e7b12dd50595aaea9f0"
+            implementation_branch: chatgpt/TASK-S07-004-physical-storage-cleanup-runner
+            implementation_review_mode: OMP_EIU_REVIEWER
+            implementation_review_status: PENDING
+            review_role_override:
+              producer: EXTERNAL_CHATGPT
+              reviewer: OMP_EIU_REVIEWER
+              transport: OWNER_MESSAGE
+              chatgpt_self_accept_allowed: false
+              reason: Owner-authorized task-local producer/reviewer role separation
+            producer_verification:
+              product_candidate_sha: "7a9026b180aaf964d98bab7a099c30bd5785246d"
+              candidate_ci: "35039933000 PASS @ 7a9026b180aaf964d98bab7a099c30bd5785246d; Web, governance, predecessor DB regressions, worker binding, real local physical Storage integration, and DB lint PASS"
+              source_reopen_required: false
+            next_frontier_behavior: "HARD STOP at the exact verified task-branch candidate for OMP/eiu-reviewer independent implementation review; no serialization, accepted checkpoint, deployment, connected Supabase mutation, or next task before reviewer verdict."'''
+          if text.count(old) != 1:
+              raise SystemExit('TASK_REGISTRY S07-004 source block mismatch')
+          registry.write_text(text.replace(old, new))
+
+          runtime = Path('project_control/AUTONOMY_RUN_STATE.yaml')
+          text = runtime.read_text()
+          old = '''slice_07_planning:
+            status: S07_004_PROMPT_PASS_AWAITING_EXTERNAL_AUDIT
+            accepted_checkpoint: checkpoint/S07-003-accepted-001
+            accepted_checkpoint_sha: "7317138779270087e3e425f48b13785923b17f42"
+            accepted_task: TASK-S07-003
+            accepted_scope: "Storage cleanup eligibility and result-fencing trusted contracts."
+            source_reopen_required: false
+            implementation_reopen_required: false
+            lifecycle: CLOSED
+            external_final_acceptance_audit:
+              work_id: S07-003-EXTERNAL-FINAL-ACCEPTANCE-AUDIT-001
+              reviewer: EXTERNAL_CHATGPT
+              transport: OWNER_MESSAGE
+              decision: FINAL_ACCEPTANCE_PASS_AND_FRONTIER_RELEASE
+              accepted_sha: "7317138779270087e3e425f48b13785923b17f42"
+              source_reopen_required: false
+              implementation_reopen_required: false
+              evidence_persistence: "Owner-transported message; no reviewer-native persistence claimed."
+            external_boundaries:
+              scanner_provider_runtime: NOT_IMPLEMENTED
+              physical_storage_cleanup_worker: NOT_IMPLEMENTED
+              deployment_or_connected_supabase: NOT_USED
+            selected_task: TASK-S07-004
+            source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
+            prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
+            prompt_checkpoint: checkpoint/pre-S07-004-002
+            prompt_review_status: PASS
+            prompt_review_sha: "06f8635da5438424a69e0cff12e91fc2389dfd48"
+            prompt_review_work_id: S07-004-PROMPT-REVIEW-003
+            materialized_next_task_count: 1
+            implementation_started: false
+
+          safe_frontier:
+            eligible_tasks: []
+            skipped_due_to_dependency:
+              - "TASK-S07-004 prompt review PASS; awaiting external audit and implementation dispatch."
+            materialization_frontier: []
+            execution_hold: "Stop at prompt review PASS for external audit and explicit implementation dispatch; implementation not authorized."
+
+          stop_gate:
+            status: ACTIVE
+            type: S07_004_EXTERNAL_PROMPT_AUDIT_GATE
+            source_reopen_required: false
+            resume_on: "Owner-transported ChatGPT prompt audit decision."
+
+          next_action: "Freeze pre-task checkpoint pre-S07-004-002 and return S07-004 prompt packet to ChatGPT for audit; implementation strictly prohibited."'''
+          new = '''slice_07_planning:
+            status: S07_004_IMPLEMENTATION_COMPLETE_AWAITING_INDEPENDENT_REVIEW
+            accepted_checkpoint: checkpoint/S07-003-accepted-001
+            accepted_checkpoint_sha: "7317138779270087e3e425f48b13785923b17f42"
+            accepted_task: TASK-S07-003
+            accepted_scope: "Storage cleanup eligibility and result-fencing trusted contracts."
+            source_reopen_required: false
+            implementation_reopen_required: false
+            lifecycle: ACTIVE
+            external_final_acceptance_audit:
+              work_id: S07-003-EXTERNAL-FINAL-ACCEPTANCE-AUDIT-001
+              reviewer: EXTERNAL_CHATGPT
+              transport: OWNER_MESSAGE
+              decision: FINAL_ACCEPTANCE_PASS_AND_FRONTIER_RELEASE
+              accepted_sha: "7317138779270087e3e425f48b13785923b17f42"
+              source_reopen_required: false
+              implementation_reopen_required: false
+              evidence_persistence: "Owner-transported message; no reviewer-native persistence claimed."
+            external_boundaries:
+              scanner_provider_runtime: NOT_IMPLEMENTED
+              physical_storage_cleanup_worker: IMPLEMENTED_TASK_BRANCH_DISPOSABLE_LOCAL_VERIFIED_NOT_DEPLOYED
+              deployment_or_connected_supabase: NOT_USED
+            selected_task: TASK-S07-004
+            source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
+            prompt: project_control/prompts/SLICE-07_TASK-004_v1.md
+            prompt_checkpoint: checkpoint/pre-S07-004-002
+            prompt_review_status: PASS
+            prompt_review_sha: "06f8635da5438424a69e0cff12e91fc2389dfd48"
+            prompt_review_work_id: S07-004-PROMPT-REVIEW-003
+            materialized_next_task_count: 1
+            implementation_started: true
+            implementation_baseline_sha: "9af517c0f83af1c3337f6e7b12dd50595aaea9f0"
+            implementation_branch: chatgpt/TASK-S07-004-physical-storage-cleanup-runner
+            producer: EXTERNAL_CHATGPT
+            independent_implementation_reviewer: OMP_EIU_REVIEWER
+            implementation_review_status: PENDING
+            producer_verified_product_sha: "7a9026b180aaf964d98bab7a099c30bd5785246d"
+            producer_candidate_ci: "35039933000 PASS @ 7a9026b180aaf964d98bab7a099c30bd5785246d"
+
+          safe_frontier:
+            eligible_tasks: []
+            skipped_due_to_dependency:
+              - "TASK-S07-004 implementation candidate verified by producer; awaiting OMP/eiu-reviewer independent implementation review."
+            materialization_frontier: []
+            execution_hold: "HARD STOP at exact verified S07-004 candidate pending independent OMP/eiu-reviewer implementation verdict."
+
+          stop_gate:
+            status: ACTIVE
+            type: S07_004_INDEPENDENT_IMPLEMENTATION_REVIEW_GATE
+            source_reopen_required: false
+            resume_on: "Owner-transported OMP/eiu-reviewer PASS or BLOCKING_REPAIR verdict for the exact frozen candidate SHA."
+
+          next_action: "Return the exact verified S07-004 task-branch candidate and evidence packet to OMP/eiu-reviewer; no serialization, accepted checkpoint, deployment, connected Supabase mutation, or TASK-S07-005 before reviewer verdict."'''
+          if text.count(old) != 1:
+              raise SystemExit('AUTONOMY_RUN_STATE S07-004 source block mismatch')
+          runtime.write_text(text.replace(old, new))
+
+          state = Path('project_control/CURRENT_STATE.md')
+          text = state.read_text()
+          old = '''- `TASK-S07-004 — Physical Storage Cleanup Runner and Local Storage Integration` is now IN_PROGRESS after Owner-authorized implementation dispatch. Source reconciliation: `project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-004_v1.md`; immutable implementation baseline: `checkpoint/pre-S07-004-002` → `9af517c0f83af1c3337f6e7b12dd50595aaea9f0`.
+          - Independent prompt re-review by eiu-reviewer (`S07-004-PROMPT-REVIEW-003` @ `06f8635da5438424a69e0cff12e91fc2389dfd48`): PASS, source reopen false. External ChatGPT prompt-gate re-audit: PASS with pre-implementation governance reconciliation.
+          - Owner role override `S07-004-OWNER-ROLE-OVERRIDE-001`: ChatGPT is implementation producer/executor; OMP/`eiu-reviewer` is independent implementation reviewer. ChatGPT may not self-accept S07-004. Implementation branch: `chatgpt/TASK-S07-004-physical-storage-cleanup-runner`.
+          - No task beyond S07-004 is materialized; production deployment, connected Supabase operations, scanner/email provider runtimes, production scheduler/daemon, and TASK-S07-005 remain strictly out of scope.
+
+          ## Scope boundary
+
+          Current execution is authorized only for TASK-S07-004 implementation on the dedicated task branch, using disposable local Supabase for physical Storage integration. ChatGPT is the producer/executor and must stop at an exact candidate for OMP independent review. No serialization, accepted checkpoint, deployment, connected Supabase mutation, `main` mutation, PR merge, or subsequent task is authorized in this phase.'''
+          new = '''- `TASK-S07-004 — Physical Storage Cleanup Runner and Local Storage Integration` remains IN_PROGRESS but implementation production is complete and the review gate is active. Source reconciliation: `project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md`; prompt: `project_control/prompts/SLICE-07_TASK-004_v1.md`; immutable implementation baseline: `checkpoint/pre-S07-004-002` → `9af517c0f83af1c3337f6e7b12dd50595aaea9f0`.
+          - Independent prompt re-review by eiu-reviewer (`S07-004-PROMPT-REVIEW-003` @ `06f8635da5438424a69e0cff12e91fc2389dfd48`): PASS, source reopen false. External ChatGPT prompt-gate re-audit: PASS with pre-implementation governance reconciliation.
+          - Owner role override `S07-004-OWNER-ROLE-OVERRIDE-001`: ChatGPT is implementation producer/executor; OMP/`eiu-reviewer` is independent implementation reviewer. ChatGPT may not self-accept S07-004. Implementation branch: `chatgpt/TASK-S07-004-physical-storage-cleanup-runner`.
+          - Producer product verification: candidate product SHA `7a9026b180aaf964d98bab7a099c30bd5785246d`; Candidate CI `35039933000` PASS for Web, governance, zero-to-head/predecessor DB regressions, narrow worker binding, real disposable-local physical Storage integration across managed quarantine buckets, and DB lint. Local already-absent observation was behavior-driven (`remove()` returned no error with an empty data result) and is covered without treating missing buckets or generic provider errors as absence.
+          - Governance reconciliation intentionally does not embed a self-referential final candidate SHA. The external OMP handoff must name the exact task-branch HEAD after this reconciliation and require a fresh exact-SHA Candidate CI before independent review.
+          - No task beyond S07-004 is materialized; production deployment, connected Supabase operations, scanner/email provider runtimes, production scheduler/daemon, and TASK-S07-005 remain strictly out of scope.
+
+          ## Scope boundary
+
+          TASK-S07-004 is at the independent implementation review gate. ChatGPT has completed producer execution and must not self-accept. OMP/`eiu-reviewer` must review the exact frozen task-branch candidate. No serialization, accepted checkpoint, deployment, connected Supabase mutation, `main` mutation, PR merge, or subsequent task is authorized before that reviewer verdict.'''
+          if text.count(old) != 1:
+              raise SystemExit('CURRENT_STATE S07-004 source block mismatch')
+          state.write_text(text.replace(old, new))
+          PY
+      - name: Validate reconciled control plane
+        run: |
+          python project_control/validators/validate_control_plane.py
+          python project_control/validators/validate_omp_native.py
+          git diff --check
+      - name: Commit governance reconciliation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add project_control/TASK_REGISTRY.yaml project_control/AUTONOMY_RUN_STATE.yaml project_control/CURRENT_STATE.md
+          git commit -m 'chore(governance): gate S07-004 for independent review'
+          git push origin HEAD:chatgpt/TASK-S07-004-physical-storage-cleanup-runner
