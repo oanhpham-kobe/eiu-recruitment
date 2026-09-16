@@ -1,0 +1,41 @@
+name: S07-004 One-shot Test Expectation Repair
+
+on:
+  push:
+    branches:
+      - chatgpt/TASK-S07-004-physical-storage-cleanup-runner
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 2
+      - name: Align terminal queue expectations with accepted S07-003 authorization state
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('web/src/__tests__/storage-cleanup-local.integration.ts')
+          text = path.read_text()
+          old = r'^DONE\|ELIGIBLE\|'
+          new = r'^DONE\|AUTHORIZED\|'
+          count = text.count(old)
+          if count != 4:
+              raise SystemExit(f'expected exactly 4 DONE/ELIGIBLE assertions, found {count}')
+          path.write_text(text.replace(old, new))
+          PY
+      - name: Diff hygiene
+        run: git diff --check -- web/src/__tests__/storage-cleanup-local.integration.ts
+      - name: Commit bounded harness repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/src/__tests__/storage-cleanup-local.integration.ts
+          git commit -m 'test(storage): align authorization state assertions'
+          git push origin HEAD:chatgpt/TASK-S07-004-physical-storage-cleanup-runner
