@@ -632,8 +632,15 @@ async function main(): Promise<void> {
   );
 }
 
-try {
-  await main();
-} finally {
-  await cleanupObjects();
+async function runIntegration(): Promise<void> {
+  try {
+    await main();
+  } finally {
+    await cleanupObjects();
+  }
 }
+
+void runIntegration().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
