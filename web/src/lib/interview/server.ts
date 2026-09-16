@@ -60,6 +60,12 @@ function permissions(session: AppSession): InterviewPermissions {
     canChangeStatus: root || (view && has(session, "interviews.status")),
     canManageParticipants:
       root || (view && has(session, "interviews.participants")),
+    canEmail: root || has(session, "interviews.email"),
+    canViewEmailHistory: root || has(session, "emails.history_view"),
+    canDeleteEmailHistory:
+      root ||
+      (has(session, "emails.history_view") &&
+        has(session, "emails.history_delete")),
     canCreateApplication:
       root ||
       (has(session, "submissions.view") &&
