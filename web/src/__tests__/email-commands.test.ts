@@ -116,23 +116,59 @@ test("previewInterviewEmail sends the exact accepted four RPC parameters and ret
 });
 
 test("email command adapters preserve backend FORBIDDEN and never fabricate UNAUTHENTICATED", async () => {
-  const { client } = rpcClient({
+  const preview = rpcClient({
     preview_email: () => ({ success: false, error_code: "FORBIDDEN" }),
   });
-  const result = await previewInterviewEmail(
+  const previewResult = await previewInterviewEmail(
     {
       emailType: "INTERVIEW_INVITATION",
       interviewId,
       applicationId,
       submissionId,
     },
-    { client },
+    { client: preview.client },
   );
-  assert.equal(result.success, false);
-  if (!result.success) {
-    assert.equal(result.error.code, "FORBIDDEN");
-    assert.notEqual(result.error.code, "UNAUTHENTICATED");
+  assert.equal(previewResult.success, false);
+  if (!previewResult.success) {
+    assert.equal(previewResult.error.code, "FORBIDDEN");
+    assert.notEqual(previewResult.error.code, "UNAUTHENTICATED");
   }
+
+  const enqueue = rpcClient({
+    enqueue_email: () => ({ success: false, error_code: "FORBIDDEN" }),
+  });
+  const enqueueResult = await enqueueInterviewEmail(
+    enqueueRequest(),
+    idempotencyKey,
+    { client: enqueue.client },
+  );
+  assert.equal(enqueueResult.success, false);
+  if (!enqueueResult.success)
+    assert.equal(enqueueResult.error.code, "FORBIDDEN");
+
+  const bulk = rpcClient({
+    bulk_enqueue_email: () => ({ success: false, error_code: "FORBIDDEN" }),
+  });
+  const bulkResult = await bulkEnqueueInterviewEmails(
+    [enqueueRequest()],
+    idempotencyKey,
+    { client: bulk.client },
+  );
+  assert.equal(bulkResult.success, false);
+  if (!bulkResult.success) assert.equal(bulkResult.error.code, "FORBIDDEN");
+
+  const historyDelete = rpcClient({
+    delete_email_history: () => ({ success: false, error_code: "FORBIDDEN" }),
+  });
+  const deleteResult = await deleteEmailHistoryEntry(
+    historyId,
+    "WRONG_RECORD",
+    "Wrong record",
+    { client: historyDelete.client },
+  );
+  assert.equal(deleteResult.success, false);
+  if (!deleteResult.success)
+    assert.equal(deleteResult.error.code, "FORBIDDEN");
 });
 
 test("enqueueInterviewEmail sends exactly the five-key request and idempotency key", async () => {
@@ -189,30 +225,37 @@ test("enqueueInterviewEmail surfaces STALE_PREVIEW as the accepted structured er
   }
 });
 
-test("bulkEnqueueInterviewEmails sends 1..100 complete preview-fenced requests", async () => {
+test("bulkEnqueueInterviewEmails sends 1..100 complete requests and parses the direct per-item result", async () => {
   const requests = [
     enqueueRequest("INTERVIEW_INVITATION"),
     enqueueRequest("INTERVIEW_PARTICIPANT_INVITATION"),
   ];
   const { client, calls } = rpcClient({
     bulk_enqueue_email: () => ({
-      success: true,
-      data: {
-        success: [
-          {
-            interview_id: interviewId,
-            email_type: "INTERVIEW_INVITATION",
-            email_outbox_id: "60000000-0000-0000-0000-000000000001",
-          },
-        ],
-        failed: [],
-      },
+      success: [
+        {
+          id: interviewId,
+          email_type: "INTERVIEW_INVITATION",
+          application_id: applicationId,
+          submission_id: submissionId,
+          email_outbox_id: "60000000-0000-0000-0000-000000000001",
+        },
+      ],
+      failed: [],
     }),
   });
   const result = await bulkEnqueueInterviewEmails(requests, idempotencyKey, {
     client,
   });
   assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.data.success[0]?.id, interviewId);
+    assert.equal(
+      result.data.success[0]?.email_outbox_id,
+      "60000000-0000-0000-0000-000000000001",
+    );
+    assert.deepEqual(result.data.failed, []);
+  }
   assert.deepEqual(calls, [
     {
       fn: "bulk_enqueue_email",
@@ -290,9 +333,22 @@ test("loadInterviewEmailHistory scopes by interview and accepts only completed h
   };
   const { client, calls } = historyClient([
     { ...base, status_code: "SENT" },
-    { ...base, email_history_id: "40000000-0000-0000-0000-000000000002", status_code: "FAILED", error_code: "PROVIDER_ERROR" },
-    { ...base, email_history_id: "40000000-0000-0000-0000-000000000003", status_code: "CANCELLED" },
-    { ...base, email_history_id: "40000000-0000-0000-0000-000000000004", status_code: "ABANDONED" },
+    {
+      ...base,
+      email_history_id: "40000000-0000-0000-0000-000000000002",
+      status_code: "FAILED",
+      error_code: "PROVIDER_ERROR",
+    },
+    {
+      ...base,
+      email_history_id: "40000000-0000-0000-0000-000000000003",
+      status_code: "CANCELLED",
+    },
+    {
+      ...base,
+      email_history_id: "40000000-0000-0000-0000-000000000004",
+      status_code: "ABANDONED",
+    },
   ]);
   const result = await loadInterviewEmailHistory(interviewId, { client });
   assert.equal(result.success, true);
