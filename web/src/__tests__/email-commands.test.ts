@@ -197,8 +197,10 @@ test("enqueueInterviewEmail sends exactly the five-key request and idempotency k
       },
     },
   ]);
+  const enqueueCall = calls[0];
+  assert.ok(enqueueCall);
   const sentRequest = (
-    calls[0]?.args as { p_request: Record<string, unknown> }
+    enqueueCall.args as { p_request: Record<string, unknown> }
   ).p_request;
   assert.deepEqual(Object.keys(sentRequest).sort(), [
     "application_id",
