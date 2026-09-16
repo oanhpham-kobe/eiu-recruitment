@@ -420,7 +420,7 @@ async function main(): Promise<void> {
   assert.deepEqual(candidateCounted.calls, [
     [candidate.bucket, candidate.path],
   ]);
-  assert.match(queueState(candidate.queueId), /^DONE\|ELIGIBLE\|1\|/);
+  assert.match(queueState(candidate.queueId), /^DONE\|AUTHORIZED\|1\|/);
 
   // 2: Interview-quarantine physical deletion using its accepted managed path shape.
   retireActiveQueues();
@@ -539,7 +539,7 @@ async function main(): Promise<void> {
   });
   assert.equal(terminalResult.jobs[0]?.result, "DONE");
   assert.equal(await exists(terminal.bucket, terminal.path), false);
-  assert.match(queueState(terminal.queueId), /^DONE\|ELIGIBLE\|1\|/);
+  assert.match(queueState(terminal.queueId), /^DONE\|AUTHORIZED\|1\|/);
 
   // 9: Crash after physical delete but before completion -> reclaim -> absent -> DONE.
   retireActiveQueues();
@@ -568,7 +568,7 @@ async function main(): Promise<void> {
     leaseSeconds: 60,
   });
   assert.equal(crashRecovery.jobs[0]?.result, "DONE");
-  assert.match(queueState(crash.queueId), /^DONE\|ELIGIBLE\|2\|/);
+  assert.match(queueState(crash.queueId), /^DONE\|AUTHORIZED\|2\|/);
 
   // 10: Object already absent before first delete converges to DONE.
   retireActiveQueues();
@@ -582,7 +582,7 @@ async function main(): Promise<void> {
     leaseSeconds: 60,
   });
   assert.equal(absentResult.jobs[0]?.result, "DONE");
-  assert.match(queueState(absent.queueId), /^DONE\|ELIGIBLE\|1\|/);
+  assert.match(queueState(absent.queueId), /^DONE\|AUTHORIZED\|1\|/);
 
   // 11: Provider timeout records bounded retry and does not falsely delete; retry succeeds.
   retireActiveQueues();
@@ -624,7 +624,7 @@ async function main(): Promise<void> {
   assert.equal(await exists(retry.bucket, retry.path), false);
   assert.match(
     queueState(retry.queueId),
-    /^DONE\|ELIGIBLE\|2\|PROVIDER_TIMEOUT$/,
+    /^DONE\|AUTHORIZED\|2\|PROVIDER_TIMEOUT$/,
   );
 
   console.log(
