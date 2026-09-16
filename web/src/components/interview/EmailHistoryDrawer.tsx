@@ -49,28 +49,33 @@ export function EmailHistoryDrawer({
     text: string;
   } | null>(null);
 
-  const loadHistory = useCallback(async () => {
-    setLoading(true);
-    setMessage(null);
-    try {
-      const result = await loadInterviewEmailHistoryAction(interviewId);
-      if (!result.success) {
+  const loadHistory = useCallback(
+    async (clearMessage = true): Promise<boolean> => {
+      setLoading(true);
+      if (clearMessage) setMessage(null);
+      try {
+        const result = await loadInterviewEmailHistoryAction(interviewId);
+        if (!result.success) {
+          setRows([]);
+          setMessage({ kind: "error", text: result.error.message });
+          return false;
+        }
+        setRows(result.data);
+        setSelectedIds(new Set());
+        return true;
+      } catch {
         setRows([]);
-        setMessage({ kind: "error", text: result.error.message });
-        return;
+        setMessage({
+          kind: "error",
+          text: "Không thể tải Email History. Vui lòng thử lại.",
+        });
+        return false;
+      } finally {
+        setLoading(false);
       }
-      setRows(result.data);
-      setSelectedIds(new Set());
-    } catch {
-      setRows([]);
-      setMessage({
-        kind: "error",
-        text: "Không thể tải Email History. Vui lòng thử lại.",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [interviewId]);
+    },
+    [interviewId],
+  );
 
   useEffect(() => {
     if (open) void loadHistory();
@@ -102,6 +107,7 @@ export function EmailHistoryDrawer({
     setDeleting(true);
     setMessage(null);
     let deleted = 0;
+    let failure: string | null = null;
     try {
       for (const row of selectedRows) {
         const result = await deleteEmailHistoryEntryAction({
@@ -110,31 +116,34 @@ export function EmailHistoryDrawer({
           reason,
         });
         if (!result.success) {
-          setMessage({
-            kind: "error",
-            text:
-              deleted > 0
-                ? `Đã xóa ${deleted} bản ghi trước khi gặp lỗi: ${result.error.message}`
-                : result.error.message,
-          });
+          failure =
+            deleted > 0
+              ? `Đã xóa ${deleted} bản ghi trước khi gặp lỗi: ${result.error.message}`
+              : result.error.message;
           break;
         }
         deleted += 1;
       }
       setDeleteOpen(false);
-      await loadHistory();
-      if (deleted === selectedRows.length) {
+      const refreshed = await loadHistory(false);
+      if (!refreshed) return;
+      if (failure) {
+        setMessage({ kind: "error", text: failure });
+      } else {
         setMessage({
           kind: "success",
           text: `Đã xóa ${deleted} bản ghi Email History. Security audit vẫn được giữ nguyên.`,
         });
       }
     } catch {
+      await loadHistory(false);
       setMessage({
         kind: "error",
-        text: "Không thể hoàn tất xóa Email History. Vui lòng thử lại.",
+        text:
+          deleted > 0
+            ? `Đã xóa ${deleted} bản ghi trước khi thao tác bị gián đoạn.`
+            : "Không thể hoàn tất xóa Email History. Vui lòng thử lại.",
       });
-      await loadHistory();
     } finally {
       setDeleting(false);
     }
@@ -148,7 +157,10 @@ export function EmailHistoryDrawer({
         onClose={deleting ? () => undefined : onClose}
         footer={
           <div className="interview-drawer-actions">
-            <Button disabled={loading || deleting} onClick={() => void loadHistory()}>
+            <Button
+              disabled={loading || deleting}
+              onClick={() => void loadHistory()}
+            >
               Tải lại
             </Button>
             {canDelete ? (
@@ -168,7 +180,9 @@ export function EmailHistoryDrawer({
             Email History chỉ hiển thị kết quả giao nhận đã hoàn tất. Trạng thái
             hàng đợi QUEUED thuộc Email Outbox và không được tổng hợp vào đây.
           </p>
-          {message ? <AsyncStatus kind={message.kind}>{message.text}</AsyncStatus> : null}
+          {message ? (
+            <AsyncStatus kind={message.kind}>{message.text}</AsyncStatus>
+          ) : null}
           {loading ? <AsyncStatus>Đang tải Email History…</AsyncStatus> : null}
           {!loading && !rows.length ? (
             <p>Chưa có Email History cho Interview này.</p>
@@ -184,7 +198,9 @@ export function EmailHistoryDrawer({
                     {canDelete ? (
                       <th scope="col">
                         <label>
-                          <span className="sr-only">Chọn tất cả Email History</span>
+                          <span className="sr-only">
+                            Chọn tất cả Email History
+                          </span>
                           <input
                             type="checkbox"
                             checked={allSelected}
@@ -192,7 +208,9 @@ export function EmailHistoryDrawer({
                             onChange={(event) =>
                               setSelectedIds(
                                 event.target.checked
-                                  ? new Set(rows.map((row) => row.email_history_id))
+                                  ? new Set(
+                                      rows.map((row) => row.email_history_id),
+                                    )
                                   : new Set(),
                               )
                             }
@@ -221,7 +239,9 @@ export function EmailHistoryDrawer({
                           />
                         </td>
                       ) : null}
-                      <td>{formatEmailHistoryRecipients(row.recipients) || "—"}</td>
+                      <td>
+                        {formatEmailHistoryRecipients(row.recipients) || "—"}
+                      </td>
                       <td>{row.subject ?? "—"}</td>
                       <td>
                         <div>{row.email_type}</div>
@@ -230,12 +250,18 @@ export function EmailHistoryDrawer({
                         </span>
                       </td>
                       <td>
-                        <StatusBadge tone={emailHistoryStatusTone(row.status_code)}>
+                        <StatusBadge
+                          tone={emailHistoryStatusTone(row.status_code)}
+                        >
                           {row.status_code}
                         </StatusBadge>
                       </td>
                       <td>{formatTimestamp(emailHistoryTimestamp(row))}</td>
-                      <td>{row.status_code === "FAILED" ? row.error_code ?? "—" : "—"}</td>
+                      <td>
+                        {row.status_code === "FAILED"
+                          ? row.error_code ?? "—"
+                          : "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
