@@ -54,8 +54,10 @@ export interface EmailEnqueueInput {
 }
 
 export interface BulkEmailItemResult {
-  interview_id?: string;
+  id: string;
   email_type?: InterviewEmailType;
+  application_id?: string;
+  submission_id?: string;
   email_outbox_id?: string;
   error_code?: string;
 }
@@ -91,6 +93,7 @@ function messageFor(code: string): string {
   const messages: Record<string, string> = {
     FORBIDDEN: "Bạn không có quyền thực hiện thao tác email này.",
     VALIDATION_ERROR: "Dữ liệu email chưa hợp lệ.",
+    BATCH_LIMIT_EXCEEDED: "Danh sách email vượt giới hạn cho phép.",
     UNSUPPORTED_EMAIL_TYPE: "Loại email không được hỗ trợ.",
     INVALID_EMAIL_CONTEXT: "Ngữ cảnh email không hợp lệ.",
     EMAIL_RECIPIENTS_UNAVAILABLE: "Không có địa chỉ email người nhận hợp lệ.",
@@ -99,6 +102,7 @@ function messageFor(code: string): string {
     PREVIEW_REQUIRED: "Vui lòng xem trước email trước khi gửi.",
     STALE_PREVIEW: "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
     IDEMPOTENCY_CONFLICT: "Yêu cầu gửi bị trùng khóa với nội dung khác.",
+    INVALID_CLEANUP_CLASSIFICATION: "Phân loại hoặc lý do xóa Email History không hợp lệ.",
   };
   return messages[code] ?? "Không thể hoàn tất thao tác email. Vui lòng thử lại.";
 }
@@ -118,6 +122,28 @@ function rpcResult<T>(data: unknown): EmailCommandResult<T> {
     return { success: false, error: { code, message: messageFor(code) } };
   }
   return { success: true, data: result.data };
+}
+
+function bulkRpcResult(data: unknown): EmailCommandResult<BulkEmailResult> {
+  const result = data as
+    | {
+        success?: unknown;
+        failed?: unknown;
+        error_code?: unknown;
+      }
+    | null;
+  if (Array.isArray(result?.success) && Array.isArray(result?.failed)) {
+    return {
+      success: true,
+      data: {
+        success: result.success as BulkEmailItemResult[],
+        failed: result.failed as BulkEmailItemResult[],
+      },
+    };
+  }
+  const code =
+    typeof result?.error_code === "string" ? result.error_code : "INTERNAL_ERROR";
+  return { success: false, error: { code, message: messageFor(code) } };
 }
 
 function validContext(input: EmailPreviewInput): boolean {
@@ -211,7 +237,7 @@ export async function bulkEnqueueInterviewEmails(
     console.error("[email-command] bulk_enqueue_email RPC error", error.message);
     return { success: false, error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") } };
   }
-  return rpcResult<BulkEmailResult>(data);
+  return bulkRpcResult(data);
 }
 
 export async function deleteEmailHistoryEntry(
