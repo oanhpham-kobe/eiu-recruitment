@@ -54,6 +54,7 @@ export function EmailPreviewDialog({
       setFeedback({ tone: "error", message: result.error.message });
     }
     setPending(false);
+    return result.success;
   }, [application.applicationId, application.submissionId, emailType, round.interviewId]);
 
   useEffect(() => {
@@ -83,11 +84,13 @@ export function EmailPreviewDialog({
       return;
     }
     if (result.error.code === "STALE_PREVIEW") {
-      setFeedback({
-        tone: "info",
-        message: "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
-      });
-      await loadPreview();
+      const refreshed = await loadPreview();
+      if (refreshed) {
+        setFeedback({
+          tone: "info",
+          message: "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
+        });
+      }
       return;
     }
     setFeedback({ tone: "error", message: result.error.message });
