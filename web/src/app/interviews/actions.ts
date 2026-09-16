@@ -4,6 +4,15 @@ import { revalidatePath } from "next/cache";
 import { loadAssignmentOptions } from "@/lib/application-inbox/submission-detail-server";
 import { createOrUpdateApplication } from "@/lib/commands/application-lifecycle";
 import {
+  bulkEnqueueInterviewEmails,
+  deleteEmailHistoryEntry,
+  enqueueInterviewEmail,
+  type InterviewEmailRequest,
+  loadInterviewEmailHistory,
+  type ManualInterviewEmailType,
+  previewInterviewEmail,
+} from "@/lib/commands/email-commands";
+import {
   addInterviewParticipant,
   type CopyInterviewScheduleInput,
   changeInterviewScheduleStatus,
@@ -195,4 +204,47 @@ export async function reorderInterviewParticipantsAction(input: {
   expectedVersions: number[];
 }) {
   return refreshOnSuccess(await reorderInterviewParticipants(input));
+}
+
+export async function previewInterviewEmailAction(input: {
+  emailType: ManualInterviewEmailType;
+  interviewId: string;
+  applicationId: string;
+  submissionId: string;
+}) {
+  return previewInterviewEmail(input);
+}
+
+export async function enqueueInterviewEmailAction(input: {
+  emailType: ManualInterviewEmailType;
+  interviewId: string;
+  applicationId: string;
+  submissionId: string;
+  previewFingerprint: string;
+  idempotencyKey: string;
+}) {
+  return enqueueInterviewEmail(input, input.idempotencyKey);
+}
+
+export async function bulkEnqueueInterviewEmailsAction(input: {
+  requests: InterviewEmailRequest[];
+  idempotencyKey: string;
+}) {
+  return bulkEnqueueInterviewEmails(input.requests, input.idempotencyKey);
+}
+
+export async function loadInterviewEmailHistoryAction(interviewId: string) {
+  return loadInterviewEmailHistory(interviewId);
+}
+
+export async function deleteEmailHistoryEntryAction(input: {
+  emailHistoryId: string;
+  classification: "TEST_RECORD" | "WRONG_RECORD";
+  reason: string | null;
+}) {
+  return deleteEmailHistoryEntry(
+    input.emailHistoryId,
+    input.classification,
+    input.reason,
+  );
 }
