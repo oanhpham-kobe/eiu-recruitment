@@ -632,14 +632,14 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: S07_004_PROMPT_PASS_AWAITING_EXTERNAL_AUDIT
+  status: S07_004_IMPLEMENTATION_COMPLETE_AWAITING_INDEPENDENT_REVIEW
   accepted_checkpoint: checkpoint/S07-003-accepted-001
   accepted_checkpoint_sha: "7317138779270087e3e425f48b13785923b17f42"
   accepted_task: TASK-S07-003
   accepted_scope: "Storage cleanup eligibility and result-fencing trusted contracts."
   source_reopen_required: false
   implementation_reopen_required: false
-  lifecycle: CLOSED
+  lifecycle: ACTIVE
   external_final_acceptance_audit:
     work_id: S07-003-EXTERNAL-FINAL-ACCEPTANCE-AUDIT-001
     reviewer: EXTERNAL_CHATGPT
@@ -651,7 +651,7 @@ slice_07_planning:
     evidence_persistence: "Owner-transported message; no reviewer-native persistence claimed."
   external_boundaries:
     scanner_provider_runtime: NOT_IMPLEMENTED
-    physical_storage_cleanup_worker: NOT_IMPLEMENTED
+    physical_storage_cleanup_worker: IMPLEMENTED_TASK_BRANCH_DISPOSABLE_LOCAL_VERIFIED_NOT_DEPLOYED
     deployment_or_connected_supabase: NOT_USED
   selected_task: TASK-S07-004
   source_reconciliation: project_control/reviews/S07_004_SOURCE_RECONCILIATION_v1.md
@@ -661,19 +661,26 @@ slice_07_planning:
   prompt_review_sha: "06f8635da5438424a69e0cff12e91fc2389dfd48"
   prompt_review_work_id: S07-004-PROMPT-REVIEW-003
   materialized_next_task_count: 1
-  implementation_started: false
+  implementation_started: true
+  implementation_baseline_sha: "9af517c0f83af1c3337f6e7b12dd50595aaea9f0"
+  implementation_branch: chatgpt/TASK-S07-004-physical-storage-cleanup-runner
+  producer: EXTERNAL_CHATGPT
+  independent_implementation_reviewer: OMP_EIU_REVIEWER
+  implementation_review_status: PENDING
+  producer_verified_product_sha: "7a9026b180aaf964d98bab7a099c30bd5785246d"
+  producer_candidate_ci: "35039933000 PASS @ 7a9026b180aaf964d98bab7a099c30bd5785246d"
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-004 prompt review PASS; awaiting external audit and implementation dispatch."
+    - "TASK-S07-004 implementation candidate verified by producer; awaiting OMP/eiu-reviewer independent implementation review."
   materialization_frontier: []
-  execution_hold: "Stop at prompt review PASS for external audit and explicit implementation dispatch; implementation not authorized."
+  execution_hold: "HARD STOP at exact verified S07-004 candidate pending independent OMP/eiu-reviewer implementation verdict."
 
 stop_gate:
   status: ACTIVE
-  type: S07_004_EXTERNAL_PROMPT_AUDIT_GATE
+  type: S07_004_INDEPENDENT_IMPLEMENTATION_REVIEW_GATE
   source_reopen_required: false
-  resume_on: "Owner-transported ChatGPT prompt audit decision."
+  resume_on: "Owner-transported OMP/eiu-reviewer PASS or BLOCKING_REPAIR verdict for the exact frozen candidate SHA."
 
-next_action: "Freeze pre-task checkpoint pre-S07-004-002 and return S07-004 prompt packet to ChatGPT for audit; implementation strictly prohibited."
+next_action: "Return the exact verified S07-004 task-branch candidate and evidence packet to OMP/eiu-reviewer; no serialization, accepted checkpoint, deployment, connected Supabase mutation, or TASK-S07-005 before reviewer verdict."

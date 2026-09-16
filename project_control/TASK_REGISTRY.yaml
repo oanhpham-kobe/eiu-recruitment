@@ -1363,7 +1363,7 @@ tasks:
   TASK-S07-004:
     title: "Physical Storage Cleanup Runner and Local Storage Integration"
     slice: SLICE-07
-    status: PLANNED
+    status: IN_PROGRESS
     depends_on: [TASK-S07-003]
     planning_baseline_sha: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
     audit_release_commit: "f536c839e0999e66b498dbfcd40d321539a7b4cd"
@@ -1375,9 +1375,23 @@ tasks:
     source_authority: "review_pack 11/37/39/41/42/47/48/59/66/73 and app_spec; current source_registry"
     acceptance:
       - "Server-only physical cleanup runner decouples database authorization from Storage provider deletion."
-      - "Exact authorized (bucket, path) deletion proves 12 physical provider test cases against local Supabase Storage."
-      - "Crash recovery, idempotency on 404, and stale attempt fences handle asynchronous failure windows safely."
+      - "Exact authorized (bucket, path) deletion proves 12 physical provider test cases against local Supabase Storage plus the separate worker-capability binding case."
+      - "Crash recovery, behavior-driven already-absent idempotency, retry settlement, and stale attempt fences handle asynchronous failure windows safely."
       - "All predecessor S07-003 contracts, migrations, and crossed regressions remain intact."
     out_of_scope: "Production deployment, connected Supabase mutations, cron/scheduler, continuous daemon, sweeps, scanner/email runtime, UI, archive/purge, second next task."
-    implementation_started: false
-    next_frontier_behavior: "Stop at independent prompt PASS for external audit and explicit implementation-dispatch decision."
+    implementation_started: true
+    implementation_baseline_sha: "9af517c0f83af1c3337f6e7b12dd50595aaea9f0"
+    implementation_branch: chatgpt/TASK-S07-004-physical-storage-cleanup-runner
+    implementation_review_mode: OMP_EIU_REVIEWER
+    implementation_review_status: PENDING
+    review_role_override:
+      producer: EXTERNAL_CHATGPT
+      reviewer: OMP_EIU_REVIEWER
+      transport: OWNER_MESSAGE
+      chatgpt_self_accept_allowed: false
+      reason: Owner-authorized task-local producer/reviewer role separation
+    producer_verification:
+      product_candidate_sha: "7a9026b180aaf964d98bab7a099c30bd5785246d"
+      candidate_ci: "35039933000 PASS @ 7a9026b180aaf964d98bab7a099c30bd5785246d; Web, governance, predecessor DB regressions, worker binding, real local physical Storage integration, and DB lint PASS"
+      source_reopen_required: false
+    next_frontier_behavior: "HARD STOP at exact verified task-branch candidate for OMP/eiu-reviewer independent implementation review; no serialization, accepted checkpoint, deployment, connected Supabase mutation, or next task before reviewer verdict."
