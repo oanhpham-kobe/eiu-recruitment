@@ -38,10 +38,10 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "2c42533733257caa3567cd6c8cae80e13b3092b8"
-  last_verified_application_ci_run: "35046185306"
-  accepted_checkpoint: checkpoint/S07-004-accepted-001
-  accepted_checkpoint_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
+  last_verified_application_checkpoint: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+  last_verified_application_ci_run: "35236834202"
+  accepted_checkpoint: checkpoint/S07-005-accepted-001
+  accepted_checkpoint_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
   last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
   last_verified_slice_closing_ci_run: "34201054499"
   last_verified_control_plane_sha: "44f1d1d22d09a3b8bb0855324b6631e16256cefc"
@@ -49,13 +49,13 @@ integration:
   last_verified_control_plane_governance_ci_run: "34736028909"
   current_reporting_head: DIRECT_GIT_RUNTIME
   current_reporting_classification: GOVERNANCE_ONLY
-  last_task_acceptance_attempt_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
-  last_task_acceptance_integration_ci_run: "34765432362"
+  last_task_acceptance_attempt_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+  last_task_acceptance_integration_ci_run: "35236834202"
   last_task_acceptance_integration_ci_result: PASS
-  acceptance_domain_verification: "34765432362 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; full_verification=true; resolver, Web, Database and both S07-002 DB gates PASS"
-  prior_incomplete_acceptance_ci: "34764835368 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; resolver PASS; Web/Database skipped; insufficient final acceptance domain verification"
-  last_task_acceptance_governance_ci_run: NOT_RUN
-  last_task_acceptance_governance_ci_result: NOT_APPLICABLE
+  acceptance_domain_verification: "35234321237 @ c2474f2d83b5a7748fde49db04c4dba85398b216 product Web verification PASS; local exact-candidate predecessor DB regressions PASS; 35236834202 and 35236834204 PASS @ governance-reconciled accepted SHA 0caf83354a1353d7fc807d3b3014720f9720e2e3; independent final acceptance audit PASS."
+  prior_incomplete_acceptance_ci: "35211232380 @ 48e29338fb1f6daa23b981f3a5b79d087ed8178f; Integration CI failed only on canonical Biome formatting before formatting-only repair and independent re-review."
+  last_task_acceptance_governance_ci_run: "35236834204"
+  last_task_acceptance_governance_ci_result: PASS
   current_prompt_review_target_sha: "c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
 
 
@@ -117,16 +117,22 @@ worker_settled_history:
     exact_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
     settled_at: "2026-09-14T00:00:00Z"
 last_accepted_task:
-  id: TASK-S07-002
-  commit: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
-  accepted_checkpoint: checkpoint/S07-002-accepted-001
-  accepted_checkpoint_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
+  id: TASK-S07-005
+  commit: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+  accepted_checkpoint: checkpoint/S07-005-accepted-001
+  accepted_checkpoint_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+  annotated_tag_object: "63be36559229b758353b9a95e867d8632814b10d"
   evidence:
-    - "implementation_review: PASS (S07-002-IMPLEMENTATION-REVIEW-001-R9 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed)"
-    - "integration_equivalence_review: PASS (S07-002-INTEGRATION-EQUIVALENCE-REVIEW-001 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed)"
-    - "github_ci: VERIFIED (Integration CI 34765432362 @ d99776aa6e07c0023ada9906211f6d1d4b17f5ed; resolver, Web, Database and both S07-002 DB gates PASS)"
+    - "implementation_review: PASS (S07-005-IMPLEMENTATION-REVIEW-003 @ f4a568f87556e1d97da9fd315f50c73b00a60f5c)"
+    - "external_integration_audit: PASS (S07-005-EXTERNAL-INTEGRATION-AUDIT-001 @ c2474f2d83b5a7748fde49db04c4dba85398b216)"
+    - "final_acceptance_audit: PASS (S07-005-FINAL-ACCEPTANCE-AUDIT-001 @ 0caf83354a1353d7fc807d3b3014720f9720e2e3)"
+    - "github_ci: VERIFIED (Integration CI 35236834202 and Governance CI 35236834204 PASS @ 0caf83354a1353d7fc807d3b3014720f9720e2e3)"
+    - "checkpoint: checkpoint/S07-005-accepted-001; annotated tag object 63be36559229b758353b9a95e867d8632814b10d; peeled target 0caf83354a1353d7fc807d3b3014720f9720e2e3"
 
 previous_accepted_tasks:
+  TASK-S07-004: {commit: "2c42533733257caa3567cd6c8cae80e13b3092b8"}
+  TASK-S07-003: {commit: "7317138779270087e3e425f48b13785923b17f42"}
+  TASK-S07-002: {commit: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"}
   TASK-S06-002: {commit: "5f2b76c7f1e901b3cadb847906efcd1568c8cbc3"}
   TASK-S06-001: {commit: "59be9b2c92906065b8e4baa902fcec1d4cbefa12"}
   TASK-S05-002: {commit: "fe556dda76ebeda7107bcb9310cbaf338b30fc29"}
@@ -632,23 +638,29 @@ slice_06_external_audit:
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
 slice_07_planning:
-  status: S07_005_INTEGRATED_AWAITING_FINAL_ACCEPTANCE_AUDIT
-  accepted_checkpoint: checkpoint/S07-004-accepted-001
-  accepted_checkpoint_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
-  accepted_task: TASK-S07-004
-  accepted_scope: "Physical storage cleanup runner and local Storage integration."
+  status: S07_005_ACCEPTED_AWAITING_SLICE_CLOSING_REREVIEW
+  accepted_checkpoint: checkpoint/S07-005-accepted-001
+  accepted_checkpoint_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+  accepted_checkpoint_tag_object: "63be36559229b758353b9a95e867d8632814b10d"
+  accepted_task: TASK-S07-005
+  accepted_scope: "Email History projection and manual preview-fenced Candidate/Participant email outbox UI consumers."
   source_reopen_required: false
   implementation_reopen_required: false
   lifecycle: ACTIVE
   independent_final_acceptance_audit:
-    work_id: S07-004-OMP-FINAL-ACCEPTANCE-AUDIT-001
+    work_id: S07-005-FINAL-ACCEPTANCE-AUDIT-001
     reviewer: OMP_EIU_REVIEWER
     transport: OWNER_TRANSPORTED
     decision: FINAL_ACCEPTANCE_PASS
-    accepted_sha: "2c42533733257caa3567cd6c8cae80e13b3092b8"
+    accepted_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+    accepted_checkpoint: checkpoint/S07-005-accepted-001
+    annotated_tag_object: "63be36559229b758353b9a95e867d8632814b10d"
     source_reopen_required: false
     implementation_reopen_required: false
-    evidence_persistence: "Owner-transported OMP audit decision based on exact-SHA candidate CI 35040828903, serialized integration CI 35046185306, and governance CI 35046185309."
+    evidence_artifact: project_control/reviews/S07_005_FINAL_ACCEPTANCE_AUDIT_0caf833_v1.md
+    product_integration_ci: "35234321237 PASS @ c2474f2d83b5a7748fde49db04c4dba85398b216"
+    final_integration_ci: "35236834202 PASS @ 0caf83354a1353d7fc807d3b3014720f9720e2e3"
+    final_governance_ci: "35236834204 PASS @ 0caf83354a1353d7fc807d3b3014720f9720e2e3"
   external_boundaries:
     scanner_provider_runtime: NOT_IMPLEMENTED
     physical_storage_cleanup_worker: IMPLEMENTED_TASK_BRANCH_DISPOSABLE_LOCAL_VERIFIED_NOT_DEPLOYED
@@ -705,19 +717,26 @@ slice_07_planning:
   serialized_governance_ci: "35234321180 PASS"
   external_integration_audit: PASS
   external_integration_audit_work_id: S07-005-EXTERNAL-INTEGRATION-AUDIT-001
-  final_acceptance_audit_status: PENDING
+  final_acceptance_audit_status: PASS
+  final_acceptance_audit_work_id: S07-005-FINAL-ACCEPTANCE-AUDIT-001
+  accepted_checkpoint_verified: checkpoint/S07-005-accepted-001
+  historical_slice_closing_review:
+    work_id: SLICE-07-CLOSING-REVIEW-001
+    verdict: BLOCKING_REPAIR
+    finding: S07-CLOSING-001
+    disposition: AWAITING_INDEPENDENT_REREVIEW_AFTER_S07_005_ACCEPTANCE
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-005 implementation, independent implementation review, external integration audit, and serialized exact-SHA CI are PASS; awaiting independent final acceptance audit before checkpoint creation."
+    - "TASK-S07-005 is individually accepted at checkpoint/S07-005-accepted-001; no remaining Slice-07 task is materialized. Slice-07 remains IN_PROGRESS pending independent closing composition re-review of historical finding S07-CLOSING-001."
   materialization_frontier: []
-  execution_hold: "HARD STOP at the governance-reconciled S07-005 integration SHA pending independent OMP/eiu-reviewer final acceptance audit; accepted checkpoint creation is forbidden before PASS."
+  execution_hold: "HARD STOP after TASK-S07-005 individual acceptance pending independent Slice-07 closing composition re-review. Slice-08 remains held until Slice-07 closes legitimately."
 
 stop_gate:
   status: ACTIVE
-  type: S07_005_FINAL_ACCEPTANCE_AUDIT_GATE
+  type: SLICE_07_CLOSING_REREVIEW_GATE
   source_reopen_required: false
-  resume_on: "Owner-transported independent OMP/eiu-reviewer final acceptance PASS or BLOCKING_REPAIR verdict for the exact governance-reconciled integration SHA."
+  resume_on: "Owner-transported independent OMP/eiu-reviewer Slice-07 closing composition re-review PASS or BLOCKING_REPAIR verdict on the exact post-acceptance reporting SHA."
 
-next_action: "Return the exact governance-reconciled S07-005 integration SHA and evidence packet to OMP/eiu-reviewer for independent final acceptance audit; do not create checkpoint/S07-005-accepted-001 before PASS."
+next_action: "Run an independent Slice-07 closing composition re-review on the exact post-acceptance governance reporting SHA; verify historical S07-CLOSING-001 is resolved by accepted TASK-S07-005 before any Slice-08 advancement."

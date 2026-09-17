@@ -1415,7 +1415,7 @@ tasks:
   TASK-S07-005:
     title: "Email History Projection and Manual Email Outbox UI Consumers"
     slice: SLICE-07
-    status: REVIEW
+    status: DONE
     depends_on: [TASK-S07-001, TASK-S04-001, TASK-S04-002, TASK-S04-003, TASK-S07-004]
     planning_baseline_sha: "570ffb6c4d5e560b6c5c858a859003683bb7890e"
     audit_release_commit: "570ffb6c4d5e560b6c5c858a859003683bb7890e"
@@ -1505,7 +1505,29 @@ tasks:
       implementation_reopen_required: false
       artifact: project_control/reviews/S07_005_EXTERNAL_INTEGRATION_AUDIT_c2474f2_v1.md
     final_acceptance_audit:
-      status: PENDING
-      required_reviewer: OMP_EIU_REVIEWER
-      checkpoint_before_pass: FORBIDDEN
-    next_frontier_behavior: "HARD STOP at the exact governance-reconciled integration SHA pending independent OMP/eiu-reviewer final acceptance audit; no accepted checkpoint, next task, deployment, connected Supabase mutation, or main mutation before PASS."
+      status: PASS
+      work_id: S07-005-FINAL-ACCEPTANCE-AUDIT-001
+      reviewer: OMP_EIU_REVIEWER
+      transport: OWNER_MESSAGE
+      reviewed_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+      verdict: FINAL_ACCEPTANCE_PASS
+      source_reopen_required: false
+      implementation_reopen_required: false
+      findings_count: 0
+      artifact: project_control/reviews/S07_005_FINAL_ACCEPTANCE_AUDIT_0caf833_v1.md
+    implementation_acceptance:
+      accepted_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+      accepted_checkpoint: checkpoint/S07-005-accepted-001
+      annotated_tag_object: "63be36559229b758353b9a95e867d8632814b10d"
+      implementation_review_work_id: S07-005-IMPLEMENTATION-REVIEW-003
+      implementation_review_verdict: PASS
+      final_acceptance_work_id: S07-005-FINAL-ACCEPTANCE-AUDIT-001
+      final_acceptance_verdict: PASS
+      product_integration_sha: "c2474f2d83b5a7748fde49db04c4dba85398b216"
+      product_integration_ci: "35234321237 PASS"
+      product_governance_ci: "35234321180 PASS"
+      final_acceptance_integration_ci: "35236834202 PASS @ 0caf83354a1353d7fc807d3b3014720f9720e2e3"
+      final_acceptance_governance_ci: "35236834204 PASS @ 0caf83354a1353d7fc807d3b3014720f9720e2e3"
+      source_reopen_required: false
+      implementation_reopen_required: false
+    next_frontier_behavior: "Lifecycle CLOSED for TASK-S07-005; HARD STOP pending independent Slice-07 closing composition re-review resolving historical S07-CLOSING-001. Slice-07 remains IN_PROGRESS and Slice-08 remains held until that review PASSes."

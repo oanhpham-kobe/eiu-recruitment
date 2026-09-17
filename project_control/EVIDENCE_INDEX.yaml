@@ -8,7 +8,7 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: SLICE_05_CLOSED_S06_001_PROMPT_REVIEW
+  status: S07_005_ACCEPTED_AWAITING_SLICE_07_CLOSING_REREVIEW
   note: "TASK-S05-002 accepted at exact SHA fe556dda76ebeda7107bcb9310cbaf338b30fc29 after final integration-equivalence PASS, Integration CI 34461727271 PASS, Governance CI 34461727266 PASS, and immutable checkpoint; SLICE-05 closure remains pending composition review and broader regression."
 
   PLAN-RECONCILIATION-S04-005-001:
@@ -1499,9 +1499,33 @@ implementation_evidence:
       implementation_reopen_required: false
       artifact: project_control/reviews/S07_005_EXTERNAL_INTEGRATION_AUDIT_c2474f2_v1.md
     final_acceptance_audit:
-      status: PENDING
-      required_reviewer: OMP_EIU_REVIEWER
-      checkpoint_before_pass: FORBIDDEN
+      status: PASS
+      work_id: S07-005-FINAL-ACCEPTANCE-AUDIT-001
+      reviewer: OMP_EIU_REVIEWER
+      transport: OWNER_MESSAGE
+      reviewed_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+      verdict: FINAL_ACCEPTANCE_PASS
+      source_reopen_required: false
+      implementation_reopen_required: false
+      findings_count: 0
+      artifact: project_control/reviews/S07_005_FINAL_ACCEPTANCE_AUDIT_0caf833_v1.md
+    implementation_acceptance:
+      accepted_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+      accepted_checkpoint: checkpoint/S07-005-accepted-001
+      annotated_tag_object: "63be36559229b758353b9a95e867d8632814b10d"
+      peeled_target_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+      product_integration_sha: "c2474f2d83b5a7748fde49db04c4dba85398b216"
+      product_integration_ci: "35234321237 PASS"
+      product_governance_ci: "35234321180 PASS"
+      final_acceptance_integration_ci: "35236834202 PASS"
+      final_acceptance_governance_ci: "35236834204 PASS"
+    slice_closing_frontier:
+      prior_review_work_id: SLICE-07-CLOSING-REVIEW-001
+      prior_verdict: BLOCKING_REPAIR
+      prior_finding: S07-CLOSING-001
+      status: REREVIEW_REQUIRED_AFTER_S07_005_ACCEPTANCE
+      slice_07_status: IN_PROGRESS
+      slice_08_status: NOT_STARTED
     materialized_next_task_count: 1
     historical_reviews:
       - work_id: S07-005-PROMPT-REVIEW-001
