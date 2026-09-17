@@ -23,6 +23,7 @@ export interface InterviewEmailHarnessState {
     reason: string | null;
   }>;
   historyRows: EmailHistoryEntry[];
+  failNextHistoryLoad: boolean;
   staleNextEnqueue: boolean;
   queuedNotices: number;
   interviewStatusMutations: number;
@@ -46,6 +47,7 @@ export function installInterviewEmailHarnessState(
     bulkCalls: [],
     deleteCalls: [],
     historyRows,
+    failNextHistoryLoad: false,
     staleNextEnqueue: false,
     queuedNotices: 0,
     interviewStatusMutations: 0,
