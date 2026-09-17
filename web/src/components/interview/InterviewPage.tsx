@@ -105,9 +105,6 @@ export function InterviewPage({
   const [expandedApplicationId, setExpandedApplicationId] = useState<
     string | null
   >(null);
-  const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(
-    null,
-  );
   const [emailSelectedInterviewIds, setEmailSelectedInterviewIds] = useState<
     Set<string>
   >(() => new Set());
@@ -143,9 +140,7 @@ export function InterviewPage({
       }),
     [emailSelectedInterviewIds, groupsByInterview],
   );
-  const selected = selectedInterviewId
-    ? (groupsByInterview.get(selectedInterviewId) ?? null)
-    : null;
+  const selected = emailTargets.length === 1 ? (emailTargets[0] ?? null) : null;
   const drawer = drawerInterviewId
     ? (groupsByInterview.get(drawerInterviewId) ?? null)
     : null;
@@ -169,7 +164,6 @@ export function InterviewPage({
     if (checked) next.add(interviewId);
     else next.delete(interviewId);
     setEmailSelectedInterviewIds(next);
-    setSelectedInterviewId(next.size === 1 ? [...next][0] ?? null : null);
   };
 
   const refresh = useCallback(
@@ -179,14 +173,6 @@ export function InterviewPage({
         page,
       });
       setData(next);
-      setSelectedInterviewId((id) =>
-        id &&
-        next.groups.some((group) =>
-          group.rounds.some((round) => round.interviewId === id),
-        )
-          ? id
-          : null,
-      );
       setEmailSelectedInterviewIds((ids) => {
         const validIds = new Set(
           [...ids].filter((id) =>
@@ -263,7 +249,6 @@ export function InterviewPage({
       });
       setData(nextData);
       setExpandedApplicationId(null);
-      setSelectedInterviewId(null);
       setEmailSelectedInterviewIds(new Set());
     } catch {
       setFeedback({
@@ -388,7 +373,7 @@ export function InterviewPage({
         );
         if (ok) {
           setDrawerInterviewId(null);
-          setSelectedInterviewId(null);
+          setEmailSelectedInterviewIds(new Set());
         }
       },
     });
