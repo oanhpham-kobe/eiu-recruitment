@@ -1460,7 +1460,48 @@ implementation_evidence:
     prompt: project_control/prompts/SLICE-07_TASK-005_v1.md
     pre_task_checkpoint: checkpoint/pre-S07-005-004
     superseded_checkpoints: [checkpoint/pre-S07-005-001, checkpoint/pre-S07-005-002, checkpoint/pre-S07-005-003]
-    implementation_started: false
+    implementation_started: true
+    owner_implementation_dispatch: AUTHORIZED
+    implementation_baseline_sha: "9492293bfe0125acdfd4c26921247d1e6151424d"
+    implementation_branch: chatgpt/TASK-S07-005-email-ui-consumers
+    final_reviewed_candidate_sha: "f4a568f87556e1d97da9fd315f50c73b00a60f5c"
+    implementation_review:
+      work_id: S07-005-IMPLEMENTATION-REVIEW-003
+      reviewer: OMP_EIU_REVIEWER
+      reviewed_sha: "f4a568f87556e1d97da9fd315f50c73b00a60f5c"
+      verdict: PASS
+      findings_count: 0
+      source_reopen_required: false
+    producer_verification:
+      focused_email_tests: "PASS 15/15"
+      s04_web_regressions: "PASS 17/17"
+      full_web_suite: "PASS 330/330"
+      lint_typecheck_build_design: PASS
+      s07_001_contract_sql: PASS
+      s07_001_concurrency: "PASS 2/2 final verification; supporting D2.4 unchanged-script PASS 3/3 after runtime-only Windows jq CRLF normalization"
+      s04_db_regressions: PASS
+      db_lint: PASS
+      windows_jq_crlf: ENVIRONMENT_ONLY
+    serialization:
+      prior_integration_sha: "48e29338fb1f6daa23b981f3a5b79d087ed8178f"
+      prior_integration_ci: "35211232380 FAIL — Biome formatting errors only"
+      formatted_candidate_sha: "f4a568f87556e1d97da9fd315f50c73b00a60f5c"
+      final_serialized_integration_sha: "c2474f2d83b5a7748fde49db04c4dba85398b216"
+      integration_ci: "35234321237 PASS"
+      governance_ci: "35234321180 PASS"
+    external_integration_audit:
+      work_id: S07-005-EXTERNAL-INTEGRATION-AUDIT-001
+      auditor: EXTERNAL_CHATGPT
+      audited_candidate_sha: "f4a568f87556e1d97da9fd315f50c73b00a60f5c"
+      audited_integration_sha: "c2474f2d83b5a7748fde49db04c4dba85398b216"
+      verdict: PASS
+      source_reopen_required: false
+      implementation_reopen_required: false
+      artifact: project_control/reviews/S07_005_EXTERNAL_INTEGRATION_AUDIT_c2474f2_v1.md
+    final_acceptance_audit:
+      status: PENDING
+      required_reviewer: OMP_EIU_REVIEWER
+      checkpoint_before_pass: FORBIDDEN
     materialized_next_task_count: 1
     historical_reviews:
       - work_id: S07-005-PROMPT-REVIEW-001

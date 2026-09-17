@@ -1415,7 +1415,7 @@ tasks:
   TASK-S07-005:
     title: "Email History Projection and Manual Email Outbox UI Consumers"
     slice: SLICE-07
-    status: PLANNED
+    status: REVIEW
     depends_on: [TASK-S07-001, TASK-S04-001, TASK-S04-002, TASK-S04-003, TASK-S07-004]
     planning_baseline_sha: "570ffb6c4d5e560b6c5c858a859003683bb7890e"
     audit_release_commit: "570ffb6c4d5e560b6c5c858a859003683bb7890e"
@@ -1468,5 +1468,44 @@ tasks:
       - "User-facing Email History view supports filtering and deletion with classification and mandatory reason."
       - "Contextual permissions (interviews.email, emails.history_view, emails.history_delete) and RLS are strictly enforced, with accepted parent-context read predicates applied separately."
     out_of_scope: "Live external email provider credentials (SMTP/SendGrid), background email sending daemon, scanner runtime, deployment, connected Supabase mutations, S07-006."
-    implementation_started: false
-    next_frontier_behavior: "Stop at independent prompt PASS for external audit and explicit implementation-dispatch decision."
+    implementation_started: true
+    implementation_baseline_sha: "9492293bfe0125acdfd4c26921247d1e6151424d"
+    implementation_branch: chatgpt/TASK-S07-005-email-ui-consumers
+    implementation_review_mode: OMP_EIU_REVIEWER
+    implementation_review_status: PASS
+    review_role_override:
+      producer: EXTERNAL_CHATGPT
+      reviewer: OMP_EIU_REVIEWER
+      transport: OWNER_MESSAGE
+      chatgpt_self_accept_allowed: false
+      reason: "Owner-authorized producer/reviewer separation; OMP independently reviewed exact producer candidate."
+    producer_verification:
+      final_candidate_sha: "f4a568f87556e1d97da9fd315f50c73b00a60f5c"
+      local_verification: "PASS — focused S07-005 15/15; S04 web 17/17; full web 330/330; lint, typecheck, build, design checks PASS; S07-001 contract SQL and concurrency regressions PASS; S04 DB regressions and DB lint PASS."
+      windows_jq_crlf_classification: ENVIRONMENT_ONLY
+      serialized_integration_sha: "c2474f2d83b5a7748fde49db04c4dba85398b216"
+      integration_ci: "35234321237 PASS @ c2474f2d83b5a7748fde49db04c4dba85398b216; resolver PASS and Web verification PASS; Database integration correctly skipped for the final web-only serialized delta."
+      governance_ci: "35234321180 PASS @ c2474f2d83b5a7748fde49db04c4dba85398b216"
+      source_reopen_required: false
+      implementation_reopen_required: false
+    independent_implementation_review:
+      work_id: S07-005-IMPLEMENTATION-REVIEW-003
+      reviewed_sha: "f4a568f87556e1d97da9fd315f50c73b00a60f5c"
+      reviewer: OMP_EIU_REVIEWER
+      verdict: PASS
+      findings_count: 0
+      source_reopen_required: false
+    external_integration_audit:
+      work_id: S07-005-EXTERNAL-INTEGRATION-AUDIT-001
+      auditor: EXTERNAL_CHATGPT
+      audited_candidate_sha: "f4a568f87556e1d97da9fd315f50c73b00a60f5c"
+      audited_integration_sha: "c2474f2d83b5a7748fde49db04c4dba85398b216"
+      verdict: PASS
+      source_reopen_required: false
+      implementation_reopen_required: false
+      artifact: project_control/reviews/S07_005_EXTERNAL_INTEGRATION_AUDIT_c2474f2_v1.md
+    final_acceptance_audit:
+      status: PENDING
+      required_reviewer: OMP_EIU_REVIEWER
+      checkpoint_before_pass: FORBIDDEN
+    next_frontier_behavior: "HARD STOP at the exact governance-reconciled integration SHA pending independent OMP/eiu-reviewer final acceptance audit; no accepted checkpoint, next task, deployment, connected Supabase mutation, or main mutation before PASS."
