@@ -239,7 +239,9 @@ test(
         "email send must not mutate Interview schedule status",
       );
 
-      await candidateDialog.getByRole("button", { name: "Đóng" }).click();
+      await candidateDialog
+        .getByRole("button", { name: "Đóng", exact: true })
+        .click();
       await candidateDialog.waitFor({ state: "detached" });
       await page
         .getByRole("button", { name: "Gửi thư người tham dự đã chọn" })
@@ -397,12 +399,20 @@ test(
         /security audit đã ghi nhận thao tác vẫn bất biến/i,
       );
       const classification = deleteDialog.getByLabel("Phân loại xóa");
+      const testRecordOption = classification.locator(
+        'option[value="TEST_RECORD"]',
+      );
       assert.equal(
-        await classification
-          .locator('option[value="TEST_RECORD"]')
-          .isDisabled(),
+        await testRecordOption.evaluate((option) =>
+          option.hasAttribute("disabled"),
+        ),
         true,
         "TEST_RECORD must be unavailable for a mixed TEST/PRODUCTION selection",
+      );
+      assert.equal(
+        await classification.inputValue(),
+        "WRONG_RECORD",
+        "mixed TEST/PRODUCTION selection must default to WRONG_RECORD",
       );
       const deleteButton = deleteDialog.getByRole("button", {
         name: "Xóa 4 bản ghi",
