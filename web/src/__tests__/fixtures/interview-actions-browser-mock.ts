@@ -126,6 +126,16 @@ export async function bulkEnqueueInterviewEmailsAction(input: {
 
 export async function loadInterviewEmailHistoryAction(interviewId: string) {
   const state = interviewEmailHarnessState();
+  if (state.failNextHistoryLoad) {
+    state.failNextHistoryLoad = false;
+    return {
+      success: false as const,
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Không thể tải Email History. Vui lòng thử lại.",
+      },
+    };
+  }
   return {
     success: true as const,
     data: state.historyRows.filter((row) => row.interview_id === interviewId),
