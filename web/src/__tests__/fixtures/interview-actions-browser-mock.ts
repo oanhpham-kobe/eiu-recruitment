@@ -42,7 +42,10 @@ export async function previewInterviewEmailAction(input: {
   if (!target) {
     return {
       success: false as const,
-      error: { code: "INVALID_EMAIL_CONTEXT", message: "Missing harness target" },
+      error: {
+        code: "INVALID_EMAIL_CONTEXT",
+        message: "Missing harness target",
+      },
     };
   }
   const recipients =
@@ -87,7 +90,8 @@ export async function enqueueInterviewEmailAction(input: {
       success: false as const,
       error: {
         code: "STALE_PREVIEW",
-        message: "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
+        message:
+          "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
       },
     };
   }

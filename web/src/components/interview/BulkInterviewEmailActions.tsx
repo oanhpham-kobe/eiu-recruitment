@@ -62,7 +62,10 @@ function BulkEmailPreviewDialog({
   const labelsByInterview = useMemo(
     () =>
       new Map(
-        targets.map((target) => [target.round.interviewId, targetLabel(target)]),
+        targets.map((target) => [
+          target.round.interviewId,
+          targetLabel(target),
+        ]),
       ),
     [targets],
   );
@@ -104,7 +107,9 @@ function BulkEmailPreviewDialog({
         );
       }
     } catch {
-      setMessage("Không thể tải bản xem trước email hàng loạt. Vui lòng thử lại.");
+      setMessage(
+        "Không thể tải bản xem trước email hàng loạt. Vui lòng thử lại.",
+      );
     } finally {
       setLoading(false);
     }
@@ -126,7 +131,9 @@ function BulkEmailPreviewDialog({
 
   const confirmBulkSend = async () => {
     if (!canConfirm) return;
-    const previews = items.flatMap((item) => (item.preview ? [item.preview] : []));
+    const previews = items.flatMap((item) =>
+      item.preview ? [item.preview] : [],
+    );
     if (previews.length !== targets.length) return;
     const key = idempotencyKey.current ?? crypto.randomUUID();
     idempotencyKey.current = key;
@@ -172,7 +179,11 @@ function BulkEmailPreviewDialog({
       onClose={loading || sending ? () => undefined : onClose}
       footer={
         <div className="interview-drawer-actions">
-          <Button variant="ghost" disabled={loading || sending} onClick={onClose}>
+          <Button
+            variant="ghost"
+            disabled={loading || sending}
+            onClick={onClose}
+          >
             Đóng
           </Button>
           {!result ? (
@@ -257,7 +268,8 @@ function BulkEmailPreviewDialog({
                       {item.preview.body_text}
                     </pre>
                     <p className="interview-field-hint">
-                      Template {item.preview.template_version} · {item.preview.environment_code}
+                      Template {item.preview.template_version} ·{" "}
+                      {item.preview.environment_code}
                     </p>
                   </>
                 ) : null}
@@ -270,15 +282,15 @@ function BulkEmailPreviewDialog({
             <ul className={styles.bulkResultList}>
               {result.success.map((item) => (
                 <li key={`success-${item.id}-${item.email_type ?? "email"}`}>
-                  <strong>{labelsByInterview.get(item.id) ?? item.id}</strong>: Đã
-                  vào hàng đợi
+                  <strong>{labelsByInterview.get(item.id) ?? item.id}</strong>:
+                  Đã vào hàng đợi
                   {item.email_outbox_id ? ` · ${item.email_outbox_id}` : ""}
                 </li>
               ))}
               {result.failed.map((item) => (
                 <li key={`failed-${item.id}-${item.error_code ?? "error"}`}>
-                  <strong>{labelsByInterview.get(item.id) ?? item.id}</strong>: Thất
-                  bại · {item.error_code ?? "INTERNAL_ERROR"}
+                  <strong>{labelsByInterview.get(item.id) ?? item.id}</strong>:
+                  Thất bại · {item.error_code ?? "INTERNAL_ERROR"}
                 </li>
               ))}
             </ul>
@@ -347,12 +359,15 @@ export function BulkInterviewEmailActions({
   if (!uniqueTargets.length || !resolved || !canSend) return null;
 
   return (
-    <section className={styles.bulkBar} aria-label="Gửi email cho Interview đã chọn">
+    <section
+      className={styles.bulkBar}
+      aria-label="Gửi email cho Interview đã chọn"
+    >
       <div>
         <strong>{uniqueTargets.length} Interview đã chọn cho email</strong>
         <p className="interview-field-hint">
-          Gửi hàng loạt luôn preview từng Interview trước; tối đa 100 request mỗi
-          batch.
+          Gửi hàng loạt luôn preview từng Interview trước; tối đa 100 request
+          mỗi batch.
         </p>
       </div>
       <div className={styles.bulkActions}>

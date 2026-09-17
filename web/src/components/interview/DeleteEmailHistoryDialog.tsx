@@ -39,7 +39,8 @@ export function DeleteEmailHistoryDialog({
   }, [open, testRecordAllowed]);
 
   const validation = useMemo(
-    () => validateEmailHistoryDeletion(classification, reason, testRecordAllowed),
+    () =>
+      validateEmailHistoryDeletion(classification, reason, testRecordAllowed),
     [classification, reason, testRecordAllowed],
   );
 
@@ -125,15 +126,12 @@ export function DeleteEmailHistoryDialog({
           </label>
         ) : (
           <p className="interview-field-hint interview-form-span">
-            TEST_RECORD chỉ được phép khi tất cả bản ghi đã chọn thuộc môi trường
-            TEST.
+            TEST_RECORD chỉ được phép khi tất cả bản ghi đã chọn thuộc môi
+            trường TEST.
           </p>
         )}
         {message ? (
-          <p
-            className="interview-field-hint interview-form-span"
-            role="alert"
-          >
+          <p className="interview-field-hint interview-form-span" role="alert">
             {message}
           </p>
         ) : null}

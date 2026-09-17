@@ -27,7 +27,9 @@ export function InterviewEmailActions({
   round: InterviewRound;
   pending: boolean;
 }) {
-  const [capabilities, setCapabilities] = useState<EmailCapabilities | null>(null);
+  const [capabilities, setCapabilities] = useState<EmailCapabilities | null>(
+    null,
+  );
   const [emailType, setEmailType] = useState<InterviewEmailType | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -56,14 +58,11 @@ export function InterviewEmailActions({
     [round.participants],
   );
   const operational = application.isActive && round.isActive;
-  const sendDisabled = pending || capabilities?.canSend !== true || !operational;
+  const sendDisabled =
+    pending || capabilities?.canSend !== true || !operational;
   const contextSummary = `Vòng ${round.roundNo} · ${formatInterviewTime(round.startAt, round.endAt)}`;
 
-  if (
-    capabilities &&
-    !capabilities.canSend &&
-    !capabilities.canViewHistory
-  )
+  if (capabilities && !capabilities.canSend && !capabilities.canViewHistory)
     return null;
 
   return (
@@ -111,11 +110,7 @@ export function InterviewEmailActions({
         </p>
       ) : null}
       {notice ? (
-        <p
-          className="interview-field-hint"
-          role="status"
-          aria-live="polite"
-        >
+        <p className="interview-field-hint" role="status" aria-live="polite">
           {notice}
         </p>
       ) : null}

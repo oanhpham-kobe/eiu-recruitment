@@ -1,4 +1,7 @@
-import type { EmailHistoryEntry, EmailHistoryStatus } from "@/lib/commands/email-commands";
+import type {
+  EmailHistoryEntry,
+  EmailHistoryStatus,
+} from "@/lib/commands/email-commands";
 
 export type EmailHistoryTone =
   | "success"
@@ -7,9 +10,7 @@ export type EmailHistoryTone =
   | "info"
   | "neutral";
 
-export type EmailHistoryDeleteClassification =
-  | "TEST_RECORD"
-  | "WRONG_RECORD";
+export type EmailHistoryDeleteClassification = "TEST_RECORD" | "WRONG_RECORD";
 
 export function emailHistoryStatusTone(
   status: EmailHistoryStatus,

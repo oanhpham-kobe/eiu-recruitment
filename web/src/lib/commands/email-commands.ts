@@ -100,11 +100,15 @@ function messageFor(code: string): string {
     CURRENT_PARTICIPANT_INACTIVE_REASSIGN_REQUIRED:
       "Có người tham dự hiện tại đã ngừng hoạt động. Vui lòng thay thế trước khi gửi.",
     PREVIEW_REQUIRED: "Vui lòng xem trước email trước khi gửi.",
-    STALE_PREVIEW: "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
+    STALE_PREVIEW:
+      "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
     IDEMPOTENCY_CONFLICT: "Yêu cầu gửi bị trùng khóa với nội dung khác.",
-    INVALID_CLEANUP_CLASSIFICATION: "Phân loại hoặc lý do xóa Email History không hợp lệ.",
+    INVALID_CLEANUP_CLASSIFICATION:
+      "Phân loại hoặc lý do xóa Email History không hợp lệ.",
   };
-  return messages[code] ?? "Không thể hoàn tất thao tác email. Vui lòng thử lại.";
+  return (
+    messages[code] ?? "Không thể hoàn tất thao tác email. Vui lòng thử lại."
+  );
 }
 
 function invalid(message: string): EmailCommandResult<never> {
@@ -116,22 +120,27 @@ async function clientFor(deps: EmailCommandDeps): Promise<SupabaseClient> {
 }
 
 function rpcResult<T>(data: unknown): EmailCommandResult<T> {
-  const result = data as { success?: boolean; error_code?: unknown; data?: T } | null;
+  const result = data as {
+    success?: boolean;
+    error_code?: unknown;
+    data?: T;
+  } | null;
   if (!result?.success || result.data === undefined) {
-    const code = typeof result?.error_code === "string" ? result.error_code : "INTERNAL_ERROR";
+    const code =
+      typeof result?.error_code === "string"
+        ? result.error_code
+        : "INTERNAL_ERROR";
     return { success: false, error: { code, message: messageFor(code) } };
   }
   return { success: true, data: result.data };
 }
 
 function bulkRpcResult(data: unknown): EmailCommandResult<BulkEmailResult> {
-  const result = data as
-    | {
-        success?: unknown;
-        failed?: unknown;
-        error_code?: unknown;
-      }
-    | null;
+  const result = data as {
+    success?: unknown;
+    failed?: unknown;
+    error_code?: unknown;
+  } | null;
   if (Array.isArray(result?.success) && Array.isArray(result?.failed)) {
     return {
       success: true,
@@ -142,7 +151,9 @@ function bulkRpcResult(data: unknown): EmailCommandResult<BulkEmailResult> {
     };
   }
   const code =
-    typeof result?.error_code === "string" ? result.error_code : "INTERNAL_ERROR";
+    typeof result?.error_code === "string"
+      ? result.error_code
+      : "INTERNAL_ERROR";
   return { success: false, error: { code, message: messageFor(code) } };
 }
 
@@ -169,7 +180,10 @@ export async function previewInterviewEmail(
   input: EmailPreviewInput,
   deps: EmailCommandDeps = {},
 ): Promise<EmailCommandResult<EmailPreviewData>> {
-  if (!validContext(input)) return invalid("Interview, Application, Submission hoặc loại email không hợp lệ.");
+  if (!validContext(input))
+    return invalid(
+      "Interview, Application, Submission hoặc loại email không hợp lệ.",
+    );
   const client = await clientFor(deps);
   const { data, error } = await client.rpc("preview_email", {
     p_email_type: input.emailType,
@@ -179,7 +193,10 @@ export async function previewInterviewEmail(
   });
   if (error) {
     console.error("[email-command] preview_email RPC error", error.message);
-    return { success: false, error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") } };
+    return {
+      success: false,
+      error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") },
+    };
   }
   return rpcResult<EmailPreviewData>(data);
 }
@@ -190,7 +207,9 @@ export async function enqueueInterviewEmail(
   deps: EmailCommandDeps = {},
 ): Promise<EmailCommandResult<{ email_outbox_id: string }>> {
   if (!validRequest(input) || !UUID.test(idempotencyKey))
-    return invalid("Email request, preview fingerprint hoặc idempotency key không hợp lệ.");
+    return invalid(
+      "Email request, preview fingerprint hoặc idempotency key không hợp lệ.",
+    );
   const client = await clientFor(deps);
   const request = {
     email_type: input.email_type,
@@ -205,7 +224,10 @@ export async function enqueueInterviewEmail(
   });
   if (error) {
     console.error("[email-command] enqueue_email RPC error", error.message);
-    return { success: false, error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") } };
+    return {
+      success: false,
+      error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") },
+    };
   }
   return rpcResult<{ email_outbox_id: string }>(data);
 }
@@ -221,7 +243,9 @@ export async function bulkEnqueueInterviewEmails(
     requests.some((request) => !validRequest(request)) ||
     !UUID.test(idempotencyKey)
   )
-    return invalid("Danh sách email phải có 1–100 request hợp lệ và đã được preview.");
+    return invalid(
+      "Danh sách email phải có 1–100 request hợp lệ và đã được preview.",
+    );
   const client = await clientFor(deps);
   const { data, error } = await client.rpc("bulk_enqueue_email", {
     p_requests: requests.map((request) => ({
@@ -234,8 +258,14 @@ export async function bulkEnqueueInterviewEmails(
     p_idempotency_key: idempotencyKey,
   });
   if (error) {
-    console.error("[email-command] bulk_enqueue_email RPC error", error.message);
-    return { success: false, error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") } };
+    console.error(
+      "[email-command] bulk_enqueue_email RPC error",
+      error.message,
+    );
+    return {
+      success: false,
+      error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") },
+    };
   }
   return bulkRpcResult(data);
 }
@@ -247,12 +277,14 @@ export async function deleteEmailHistoryEntry(
   deps: EmailCommandDeps = {},
 ): Promise<EmailCommandResult<{ email_history_id: string }>> {
   const normalizedReason = reason?.trim() || null;
-  if (!UUID.test(emailHistoryId)) return invalid("Email history ID không hợp lệ.");
+  if (!UUID.test(emailHistoryId))
+    return invalid("Email history ID không hợp lệ.");
   if (classification !== "TEST_RECORD" && classification !== "WRONG_RECORD")
     return invalid("Phân loại xóa không hợp lệ.");
   if (classification === "WRONG_RECORD" && !normalizedReason)
     return invalid("WRONG_RECORD yêu cầu lý do xóa.");
-  if ((normalizedReason?.length ?? 0) > 1000) return invalid("Lý do xóa tối đa 1000 ký tự.");
+  if ((normalizedReason?.length ?? 0) > 1000)
+    return invalid("Lý do xóa tối đa 1000 ký tự.");
 
   const client = await clientFor(deps);
   const { data, error } = await client.rpc("delete_email_history", {
@@ -261,8 +293,14 @@ export async function deleteEmailHistoryEntry(
     p_reason: normalizedReason,
   });
   if (error) {
-    console.error("[email-command] delete_email_history RPC error", error.message);
-    return { success: false, error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") } };
+    console.error(
+      "[email-command] delete_email_history RPC error",
+      error.message,
+    );
+    return {
+      success: false,
+      error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") },
+    };
   }
   return rpcResult<{ email_history_id: string }>(data);
 }
@@ -282,13 +320,19 @@ export async function loadInterviewEmailHistory(
     .order("created_at", { ascending: false });
   if (error) {
     console.error("[email-command] email_history query error", error.message);
-    return { success: false, error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") } };
+    return {
+      success: false,
+      error: { code: "INTERNAL_ERROR", message: messageFor("INTERNAL_ERROR") },
+    };
   }
   const rows = (data ?? []) as EmailHistoryEntry[];
   if (rows.some((row) => !HISTORY_STATUSES.has(row.status_code))) {
     return {
       success: false,
-      error: { code: "INTERNAL_ERROR", message: "Email History chứa trạng thái ngoài contract đã chấp nhận." },
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Email History chứa trạng thái ngoài contract đã chấp nhận.",
+      },
     };
   }
   return { success: true, data: rows };

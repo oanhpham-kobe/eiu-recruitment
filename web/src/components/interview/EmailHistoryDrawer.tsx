@@ -262,7 +262,7 @@ export function EmailHistoryDrawer({
                       <td>{formatTimestamp(emailHistoryTimestamp(row))}</td>
                       <td>
                         {row.status_code === "FAILED"
-                          ? row.error_code ?? "—"
+                          ? (row.error_code ?? "—")
                           : "—"}
                       </td>
                     </tr>

@@ -17,9 +17,10 @@ const historyId = "40000000-0000-0000-0000-000000000001";
 const idempotencyKey = "50000000-0000-0000-0000-000000000001";
 const previewFingerprint = "a".repeat(64);
 
-function rpcClient(
-  handlers: Record<string, (args: unknown) => unknown>,
-): { client: SupabaseClient; calls: Array<{ fn: string; args: unknown }> } {
+function rpcClient(handlers: Record<string, (args: unknown) => unknown>): {
+  client: SupabaseClient;
+  calls: Array<{ fn: string; args: unknown }>;
+} {
   const calls: Array<{ fn: string; args: unknown }> = [];
   return {
     client: {
@@ -167,8 +168,7 @@ test("email command adapters preserve backend FORBIDDEN and never fabricate UNAU
     { client: historyDelete.client },
   );
   assert.equal(deleteResult.success, false);
-  if (!deleteResult.success)
-    assert.equal(deleteResult.error.code, "FORBIDDEN");
+  if (!deleteResult.success) assert.equal(deleteResult.error.code, "FORBIDDEN");
 });
 
 test("enqueueInterviewEmail sends exactly the five-key request and idempotency key", async () => {
@@ -179,7 +179,9 @@ test("enqueueInterviewEmail sends exactly the five-key request and idempotency k
     }),
   });
   const request = enqueueRequest();
-  const result = await enqueueInterviewEmail(request, idempotencyKey, { client });
+  const result = await enqueueInterviewEmail(request, idempotencyKey, {
+    client,
+  });
 
   assert.equal(result.success, true);
   assert.deepEqual(calls, [
@@ -215,11 +217,9 @@ test("enqueueInterviewEmail surfaces STALE_PREVIEW as the accepted structured er
   const { client } = rpcClient({
     enqueue_email: () => ({ success: false, error_code: "STALE_PREVIEW" }),
   });
-  const result = await enqueueInterviewEmail(
-    enqueueRequest(),
-    idempotencyKey,
-    { client },
-  );
+  const result = await enqueueInterviewEmail(enqueueRequest(), idempotencyKey, {
+    client,
+  });
   assert.equal(result.success, false);
   if (!result.success) {
     assert.equal(result.error.code, "STALE_PREVIEW");
