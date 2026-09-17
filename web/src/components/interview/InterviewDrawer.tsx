@@ -16,6 +16,7 @@ import {
   type InterviewScheduleStatus,
   type InterviewUserOption,
 } from "@/lib/interview/model";
+import { InterviewEmailActions } from "./InterviewEmailActions";
 
 const STATUS_OPTIONS = Object.entries(INTERVIEW_STATUS_LABEL).map(
   ([value, label]) => ({ value, label }),
@@ -272,6 +273,12 @@ export function InterviewDrawer({
           <strong>{INTERVIEW_STATUS_LABEL[round.scheduleStatus]}</strong>
         )}
       </section>
+
+      <InterviewEmailActions
+        application={application}
+        round={round}
+        pending={pending}
+      />
 
       {!round.isActive && application.isActive && permissions.canManage ? (
         <section className="interview-drawer-section">

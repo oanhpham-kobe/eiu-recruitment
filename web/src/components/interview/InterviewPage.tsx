@@ -42,11 +42,13 @@ import {
   nextExpandedApplicationId,
   type SubmissionSelectorOption,
 } from "@/lib/interview/model";
+import { BulkInterviewEmailActions } from "./BulkInterviewEmailActions";
 import {
   ApplicationAssignmentDialog,
   CopyScheduleDialog,
 } from "./InterviewDialogs";
 import { InterviewDrawer } from "./InterviewDrawer";
+import { InterviewRowEmailActions } from "./InterviewRowEmailActions";
 
 const STATUS_OPTIONS = Object.entries(INTERVIEW_STATUS_LABEL).map(
   ([value, label]) => ({ value, label }),
@@ -103,9 +105,9 @@ export function InterviewPage({
   const [expandedApplicationId, setExpandedApplicationId] = useState<
     string | null
   >(null);
-  const [selectedInterviewId, setSelectedInterviewId] = useState<string | null>(
-    null,
-  );
+  const [emailSelectedInterviewIds, setEmailSelectedInterviewIds] = useState<
+    Set<string>
+  >(() => new Set());
   const [drawerInterviewId, setDrawerInterviewId] = useState<string | null>(
     null,
   );
@@ -130,9 +132,15 @@ export function InterviewPage({
         map.set(round.interviewId, { application, round });
     return map;
   }, [data.groups]);
-  const selected = selectedInterviewId
-    ? (groupsByInterview.get(selectedInterviewId) ?? null)
-    : null;
+  const emailTargets = useMemo(
+    () =>
+      Array.from(emailSelectedInterviewIds).flatMap((interviewId) => {
+        const target = groupsByInterview.get(interviewId);
+        return target ? [target] : [];
+      }),
+    [emailSelectedInterviewIds, groupsByInterview],
+  );
+  const selected = emailTargets.length === 1 ? (emailTargets[0] ?? null) : null;
   const drawer = drawerInterviewId
     ? (groupsByInterview.get(drawerInterviewId) ?? null)
     : null;
@@ -151,6 +159,13 @@ export function InterviewPage({
     return { signature, key };
   };
 
+  const toggleEmailSelection = (interviewId: string, checked: boolean) => {
+    const next = new Set(emailSelectedInterviewIds);
+    if (checked) next.add(interviewId);
+    else next.delete(interviewId);
+    setEmailSelectedInterviewIds(next);
+  };
+
   const refresh = useCallback(
     async (page = data.page, nextFilters = filters) => {
       const next = await queryInterviewPageAction({
@@ -158,14 +173,16 @@ export function InterviewPage({
         page,
       });
       setData(next);
-      setSelectedInterviewId((id) =>
-        id &&
-        next.groups.some((group) =>
-          group.rounds.some((round) => round.interviewId === id),
-        )
-          ? id
-          : null,
-      );
+      setEmailSelectedInterviewIds((ids) => {
+        const validIds = new Set(
+          [...ids].filter((id) =>
+            next.groups.some((group) =>
+              group.rounds.some((round) => round.interviewId === id),
+            ),
+          ),
+        );
+        return validIds;
+      });
       setDrawerInterviewId((id) =>
         id &&
         next.groups.some((group) =>
@@ -232,7 +249,7 @@ export function InterviewPage({
       });
       setData(nextData);
       setExpandedApplicationId(null);
-      setSelectedInterviewId(null);
+      setEmailSelectedInterviewIds(new Set());
     } catch {
       setFeedback({
         kind: "error",
@@ -356,7 +373,7 @@ export function InterviewPage({
         );
         if (ok) {
           setDrawerInterviewId(null);
-          setSelectedInterviewId(null);
+          setEmailSelectedInterviewIds(new Set());
         }
       },
     });
@@ -684,6 +701,8 @@ export function InterviewPage({
         <AsyncStatus kind={feedback.kind}>{feedback.message}</AsyncStatus>
       ) : null}
 
+      <BulkInterviewEmailActions targets={emailTargets} disabled={busy} />
+
       <TableScrollContainer className="interview-table-scroll">
         <table className="interview-table">
           <colgroup>
@@ -713,7 +732,7 @@ export function InterviewPage({
                   application={application}
                   latest={latest}
                   expanded={expanded}
-                  selectedInterviewId={selectedInterviewId}
+                  selectedEmailInterviewIds={emailSelectedInterviewIds}
                   busy={busy}
                   canManage={data.permissions.canManage}
                   canReactivateApplication={
@@ -730,7 +749,7 @@ export function InterviewPage({
                       ),
                     )
                   }
-                  onSelect={setSelectedInterviewId}
+                  onSelect={toggleEmailSelection}
                   onOpen={setDrawerInterviewId}
                   onCopy={setCopySourceId}
                   onCreateNext={() => requestCreateNextRound(application)}
@@ -1038,7 +1057,7 @@ function ApplicationRows({
   application,
   latest,
   expanded,
-  selectedInterviewId,
+  selectedEmailInterviewIds,
   busy,
   canManage,
   canReactivateApplication,
@@ -1056,7 +1075,7 @@ function ApplicationRows({
   application: InterviewApplicationGroup;
   latest: InterviewRound | null;
   expanded: boolean;
-  selectedInterviewId: string | null;
+  selectedEmailInterviewIds: ReadonlySet<string>;
   busy: boolean;
   canManage: boolean;
   canReactivateApplication: boolean;
@@ -1067,7 +1086,7 @@ function ApplicationRows({
   ) => React.ReactNode;
   locationText: (round: InterviewRound) => string;
   onToggle: () => void;
-  onSelect: (id: string | null) => void;
+  onSelect: (id: string, checked: boolean) => void;
   onOpen: (id: string) => void;
   onCopy: (id: string) => void;
   onCreateNext: () => void;
@@ -1092,10 +1111,8 @@ function ApplicationRows({
               <input
                 type="checkbox"
                 aria-label={`Chọn ${application.candidateName}`}
-                checked={selectedInterviewId === selectId}
-                onChange={(event) =>
-                  onSelect(event.target.checked ? selectId : null)
-                }
+                checked={selectedEmailInterviewIds.has(selectId)}
+                onChange={(event) => onSelect(selectId, event.target.checked)}
               />
             </label>
           ) : null}
@@ -1134,12 +1151,19 @@ function ApplicationRows({
         <td data-label="Action">
           <div className="interview-row-actions">
             {latest ? (
-              <Button
-                variant="ghost"
-                onClick={() => onOpen(latest.interviewId)}
-              >
-                Mở
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => onOpen(latest.interviewId)}
+                >
+                  Mở
+                </Button>
+                <InterviewRowEmailActions
+                  application={application}
+                  round={latest}
+                  disabled={busy}
+                />
+              </>
             ) : null}
             {canManage && canCreateNextRound(application) ? (
               <Button variant="ghost" disabled={busy} onClick={onCreateNext}>
@@ -1178,9 +1202,9 @@ function ApplicationRows({
                   <input
                     type="checkbox"
                     aria-label={`Chọn Vòng ${round.roundNo}`}
-                    checked={selectedInterviewId === round.interviewId}
+                    checked={selectedEmailInterviewIds.has(round.interviewId)}
                     onChange={(event) =>
-                      onSelect(event.target.checked ? round.interviewId : null)
+                      onSelect(round.interviewId, event.target.checked)
                     }
                   />
                 </label>
@@ -1207,6 +1231,11 @@ function ApplicationRows({
                   >
                     Chi tiết
                   </Button>
+                  <InterviewRowEmailActions
+                    application={application}
+                    round={round}
+                    disabled={busy}
+                  />
                   {canManage && application.isActive && round.isActive ? (
                     <Button
                       variant="ghost"

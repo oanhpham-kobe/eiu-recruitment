@@ -2,7 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { loadAssignmentOptions } from "@/lib/application-inbox/submission-detail-server";
+import { getServerSession } from "@/lib/auth/session";
 import { createOrUpdateApplication } from "@/lib/commands/application-lifecycle";
+import {
+  bulkEnqueueInterviewEmails,
+  deleteEmailHistoryEntry,
+  type EmailEnqueueInput,
+  type EmailPreviewInput,
+  enqueueInterviewEmail,
+  loadInterviewEmailHistory,
+  previewInterviewEmail,
+} from "@/lib/commands/email-commands";
 import {
   addInterviewParticipant,
   type CopyInterviewScheduleInput,
@@ -26,6 +36,7 @@ import {
   searchApplicationOptions,
   searchSubmissionOptions,
 } from "@/lib/interview/server";
+import { createServerClient } from "@/lib/supabase/server";
 
 function refreshOnSuccess<T extends { success: boolean }>(result: T): T {
   if (result.success) revalidatePath("/interviews");
@@ -76,6 +87,58 @@ export async function getInterviewAssignmentOptionsAction() {
       error: "Không thể tải danh mục phân công Application.",
     };
   }
+}
+
+export async function getInterviewEmailCapabilitiesAction() {
+  const client = await createServerClient();
+  const session = await getServerSession(client);
+  const user = session.user;
+  const root = user?.roles.includes("ROOT_ADMIN") === true;
+  const has = (permission: string) =>
+    root || user?.permissions.includes(permission) === true;
+  return {
+    canSend: Boolean(user?.isInternal && has("interviews.email")),
+    canViewHistory: Boolean(user?.isInternal && has("emails.history_view")),
+    canDeleteHistory: Boolean(
+      user?.isInternal &&
+        has("emails.history_view") &&
+        has("emails.history_delete"),
+    ),
+  };
+}
+
+export async function previewInterviewEmailAction(input: EmailPreviewInput) {
+  return previewInterviewEmail(input);
+}
+
+export async function enqueueInterviewEmailAction(input: {
+  request: EmailEnqueueInput;
+  idempotencyKey: string;
+}) {
+  return enqueueInterviewEmail(input.request, input.idempotencyKey);
+}
+
+export async function bulkEnqueueInterviewEmailsAction(input: {
+  requests: EmailEnqueueInput[];
+  idempotencyKey: string;
+}) {
+  return bulkEnqueueInterviewEmails(input.requests, input.idempotencyKey);
+}
+
+export async function loadInterviewEmailHistoryAction(interviewId: string) {
+  return loadInterviewEmailHistory(interviewId);
+}
+
+export async function deleteEmailHistoryEntryAction(input: {
+  emailHistoryId: string;
+  classification: "TEST_RECORD" | "WRONG_RECORD";
+  reason: string | null;
+}) {
+  return deleteEmailHistoryEntry(
+    input.emailHistoryId,
+    input.classification,
+    input.reason,
+  );
 }
 
 export async function createInterviewApplicationAction(input: {
