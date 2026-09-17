@@ -249,7 +249,8 @@ const mode = document.body.dataset.harness ?? "page";
 const historyRows = mode === "history" ? HISTORY_ROWS : [];
 installInterviewEmailHarnessState(PAGE_DATA, historyRows);
 const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error("Interview email browser harness root is missing");
+if (!rootElement)
+  throw new Error("Interview email browser harness root is missing");
 const root = createRoot(rootElement);
 if (mode === "preview-stale") root.render(<PreviewStaleHarness />);
 else if (mode === "history") root.render(<HistoryHarness />);

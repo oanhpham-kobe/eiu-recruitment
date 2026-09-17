@@ -11,15 +11,17 @@ import {
 } from "@/lib/interview/model";
 import { EmailPreviewDialog } from "./EmailPreviewDialog";
 
-let capabilitiesPromise:
-  | ReturnType<typeof getInterviewEmailCapabilitiesAction>
-  | null = null;
+let capabilitiesPromise: ReturnType<
+  typeof getInterviewEmailCapabilitiesAction
+> | null = null;
 
 function loadCapabilities() {
-  capabilitiesPromise ??= getInterviewEmailCapabilitiesAction().catch((error) => {
-    capabilitiesPromise = null;
-    throw error;
-  });
+  capabilitiesPromise ??= getInterviewEmailCapabilitiesAction().catch(
+    (error) => {
+      capabilitiesPromise = null;
+      throw error;
+    },
+  );
   return capabilitiesPromise;
 }
 

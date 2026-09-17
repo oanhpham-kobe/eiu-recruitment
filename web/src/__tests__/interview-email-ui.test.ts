@@ -58,7 +58,9 @@ async function bundleHarness() {
     file.path.endsWith(".css"),
   )?.text;
   if (!script || !style)
-    throw new Error("Interview email browser acceptance fixture did not bundle");
+    throw new Error(
+      "Interview email browser acceptance fixture did not bundle",
+    );
   return { script, style };
 }
 
@@ -67,7 +69,9 @@ async function openHarness(
   assets: { script: string; style: string },
   mode: "page" | "preview-stale" | "history",
 ): Promise<{ page: Page; errors: string[] }> {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 900 },
+  });
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
@@ -135,316 +139,302 @@ test("delete validation enforces TEST environment and WRONG_RECORD reason", () =
   );
 });
 
-test(
-  "InterviewPage supports multi-row preview-fenced bulk email without participant subsetting",
-  { timeout: 120_000 },
-  async () => {
-    const assets = await bundleHarness();
-    let browser: Browser | undefined;
-    try {
-      browser = await chromium.launch();
-      const { page, errors } = await openHarness(browser, assets, "page");
+test("InterviewPage supports multi-row preview-fenced bulk email without participant subsetting", {
+  timeout: 120_000,
+}, async () => {
+  const assets = await bundleHarness();
+  let browser: Browser | undefined;
+  try {
+    browser = await chromium.launch();
+    const { page, errors } = await openHarness(browser, assets, "page");
 
-      await page.getByLabel("Chọn Nguyễn Thị An").check();
-      assert.equal(
-        await page
-          .getByRole("button", { name: "Tạo lịch / Chi tiết" })
-          .isDisabled(),
-        false,
-      );
-      await page.getByLabel("Chọn Trần Minh Bình").check();
-      assert.equal(
-        await page
-          .getByRole("button", { name: "Tạo lịch / Chi tiết" })
-          .isDisabled(),
-        true,
-        "single-Interview lifecycle actions must disable while multiple rows are selected",
-      );
-
+    await page.getByLabel("Chọn Nguyễn Thị An").check();
+    assert.equal(
       await page
-        .getByText("2 Interview đã chọn cho email", { exact: true })
-        .waitFor({ state: "visible" });
+        .getByRole("button", { name: "Tạo lịch / Chi tiết" })
+        .isDisabled(),
+      false,
+    );
+    await page.getByLabel("Chọn Trần Minh Bình").check();
+    assert.equal(
       await page
-        .getByRole("button", { name: "Gửi thư ứng viên đã chọn" })
-        .click();
+        .getByRole("button", { name: "Tạo lịch / Chi tiết" })
+        .isDisabled(),
+      true,
+      "single-Interview lifecycle actions must disable while multiple rows are selected",
+    );
 
-      const candidateDialog = page.getByRole("dialog", {
-        name: "Bản xem trước email ứng viên — 2 Interview",
-      });
-      await candidateDialog.waitFor({ state: "visible" });
-      assert.equal(
-        await candidateDialog.locator("[data-interview-id]").count(),
-        2,
-      );
-      await candidateDialog
-        .getByText("an@example.com", { exact: true })
-        .waitFor();
-      await candidateDialog
-        .getByText("binh@example.com", { exact: true })
-        .waitFor();
-      assert.match(
-        await candidateDialog.innerText(),
-        /Server body — Nguyễn Thị An/,
-      );
-      assert.match(
-        await candidateDialog.innerText(),
-        /Server body — Trần Minh Bình/,
-      );
+    await page
+      .getByText("2 Interview đã chọn cho email", { exact: true })
+      .waitFor({ state: "visible" });
+    await page
+      .getByRole("button", { name: "Gửi thư ứng viên đã chọn" })
+      .click();
 
-      const candidatePreviewCalls = await page.evaluate(
-        () => window.__interviewEmailHarness?.previewCalls ?? [],
-      );
-      assert.equal(candidatePreviewCalls.length, 2);
-      assert.deepEqual(
-        candidatePreviewCalls.map((call) => call.emailType),
-        ["INTERVIEW_INVITATION", "INTERVIEW_INVITATION"],
-      );
+    const candidateDialog = page.getByRole("dialog", {
+      name: "Bản xem trước email ứng viên — 2 Interview",
+    });
+    await candidateDialog.waitFor({ state: "visible" });
+    assert.equal(
+      await candidateDialog.locator("[data-interview-id]").count(),
+      2,
+    );
+    await candidateDialog
+      .getByText("an@example.com", { exact: true })
+      .waitFor();
+    await candidateDialog
+      .getByText("binh@example.com", { exact: true })
+      .waitFor();
+    assert.match(
+      await candidateDialog.innerText(),
+      /Server body — Nguyễn Thị An/,
+    );
+    assert.match(
+      await candidateDialog.innerText(),
+      /Server body — Trần Minh Bình/,
+    );
 
-      await candidateDialog
-        .getByRole("button", { name: "Xác nhận gửi 2 email" })
-        .click();
-      await candidateDialog
-        .getByText("Đã đưa 2 email vào hàng đợi gửi thư.", { exact: true })
-        .waitFor({ state: "visible" });
+    const candidatePreviewCalls = await page.evaluate(
+      () => window.__interviewEmailHarness?.previewCalls ?? [],
+    );
+    assert.equal(candidatePreviewCalls.length, 2);
+    assert.deepEqual(
+      candidatePreviewCalls.map((call) => call.emailType),
+      ["INTERVIEW_INVITATION", "INTERVIEW_INVITATION"],
+    );
 
-      const bulkCalls = await page.evaluate(
-        () => window.__interviewEmailHarness?.bulkCalls ?? [],
-      );
-      assert.equal(bulkCalls.length, 1);
-      const bulkCall = bulkCalls[0];
-      assert.ok(bulkCall);
-      assert.equal(bulkCall.requests.length, 2);
-      for (const request of bulkCall.requests) {
-        assert.deepEqual(Object.keys(request).sort(), [
-          "application_id",
-          "email_type",
-          "interview_id",
-          "preview_fingerprint",
-          "submission_id",
-        ]);
-        assert.equal(request.preview_fingerprint.length, 64);
-        assert.equal("participantIds" in request, false);
-        assert.equal("recipientIds" in request, false);
-      }
-      assert.match(
-        bulkCall.idempotencyKey,
-        /^[0-9a-f-]{36}$/i,
-        "bulk action must receive a client-generated UUID idempotency key",
-      );
-      assert.equal(
-        await page.evaluate(
-          () => window.__interviewEmailHarness?.interviewStatusMutations ?? -1,
-        ),
-        0,
-        "email send must not mutate Interview schedule status",
-      );
+    await candidateDialog
+      .getByRole("button", { name: "Xác nhận gửi 2 email" })
+      .click();
+    await candidateDialog
+      .getByText("Đã đưa 2 email vào hàng đợi gửi thư.", { exact: true })
+      .waitFor({ state: "visible" });
 
-      await candidateDialog
-        .getByRole("button", { name: "Đóng", exact: true })
-        .click();
-      await candidateDialog.waitFor({ state: "detached" });
-      await page
-        .getByRole("button", { name: "Gửi thư người tham dự đã chọn" })
-        .click();
-      const participantDialog = page.getByRole("dialog", {
-        name: "Bản xem trước email người tham dự — 2 Interview",
-      });
-      await participantDialog.waitFor({ state: "visible" });
-      await participantDialog
-        .getByText("interviewer.one@example.com", { exact: true })
-        .waitFor();
-      await participantDialog
-        .getByText("interviewer.two@example.com", { exact: true })
-        .waitFor();
-      const allPreviewCalls = await page.evaluate(
-        () => window.__interviewEmailHarness?.previewCalls ?? [],
-      );
-      assert.deepEqual(
-        allPreviewCalls.slice(-2).map((call) => call.emailType),
-        [
-          "INTERVIEW_PARTICIPANT_INVITATION",
-          "INTERVIEW_PARTICIPANT_INVITATION",
-        ],
-      );
-
-      await page
-        .getByRole("button", { name: "Gửi thư ứng viên Nguyễn Thị An" })
-        .waitFor({ state: "visible" });
-      await page
-        .getByRole("button", { name: "Gửi thư người tham dự Vòng 1" })
-        .waitFor({ state: "visible" });
-      assert.deepEqual(errors, [], "page bulk-email browser console/page errors");
-      await page.close();
-    } finally {
-      await browser?.close();
+    const bulkCalls = await page.evaluate(
+      () => window.__interviewEmailHarness?.bulkCalls ?? [],
+    );
+    assert.equal(bulkCalls.length, 1);
+    const bulkCall = bulkCalls[0];
+    assert.ok(bulkCall);
+    assert.equal(bulkCall.requests.length, 2);
+    for (const request of bulkCall.requests) {
+      assert.deepEqual(Object.keys(request).sort(), [
+        "application_id",
+        "email_type",
+        "interview_id",
+        "preview_fingerprint",
+        "submission_id",
+      ]);
+      assert.equal(request.preview_fingerprint.length, 64);
+      assert.equal("participantIds" in request, false);
+      assert.equal("recipientIds" in request, false);
     }
-  },
-);
+    assert.match(
+      bulkCall.idempotencyKey,
+      /^[0-9a-f-]{36}$/i,
+      "bulk action must receive a client-generated UUID idempotency key",
+    );
+    assert.equal(
+      await page.evaluate(
+        () => window.__interviewEmailHarness?.interviewStatusMutations ?? -1,
+      ),
+      0,
+      "email send must not mutate Interview schedule status",
+    );
 
-test(
-  "preview dialog retains fingerprint, refreshes STALE_PREVIEW, and queues without status mutation",
-  { timeout: 120_000 },
-  async () => {
-    const assets = await bundleHarness();
-    let browser: Browser | undefined;
-    try {
-      browser = await chromium.launch();
-      const { page, errors } = await openHarness(
-        browser,
-        assets,
-        "preview-stale",
-      );
-      const dialog = page.getByRole("dialog", {
-        name: "Bản xem trước email — Ứng viên",
-      });
-      await dialog.waitFor({ state: "visible" });
-      await dialog.getByText("an@example.com", { exact: true }).waitFor();
-      assert.match(
-        await dialog.innerText(),
-        /Server subject — Nguyễn Thị An/,
-      );
-      assert.match(await dialog.innerText(), /Server body — Nguyễn Thị An/);
+    await candidateDialog
+      .getByRole("button", { name: "Đóng", exact: true })
+      .click();
+    await candidateDialog.waitFor({ state: "detached" });
+    await page
+      .getByRole("button", { name: "Gửi thư người tham dự đã chọn" })
+      .click();
+    const participantDialog = page.getByRole("dialog", {
+      name: "Bản xem trước email người tham dự — 2 Interview",
+    });
+    await participantDialog.waitFor({ state: "visible" });
+    await participantDialog
+      .getByText("interviewer.one@example.com", { exact: true })
+      .waitFor();
+    await participantDialog
+      .getByText("interviewer.two@example.com", { exact: true })
+      .waitFor();
+    const allPreviewCalls = await page.evaluate(
+      () => window.__interviewEmailHarness?.previewCalls ?? [],
+    );
+    assert.deepEqual(
+      allPreviewCalls.slice(-2).map((call) => call.emailType),
+      ["INTERVIEW_PARTICIPANT_INVITATION", "INTERVIEW_PARTICIPANT_INVITATION"],
+    );
 
-      await dialog.getByRole("button", { name: "Xác nhận gửi" }).click();
-      await dialog
-        .getByText(
-          "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
-          { exact: true },
-        )
-        .waitFor({ state: "visible" });
+    await page
+      .getByRole("button", { name: "Gửi thư ứng viên Nguyễn Thị An" })
+      .waitFor({ state: "visible" });
+    await page
+      .getByRole("button", { name: "Gửi thư người tham dự Vòng 1" })
+      .waitFor({ state: "visible" });
+    assert.deepEqual(errors, [], "page bulk-email browser console/page errors");
+    await page.close();
+  } finally {
+    await browser?.close();
+  }
+});
 
-      const staleState = await page.evaluate(() => ({
-        previewCalls: window.__interviewEmailHarness?.previewCalls ?? [],
-        previewFingerprints:
-          window.__interviewEmailHarness?.previewFingerprints ?? [],
-        enqueueCalls: window.__interviewEmailHarness?.enqueueCalls ?? [],
-      }));
-      assert.equal(staleState.previewCalls.length, 2);
-      assert.equal(staleState.previewFingerprints.length, 2);
-      assert.equal(staleState.enqueueCalls.length, 1);
-      assert.equal(
-        staleState.enqueueCalls[0]?.request.preview_fingerprint,
-        staleState.previewFingerprints[0],
-        "first enqueue must carry the fingerprint the user reviewed",
-      );
-      assert.notEqual(
-        staleState.previewFingerprints[0],
-        staleState.previewFingerprints[1],
-        "STALE_PREVIEW refresh must produce a new preview fingerprint in the harness",
-      );
+test("preview dialog retains fingerprint, refreshes STALE_PREVIEW, and queues without status mutation", {
+  timeout: 120_000,
+}, async () => {
+  const assets = await bundleHarness();
+  let browser: Browser | undefined;
+  try {
+    browser = await chromium.launch();
+    const { page, errors } = await openHarness(
+      browser,
+      assets,
+      "preview-stale",
+    );
+    const dialog = page.getByRole("dialog", {
+      name: "Bản xem trước email — Ứng viên",
+    });
+    await dialog.waitFor({ state: "visible" });
+    await dialog.getByText("an@example.com", { exact: true }).waitFor();
+    assert.match(await dialog.innerText(), /Server subject — Nguyễn Thị An/);
+    assert.match(await dialog.innerText(), /Server body — Nguyễn Thị An/);
 
-      await dialog.getByRole("button", { name: "Xác nhận gửi" }).click();
-      await page.waitForFunction(
-        () => (window.__interviewEmailHarness?.queuedNotices ?? 0) === 1,
-      );
-      const finalState = await page.evaluate(() => ({
-        queuedNotices: window.__interviewEmailHarness?.queuedNotices ?? 0,
-        previewFingerprints:
-          window.__interviewEmailHarness?.previewFingerprints ?? [],
-        enqueueCalls: window.__interviewEmailHarness?.enqueueCalls ?? [],
-        statusMutations:
-          window.__interviewEmailHarness?.interviewStatusMutations ?? -1,
-      }));
-      assert.equal(finalState.queuedNotices, 1);
-      assert.equal(finalState.enqueueCalls.length, 2);
-      assert.equal(
-        finalState.enqueueCalls[1]?.request.preview_fingerprint,
-        finalState.previewFingerprints[1],
-        "second confirmation must use the refreshed fingerprint, not the stale one",
-      );
-      assert.equal(finalState.statusMutations, 0);
-      assert.deepEqual(errors, [], "preview browser console/page errors");
-      await page.close();
-    } finally {
-      await browser?.close();
-    }
-  },
-);
+    await dialog.getByRole("button", { name: "Xác nhận gửi" }).click();
+    await dialog
+      .getByText(
+        "Thông tin phỏng vấn đã thay đổi, vui lòng xem lại bản xem trước.",
+        { exact: true },
+      )
+      .waitFor({ state: "visible" });
 
-test(
-  "history drawer renders completed statuses and executes validated deletion behavior",
-  { timeout: 120_000 },
-  async () => {
-    const assets = await bundleHarness();
-    let browser: Browser | undefined;
-    try {
-      browser = await chromium.launch();
-      const { page, errors } = await openHarness(browser, assets, "history");
-      const drawer = page.getByRole("dialog", {
-        name: "Lịch sử gửi thư — Nguyễn Thị An — Vòng 1",
-      });
-      await drawer.waitFor({ state: "visible" });
+    const staleState = await page.evaluate(() => ({
+      previewCalls: window.__interviewEmailHarness?.previewCalls ?? [],
+      previewFingerprints:
+        window.__interviewEmailHarness?.previewFingerprints ?? [],
+      enqueueCalls: window.__interviewEmailHarness?.enqueueCalls ?? [],
+    }));
+    assert.equal(staleState.previewCalls.length, 2);
+    assert.equal(staleState.previewFingerprints.length, 2);
+    assert.equal(staleState.enqueueCalls.length, 1);
+    assert.equal(
+      staleState.enqueueCalls[0]?.request.preview_fingerprint,
+      staleState.previewFingerprints[0],
+      "first enqueue must carry the fingerprint the user reviewed",
+    );
+    assert.notEqual(
+      staleState.previewFingerprints[0],
+      staleState.previewFingerprints[1],
+      "STALE_PREVIEW refresh must produce a new preview fingerprint in the harness",
+    );
 
-      assert.deepEqual(
-        await drawer.locator(".ui-status-badge").allTextContents(),
-        ["SENT", "FAILED", "CANCELLED", "ABANDONED"],
-      );
-      assert.equal(
-        (await drawer.locator(".ui-status-badge").allTextContents()).includes(
-          "QUEUED",
-        ),
-        false,
-      );
-      await drawer.getByLabel("Chọn tất cả Email History").check();
-      await drawer
-        .getByRole("button", { name: "Xóa đã chọn (4)" })
-        .click();
+    await dialog.getByRole("button", { name: "Xác nhận gửi" }).click();
+    await page.waitForFunction(
+      () => (window.__interviewEmailHarness?.queuedNotices ?? 0) === 1,
+    );
+    const finalState = await page.evaluate(() => ({
+      queuedNotices: window.__interviewEmailHarness?.queuedNotices ?? 0,
+      previewFingerprints:
+        window.__interviewEmailHarness?.previewFingerprints ?? [],
+      enqueueCalls: window.__interviewEmailHarness?.enqueueCalls ?? [],
+      statusMutations:
+        window.__interviewEmailHarness?.interviewStatusMutations ?? -1,
+    }));
+    assert.equal(finalState.queuedNotices, 1);
+    assert.equal(finalState.enqueueCalls.length, 2);
+    assert.equal(
+      finalState.enqueueCalls[1]?.request.preview_fingerprint,
+      finalState.previewFingerprints[1],
+      "second confirmation must use the refreshed fingerprint, not the stale one",
+    );
+    assert.equal(finalState.statusMutations, 0);
+    assert.deepEqual(errors, [], "preview browser console/page errors");
+    await page.close();
+  } finally {
+    await browser?.close();
+  }
+});
 
-      const deleteDialog = page.getByRole("dialog", {
-        name: "Xóa Email History",
-      });
-      await deleteDialog.waitFor({ state: "visible" });
-      assert.match(
-        await deleteDialog.innerText(),
-        /security audit đã ghi nhận thao tác vẫn bất biến/i,
-      );
-      const classification = deleteDialog.getByLabel("Phân loại xóa");
-      const testRecordOption = classification.locator(
-        'option[value="TEST_RECORD"]',
-      );
-      assert.equal(
-        await testRecordOption.evaluate((option) =>
-          option.hasAttribute("disabled"),
-        ),
-        true,
-        "TEST_RECORD must be unavailable for a mixed TEST/PRODUCTION selection",
-      );
-      assert.equal(
-        await classification.inputValue(),
-        "WRONG_RECORD",
-        "mixed TEST/PRODUCTION selection must default to WRONG_RECORD",
-      );
-      const deleteButton = deleteDialog.getByRole("button", {
-        name: "Xóa 4 bản ghi",
-      });
-      assert.equal(await deleteButton.isDisabled(), true);
-      await deleteDialog
-        .getByLabel("Lý do xóa")
-        .fill("  Wrong imported records  ");
-      assert.equal(await deleteButton.isDisabled(), false);
-      await deleteButton.click();
+test("history drawer renders completed statuses and executes validated deletion behavior", {
+  timeout: 120_000,
+}, async () => {
+  const assets = await bundleHarness();
+  let browser: Browser | undefined;
+  try {
+    browser = await chromium.launch();
+    const { page, errors } = await openHarness(browser, assets, "history");
+    const drawer = page.getByRole("dialog", {
+      name: "Lịch sử gửi thư — Nguyễn Thị An — Vòng 1",
+    });
+    await drawer.waitFor({ state: "visible" });
 
-      await drawer
-        .getByText(
-          "Đã xóa 4 bản ghi Email History. Security audit vẫn được giữ nguyên.",
-          { exact: true },
-        )
-        .waitFor({ state: "visible" });
-      const deleteCalls = await page.evaluate(
-        () => window.__interviewEmailHarness?.deleteCalls ?? [],
-      );
-      assert.equal(deleteCalls.length, 4);
-      assert.ok(
-        deleteCalls.every(
-          (call) =>
-            call.classification === "WRONG_RECORD" &&
-            call.reason === "Wrong imported records",
-        ),
-      );
-      assert.deepEqual(errors, [], "history browser console/page errors");
-      await page.close();
-    } finally {
-      await browser?.close();
-    }
-  },
-);
+    assert.deepEqual(
+      await drawer.locator(".ui-status-badge").allTextContents(),
+      ["SENT", "FAILED", "CANCELLED", "ABANDONED"],
+    );
+    assert.equal(
+      (await drawer.locator(".ui-status-badge").allTextContents()).includes(
+        "QUEUED",
+      ),
+      false,
+    );
+    await drawer.getByLabel("Chọn tất cả Email History").check();
+    await drawer.getByRole("button", { name: "Xóa đã chọn (4)" }).click();
+
+    const deleteDialog = page.getByRole("dialog", {
+      name: "Xóa Email History",
+    });
+    await deleteDialog.waitFor({ state: "visible" });
+    assert.match(
+      await deleteDialog.innerText(),
+      /security audit đã ghi nhận thao tác vẫn bất biến/i,
+    );
+    const classification = deleteDialog.getByLabel("Phân loại xóa");
+    const testRecordOption = classification.locator(
+      'option[value="TEST_RECORD"]',
+    );
+    assert.equal(
+      await testRecordOption.evaluate((option) =>
+        option.hasAttribute("disabled"),
+      ),
+      true,
+      "TEST_RECORD must be unavailable for a mixed TEST/PRODUCTION selection",
+    );
+    assert.equal(
+      await classification.inputValue(),
+      "WRONG_RECORD",
+      "mixed TEST/PRODUCTION selection must default to WRONG_RECORD",
+    );
+    const deleteButton = deleteDialog.getByRole("button", {
+      name: "Xóa 4 bản ghi",
+    });
+    assert.equal(await deleteButton.isDisabled(), true);
+    await deleteDialog
+      .getByLabel("Lý do xóa")
+      .fill("  Wrong imported records  ");
+    assert.equal(await deleteButton.isDisabled(), false);
+    await deleteButton.click();
+
+    await drawer
+      .getByText(
+        "Đã xóa 4 bản ghi Email History. Security audit vẫn được giữ nguyên.",
+        { exact: true },
+      )
+      .waitFor({ state: "visible" });
+    const deleteCalls = await page.evaluate(
+      () => window.__interviewEmailHarness?.deleteCalls ?? [],
+    );
+    assert.equal(deleteCalls.length, 4);
+    assert.ok(
+      deleteCalls.every(
+        (call) =>
+          call.classification === "WRONG_RECORD" &&
+          call.reason === "Wrong imported records",
+      ),
+    );
+    assert.deepEqual(errors, [], "history browser console/page errors");
+    await page.close();
+  } finally {
+    await browser?.close();
+  }
+});
