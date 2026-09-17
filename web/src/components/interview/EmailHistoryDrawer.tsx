@@ -58,6 +58,7 @@ export function EmailHistoryDrawer({
         const result = await loadInterviewEmailHistoryAction(interviewId);
         if (!result.success) {
           setRows([]);
+          setSelectedIds(new Set());
           setMessage({ kind: "error", text: result.error.message });
           return false;
         }
@@ -66,6 +67,7 @@ export function EmailHistoryDrawer({
         return true;
       } catch {
         setRows([]);
+        setSelectedIds(new Set());
         setMessage({
           kind: "error",
           text: "Không thể tải Email History. Vui lòng thử lại.",
