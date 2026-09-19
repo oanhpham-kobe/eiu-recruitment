@@ -1,5 +1,5 @@
 version: 1
-current_slice: SLICE-07
+current_slice: SLICE-08
 slices:
   SLICE-00:
     name: Foundation / Production Skeleton
@@ -16,4 +16,4 @@ slices:
   SLICE-05: {name: Interviewer Reports / HR Report / Final Decision, status: DONE, current_task: TASK-S05-002}
   SLICE-06: {name: Master Data / Users & Permissions, status: DONE, current_task: TASK-S06-002}
   SLICE-07: {name: Email / Documents / Activity / Workers, status: DONE, current_task: TASK-S07-005}
-  SLICE-08: {name: Search / Performance / Ops / Release Hardening, status: NOT_STARTED}
+  SLICE-08: {name: Search / Performance / Ops / Release Hardening, status: IN_PROGRESS, current_task: TASK-S08-001}

@@ -8,8 +8,31 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: SLICE_07_CLOSED_AWAITING_SLICE_08_SOURCE_RECONCILIATION
-  note: "TASK-S05-002 accepted at exact SHA fe556dda76ebeda7107bcb9310cbaf338b30fc29 after final integration-equivalence PASS, Integration CI 34461727271 PASS, Governance CI 34461727266 PASS, and immutable checkpoint; SLICE-05 closure remains pending composition review and broader regression."
+  status: S08_001_MATERIALIZED_AWAITING_PRETASK_CHECKPOINT_AND_PROMPT_REVIEW
+  note: "Slice-07 is CLOSED_ACCEPTED. TASK-S08-001 is the first materialized Slice-08 task after source reconciliation PASS; implementation is prohibited pending immutable pre-task checkpoint, independent prompt/source review PASS, persisted evidence, and explicit Owner dispatch."
+
+  S08-001-SOURCE-GATE-001:
+    task: TASK-S08-001
+    operation: APPLICATION_INBOX_SEARCH_AND_INDEXED_PAGINATION_HARDENING_SOURCE_RECONCILIATION
+    status: MATERIALIZED_AWAITING_PRETASK_CHECKPOINT_AND_PROMPT_REVIEW
+    planning_source_prompt_head: "6348fe9af137d18a2b148979583141bc8c8104b0"
+    source_reconciliation: project_control/reviews/S08_001_SOURCE_RECONCILIATION_v2.md
+    source_reconciliation_work_id: S08-001-SOURCE-RECONCILIATION-002
+    source_reconciliation_result: PASS
+    source_reopen_required: false
+    prompt: project_control/prompts/SLICE-08_TASK-001_v2.md
+    prompt_version: v2
+    planned_pre_task_checkpoint: checkpoint/pre-S08-001-001
+    prompt_review_status: PENDING
+    implementation_started: false
+    implementation_authorized: false
+    accepted_predecessor_slice_checkpoint: checkpoint/SLICE-07-accepted-001
+    accepted_predecessor_slice_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
+    superseded_before_review:
+      - project_control/reviews/S08_001_SOURCE_RECONCILIATION_v1.md
+      - project_control/prompts/SLICE-08_TASK-001_v1.md
+    bounded_scope: "Existing Application Inbox search/read hardening only: accent-insensitive Name normalization/indexing, authoritative Email/index alignment, digit-normalized Phone search, canonical page-size/debounce/minimum-query behavior, PII-safe request transport, and representative query-plan evidence."
+    deferred_candidate: "TASK-S08-002 Durable Distributed Rate Limiting and Abuse Controls — identified but NOT materialized."
 
   PLAN-RECONCILIATION-S04-005-001:
     operation: SOURCE_IMPLEMENTATION_PLAN_RECONCILIATION

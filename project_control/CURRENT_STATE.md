@@ -50,6 +50,16 @@
 - Closing-review evidence is persisted at `project_control/reviews/SLICE_07_CLOSING_REREVIEW_b4e06a6_v1.md`; reporting SHA `03629c81e0fdcf0d868c5a376b9df60363f0126b` passed Integration CI `35412795335` and Governance CI `35412795329`.
 - Slice-07 lifecycle is CLOSED_ACCEPTED.
 
+## Slice-08 planning state
+
+- Slice-07 remains CLOSED_ACCEPTED at `checkpoint/SLICE-07-accepted-001`.
+- Source reconciliation `S08-001-SOURCE-RECONCILIATION-002` is PASS with `SOURCE_REOPEN_REQUIRED=false`.
+- The first materialized Slice-08 task is `TASK-S08-001 — Application Inbox Search and Indexed Pagination Hardening`.
+- Governed source/prompt artifacts are `project_control/reviews/S08_001_SOURCE_RECONCILIATION_v2.md` and `project_control/prompts/SLICE-08_TASK-001_v2.md`; both v2 artifacts supersede their v1 drafts before any checkpoint or independent prompt review.
+- Materialization source/prompt head is `6348fe9af137d18a2b148979583141bc8c8104b0`. The exact materialized commit produced by this control-plane transition must be captured by `checkpoint/pre-S08-001-001` before prompt review.
+- TASK-S08-001 is PLANNED only. `implementation_started=false`; no implementation authority exists.
+- The next identified domain, durable distributed rate limiting, is only a future TASK-S08-002 candidate and is not materialized.
+
 ## Scope boundary
 
-SLICE-07 is DONE. Slice-08 remains NOT_STARTED and no `TASK-S08-*` has been materialized. Because the control-plane validator requires `current_slice/current_task` to reference an existing task, the reporting pointer remains `SLICE-07` / `TASK-S07-005` until canonical Slice-08 source reconciliation materializes the first valid Slice-08 task. The next gate is Slice-08 source reconciliation and prompt materialization/review only; no Slice-08 implementation, deployment, connected Supabase mutation, or `main` mutation is authorized by this closure.
+SLICE-08 is IN_PROGRESS at a pre-implementation prompt gate. `current_slice=SLICE-08` and `current_task=TASK-S08-001` become valid only because TASK-S08-001 is materialized in the same atomic governance commit. The next action is immutable pre-task checkpoint creation followed by independent OMP/`eiu-reviewer` prompt/source review. No TASK-S08-001 implementation, TASK-S08-002 materialization, production deployment, connected Supabase mutation, or `main` mutation is authorized by this transition.

@@ -1,6 +1,6 @@
 version: 1
-current_slice: SLICE-07
-current_task: TASK-S07-005
+current_slice: SLICE-08
+current_task: TASK-S08-001
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1531,3 +1531,38 @@ tasks:
       source_reopen_required: false
       implementation_reopen_required: false
     next_frontier_behavior: "Lifecycle CLOSED for TASK-S07-005 and Slice-07 closing composition re-review PASSed. Slice-07 is CLOSED_ACCEPTED; HARD STOP before Slice-08 until canonical Slice-08 source reconciliation materializes the first valid TASK-S08-* and its prompt-review gate."
+
+  TASK-S08-001:
+    title: "Application Inbox Search and Indexed Pagination Hardening"
+    slice: SLICE-08
+    status: PLANNED
+    lane: LANE_A
+    depends_on: [TASK-S03-004, TASK-S07-005]
+    planning_baseline_sha: "6348fe9af137d18a2b148979583141bc8c8104b0"
+    source_reconciliation: project_control/reviews/S08_001_SOURCE_RECONCILIATION_v2.md
+    source_reconciliation_work_id: S08-001-SOURCE-RECONCILIATION-002
+    source_reconciliation_status: PASS
+    source_reopen_required: false
+    prompt: project_control/prompts/SLICE-08_TASK-001_v2.md
+    prompt_version: v2
+    superseded_pre_review_artifacts:
+      - project_control/reviews/S08_001_SOURCE_RECONCILIATION_v1.md
+      - project_control/prompts/SLICE-08_TASK-001_v1.md
+    planned_pre_task_checkpoint: checkpoint/pre-S08-001-001
+    prompt_review_status: PENDING
+    prompt_review_work_id: PENDING
+    implementation_started: false
+    implementation_branch: chatgpt/TASK-S08-001-application-inbox-search-hardening
+    acceptance:
+      - "Existing server-side public.list_application_inbox architecture and Candidate-group pagination remain authoritative."
+      - "Vietnamese Name search gains a tested accent-insensitive indexed normalization strategy without unsafe IMMUTABLE claims."
+      - "Authoritative Email search predicate is explicitly aligned with its actual normalized/index support; the submissions.email_snapshot index is not misrepresented as supporting candidates.email."
+      - "Phone search uses digit-normalized indexed behavior."
+      - "User-facing default page size is 25 with exactly 25/50/100 choices; page-size changes reset page-scoped selection safely."
+      - "Search/filter debounce is 300 ms and one-character generic Name queries cannot trigger broad trusted-database Name scans."
+      - "PII Name/Email/Phone query text remains request state and is excluded from URL/history/logs/telemetry/audit payloads."
+      - "RLS, submissions.view authorization, Root Admin behavior, deterministic immutable-ID tie-breakers and complete child history remain intact."
+      - "Representative query-plan evidence is recorded without falsely claiming tiny-fixture production p95 proof."
+      - "Focused/new and accepted Application Inbox regressions, full web gates, disposable local DB replay, DB lint, and governance validators PASS."
+    out_of_scope: "Durable distributed rate limiting/TASK-S08-002, provider runtimes, production scheduler, archive/purge/retention, backup/restore, production deployment, connected Supabase mutation, Production UAT sign-off, global accessibility recertification, and unrelated search redesign."
+    next_frontier_behavior: "HARD STOP before implementation: create immutable checkpoint/pre-S08-001-001 on the exact materialized baseline, obtain independent OMP/eiu-reviewer prompt/source PASS on its peeled SHA, persist that evidence, then await explicit Owner implementation dispatch."

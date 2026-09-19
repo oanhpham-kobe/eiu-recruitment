@@ -662,7 +662,7 @@ slice_07_closure:
   ci_result: PASS
   connected_supabase_mutated: false
   vercel_deployed: false
-  slice_08_materialized: false
+  slice_08_materialized: true
 
 slice_07_planning:
   status: CLOSED_ACCEPTED
@@ -766,17 +766,41 @@ slice_07_planning:
     checkpoint_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
     annotated_tag_object: "2e127b3dcd8e765f73366a8165dee26112788e33"
 
+slice_08_planning:
+  status: S08_001_MATERIALIZED_AWAITING_PRETASK_CHECKPOINT_AND_PROMPT_REVIEW
+  lifecycle: ACTIVE
+  selected_task: TASK-S08-001
+  planning_source_prompt_head: "6348fe9af137d18a2b148979583141bc8c8104b0"
+  source_reconciliation: project_control/reviews/S08_001_SOURCE_RECONCILIATION_v2.md
+  source_reconciliation_work_id: S08-001-SOURCE-RECONCILIATION-002
+  source_reconciliation_status: PASS
+  source_reopen_required: false
+  prompt: project_control/prompts/SLICE-08_TASK-001_v2.md
+  prompt_version: v2
+  planned_pre_task_checkpoint: checkpoint/pre-S08-001-001
+  prompt_review_status: PENDING
+  implementation_started: false
+  implementation_authorized: false
+  materialized_next_task_count: 1
+  implementation_branch: chatgpt/TASK-S08-001-application-inbox-search-hardening
+  accepted_predecessor_slice_checkpoint: checkpoint/SLICE-07-accepted-001
+  accepted_predecessor_slice_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
+  producer_role: EXTERNAL_CHATGPT
+  independent_prompt_reviewer: OMP_EIU_REVIEWER
+  deferred_candidate_tasks:
+    - "TASK-S08-002 candidate: Durable Distributed Rate Limiting and Abuse Controls — identified by source reconciliation but NOT materialized."
+
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "Slice-07 is CLOSED_ACCEPTED at checkpoint/SLICE-07-accepted-001. Slice-08 has no materialized TASK-S08-* yet; canonical source reconciliation is required before changing current_slice/current_task."
-  materialization_frontier: []
-  execution_hold: "HARD STOP after Slice-07 closure pending canonical Slice-08 source reconciliation and first-task materialization. Do not advance current_slice until a valid TASK-S08-* exists."
+    - "TASK-S08-001 is materialized for prompt gating only. Implementation remains prohibited until the immutable pre-task checkpoint receives independent OMP/eiu-reviewer prompt/source PASS and the Owner explicitly dispatches implementation."
+  materialization_frontier: [TASK-S08-001]
+  execution_hold: "HARD STOP at TASK-S08-001 pre-task checkpoint and independent prompt-review gate; implementation_started=false and implementation_authorized=false."
 
 stop_gate:
   status: ACTIVE
-  type: SLICE_08_SOURCE_RECONCILIATION_GATE
+  type: S08_001_PRETASK_CHECKPOINT_AND_PROMPT_REVIEW_GATE
   source_reopen_required: false
-  resume_on: "Canonical Slice-08 source reconciliation identifies and materializes the first valid TASK-S08-* together with its dependency-safe prompt-review gate."
+  resume_on: "Create immutable annotated checkpoint/pre-S08-001-001 on the exact TASK-S08-001 materialized baseline, obtain independent OMP/eiu-reviewer prompt/source reconciliation PASS on the peeled SHA, persist the PASS evidence, then await explicit Owner implementation dispatch."
 
-next_action: "Source-reconcile Slice-08 against canonical review_pack/app_spec authorities, identify the dependency-safe first task, materialize its governed prompt and task entry, then run independent prompt review before implementation. Do not modify main, deploy Vercel, or mutate connected Supabase."
+next_action: "Create and verify immutable checkpoint/pre-S08-001-001 for the exact materialized TASK-S08-001 baseline, then run independent OMP/eiu-reviewer prompt/source review. Do not begin implementation, materialize TASK-S08-002, modify main, deploy Vercel, or mutate connected Supabase."
