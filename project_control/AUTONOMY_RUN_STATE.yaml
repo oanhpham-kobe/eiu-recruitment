@@ -42,8 +42,9 @@ integration:
   last_verified_application_ci_run: "35236834202"
   accepted_checkpoint: checkpoint/S07-005-accepted-001
   accepted_checkpoint_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
-  last_verified_slice_closing_sha: "e3daa6930374ecad1ad0e646b651ee076b515a8b"
-  last_verified_slice_closing_ci_run: "34201054499"
+  last_verified_slice_closing_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
+  last_verified_slice_closing_ci_run: "35245552145"
+  last_verified_slice_closing_governance_ci_run: "35245551953"
   last_verified_control_plane_sha: "44f1d1d22d09a3b8bb0855324b6631e16256cefc"
   last_verified_control_plane_integration_ci_run: "34736028874"
   last_verified_control_plane_governance_ci_run: "34736028909"
@@ -637,8 +638,34 @@ slice_06_external_audit:
   evidence_persistence: "Owner supplied external audit verdict in current continuation; no reviewer-native coordinate claimed."
   governance_debt: "Checkpoint immutability is process-enforced, not GitHub branch-protection-enforced; non-blocking and outside this planning scope."
 
+slice_07_closure:
+  status: CLOSED_ACCEPTED
+  work_id: SLICE-07-CLOSING-REVIEW-002
+  reviewed_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
+  result: PASS
+  source_reopen_required: false
+  reviewer: OMP_EIU_REVIEWER
+  historical_review_work_id: SLICE-07-CLOSING-REVIEW-001
+  historical_finding: S07-CLOSING-001
+  historical_finding_disposition: RESOLVED_BY_ACCEPTED_TASK_S07_005
+  composition_result: PASS
+  slice_completeness: true
+  evidence_path: project_control/reviews/SLICE_07_CLOSING_REREVIEW_b4e06a6_v1.md
+  evidence_reporting_sha: "03629c81e0fdcf0d868c5a376b9df60363f0126b"
+  checkpoint: checkpoint/SLICE-07-accepted-001
+  checkpoint_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
+  annotated_tag_object: "2e127b3dcd8e765f73366a8165dee26112788e33"
+  integration_ci_run: "35245552145"
+  governance_ci_run: "35245551953"
+  evidence_reporting_integration_ci_run: "35412795335"
+  evidence_reporting_governance_ci_run: "35412795329"
+  ci_result: PASS
+  connected_supabase_mutated: false
+  vercel_deployed: false
+  slice_08_materialized: false
+
 slice_07_planning:
-  status: S07_005_ACCEPTED_AWAITING_SLICE_CLOSING_REREVIEW
+  status: CLOSED_ACCEPTED
   accepted_checkpoint: checkpoint/S07-005-accepted-001
   accepted_checkpoint_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
   accepted_checkpoint_tag_object: "63be36559229b758353b9a95e867d8632814b10d"
@@ -646,7 +673,7 @@ slice_07_planning:
   accepted_scope: "Email History projection and manual preview-fenced Candidate/Participant email outbox UI consumers."
   source_reopen_required: false
   implementation_reopen_required: false
-  lifecycle: ACTIVE
+  lifecycle: CLOSED
   independent_final_acceptance_audit:
     work_id: S07-005-FINAL-ACCEPTANCE-AUDIT-001
     reviewer: OMP_EIU_REVIEWER
@@ -724,19 +751,32 @@ slice_07_planning:
     work_id: SLICE-07-CLOSING-REVIEW-001
     verdict: BLOCKING_REPAIR
     finding: S07-CLOSING-001
-    disposition: AWAITING_INDEPENDENT_REREVIEW_AFTER_S07_005_ACCEPTANCE
+    disposition: RESOLVED_BY_ACCEPTED_TASK_S07_005
+  closing_rereview:
+    work_id: SLICE-07-CLOSING-REVIEW-002
+    reviewed_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
+    reviewer: OMP_EIU_REVIEWER
+    verdict: PASS
+    slice_completeness: true
+    source_reopen_required: false
+    findings: NONE
+    evidence_path: project_control/reviews/SLICE_07_CLOSING_REREVIEW_b4e06a6_v1.md
+  slice_acceptance:
+    checkpoint: checkpoint/SLICE-07-accepted-001
+    checkpoint_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
+    annotated_tag_object: "2e127b3dcd8e765f73366a8165dee26112788e33"
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S07-005 is individually accepted at checkpoint/S07-005-accepted-001; no remaining Slice-07 task is materialized. Slice-07 remains IN_PROGRESS pending independent closing composition re-review of historical finding S07-CLOSING-001."
+    - "Slice-07 is CLOSED_ACCEPTED at checkpoint/SLICE-07-accepted-001. Slice-08 has no materialized TASK-S08-* yet; canonical source reconciliation is required before changing current_slice/current_task."
   materialization_frontier: []
-  execution_hold: "HARD STOP after TASK-S07-005 individual acceptance pending independent Slice-07 closing composition re-review. Slice-08 remains held until Slice-07 closes legitimately."
+  execution_hold: "HARD STOP after Slice-07 closure pending canonical Slice-08 source reconciliation and first-task materialization. Do not advance current_slice until a valid TASK-S08-* exists."
 
 stop_gate:
   status: ACTIVE
-  type: SLICE_07_CLOSING_REREVIEW_GATE
+  type: SLICE_08_SOURCE_RECONCILIATION_GATE
   source_reopen_required: false
-  resume_on: "Owner-transported independent OMP/eiu-reviewer Slice-07 closing composition re-review PASS or BLOCKING_REPAIR verdict on the exact post-acceptance reporting SHA."
+  resume_on: "Canonical Slice-08 source reconciliation identifies and materializes the first valid TASK-S08-* together with its dependency-safe prompt-review gate."
 
-next_action: "Run an independent Slice-07 closing composition re-review on the exact post-acceptance governance reporting SHA; verify historical S07-CLOSING-001 is resolved by accepted TASK-S07-005 before any Slice-08 advancement."
+next_action: "Source-reconcile Slice-08 against canonical review_pack/app_spec authorities, identify the dependency-safe first task, materialize its governed prompt and task entry, then run independent prompt review before implementation. Do not modify main, deploy Vercel, or mutate connected Supabase."

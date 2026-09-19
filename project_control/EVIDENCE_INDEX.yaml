@@ -8,7 +8,7 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: S07_005_ACCEPTED_AWAITING_SLICE_07_CLOSING_REREVIEW
+  status: SLICE_07_CLOSED_AWAITING_SLICE_08_SOURCE_RECONCILIATION
   note: "TASK-S05-002 accepted at exact SHA fe556dda76ebeda7107bcb9310cbaf338b30fc29 after final integration-equivalence PASS, Integration CI 34461727271 PASS, Governance CI 34461727266 PASS, and immutable checkpoint; SLICE-05 closure remains pending composition review and broader regression."
 
   PLAN-RECONCILIATION-S04-005-001:
@@ -1520,12 +1520,28 @@ implementation_evidence:
       final_acceptance_integration_ci: "35236834202 PASS"
       final_acceptance_governance_ci: "35236834204 PASS"
     slice_closing_frontier:
-      prior_review_work_id: SLICE-07-CLOSING-REVIEW-001
-      prior_verdict: BLOCKING_REPAIR
-      prior_finding: S07-CLOSING-001
-      status: REREVIEW_REQUIRED_AFTER_S07_005_ACCEPTANCE
-      slice_07_status: IN_PROGRESS
+      historical_review_work_id: SLICE-07-CLOSING-REVIEW-001
+      historical_verdict: BLOCKING_REPAIR
+      historical_finding: S07-CLOSING-001
+      historical_finding_disposition: RESOLVED_BY_ACCEPTED_TASK_S07_005
+      closing_rereview_work_id: SLICE-07-CLOSING-REVIEW-002
+      closing_rereview_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
+      closing_rereview_verdict: PASS
+      source_reopen_required: false
+      slice_completeness: true
+      findings: NONE
+      slice_accepted_checkpoint: checkpoint/SLICE-07-accepted-001
+      slice_accepted_checkpoint_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
+      slice_accepted_tag_object: "2e127b3dcd8e765f73366a8165dee26112788e33"
+      evidence_artifact: project_control/reviews/SLICE_07_CLOSING_REREVIEW_b4e06a6_v1.md
+      reviewed_integration_ci: "35245552145 PASS"
+      reviewed_governance_ci: "35245551953 PASS"
+      evidence_reporting_sha: "03629c81e0fdcf0d868c5a376b9df60363f0126b"
+      evidence_reporting_integration_ci: "35412795335 PASS"
+      evidence_reporting_governance_ci: "35412795329 PASS"
+      slice_07_status: DONE
       slice_08_status: NOT_STARTED
+      next_frontier: SLICE_08_SOURCE_RECONCILIATION_REQUIRED
     materialized_next_task_count: 1
     historical_reviews:
       - work_id: S07-005-PROMPT-REVIEW-001

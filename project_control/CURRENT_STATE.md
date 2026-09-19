@@ -41,6 +41,15 @@
 - Checkpoint verified: annotated tag object `63be36559229b758353b9a95e867d8632814b10d` peels exactly to `0caf83354a1353d7fc807d3b3014720f9720e2e3` with message `Accept TASK-S07-005 @ 0caf83354a1353d7fc807d3b3014720f9720e2e3`.
 - Accepted scope supplies the source-required manual Candidate/Participant email actions, preview-fenced single/bulk enqueue consumers, permission-separated Email History projection, and audited cleanup UI over accepted S07-001 contracts. It does not introduce a live email provider, background sender, deployment, connected Supabase mutation, or production scheduler.
 
+## Slice-07 closure
+
+- Independent Slice-07 closing composition re-review `SLICE-07-CLOSING-REVIEW-002` reviewed exact `b4e06a639f9e00126c1f76549067e1f6469ebc8b` and returned `PASS`, findings `NONE`, source reopen `false`, and `SLICE_07_CLOSURE_AUTHORIZED=YES`.
+- Historical finding `S07-CLOSING-001` is `RESOLVED_BY_ACCEPTED_TASK_S07_005`.
+- All five materialized Slice-07 tasks are individually accepted and compose successfully across email/outbox/history, scan/quarantine, cleanup eligibility/fencing, physical Storage deletion, worker security, permissions, audit, idempotency, and Interview lifecycle interaction.
+- Slice checkpoint verified: `checkpoint/SLICE-07-accepted-001` is annotated tag object `2e127b3dcd8e765f73366a8165dee26112788e33` and peels exactly to `b4e06a639f9e00126c1f76549067e1f6469ebc8b`.
+- Closing-review evidence is persisted at `project_control/reviews/SLICE_07_CLOSING_REREVIEW_b4e06a6_v1.md`; reporting SHA `03629c81e0fdcf0d868c5a376b9df60363f0126b` passed Integration CI `35412795335` and Governance CI `35412795329`.
+- Slice-07 lifecycle is CLOSED_ACCEPTED.
+
 ## Scope boundary
 
-SLICE-07 remains IN_PROGRESS. All materialized Slice-07 tasks through TASK-S07-005 are individually accepted, but historical closing review `SLICE-07-CLOSING-REVIEW-001` returned `BLOCKING_REPAIR` on `S07-CLOSING-001` before S07-005 existed. The next gate is an independent Slice-07 closing composition re-review proving that accepted TASK-S07-005 resolves that finding and that the five accepted Slice-07 tasks compose without regressions. Slice-08 remains NOT_STARTED. No deployment, connected Supabase mutation, or `main` mutation is authorized by this acceptance.
+SLICE-07 is DONE. Slice-08 remains NOT_STARTED and no `TASK-S08-*` has been materialized. Because the control-plane validator requires `current_slice/current_task` to reference an existing task, the reporting pointer remains `SLICE-07` / `TASK-S07-005` until canonical Slice-08 source reconciliation materializes the first valid Slice-08 task. The next gate is Slice-08 source reconciliation and prompt materialization/review only; no Slice-08 implementation, deployment, connected Supabase mutation, or `main` mutation is authorized by this closure.

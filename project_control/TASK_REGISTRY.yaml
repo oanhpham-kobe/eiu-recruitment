@@ -1530,4 +1530,4 @@ tasks:
       final_acceptance_governance_ci: "35236834204 PASS @ 0caf83354a1353d7fc807d3b3014720f9720e2e3"
       source_reopen_required: false
       implementation_reopen_required: false
-    next_frontier_behavior: "Lifecycle CLOSED for TASK-S07-005; HARD STOP pending independent Slice-07 closing composition re-review resolving historical S07-CLOSING-001. Slice-07 remains IN_PROGRESS and Slice-08 remains held until that review PASSes."
+    next_frontier_behavior: "Lifecycle CLOSED for TASK-S07-005 and Slice-07 closing composition re-review PASSed. Slice-07 is CLOSED_ACCEPTED; HARD STOP before Slice-08 until canonical Slice-08 source reconciliation materializes the first valid TASK-S08-* and its prompt-review gate."
