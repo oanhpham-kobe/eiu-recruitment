@@ -128,7 +128,10 @@ as $$
         '',
         'g'
       ) as phone_query,
-      least(greatest(coalesce(p_page_size, 25), 1), 100) as effective_page_size
+      case
+        when p_page_size in (25, 50, 100) then p_page_size
+        else 25
+      end as effective_page_size
   ), query_spec as (
     select
       qi.*,
