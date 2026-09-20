@@ -41,16 +41,16 @@ set role authenticated;
 
 do $$
 declare
-  v_page_one_candidate_ids uuid[];
-  v_page_two_submission_ids uuid[];
   v_filtered_candidate_ids uuid[];
+  v_candidate_a_submission_ids uuid[];
   v_total_count bigint;
+  v_invalid_size_candidate_count bigint;
 begin
   select array_agg(candidate_id order by candidate_id), min(total_count)
     into v_filtered_candidate_ids, v_total_count
   from (
     select distinct candidate_id, total_count
-    from public.list_application_inbox('', 'ALL', '2026-09-01', '2026-09-01', 'ALL', 'ALL', 'ALL', 1, 10)
+    from public.list_application_inbox('', 'ALL', '2026-09-01', '2026-09-01', 'ALL', 'ALL', 'ALL', 1, 25)
   ) filtered;
   assert v_filtered_candidate_ids = array[
     '00000000-0000-0000-0000-000000004201'::uuid,
@@ -58,19 +58,22 @@ begin
   ], 'date filtering uses Asia/Ho_Chi_Minh calendar bounds';
   assert v_total_count = 2, 'date filtering counts Candidate groups, not Submission rows';
 
-  select array_agg(distinct candidate_id), min(total_count)
-    into v_page_one_candidate_ids, v_total_count
-  from public.list_application_inbox('', 'ALL', '2026-09-01', '2026-09-01', 'ALL', 'ALL', 'ALL', 1, 1);
-  assert v_page_one_candidate_ids = array['00000000-0000-0000-0000-000000004202'::uuid], 'first page contains the latest Candidate group';
-  assert v_total_count = 2, 'pagination total is Candidate-group count';
-
   select array_agg(submission_id order by submitted_at desc, submission_id desc)
-    into v_page_two_submission_ids
-  from public.list_application_inbox('', 'ALL', '2026-09-01', '2026-09-01', 'ALL', 'ALL', 'ALL', 2, 1);
-  assert v_page_two_submission_ids = array[
+    into v_candidate_a_submission_ids
+  from public.list_application_inbox('', 'ALL', '2026-09-01', '2026-09-01', 'ALL', 'ALL', 'ALL', 1, 25)
+  where candidate_id = '00000000-0000-0000-0000-000000004201'::uuid;
+
+  assert v_candidate_a_submission_ids = array[
     '00000000-0000-0000-0000-000000004502'::uuid,
     '00000000-0000-0000-0000-000000004501'::uuid
-  ], 'second Candidate page returns the complete historical group in deterministic order';
+  ], 'Candidate page returns the complete historical group in deterministic child order';
+
+  select count(distinct candidate_id)
+    into v_invalid_size_candidate_count
+  from public.list_application_inbox('', 'ALL', '2026-09-01', '2026-09-01', 'ALL', 'ALL', 'ALL', 1, 1);
+
+  assert v_invalid_size_candidate_count = 2,
+    'invalid page size falls back to canonical 25 instead of weakening the RPC contract';
 end;
 $$;
 

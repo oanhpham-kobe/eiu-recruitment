@@ -10,6 +10,21 @@ export const APPLICATION_INBOX_COLUMNS = [
   { key: "action", label: "Thao tác", width: 92 },
 ] as const;
 
+export const APPLICATION_INBOX_PAGE_SIZES = [25, 50, 100] as const;
+export type ApplicationInboxPageSize =
+  (typeof APPLICATION_INBOX_PAGE_SIZES)[number];
+export const DEFAULT_APPLICATION_INBOX_PAGE_SIZE: ApplicationInboxPageSize = 25;
+
+export function normalizeApplicationInboxPageSize(
+  value: unknown,
+): ApplicationInboxPageSize {
+  return typeof value === "number" &&
+    Number.isSafeInteger(value) &&
+    APPLICATION_INBOX_PAGE_SIZES.includes(value as ApplicationInboxPageSize)
+    ? (value as ApplicationInboxPageSize)
+    : DEFAULT_APPLICATION_INBOX_PAGE_SIZE;
+}
+
 export type SubmissionStatus = "NEW" | "READ" | "PROCESSED" | "DONE" | "CLOSED";
 
 export interface ApplicationInboxSubmission {

@@ -7,11 +7,11 @@ import {
   type ApplicationInboxFilters,
   type ApplicationInboxGroup,
   type ApplicationInboxSubmission,
+  normalizeApplicationInboxPageSize,
   projectApplicationInboxGroups,
   type SubmissionStatus,
 } from "./model";
 
-const DEFAULT_PAGE_SIZE = 10;
 const MAX_SEARCH_LENGTH = 256;
 
 export class ApplicationInboxAccessError extends Error {
@@ -205,12 +205,7 @@ export async function loadApplicationInbox(
     throw new ApplicationInboxAccessError();
 
   const filters = normalizeApplicationInboxFilters(deps.filters);
-  const pageSize =
-    typeof deps.pageSize === "number" &&
-    Number.isSafeInteger(deps.pageSize) &&
-    deps.pageSize > 0
-      ? deps.pageSize
-      : DEFAULT_PAGE_SIZE;
+  const pageSize = normalizeApplicationInboxPageSize(deps.pageSize);
   const requestedPage =
     typeof deps.page === "number" &&
     Number.isSafeInteger(deps.page) &&
