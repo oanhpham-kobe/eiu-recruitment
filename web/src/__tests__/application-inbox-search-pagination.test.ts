@@ -50,7 +50,7 @@ test("Application Inbox canonical user-facing page sizes are exactly 25/50/100 w
   assert.equal(normalizeApplicationInboxPageSize("50"), 25);
 });
 
-test("Application Inbox low-level server adapter defaults to 25 and keeps bounded internal page sizes", async () => {
+test("Application Inbox low-level server adapter enforces canonical page sizes with fallback 25", async () => {
   const defaultClient = createInboxClient();
   await loadApplicationInbox({
     client: defaultClient.client,
@@ -59,21 +59,29 @@ test("Application Inbox low-level server adapter defaults to 25 and keeps bounde
   assert.equal(defaultClient.rpcCalls.length, 1);
   assert.equal(defaultClient.rpcCalls[0].args.p_page_size, 25);
 
-  const smallInternalClient = createInboxClient();
+  const invalidSmallClient = createInboxClient();
   await loadApplicationInbox({
-    client: smallInternalClient.client,
+    client: invalidSmallClient.client,
     pageSize: 1,
     resolveSession: async () => internalSession(),
   });
-  assert.equal(smallInternalClient.rpcCalls[0].args.p_page_size, 1);
+  assert.equal(invalidSmallClient.rpcCalls[0].args.p_page_size, 25);
 
-  const boundedClient = createInboxClient();
+  const invalidLargeClient = createInboxClient();
   await loadApplicationInbox({
-    client: boundedClient.client,
+    client: invalidLargeClient.client,
     pageSize: 999,
     resolveSession: async () => internalSession(),
   });
-  assert.equal(boundedClient.rpcCalls[0].args.p_page_size, 100);
+  assert.equal(invalidLargeClient.rpcCalls[0].args.p_page_size, 25);
+
+  const canonicalClient = createInboxClient();
+  await loadApplicationInbox({
+    client: canonicalClient.client,
+    pageSize: 100,
+    resolveSession: async () => internalSession(),
+  });
+  assert.equal(canonicalClient.rpcCalls[0].args.p_page_size, 100);
 });
 
 let cachedScript: string | undefined;
