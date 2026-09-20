@@ -7,7 +7,7 @@ import {
   type ApplicationInboxFilters,
   type ApplicationInboxGroup,
   type ApplicationInboxSubmission,
-  DEFAULT_APPLICATION_INBOX_PAGE_SIZE,
+  normalizeApplicationInboxPageSize,
   projectApplicationInboxGroups,
   type SubmissionStatus,
 } from "./model";
@@ -205,12 +205,7 @@ export async function loadApplicationInbox(
     throw new ApplicationInboxAccessError();
 
   const filters = normalizeApplicationInboxFilters(deps.filters);
-  const pageSize =
-    typeof deps.pageSize === "number" &&
-    Number.isSafeInteger(deps.pageSize) &&
-    deps.pageSize > 0
-      ? Math.min(deps.pageSize, 100)
-      : DEFAULT_APPLICATION_INBOX_PAGE_SIZE;
+  const pageSize = normalizeApplicationInboxPageSize(deps.pageSize);
   const requestedPage =
     typeof deps.page === "number" &&
     Number.isSafeInteger(deps.page) &&
