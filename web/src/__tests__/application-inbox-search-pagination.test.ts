@@ -142,7 +142,9 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
     file.path.endsWith(".css"),
   )?.text;
   if (!script || !style) {
-    throw new Error("Application Inbox search/page-size fixture did not bundle");
+    throw new Error(
+      "Application Inbox search/page-size fixture did not bundle",
+    );
   }
 
   cachedScript = script;
@@ -169,7 +171,9 @@ async function setupPage(page: Page, style: string, script: string) {
 
 test(
   "Application Inbox page-size selector exposes exactly 25/50/100 and reloads page 1 while clearing page-scoped selection",
-  { timeout: 60_000 },
+  {
+    timeout: 60_000,
+  },
   async () => {
     const { script, style } = await getHarnessBundle();
     let browser: Browser | undefined;
@@ -242,7 +246,9 @@ test(
 
 test(
   "Application Inbox search waits 300 ms, sends PII only in request state, and leaves URL/history unchanged",
-  { timeout: 60_000 },
+  {
+    timeout: 60_000,
+  },
   async () => {
     const { script, style } = await getHarnessBundle();
     let browser: Browser | undefined;
