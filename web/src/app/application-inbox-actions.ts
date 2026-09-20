@@ -1,6 +1,10 @@
 "use server";
 
-import type { ApplicationInboxFilters } from "@/lib/application-inbox/model";
+import {
+  type ApplicationInboxFilters,
+  type ApplicationInboxPageSize,
+  normalizeApplicationInboxPageSize,
+} from "@/lib/application-inbox/model";
 import {
   type ApplicationInboxReadResult,
   loadApplicationInbox,
@@ -34,11 +38,17 @@ import {
   type BulkSetLatestSubmissionManualStatusData,
   bulkSetLatestSubmissionManualStatus,
 } from "@/lib/commands/submission-status";
+
 export async function queryApplicationInbox(input: {
   filters: ApplicationInboxFilters;
   page: number;
+  pageSize: ApplicationInboxPageSize;
 }): Promise<ApplicationInboxReadResult> {
-  return loadApplicationInbox({ filters: input.filters, page: input.page });
+  return loadApplicationInbox({
+    filters: input.filters,
+    page: input.page,
+    pageSize: normalizeApplicationInboxPageSize(input.pageSize),
+  });
 }
 
 export async function getSubmissionDetailAction(
