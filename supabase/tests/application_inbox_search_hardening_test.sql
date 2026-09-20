@@ -90,6 +90,18 @@ insert into public.submissions (
     '2026-09-19 01:00:00+00'
   ),
   (
+    '00000000-0000-0000-0000-000000008404',
+    '00000000-0000-0000-0000-000000008202',
+    'READ',
+    'Legacy Search Match',
+    '1994-01-01',
+    'MALE',
+    'Address B old',
+    '0912-000-000',
+    'old.beta@example.test',
+    '2026-09-19 12:00:00+00'
+  ),
+  (
     '00000000-0000-0000-0000-000000008403',
     '00000000-0000-0000-0000-000000008202',
     'NEW',
@@ -202,6 +214,24 @@ begin
 end;
 $$;
 
+-- Search predicates apply only to the Candidate's latest Submission. An older
+-- matching Name must not promote that Candidate into the result set.
+do $$
+declare
+  v_ids uuid[];
+begin
+  select array_agg(distinct candidate_id order by candidate_id)
+    into v_ids
+  from public.list_application_inbox(
+    'legacy search', 'ALL', null, null,
+    'ALL', 'ALL', 'ALL', 1, 25
+  );
+
+  assert v_ids is null,
+    'historical Name match must not surface a Candidate whose latest Submission does not match';
+end;
+$$;
+
 -- Email search authority is current Candidate email, not Submission snapshot.
 do $$
 declare
@@ -280,12 +310,12 @@ begin
 end;
 $$;
 
--- Explicit small internal/regression page sizes remain bounded, while the RPC
--- default is canonical 25. Candidate-group pagination must never split children.
+-- The RPC default is canonical 25 and only 25/50/100 are accepted. Invalid
+-- sizes fall back to 25; Candidate-group pagination still returns full history.
 do $$
 declare
   v_default text;
-  v_first_candidate uuid;
+  v_invalid_size_ids uuid[];
   v_child_ids uuid[];
 begin
   select pg_get_function_arguments(p.oid)
@@ -299,28 +329,30 @@ begin
   assert position('p_page_size integer DEFAULT 25' in v_default) > 0,
     'RPC default page size must remain 25';
 
-  select candidate_id
-    into v_first_candidate
+  select array_agg(distinct candidate_id order by candidate_id)
+    into v_invalid_size_ids
   from public.list_application_inbox(
     '', 'ALL', null, null,
     'ALL', 'ALL', 'ALL', 1, 1
-  )
-  limit 1;
+  );
 
-  assert v_first_candidate = '00000000-0000-0000-0000-000000008202'::uuid,
-    'small explicit regression page size returns one Candidate group';
+  assert v_invalid_size_ids = array[
+    '00000000-0000-0000-0000-000000008201'::uuid,
+    '00000000-0000-0000-0000-000000008202'::uuid
+  ], 'invalid page size must fall back to canonical 25';
 
   select array_agg(submission_id order by submitted_at desc, submission_id desc)
     into v_child_ids
   from public.list_application_inbox(
     '', 'ALL', null, null,
-    'ALL', 'ALL', 'ALL', 2, 1
-  );
+    'ALL', 'ALL', 'ALL', 1, 25
+  )
+  where candidate_id = '00000000-0000-0000-0000-000000008201'::uuid;
 
   assert v_child_ids = array[
     '00000000-0000-0000-0000-000000008402'::uuid,
     '00000000-0000-0000-0000-000000008401'::uuid
-  ], 'paged Candidate group returns complete historical Submission children';
+  ], 'Candidate group returns complete historical Submission children';
 end;
 $$;
 
