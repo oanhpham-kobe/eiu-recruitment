@@ -560,7 +560,7 @@ export function ApplicationInboxTable({
           last.focus();
         } else if (!event.shiftKey && document.activeElement === last) {
           event.preventDefault();
-          last.focus();
+          first.focus();
         }
       } else if (event.key === "Escape") {
         if (isBulkActionPending) return;
