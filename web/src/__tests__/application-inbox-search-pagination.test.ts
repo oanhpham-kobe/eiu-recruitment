@@ -169,141 +169,133 @@ async function setupPage(page: Page, style: string, script: string) {
     .waitFor({ state: "visible", timeout: 5_000 });
 }
 
-test(
-  "Application Inbox page-size selector exposes exactly 25/50/100 and reloads page 1 while clearing page-scoped selection",
-  { timeout: 60_000 },
-  async () => {
-    const { script, style } = await getHarnessBundle();
-    let browser: Browser | undefined;
-    try {
-      browser = await chromium.launch();
-      const page = await browser.newPage();
-      const pageErrors: string[] = [];
-      page.on("pageerror", (error) => pageErrors.push(error.message));
-      page.on("console", (message) => {
-        if (message.type() === "error") pageErrors.push(message.text());
-      });
-      await setupPage(page, style, script);
+test("Application Inbox page-size selector exposes exactly 25/50/100 and reloads page 1 while clearing page-scoped selection", { timeout: 60_000 }, async () => {
+  const { script, style } = await getHarnessBundle();
+  let browser: Browser | undefined;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage();
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    page.on("console", (message) => {
+      if (message.type() === "error") pageErrors.push(message.text());
+    });
+    await setupPage(page, style, script);
 
-      const pageSize = page.getByLabel("Số Candidate mỗi trang");
-      assert.equal(await pageSize.inputValue(), "25");
-      assert.deepEqual(await pageSize.locator("option").allTextContents(), [
-        "25",
-        "50",
-        "100",
-      ]);
+    const pageSize = page.getByLabel("Số Candidate mỗi trang");
+    assert.equal(await pageSize.inputValue(), "25");
+    assert.deepEqual(await pageSize.locator("option").allTextContents(), [
+      "25",
+      "50",
+      "100",
+    ]);
 
-      await page
-        .getByRole("checkbox", { name: "Chọn Candidate Nguyễn Thị An" })
-        .click();
-      assert.equal(
-        (
-          await page.locator(".application-inbox__selection-count").textContent()
-        )?.trim(),
-        "1 Candidate được chọn",
-      );
+    await page
+      .getByRole("checkbox", { name: "Chọn Candidate Nguyễn Thị An" })
+      .click();
+    assert.equal(
+      (
+        await page.locator(".application-inbox__selection-count").textContent()
+      )?.trim(),
+      "1 Candidate được chọn",
+    );
 
-      await page.evaluate(() => {
-        window.__BULK_HARNESS_LOGS__ = [];
-      });
-      await pageSize.selectOption("50");
-      await page.waitForFunction(
-        () =>
-          window.__BULK_HARNESS_LOGS__?.some(
-            (entry) =>
-              entry.event === "queryInbox" &&
-              (entry.payload as { pageSize?: number } | undefined)?.pageSize ===
-                50,
-          ) === true,
-        undefined,
-        { timeout: 2_000 },
-      );
+    await page.evaluate(() => {
+      window.__BULK_HARNESS_LOGS__ = [];
+    });
+    await pageSize.selectOption("50");
+    await page.waitForFunction(
+      () =>
+        window.__BULK_HARNESS_LOGS__?.some(
+          (entry) =>
+            entry.event === "queryInbox" &&
+            (entry.payload as { pageSize?: number } | undefined)?.pageSize ===
+              50,
+        ) === true,
+      undefined,
+      { timeout: 2_000 },
+    );
 
-      const queryLog = await page.evaluate(() =>
-        window.__BULK_HARNESS_LOGS__?.find(
+    const queryLog = await page.evaluate(() =>
+      window.__BULK_HARNESS_LOGS__?.find(
+        (entry) => entry.event === "queryInbox",
+      ),
+    );
+    const payload = queryLog?.payload as
+      | { page?: number; pageSize?: number }
+      | undefined;
+    assert.equal(payload?.page, 1);
+    assert.equal(payload?.pageSize, 50);
+    assert.equal(
+      (
+        await page.locator(".application-inbox__selection-count").textContent()
+      )?.trim(),
+      "0 Candidate được chọn",
+    );
+    assert.deepEqual(pageErrors, []);
+  } finally {
+    await browser?.close();
+  }
+});
+
+test("Application Inbox search waits 300 ms, sends PII only in request state, and leaves URL/history unchanged", { timeout: 60_000 }, async () => {
+  const { script, style } = await getHarnessBundle();
+  let browser: Browser | undefined;
+  try {
+    browser = await chromium.launch();
+    const page = await browser.newPage();
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    page.on("console", (message) => {
+      if (message.type() === "error") pageErrors.push(message.text());
+    });
+    await setupPage(page, style, script);
+
+    await page.evaluate(() => {
+      window.__BULK_HARNESS_LOGS__ = [];
+    });
+    const initialUrl = page.url();
+    const initialHistoryLength = await page.evaluate(() => history.length);
+    const query = "Nguyễn An nhaycam@example.test";
+
+    await page.getByLabel("Tìm kiếm tên, email hoặc SĐT").fill(query);
+    await page.waitForTimeout(270);
+    const earlyQueryCount = await page.evaluate(
+      () =>
+        window.__BULK_HARNESS_LOGS__?.filter(
           (entry) => entry.event === "queryInbox",
-        ),
-      );
-      const payload = queryLog?.payload as
-        | { page?: number; pageSize?: number }
-        | undefined;
-      assert.equal(payload?.page, 1);
-      assert.equal(payload?.pageSize, 50);
-      assert.equal(
-        (
-          await page.locator(".application-inbox__selection-count").textContent()
-        )?.trim(),
-        "0 Candidate được chọn",
-      );
-      assert.deepEqual(pageErrors, []);
-    } finally {
-      await browser?.close();
-    }
-  },
-);
+        ).length ?? 0,
+    );
+    assert.equal(earlyQueryCount, 0, "search must not dispatch before 300 ms");
 
-test(
-  "Application Inbox search waits 300 ms, sends PII only in request state, and leaves URL/history unchanged",
-  { timeout: 60_000 },
-  async () => {
-    const { script, style } = await getHarnessBundle();
-    let browser: Browser | undefined;
-    try {
-      browser = await chromium.launch();
-      const page = await browser.newPage();
-      const pageErrors: string[] = [];
-      page.on("pageerror", (error) => pageErrors.push(error.message));
-      page.on("console", (message) => {
-        if (message.type() === "error") pageErrors.push(message.text());
-      });
-      await setupPage(page, style, script);
-
-      await page.evaluate(() => {
-        window.__BULK_HARNESS_LOGS__ = [];
-      });
-      const initialUrl = page.url();
-      const initialHistoryLength = await page.evaluate(() => history.length);
-      const query = "Nguyễn An nhaycam@example.test";
-
-      await page.getByLabel("Tìm kiếm tên, email hoặc SĐT").fill(query);
-      await page.waitForTimeout(270);
-      const earlyQueryCount = await page.evaluate(
-        () =>
-          window.__BULK_HARNESS_LOGS__?.filter(
-            (entry) => entry.event === "queryInbox",
-          ).length ?? 0,
-      );
-      assert.equal(earlyQueryCount, 0, "search must not dispatch before 300 ms");
-
-      await page.waitForFunction(
-        () =>
-          window.__BULK_HARNESS_LOGS__?.some(
-            (entry) => entry.event === "queryInbox",
-          ) === true,
-        undefined,
-        { timeout: 2_000 },
-      );
-      const queryLog = await page.evaluate(() =>
-        window.__BULK_HARNESS_LOGS__?.find(
+    await page.waitForFunction(
+      () =>
+        window.__BULK_HARNESS_LOGS__?.some(
           (entry) => entry.event === "queryInbox",
-        ),
-      );
-      const payload = queryLog?.payload as
-        | {
-            filters?: { query?: string };
-            page?: number;
-            pageSize?: number;
-          }
-        | undefined;
-      assert.equal(payload?.filters?.query, query);
-      assert.equal(payload?.page, 1);
-      assert.equal(payload?.pageSize, 25);
-      assert.equal(page.url(), initialUrl);
-      assert.equal(await page.evaluate(() => history.length), initialHistoryLength);
-      assert.equal(new URL(page.url()).search, "");
-      assert.deepEqual(pageErrors, []);
-    } finally {
-      await browser?.close();
-    }
-  },
-);
+        ) === true,
+      undefined,
+      { timeout: 2_000 },
+    );
+    const queryLog = await page.evaluate(() =>
+      window.__BULK_HARNESS_LOGS__?.find(
+        (entry) => entry.event === "queryInbox",
+      ),
+    );
+    const payload = queryLog?.payload as
+      | {
+          filters?: { query?: string };
+          page?: number;
+          pageSize?: number;
+        }
+      | undefined;
+    assert.equal(payload?.filters?.query, query);
+    assert.equal(payload?.page, 1);
+    assert.equal(payload?.pageSize, 25);
+    assert.equal(page.url(), initialUrl);
+    assert.equal(await page.evaluate(() => history.length), initialHistoryLength);
+    assert.equal(new URL(page.url()).search, "");
+    assert.deepEqual(pageErrors, []);
+  } finally {
+    await browser?.close();
+  }
+});
