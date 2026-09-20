@@ -994,9 +994,7 @@ export function ApplicationInboxTable({
             type="button"
             className="btn-secondary"
             disabled={inbox.page === 1 || isPending}
-            onClick={() =>
-              loadPage(inbox.page - 1, debouncedFilters, pageSize)
-            }
+            onClick={() => loadPage(inbox.page - 1, debouncedFilters, pageSize)}
           >
             Trang trước
           </button>
@@ -1007,9 +1005,7 @@ export function ApplicationInboxTable({
             type="button"
             className="btn-secondary"
             disabled={inbox.page === inbox.pageCount || isPending}
-            onClick={() =>
-              loadPage(inbox.page + 1, debouncedFilters, pageSize)
-            }
+            onClick={() => loadPage(inbox.page + 1, debouncedFilters, pageSize)}
           >
             Trang sau
           </button>
