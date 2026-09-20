@@ -37,10 +37,10 @@ set search_path = ''
 as $$
   select replace(
     replace(
-      replace(p_value, '\', '\\'),
-      '%', '\%'
+      replace(p_value, E'\\', E'\\\\'),
+      '%', E'\\%'
     ),
-    '_', '\_'
+    '_', E'\\_'
   );
 $$;
 
@@ -144,10 +144,21 @@ as $$
       private.escape_search_like(qi.normalized_query) as escaped_name_query,
       private.escape_search_like(qi.lower_query) as escaped_email_query
     from query_input qi
-  ), ranked as (
+  ), actor_gate as (
+    select (
+      private.has_permission('submissions.view')
+      or private.is_root_admin()
+    ) as allowed
+  ), matching_latest as (
+    -- Unfiltered list path: use the accepted Candidate parent and latest-child
+    -- ordering without applying a text predicate.
     select
+      c.candidate_id,
+      c.email::text as email,
+      c.is_active as is_candidate_active,
+      c.version_no as candidate_version_no,
       s.submission_id,
-      s.candidate_id,
+      s.version_no as submission_version_no,
       s.status_code,
       s.full_name,
       s.date_of_birth,
@@ -155,67 +166,176 @@ as $$
       s.phone,
       s.hr_note,
       s.submitted_at,
-      s.version_no as submission_version_no,
-      c.email::text as email,
-      c.is_active as is_candidate_active,
-      c.version_no as candidate_version_no,
       exists (
         select 1
         from public.applications a
         where a.submission_id = s.submission_id
           and a.is_active = true
-      ) as has_application,
-      row_number() over (
-        partition by s.candidate_id
-        order by s.submitted_at desc, s.submission_id desc
-      ) as submission_rank
+      ) as has_application
+    from public.candidates c
+    join lateral (
+      select s0.*
+      from public.submissions s0
+      where s0.candidate_id = c.candidate_id
+      order by s0.submitted_at desc, s0.submission_id desc
+      limit 1
+    ) s on true
+    cross join query_spec q
+    cross join actor_gate g
+    where g.allowed
+      and q.query_mode = 'EMPTY'
+
+    union all
+
+    -- Email authority is current Candidate email. Filter Candidates first so the
+    -- dedicated lower(email) text_pattern_ops index can drive the lookup, then
+    -- fetch the latest Submission for each matching Candidate.
+    select
+      c.candidate_id,
+      c.email::text as email,
+      c.is_active as is_candidate_active,
+      c.version_no as candidate_version_no,
+      s.submission_id,
+      s.version_no as submission_version_no,
+      s.status_code,
+      s.full_name,
+      s.date_of_birth,
+      s.gender_code,
+      s.phone,
+      s.hr_note,
+      s.submitted_at,
+      exists (
+        select 1
+        from public.applications a
+        where a.submission_id = s.submission_id
+          and a.is_active = true
+      ) as has_application
+    from public.candidates c
+    join lateral (
+      select s0.*
+      from public.submissions s0
+      where s0.candidate_id = c.candidate_id
+      order by s0.submitted_at desc, s0.submission_id desc
+      limit 1
+    ) s on true
+    cross join query_spec q
+    cross join actor_gate g
+    where g.allowed
+      and q.query_mode = 'EMAIL'
+      and lower(c.email::text)
+        like q.escaped_email_query || '%' escape E'\\'
+
+    union all
+
+    -- Name predicate starts from the normalized trigram index. The anti-join
+    -- proves that the matching Submission is the Candidate's latest row, so
+    -- filtering cannot accidentally promote an older matching Submission.
+    select
+      c.candidate_id,
+      c.email::text as email,
+      c.is_active as is_candidate_active,
+      c.version_no as candidate_version_no,
+      s.submission_id,
+      s.version_no as submission_version_no,
+      s.status_code,
+      s.full_name,
+      s.date_of_birth,
+      s.gender_code,
+      s.phone,
+      s.hr_note,
+      s.submitted_at,
+      exists (
+        select 1
+        from public.applications a
+        where a.submission_id = s.submission_id
+          and a.is_active = true
+      ) as has_application
     from public.submissions s
     join public.candidates c on c.candidate_id = s.candidate_id
-    where private.has_permission('submissions.view') or private.is_root_admin()
-  ), latest as (
-    select *
-    from ranked
-    where submission_rank = 1
-  ), filtered as (
-    select l.*
-    from latest l
     cross join query_spec q
-    where (
-      q.query_mode = 'EMPTY'
-      or (
-        q.query_mode = 'NAME'
-        and private.normalize_vietnamese_search_text(l.full_name)
-          like '%' || q.escaped_name_query || '%' escape '\'
+    cross join actor_gate g
+    where g.allowed
+      and q.query_mode = 'NAME'
+      and private.normalize_vietnamese_search_text(s.full_name)
+        like '%' || q.escaped_name_query || '%' escape E'\\'
+      and not exists (
+        select 1
+        from public.submissions newer
+        where newer.candidate_id = s.candidate_id
+          and (
+            newer.submitted_at > s.submitted_at
+            or (
+              newer.submitted_at = s.submitted_at
+              and newer.submission_id > s.submission_id
+            )
+          )
       )
-      or (
-        q.query_mode = 'EMAIL'
-        and lower(l.email)
-          like q.escaped_email_query || '%' escape '\'
+
+    union all
+
+    -- Phone follows the same latest-row proof while allowing the normalized
+    -- digit prefix index to drive the initial matching Submission lookup.
+    select
+      c.candidate_id,
+      c.email::text as email,
+      c.is_active as is_candidate_active,
+      c.version_no as candidate_version_no,
+      s.submission_id,
+      s.version_no as submission_version_no,
+      s.status_code,
+      s.full_name,
+      s.date_of_birth,
+      s.gender_code,
+      s.phone,
+      s.hr_note,
+      s.submitted_at,
+      exists (
+        select 1
+        from public.applications a
+        where a.submission_id = s.submission_id
+          and a.is_active = true
+      ) as has_application
+    from public.submissions s
+    join public.candidates c on c.candidate_id = s.candidate_id
+    cross join query_spec q
+    cross join actor_gate g
+    where g.allowed
+      and q.query_mode = 'PHONE'
+      and regexp_replace(s.phone, '[^0-9]', '', 'g')
+        like q.phone_query || '%' escape E'\\'
+      and not exists (
+        select 1
+        from public.submissions newer
+        where newer.candidate_id = s.candidate_id
+          and (
+            newer.submitted_at > s.submitted_at
+            or (
+              newer.submitted_at = s.submitted_at
+              and newer.submission_id > s.submission_id
+            )
+          )
       )
-      or (
-        q.query_mode = 'PHONE'
-        and regexp_replace(l.phone, '[^0-9]', '', 'g')
-          like q.phone_query || '%' escape '\'
+  ), filtered as (
+    select m.*
+    from matching_latest m
+    where (p_status = 'ALL' or m.status_code = p_status)
+      and (
+        p_date_from is null
+        or m.submitted_at >= p_date_from::timestamp at time zone 'Asia/Ho_Chi_Minh'
       )
-    )
-    and (p_status = 'ALL' or l.status_code = p_status)
-    and (
-      p_date_from is null
-      or l.submitted_at >= p_date_from::timestamp at time zone 'Asia/Ho_Chi_Minh'
-    )
-    and (
-      p_date_to is null
-      or l.submitted_at < (p_date_to + 1)::timestamp at time zone 'Asia/Ho_Chi_Minh'
-    )
-    and (
-      p_candidate_activity = 'ALL'
-      or (p_candidate_activity = 'ACTIVE') = l.is_candidate_active
-    )
-    and (p_new_read = 'ALL' or l.status_code = p_new_read)
-    and (
-      p_application = 'ALL'
-      or (p_application = 'HAS_APPLICATION') = l.has_application
-    )
+      and (
+        p_date_to is null
+        or m.submitted_at < (p_date_to + 1)::timestamp at time zone 'Asia/Ho_Chi_Minh'
+      )
+      and (
+        p_candidate_activity = 'ALL'
+        or (p_candidate_activity = 'ACTIVE') = m.is_candidate_active
+      )
+      and (p_new_read = 'ALL' or m.status_code = p_new_read)
+      and (
+        p_application = 'ALL'
+        or (p_application = 'HAS_APPLICATION') = m.has_application
+      )
   ), counted as (
     select f.*, count(*) over () as total_count
     from filtered f
