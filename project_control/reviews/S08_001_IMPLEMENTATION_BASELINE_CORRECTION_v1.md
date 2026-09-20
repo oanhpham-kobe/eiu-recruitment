@@ -67,7 +67,7 @@ The new forward-only migration must preserve:
 - deterministic immutable-ID ordering;
 - `submissions.view` / Root Admin authorization and RLS behavior.
 
-For isolated regression/internal calls, explicit bounded page sizes below 25 may remain available, while the Server Action/UI contract remains exactly 25/50/100 with default 25.
+The implemented S08-001 contract further canonicalizes page size consistently across DB, server adapter, Server Action, UI, and regressions: only `25`, `50`, or `100` are valid, the default is `25`, and every invalid value (including values below `25`) falls back to `25`.
 
 ## Governance classification
 
