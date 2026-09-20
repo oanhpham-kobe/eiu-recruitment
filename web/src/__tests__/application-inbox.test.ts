@@ -256,7 +256,7 @@ test("Application Inbox server seam normalizes request-local filters and preserv
         email: "an@example.com",
         is_candidate_active: true,
         has_application: false,
-        total_count: 2,
+        total_count: 50,
       },
       {
         submission_id: "submission-1",
@@ -271,7 +271,7 @@ test("Application Inbox server seam normalizes request-local filters and preserv
         email: "an@example.com",
         is_candidate_active: true,
         has_application: false,
-        total_count: 2,
+        total_count: 50,
       },
     ],
   });
@@ -288,7 +288,7 @@ test("Application Inbox server seam normalizes request-local filters and preserv
       application: "NO_APPLICATION",
     },
     page: 2,
-    pageSize: 1,
+    pageSize: 25,
     resolveSession: async () => internalSession(["submissions.view"]),
   });
 
@@ -304,7 +304,7 @@ test("Application Inbox server seam normalizes request-local filters and preserv
         p_new_read: "READ",
         p_application: "NO_APPLICATION",
         p_page: 2,
-        p_page_size: 1,
+        p_page_size: 25,
       },
     },
   ]);
