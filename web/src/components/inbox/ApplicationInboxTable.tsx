@@ -24,11 +24,15 @@ import {
 } from "@/components/inbox/SubmissionDetailDrawer";
 import {
   APPLICATION_INBOX_COLUMNS,
+  APPLICATION_INBOX_PAGE_SIZES,
   type ApplicationInboxFilters,
   type ApplicationInboxGroup,
+  type ApplicationInboxPageSize,
+  DEFAULT_APPLICATION_INBOX_PAGE_SIZE,
   INITIAL_APPLICATION_INBOX_FILTERS,
   latestSubmission,
   nextExpandedCandidateId,
+  normalizeApplicationInboxPageSize,
   type SubmissionStatus,
 } from "@/lib/application-inbox/model";
 
@@ -86,6 +90,7 @@ export interface ApplicationInboxTableProps {
   loading?: boolean;
   page?: number;
   pageCount?: number;
+  pageSize?: ApplicationInboxPageSize;
   actions?: ApplicationInboxTableActions;
 }
 
@@ -177,6 +182,7 @@ export function ApplicationInboxTable({
   loading = false,
   page = 1,
   pageCount = 1,
+  pageSize: initialPageSize = DEFAULT_APPLICATION_INBOX_PAGE_SIZE,
   actions,
 }: ApplicationInboxTableProps) {
   const queryInbox = actions?.queryApplicationInbox ?? queryApplicationInbox;
@@ -188,6 +194,11 @@ export function ApplicationInboxTable({
   const [filters, setFilters] = useState<ApplicationInboxFilters>(
     INITIAL_APPLICATION_INBOX_FILTERS,
   );
+  const [debouncedFilters, setDebouncedFilters] =
+    useState<ApplicationInboxFilters>(INITIAL_APPLICATION_INBOX_FILTERS);
+  const [pageSize, setPageSize] = useState<ApplicationInboxPageSize>(
+    normalizeApplicationInboxPageSize(initialPageSize),
+  );
   const [inboxState, dispatchInboxState] = useReducer(
     reduceApplicationInboxReadState,
     {
@@ -196,7 +207,8 @@ export function ApplicationInboxTable({
     },
   );
   const [isPending, startTransition] = useTransition();
-  const initialLoad = useRef(true);
+  const debounceInitialized = useRef(false);
+  const reloadInitialized = useRef(false);
   const requestSequence = useRef(0);
   const [expandedCandidateId, setExpandedCandidateId] = useState<string | null>(
     null,
@@ -296,13 +308,18 @@ export function ApplicationInboxTable({
   }, []);
 
   const loadPage = useCallback(
-    (nextPage: number, nextFilters: ApplicationInboxFilters) => {
+    (
+      nextPage: number,
+      nextFilters: ApplicationInboxFilters,
+      nextPageSize: ApplicationInboxPageSize,
+    ) => {
       const sequence = ++requestSequence.current;
       startTransition(async () => {
         try {
           const nextInbox = await queryInbox({
             filters: nextFilters,
             page: nextPage,
+            pageSize: nextPageSize,
           });
           if (sequence === requestSequence.current) {
             dispatchInboxState({ type: "loaded", inbox: nextInbox });
@@ -331,13 +348,22 @@ export function ApplicationInboxTable({
   );
 
   useEffect(() => {
-    if (initialLoad.current) {
-      initialLoad.current = false;
+    if (!debounceInitialized.current) {
+      debounceInitialized.current = true;
       return;
     }
-    const timer = window.setTimeout(() => loadPage(1, filters), 250);
+    const timer = window.setTimeout(() => setDebouncedFilters(filters), 300);
     return () => window.clearTimeout(timer);
-  }, [filters, loadPage]);
+  }, [filters]);
+
+  useEffect(() => {
+    if (!reloadInitialized.current) {
+      reloadInitialized.current = true;
+      return;
+    }
+    loadPage(1, debouncedFilters, pageSize);
+  }, [debouncedFilters, pageSize, loadPage]);
+
   const handleBulkSetStatus = useCallback(
     async (statusCode: "NEW" | "READ") => {
       const selectedItems = Array.from(selectedTokens.values());
@@ -380,7 +406,7 @@ export function ApplicationInboxTable({
         setFeedbackType("success");
         setSelectedTokens(new Map());
         restoreFocus();
-        loadPage(inboxState.inbox.page, filters);
+        loadPage(inboxState.inbox.page, debouncedFilters, pageSize);
       } catch {
         setFeedbackMessage("Không thể cập nhật trạng thái phiếu hàng loạt.");
         setFeedbackType("error");
@@ -394,7 +420,8 @@ export function ApplicationInboxTable({
       restoreFocus,
       loadPage,
       inboxState.inbox.page,
-      filters,
+      debouncedFilters,
+      pageSize,
     ],
   );
 
@@ -427,7 +454,7 @@ export function ApplicationInboxTable({
       setFeedbackType("success");
       setSelectedTokens(new Map());
       restoreFocus();
-      loadPage(inboxState.inbox.page, filters);
+      loadPage(inboxState.inbox.page, debouncedFilters, pageSize);
     } catch {
       setFeedbackMessage("Không thể kích hoạt lại tài khoản Candidate.");
       setFeedbackType("error");
@@ -440,7 +467,8 @@ export function ApplicationInboxTable({
     restoreFocus,
     loadPage,
     inboxState.inbox.page,
-    filters,
+    debouncedFilters,
+    pageSize,
   ]);
   const handleOpenInactiveDialog = useCallback(() => {
     if (selectedTokens.size === 0) return;
@@ -485,7 +513,7 @@ export function ApplicationInboxTable({
       setIsInactiveModalOpen(false);
       setSelectedTokens(new Map());
       restoreFocus();
-      loadPage(inboxState.inbox.page, filters);
+      loadPage(inboxState.inbox.page, debouncedFilters, pageSize);
     } catch {
       setFeedbackMessage("Không thể ngừng hoạt động tài khoản Candidate.");
       setFeedbackType("error");
@@ -500,7 +528,8 @@ export function ApplicationInboxTable({
     restoreFocus,
     loadPage,
     inboxState.inbox.page,
-    filters,
+    debouncedFilters,
+    pageSize,
   ]);
   useEffect(() => {
     if (!isInactiveModalOpen) return;
@@ -531,7 +560,7 @@ export function ApplicationInboxTable({
           last.focus();
         } else if (!event.shiftKey && document.activeElement === last) {
           event.preventDefault();
-          first.focus();
+          last.focus();
         }
       } else if (event.key === "Escape") {
         if (isBulkActionPending) return;
@@ -550,6 +579,21 @@ export function ApplicationInboxTable({
     setSelectedTokens((current) => {
       if (current.size > 0) {
         setSelectionNotice("Đã đặt lại danh sách chọn do thay đổi bộ lọc.");
+        return new Map();
+      }
+      return current;
+    });
+  }
+
+  function handlePageSizeChange(value: string) {
+    const nextPageSize = normalizeApplicationInboxPageSize(Number(value));
+    if (nextPageSize === pageSize) return;
+    setPageSize(nextPageSize);
+    setSelectedTokens((current) => {
+      if (current.size > 0) {
+        setSelectionNotice(
+          "Đã đặt lại danh sách chọn do thay đổi số Candidate mỗi trang.",
+        );
         return new Map();
       }
       return current;
@@ -931,11 +975,28 @@ export function ApplicationInboxTable({
           className="application-inbox__pagination"
           aria-label="Phân trang Candidate"
         >
+          <label>
+            Số Candidate mỗi trang
+            <select
+              aria-label="Số Candidate mỗi trang"
+              value={pageSize}
+              disabled={isPending}
+              onChange={(event) => handlePageSizeChange(event.target.value)}
+            >
+              {APPLICATION_INBOX_PAGE_SIZES.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             type="button"
             className="btn-secondary"
             disabled={inbox.page === 1 || isPending}
-            onClick={() => loadPage(inbox.page - 1, filters)}
+            onClick={() =>
+              loadPage(inbox.page - 1, debouncedFilters, pageSize)
+            }
           >
             Trang trước
           </button>
@@ -946,7 +1007,9 @@ export function ApplicationInboxTable({
             type="button"
             className="btn-secondary"
             disabled={inbox.page === inbox.pageCount || isPending}
-            onClick={() => loadPage(inbox.page + 1, filters)}
+            onClick={() =>
+              loadPage(inbox.page + 1, debouncedFilters, pageSize)
+            }
           >
             Trang sau
           </button>
