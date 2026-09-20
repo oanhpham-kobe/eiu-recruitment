@@ -169,7 +169,9 @@ async function setupPage(page: Page, style: string, script: string) {
     .waitFor({ state: "visible", timeout: 5_000 });
 }
 
-test("Application Inbox page-size selector exposes exactly 25/50/100 and reloads page 1 while clearing page-scoped selection", { timeout: 60_000 }, async () => {
+test("Application Inbox page-size selector exposes exactly 25/50/100 and reloads page 1 while clearing page-scoped selection", {
+  timeout: 60_000,
+}, async () => {
   const { script, style } = await getHarnessBundle();
   let browser: Browser | undefined;
   try {
@@ -238,7 +240,9 @@ test("Application Inbox page-size selector exposes exactly 25/50/100 and reloads
   }
 });
 
-test("Application Inbox search waits 300 ms, sends PII only in request state, and leaves URL/history unchanged", { timeout: 60_000 }, async () => {
+test("Application Inbox search waits 300 ms, sends PII only in request state, and leaves URL/history unchanged", {
+  timeout: 60_000,
+}, async () => {
   const { script, style } = await getHarnessBundle();
   let browser: Browser | undefined;
   try {
@@ -292,7 +296,10 @@ test("Application Inbox search waits 300 ms, sends PII only in request state, an
     assert.equal(payload?.page, 1);
     assert.equal(payload?.pageSize, 25);
     assert.equal(page.url(), initialUrl);
-    assert.equal(await page.evaluate(() => history.length), initialHistoryLength);
+    assert.equal(
+      await page.evaluate(() => history.length),
+      initialHistoryLength,
+    );
     assert.equal(new URL(page.url()).search, "");
     assert.deepEqual(pageErrors, []);
   } finally {
