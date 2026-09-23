@@ -8,13 +8,13 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: S08_001_MATERIALIZED_AWAITING_PRETASK_CHECKPOINT_AND_PROMPT_REVIEW
-  note: "Slice-07 is CLOSED_ACCEPTED. TASK-S08-001 is the first materialized Slice-08 task after source reconciliation PASS; implementation is prohibited pending immutable pre-task checkpoint, independent prompt/source review PASS, persisted evidence, and explicit Owner dispatch."
+  status: S08_001_INTEGRATED_AWAITING_FINAL_ACCEPTANCE_AUDIT
+  note: "TASK-S08-001 has independent implementation PASS, exact product serialization, full Web/DB Integration CI PASS, Governance CI PASS, and external integration audit PASS. Accepted checkpoint creation and TASK-S08-002 materialization remain forbidden pending independent OMP final acceptance audit."
 
   S08-001-SOURCE-GATE-001:
     task: TASK-S08-001
-    operation: APPLICATION_INBOX_SEARCH_AND_INDEXED_PAGINATION_HARDENING_SOURCE_RECONCILIATION
-    status: MATERIALIZED_AWAITING_PRETASK_CHECKPOINT_AND_PROMPT_REVIEW
+    operation: APPLICATION_INBOX_SEARCH_AND_INDEXED_PAGINATION_HARDENING
+    status: INTEGRATED_AWAITING_FINAL_ACCEPTANCE_AUDIT
     planning_source_prompt_head: "6348fe9af137d18a2b148979583141bc8c8104b0"
     source_reconciliation: project_control/reviews/S08_001_SOURCE_RECONCILIATION_v2.md
     source_reconciliation_work_id: S08-001-SOURCE-RECONCILIATION-002
@@ -22,10 +22,54 @@ implementation_evidence:
     source_reopen_required: false
     prompt: project_control/prompts/SLICE-08_TASK-001_v2.md
     prompt_version: v2
-    planned_pre_task_checkpoint: checkpoint/pre-S08-001-001
-    prompt_review_status: PENDING
-    implementation_started: false
-    implementation_authorized: false
+    governed_pre_task_checkpoint: checkpoint/pre-S08-001-001
+    governed_pre_task_checkpoint_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
+    governed_pre_task_checkpoint_tag_object: "fc10664fdee1aa3676021b0049ec25e765ce1861"
+    prompt_review_status: PASS
+    prompt_review_work_id: S08-001-PROMPT-REVIEW-001
+    prompt_review_reviewed_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
+    prompt_review_artifact: project_control/reviews/S08_001_PROMPT_REVIEW_141146d_v1.md
+    prompt_review_implementation_authorized: false
+    implementation_started: true
+    implementation_authorized: true
+    implementation_branch: chatgpt/TASK-S08-001-application-inbox-search-hardening
+    implementation_baseline_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
+    producer: EXTERNAL_CHATGPT
+    independent_implementation_review:
+      work_id: S08-001-IMPLEMENTATION-REREVIEW-008
+      reviewer: OMP_EIU_REVIEWER
+      reviewed_sha: "d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf"
+      verdict: PASS
+      findings_count: 0
+      source_reopen_required: false
+    producer_verification:
+      final_candidate_sha: "d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf"
+      product_integration_sha: "3070e56ae06d3364f15cdc5e08d91fce090d820d"
+      product_integration_ci: "35880657875 PASS"
+      product_governance_ci: "35880657901 PASS"
+      web_verification: PASS
+      database_integration: PASS
+      accepted_application_inbox_sql_regression: PASS
+      search_hardening_sql_regression: PASS
+      db_lint: PASS
+      r7_fixture_order_failure: "35878089069 FAIL @ 1d68f9fea0116b0c279a053a06b4befa49fac1fc; one_root_admin_uq before Inbox assertions; classified CI isolation only."
+      r8_isolation_repair: "Ordering-only; both transactional S08 suites execute immediately after clean reset before PRE-S04 persistent fixtures."
+      source_reopen_required: false
+      implementation_reopen_required: false
+    external_integration_audit:
+      work_id: S08-001-EXTERNAL-INTEGRATION-AUDIT-001
+      auditor: EXTERNAL_CHATGPT
+      audited_candidate_sha: "d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf"
+      audited_integration_sha: "3070e56ae06d3364f15cdc5e08d91fce090d820d"
+      verdict: PASS
+      blob_equivalence: "11/11 MATCH"
+      source_reopen_required: false
+      implementation_reopen_required: false
+      artifact: project_control/reviews/S08_001_EXTERNAL_INTEGRATION_AUDIT_3070e56_v1.md
+    final_acceptance_audit:
+      status: PENDING
+      required_reviewer: OMP_EIU_REVIEWER
+      checkpoint_before_pass: FORBIDDEN
     accepted_predecessor_slice_checkpoint: checkpoint/SLICE-07-accepted-001
     accepted_predecessor_slice_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
     superseded_before_review:

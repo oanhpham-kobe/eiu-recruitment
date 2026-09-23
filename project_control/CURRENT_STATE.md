@@ -50,16 +50,21 @@
 - Closing-review evidence is persisted at `project_control/reviews/SLICE_07_CLOSING_REREVIEW_b4e06a6_v1.md`; reporting SHA `03629c81e0fdcf0d868c5a376b9df60363f0126b` passed Integration CI `35412795335` and Governance CI `35412795329`.
 - Slice-07 lifecycle is CLOSED_ACCEPTED.
 
-## Slice-08 planning state
+## Slice-08 TASK-S08-001 final-acceptance gate
 
-- Slice-07 remains CLOSED_ACCEPTED at `checkpoint/SLICE-07-accepted-001`.
-- Source reconciliation `S08-001-SOURCE-RECONCILIATION-002` is PASS with `SOURCE_REOPEN_REQUIRED=false`.
-- The first materialized Slice-08 task is `TASK-S08-001 — Application Inbox Search and Indexed Pagination Hardening`.
-- Governed source/prompt artifacts are `project_control/reviews/S08_001_SOURCE_RECONCILIATION_v2.md` and `project_control/prompts/SLICE-08_TASK-001_v2.md`; both v2 artifacts supersede their v1 drafts before any checkpoint or independent prompt review.
-- Materialization source/prompt head is `6348fe9af137d18a2b148979583141bc8c8104b0`. The exact materialized commit produced by this control-plane transition must be captured by `checkpoint/pre-S08-001-001` before prompt review.
-- TASK-S08-001 is PLANNED only. `implementation_started=false`; no implementation authority exists.
-- The next identified domain, durable distributed rate limiting, is only a future TASK-S08-002 candidate and is not materialized.
+- Slice-07 remains `CLOSED_ACCEPTED` at `checkpoint/SLICE-07-accepted-001`.
+- Canonical source reconciliation `S08-001-SOURCE-RECONCILIATION-002` and prompt `project_control/prompts/SLICE-08_TASK-001_v2.md` remain authoritative; source reopen is false.
+- Immutable implementation baseline: `checkpoint/pre-S08-001-001` → `141146d52a05b0d698178ba7ef097690d5ef2a27`; annotated tag object `fc10664fdee1aa3676021b0049ec25e765ce1861` peels to that exact SHA.
+- Independent prompt/source review `S08-001-PROMPT-REVIEW-001`: PASS on `141146d52a05b0d698178ba7ef097690d5ef2a27`. Its `IMPLEMENTATION_AUTHORIZED: NO` applies to the prompt-review event itself; explicit Owner implementation dispatch occurred afterward and is the authority under which implementation proceeded.
+- Final independently reviewed task candidate: `d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf` on `chatgpt/TASK-S08-001-application-inbox-search-hardening`.
+- Independent implementation re-review `S08-001-IMPLEMENTATION-REREVIEW-008`: PASS, findings NONE, source reopen false.
+- Product integration: `3070e56ae06d3364f15cdc5e08d91fce090d820d`. External integration audit `S08-001-EXTERNAL-INTEGRATION-AUDIT-001`: PASS; 11/11 governed task-delta blobs match the reviewed candidate; source reopen false; implementation reopen false.
+- Exact product Integration CI `35880657875`: PASS. Web verification, migration replay, both canonical S08 SQL gates, PRE-S04 and crossed predecessor/concurrency regressions, standalone bulk replay, and DB lint all PASS.
+- Exact product Governance CI `35880657901`: PASS.
+- Historical R7 product-integration failure `35878089069` at `1d68f9fea0116b0c279a053a06b4befa49fac1fc` was a CI fixture-order/isolation defect (`one_root_admin_uq`) before Inbox assertions; R8 repaired workflow ordering only and the exact repaired sequence is now proven by CI.
+- No TASK-S08-001 accepted checkpoint exists yet. `checkpoint/S08-001-accepted-001` is forbidden until independent OMP final acceptance audit PASSes on the exact governance-reconciled integration SHA.
+- TASK-S08-002 remains **not materialized**.
 
 ## Scope boundary
 
-SLICE-08 is IN_PROGRESS at a pre-implementation prompt gate. `current_slice=SLICE-08` and `current_task=TASK-S08-001` become valid only because TASK-S08-001 is materialized in the same atomic governance commit. The next action is immutable pre-task checkpoint creation followed by independent OMP/`eiu-reviewer` prompt/source review. No TASK-S08-001 implementation, TASK-S08-002 materialization, production deployment, connected Supabase mutation, or `main` mutation is authorized by this transition.
+SLICE-08 remains `IN_PROGRESS`. TASK-S08-001 is at the independent final-acceptance-audit gate after reviewed candidate `d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf`, product integration `3070e56ae06d3364f15cdc5e08d91fce090d820d`, Integration CI `35880657875` PASS, Governance CI `35880657901` PASS, and external integration audit PASS. No accepted checkpoint, TASK-S08-002 materialization, production deployment, connected Supabase mutation, or `main` mutation is allowed before final acceptance audit PASS.
