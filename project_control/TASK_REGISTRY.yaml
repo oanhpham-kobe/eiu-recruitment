@@ -1535,7 +1535,7 @@ tasks:
   TASK-S08-001:
     title: "Application Inbox Search and Indexed Pagination Hardening"
     slice: SLICE-08
-    status: REVIEW
+    status: DONE
     lane: LANE_A
     depends_on: [TASK-S03-004, TASK-S07-005]
     planning_baseline_sha: "6348fe9af137d18a2b148979583141bc8c8104b0"
@@ -1580,7 +1580,7 @@ tasks:
       governance_ci: "35880657901 PASS @ 3070e56ae06d3364f15cdc5e08d91fce090d820d"
       r7_failed_product_integration_sha: "1d68f9fea0116b0c279a053a06b4befa49fac1fc"
       r7_failed_integration_ci: "35878089069 FAIL — fixture-order collision at one_root_admin_uq before Inbox assertions; classified CI isolation only."
-      r8_repair: "Ordering-only workflow repair; S08 transactional SQL suites now execute immediately after clean db reset before PRE-S04 persistent fixtures."
+      r8_repair: "Ordering-only workflow repair; S08 transactional SQL suites execute immediately after clean db reset before PRE-S04 persistent fixtures."
       source_reopen_required: false
       implementation_reopen_required: false
     external_integration_audit:
@@ -1594,9 +1594,34 @@ tasks:
       blob_equivalence: "11/11 TASK-S08-001 delta blobs MATCH"
       artifact: project_control/reviews/S08_001_EXTERNAL_INTEGRATION_AUDIT_3070e56_v1.md
     final_acceptance_audit:
-      status: PENDING
-      required_reviewer: OMP_EIU_REVIEWER
-      checkpoint_before_pass: FORBIDDEN
+      status: PASS
+      work_id: S08-001-FINAL-ACCEPTANCE-AUDIT-001
+      reviewer: OMP_EIU_REVIEWER
+      transport: OWNER_MESSAGE
+      reviewed_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+      verdict: FINAL_ACCEPTANCE_PASS
+      source_reopen_required: false
+      implementation_reopen_required: false
+      findings_count: 0
+      artifact: project_control/reviews/S08_001_FINAL_ACCEPTANCE_AUDIT_0d8c5c2_v1.md
+      evidence_branch: review/S08-001-FINAL-ACCEPTANCE-0d8c5c2-v1
+      evidence_commit: "ea0c3ec38aca2861ca2f59df9e2a1a8446aac492"
+    implementation_acceptance:
+      accepted_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+      accepted_checkpoint: checkpoint/S08-001-accepted-001
+      annotated_tag_object: "4617184e5f054b6ac3f4dea5be03e7a3b7fd66d7"
+      implementation_review_work_id: S08-001-IMPLEMENTATION-REREVIEW-008
+      implementation_review_verdict: PASS
+      final_acceptance_work_id: S08-001-FINAL-ACCEPTANCE-AUDIT-001
+      final_acceptance_verdict: PASS
+      product_integration_sha: "3070e56ae06d3364f15cdc5e08d91fce090d820d"
+      product_integration_ci: "35880657875 PASS"
+      product_governance_ci: "35880657901 PASS"
+      final_acceptance_integration_ci: "35882761018 PASS @ 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+      final_acceptance_governance_ci: "35882761149 PASS @ 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+      source_reopen_required: false
+      implementation_reopen_required: false
+      closure_artifact: project_control/reviews/S08_001_ACCEPTANCE_CLOSURE_0d8c5c2_v1.md
     acceptance:
       - "Existing server-side public.list_application_inbox architecture and Candidate-group pagination remain authoritative."
       - "Vietnamese Name search gains a tested accent-insensitive indexed normalization strategy without unsafe IMMUTABLE claims."
@@ -1609,4 +1634,4 @@ tasks:
       - "Representative query-plan evidence is recorded without falsely claiming tiny-fixture production p95 proof."
       - "Focused/new and accepted Application Inbox regressions, full web gates, disposable local DB replay, DB lint, and governance validators PASS."
     out_of_scope: "Durable distributed rate limiting/TASK-S08-002, provider runtimes, production scheduler, archive/purge/retention, backup/restore, production deployment, connected Supabase mutation, Production UAT sign-off, global accessibility recertification, and unrelated search redesign."
-    next_frontier_behavior: "HARD STOP at the governance-reconciled TASK-S08-001 integration SHA pending independent OMP final acceptance audit; no accepted checkpoint, TASK-S08-002 materialization, deployment, connected Supabase mutation, or main mutation before PASS."
+    next_frontier_behavior: "Lifecycle CLOSED for TASK-S08-001. Slice-08 remains IN_PROGRESS. HARD STOP before TASK-S08-002 materialization until canonical source reconciliation and its governed prompt/source gate are explicitly materialized; no deployment, connected Supabase mutation, or main mutation."

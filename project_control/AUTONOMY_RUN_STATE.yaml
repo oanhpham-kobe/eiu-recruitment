@@ -38,10 +38,10 @@ canonical_baseline:
 integration:
   branch: autonomy/continuous-integration-20260905-01
   head_resolution: DIRECT_GIT_RUNTIME
-  last_verified_application_checkpoint: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
-  last_verified_application_ci_run: "35236834202"
-  accepted_checkpoint: checkpoint/S07-005-accepted-001
-  accepted_checkpoint_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
+  last_verified_application_checkpoint: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+  last_verified_application_ci_run: "35882761018"
+  accepted_checkpoint: checkpoint/S08-001-accepted-001
+  accepted_checkpoint_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
   last_verified_slice_closing_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
   last_verified_slice_closing_ci_run: "35245552145"
   last_verified_slice_closing_governance_ci_run: "35245551953"
@@ -50,14 +50,14 @@ integration:
   last_verified_control_plane_governance_ci_run: "34736028909"
   current_reporting_head: DIRECT_GIT_RUNTIME
   current_reporting_classification: GOVERNANCE_ONLY
-  last_task_acceptance_attempt_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
-  last_task_acceptance_integration_ci_run: "35236834202"
+  last_task_acceptance_attempt_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+  last_task_acceptance_integration_ci_run: "35882761018"
   last_task_acceptance_integration_ci_result: PASS
-  acceptance_domain_verification: "35234321237 @ c2474f2d83b5a7748fde49db04c4dba85398b216 product Web verification PASS; local exact-candidate predecessor DB regressions PASS; 35236834202 and 35236834204 PASS @ governance-reconciled accepted SHA 0caf83354a1353d7fc807d3b3014720f9720e2e3; independent final acceptance audit PASS."
-  prior_incomplete_acceptance_ci: "35211232380 @ 48e29338fb1f6daa23b981f3a5b79d087ed8178f; Integration CI failed only on canonical Biome formatting before formatting-only repair and independent re-review."
-  last_task_acceptance_governance_ci_run: "35236834204"
+  acceptance_domain_verification: "35880657875 @ 3070e56ae06d3364f15cdc5e08d91fce090d820d full product Web/DB verification PASS including both S08 SQL gates and DB lint; 35882761018 and 35882761149 PASS @ governance-reconciled accepted SHA 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb; independent final acceptance audit S08-001-FINAL-ACCEPTANCE-AUDIT-001 FINAL_ACCEPTANCE_PASS."
+  prior_incomplete_acceptance_ci: "35878089069 @ 1d68f9fea0116b0c279a053a06b4befa49fac1fc failed only on CI fixture ordering before Inbox assertions; repaired by independently reviewed R8 ordering-only workflow delta. Earlier 35517082611 @ 46b5a1f0516f1701195143636a019ff5af92d08e exposed SQLSTATE 42P10 and was repaired before final candidate."
+  last_task_acceptance_governance_ci_run: "35882761149"
   last_task_acceptance_governance_ci_result: PASS
-  current_prompt_review_target_sha: "c26c7bf183949117fe4901a62bf9e9d8a42c1dbb"
+  current_prompt_review_target_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
 
 
 authorization:
@@ -118,19 +118,22 @@ worker_settled_history:
     exact_sha: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"
     settled_at: "2026-09-14T00:00:00Z"
 last_accepted_task:
-  id: TASK-S07-005
-  commit: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
-  accepted_checkpoint: checkpoint/S07-005-accepted-001
-  accepted_checkpoint_sha: "0caf83354a1353d7fc807d3b3014720f9720e2e3"
-  annotated_tag_object: "63be36559229b758353b9a95e867d8632814b10d"
+  id: TASK-S08-001
+  commit: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+  accepted_checkpoint: checkpoint/S08-001-accepted-001
+  accepted_checkpoint_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+  annotated_tag_object: "4617184e5f054b6ac3f4dea5be03e7a3b7fd66d7"
   evidence:
-    - "implementation_review: PASS (S07-005-IMPLEMENTATION-REVIEW-003 @ f4a568f87556e1d97da9fd315f50c73b00a60f5c)"
-    - "external_integration_audit: PASS (S07-005-EXTERNAL-INTEGRATION-AUDIT-001 @ c2474f2d83b5a7748fde49db04c4dba85398b216)"
-    - "final_acceptance_audit: PASS (S07-005-FINAL-ACCEPTANCE-AUDIT-001 @ 0caf83354a1353d7fc807d3b3014720f9720e2e3)"
-    - "github_ci: VERIFIED (Integration CI 35236834202 and Governance CI 35236834204 PASS @ 0caf83354a1353d7fc807d3b3014720f9720e2e3)"
-    - "checkpoint: checkpoint/S07-005-accepted-001; annotated tag object 63be36559229b758353b9a95e867d8632814b10d; peeled target 0caf83354a1353d7fc807d3b3014720f9720e2e3"
+    - "prompt_review: PASS (S08-001-PROMPT-REVIEW-001 @ 141146d52a05b0d698178ba7ef097690d5ef2a27)"
+    - "implementation_review: PASS (S08-001-IMPLEMENTATION-REREVIEW-008 @ d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf)"
+    - "external_integration_audit: PASS (S08-001-EXTERNAL-INTEGRATION-AUDIT-001 @ product integration 3070e56ae06d3364f15cdc5e08d91fce090d820d)"
+    - "final_acceptance_audit: FINAL_ACCEPTANCE_PASS (S08-001-FINAL-ACCEPTANCE-AUDIT-001 @ 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb)"
+    - "product_ci: VERIFIED (Integration CI 35880657875 and Governance CI 35880657901 PASS @ 3070e56ae06d3364f15cdc5e08d91fce090d820d)"
+    - "final_acceptance_ci: VERIFIED (Integration CI 35882761018 and Governance CI 35882761149 PASS @ 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb)"
+    - "checkpoint: checkpoint/S08-001-accepted-001; annotated tag object 4617184e5f054b6ac3f4dea5be03e7a3b7fd66d7; peeled target 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
 
 previous_accepted_tasks:
+  TASK-S07-005: {commit: "0caf83354a1353d7fc807d3b3014720f9720e2e3"}
   TASK-S07-004: {commit: "2c42533733257caa3567cd6c8cae80e13b3092b8"}
   TASK-S07-003: {commit: "7317138779270087e3e425f48b13785923b17f42"}
   TASK-S07-002: {commit: "d99776aa6e07c0023ada9906211f6d1d4b17f5ed"}
@@ -767,7 +770,7 @@ slice_07_planning:
     annotated_tag_object: "2e127b3dcd8e765f73366a8165dee26112788e33"
 
 slice_08_planning:
-  status: S08_001_INTEGRATED_AWAITING_FINAL_ACCEPTANCE_AUDIT
+  status: S08_001_ACCEPTED_HARD_STOP_BEFORE_S08_002_MATERIALIZATION
   lifecycle: ACTIVE
   selected_task: TASK-S08-001
   planning_source_prompt_head: "6348fe9af137d18a2b148979583141bc8c8104b0"
@@ -782,12 +785,8 @@ slice_08_planning:
   governed_pre_task_checkpoint_tag_object: "fc10664fdee1aa3676021b0049ec25e765ce1861"
   prompt_review_status: PASS
   prompt_review_work_id: S08-001-PROMPT-REVIEW-001
-  prompt_review_reviewed_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
-  prompt_review_artifact: project_control/reviews/S08_001_PROMPT_REVIEW_141146d_v1.md
-  prompt_review_implementation_authorized: false
   implementation_started: true
   implementation_authorized: true
-  implementation_authorization_basis: "Explicit Owner implementation dispatch after prompt/source PASS."
   implementation_baseline_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
   implementation_branch: chatgpt/TASK-S08-001-application-inbox-search-hardening
   producer_role: EXTERNAL_CHATGPT
@@ -800,25 +799,35 @@ slice_08_planning:
   serialized_governance_ci: "35880657901 PASS"
   external_integration_audit: PASS
   external_integration_audit_work_id: S08-001-EXTERNAL-INTEGRATION-AUDIT-001
-  external_integration_audit_artifact: project_control/reviews/S08_001_EXTERNAL_INTEGRATION_AUDIT_3070e56_v1.md
-  final_acceptance_audit_status: PENDING
-  final_acceptance_reviewer: OMP_EIU_REVIEWER
-  accepted_checkpoint_before_final_pass: FORBIDDEN
+  final_acceptance_audit_status: PASS
+  final_acceptance_audit_work_id: S08-001-FINAL-ACCEPTANCE-AUDIT-001
+  final_acceptance_reviewed_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+  final_acceptance_verdict: FINAL_ACCEPTANCE_PASS
+  final_acceptance_evidence_branch: review/S08-001-FINAL-ACCEPTANCE-0d8c5c2-v1
+  final_acceptance_evidence_commit: "ea0c3ec38aca2861ca2f59df9e2a1a8446aac492"
+  final_acceptance_evidence_artifact: project_control/reviews/S08_001_FINAL_ACCEPTANCE_AUDIT_0d8c5c2_v1.md
+  accepted_checkpoint: checkpoint/S08-001-accepted-001
+  accepted_checkpoint_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+  accepted_checkpoint_tag_object: "4617184e5f054b6ac3f4dea5be03e7a3b7fd66d7"
+  final_acceptance_integration_ci: "35882761018 PASS"
+  final_acceptance_governance_ci: "35882761149 PASS"
+  source_reopen_required_after_acceptance: false
+  implementation_reopen_required_after_acceptance: false
   materialized_next_task_count: 1
   deferred_candidate_tasks:
-    - "TASK-S08-002 candidate: Durable Distributed Rate Limiting and Abuse Controls — identified by source reconciliation but NOT materialized."
+    - "TASK-S08-002 candidate: Durable Distributed Rate Limiting and Abuse Controls — identified but NOT materialized."
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S08-001 implementation, independent implementation review, exact product serialization, full Web/DB Integration CI, Governance CI, and external integration audit are PASS; awaiting independent OMP final acceptance audit."
+    - "TASK-S08-001 is ACCEPTED. TASK-S08-002 remains an unmaterialized candidate and cannot enter the DAG without canonical source reconciliation and a governed prompt/source gate."
   materialization_frontier: []
-  execution_hold: "HARD STOP at governance-reconciled S08-001 integration pending independent OMP final acceptance audit; checkpoint/S08-001-accepted-001 and TASK-S08-002 materialization are forbidden before PASS."
+  execution_hold: "HARD STOP after TASK-S08-001 acceptance. Do not materialize TASK-S08-002, mutate main, deploy Vercel, or mutate connected Supabase from this acceptance event."
 
 stop_gate:
   status: ACTIVE
-  type: S08_001_FINAL_ACCEPTANCE_AUDIT_GATE
+  type: S08_002_SOURCE_RECONCILIATION_BEFORE_MATERIALIZATION_GATE
   source_reopen_required: false
-  resume_on: "Owner-transported independent OMP final acceptance PASS or BLOCKING_REPAIR verdict for the exact governance-reconciled integration SHA."
+  resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
-next_action: "Return the exact governance-reconciled S08-001 integration SHA and evidence packet to OMP_EIU_REVIEWER for independent final acceptance audit; do not create checkpoint/S08-001-accepted-001 or materialize TASK-S08-002 before PASS."
+next_action: "SAFE CHECKPOINT: TASK-S08-001 lifecycle is CLOSED_ACCEPTED at checkpoint/S08-001-accepted-001. Stop before TASK-S08-002 materialization; the next work, if separately authorized by governance, is source reconciliation only."
