@@ -177,10 +177,6 @@ jobs:
       - name: Replay migrations from zero
         run: supabase db reset
 
-      - name: Execute PRE-S04 Database Integration & Regression Assertions
-        run: |
-          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
-
       - name: Execute TASK-S08-001 Accepted Application Inbox SQL Regression Assertions
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_inbox_read.sql
@@ -188,6 +184,10 @@ jobs:
       - name: Execute TASK-S08-001 Search Hardening Regression Assertions
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/application_inbox_search_hardening_test.sql
+
+      - name: Execute PRE-S04 Database Integration & Regression Assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -U postgres -d postgres < supabase/tests/pre_s04_contract_repairs_test.sql
 
       - name: Execute TASK-S05-001 Interviewer Report Contextual Read Regression Assertions
         run: |
