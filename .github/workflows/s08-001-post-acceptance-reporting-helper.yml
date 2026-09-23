@@ -1,0 +1,84 @@
+name: S08-001 Post Acceptance Reporting Helper
+
+on:
+  push:
+    branches:
+      - automation/s08-001-post-acceptance-reporting-helper
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout helper branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Materialize persisted final audit evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          EVIDENCE_COMMIT="ea0c3ec38aca2861ca2f59df9e2a1a8446aac492"
+          EVIDENCE_PATH="project_control/reviews/S08_001_FINAL_ACCEPTANCE_AUDIT_0d8c5c2_v1.md"
+          git fetch origin review/S08-001-FINAL-ACCEPTANCE-0d8c5c2-v1
+          git cat-file -e "$EVIDENCE_COMMIT:$EVIDENCE_PATH"
+          git show "$EVIDENCE_COMMIT:$EVIDENCE_PATH" > "$EVIDENCE_PATH"
+          grep -F "VERDICT: FINAL_ACCEPTANCE_PASS" "$EVIDENCE_PATH"
+          grep -F "REVIEWED_SHA: 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb" "$EVIDENCE_PATH"
+
+      - name: Apply post acceptance reporting reconciliation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python project_control/.tmp_s08_001_post_acceptance.py
+
+      - name: Validate reconciled control plane
+        shell: bash
+        run: |
+          set -euo pipefail
+          python project_control/validate_control_plane.py
+          python project_control/validate_omp_native.py
+          git diff --check
+
+      - name: Assert reporting-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only HEAD -- \
+            ':!project_control/AUTONOMY_RUN_STATE.yaml' \
+            ':!project_control/CURRENT_STATE.md' \
+            ':!project_control/EVIDENCE_INDEX.yaml' \
+            ':!project_control/TASK_REGISTRY.yaml' \
+            ':!project_control/reviews/S08_001_FINAL_ACCEPTANCE_AUDIT_0d8c5c2_v1.md' \
+            ':!project_control/reviews/S08_001_ACCEPTANCE_CLOSURE_0d8c5c2_v1.md' \
+            ':!project_control/.tmp_s08_001_post_acceptance.py' \
+            ':!.github/workflows/s08-001-post-acceptance-reporting-helper.yml' | tee /tmp/unexpected.txt
+          test ! -s /tmp/unexpected.txt
+
+      - name: Remove one-shot helper files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm project_control/.tmp_s08_001_post_acceptance.py
+          rm .github/workflows/s08-001-post-acceptance-reporting-helper.yml
+
+      - name: Commit reconciled reporting tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "oanhpham-kobe"
+          git config user.email "oanh.pham@eiu.edu.vn"
+          git add project_control/AUTONOMY_RUN_STATE.yaml \
+                  project_control/CURRENT_STATE.md \
+                  project_control/EVIDENCE_INDEX.yaml \
+                  project_control/TASK_REGISTRY.yaml \
+                  project_control/reviews/S08_001_FINAL_ACCEPTANCE_AUDIT_0d8c5c2_v1.md \
+                  project_control/reviews/S08_001_ACCEPTANCE_CLOSURE_0d8c5c2_v1.md \
+                  project_control/.tmp_s08_001_post_acceptance.py \
+                  .github/workflows/s08-001-post-acceptance-reporting-helper.yml
+          git diff --cached --check
+          git commit -m "chore(governance): close accepted TASK-S08-001 lifecycle"
+          git push origin HEAD:automation/s08-001-post-acceptance-reporting-helper
