@@ -1535,7 +1535,7 @@ tasks:
   TASK-S08-001:
     title: "Application Inbox Search and Indexed Pagination Hardening"
     slice: SLICE-08
-    status: PLANNED
+    status: REVIEW
     lane: LANE_A
     depends_on: [TASK-S03-004, TASK-S07-005]
     planning_baseline_sha: "6348fe9af137d18a2b148979583141bc8c8104b0"
@@ -1548,11 +1548,55 @@ tasks:
     superseded_pre_review_artifacts:
       - project_control/reviews/S08_001_SOURCE_RECONCILIATION_v1.md
       - project_control/prompts/SLICE-08_TASK-001_v1.md
-    planned_pre_task_checkpoint: checkpoint/pre-S08-001-001
-    prompt_review_status: PENDING
-    prompt_review_work_id: PENDING
-    implementation_started: false
+    governed_pre_task_checkpoint: checkpoint/pre-S08-001-001
+    governed_pre_task_checkpoint_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
+    governed_pre_task_checkpoint_tag_object: "fc10664fdee1aa3676021b0049ec25e765ce1861"
+    prompt_review_status: PASS
+    prompt_review_work_id: S08-001-PROMPT-REVIEW-001
+    prompt_review_reviewed_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
+    prompt_review_artifact: project_control/reviews/S08_001_PROMPT_REVIEW_141146d_v1.md
+    prompt_review_implementation_authorized: false
+    implementation_started: true
+    implementation_authorized: true
+    implementation_authorization_basis: "Explicit Owner implementation dispatch after independent prompt/source PASS."
+    implementation_baseline_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
     implementation_branch: chatgpt/TASK-S08-001-application-inbox-search-hardening
+    producer: EXTERNAL_CHATGPT
+    implementation_review_mode: OMP_EIU_REVIEWER
+    implementation_review_status: PASS
+    independent_implementation_review:
+      work_id: S08-001-IMPLEMENTATION-REREVIEW-008
+      reviewer: OMP_EIU_REVIEWER
+      reviewed_sha: "d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf"
+      prior_reviewed_sha: "c41392f8baf56931b6d2e22d8d082dfdf27076ef"
+      verdict: PASS
+      findings_count: 0
+      source_reopen_required: false
+      artifact: project_control/reviews/S08_001_IMPLEMENTATION_REREVIEW_R8_d3fcdfc_v1.md
+    producer_verification:
+      final_candidate_sha: "d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf"
+      serialized_product_integration_sha: "3070e56ae06d3364f15cdc5e08d91fce090d820d"
+      integration_ci: "35880657875 PASS @ 3070e56ae06d3364f15cdc5e08d91fce090d820d; resolver, full Web verification, Database integration, both S08 SQL gates, crossed regressions, standalone bulk replay, and DB lint PASS."
+      governance_ci: "35880657901 PASS @ 3070e56ae06d3364f15cdc5e08d91fce090d820d"
+      r7_failed_product_integration_sha: "1d68f9fea0116b0c279a053a06b4befa49fac1fc"
+      r7_failed_integration_ci: "35878089069 FAIL — fixture-order collision at one_root_admin_uq before Inbox assertions; classified CI isolation only."
+      r8_repair: "Ordering-only workflow repair; S08 transactional SQL suites now execute immediately after clean db reset before PRE-S04 persistent fixtures."
+      source_reopen_required: false
+      implementation_reopen_required: false
+    external_integration_audit:
+      work_id: S08-001-EXTERNAL-INTEGRATION-AUDIT-001
+      auditor: EXTERNAL_CHATGPT
+      audited_candidate_sha: "d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf"
+      audited_integration_sha: "3070e56ae06d3364f15cdc5e08d91fce090d820d"
+      verdict: PASS
+      source_reopen_required: false
+      implementation_reopen_required: false
+      blob_equivalence: "11/11 TASK-S08-001 delta blobs MATCH"
+      artifact: project_control/reviews/S08_001_EXTERNAL_INTEGRATION_AUDIT_3070e56_v1.md
+    final_acceptance_audit:
+      status: PENDING
+      required_reviewer: OMP_EIU_REVIEWER
+      checkpoint_before_pass: FORBIDDEN
     acceptance:
       - "Existing server-side public.list_application_inbox architecture and Candidate-group pagination remain authoritative."
       - "Vietnamese Name search gains a tested accent-insensitive indexed normalization strategy without unsafe IMMUTABLE claims."
@@ -1565,4 +1609,4 @@ tasks:
       - "Representative query-plan evidence is recorded without falsely claiming tiny-fixture production p95 proof."
       - "Focused/new and accepted Application Inbox regressions, full web gates, disposable local DB replay, DB lint, and governance validators PASS."
     out_of_scope: "Durable distributed rate limiting/TASK-S08-002, provider runtimes, production scheduler, archive/purge/retention, backup/restore, production deployment, connected Supabase mutation, Production UAT sign-off, global accessibility recertification, and unrelated search redesign."
-    next_frontier_behavior: "HARD STOP before implementation: create immutable checkpoint/pre-S08-001-001 on the exact materialized baseline, obtain independent OMP/eiu-reviewer prompt/source PASS on its peeled SHA, persist that evidence, then await explicit Owner implementation dispatch."
+    next_frontier_behavior: "HARD STOP at the governance-reconciled TASK-S08-001 integration SHA pending independent OMP final acceptance audit; no accepted checkpoint, TASK-S08-002 materialization, deployment, connected Supabase mutation, or main mutation before PASS."
