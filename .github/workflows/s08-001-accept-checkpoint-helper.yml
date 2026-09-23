@@ -1,0 +1,56 @@
+name: S08-001 Accept Checkpoint Helper
+
+on:
+  push:
+    branches:
+      - automation/s08-001-accept-checkpoint-helper
+
+permissions:
+  contents: write
+
+jobs:
+  accept:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout helper branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify durable final acceptance evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+          EVIDENCE_COMMIT="ea0c3ec38aca2861ca2f59df9e2a1a8446aac492"
+          EVIDENCE_PATH="project_control/reviews/S08_001_FINAL_ACCEPTANCE_AUDIT_0d8c5c2_v1.md"
+          git fetch origin review/S08-001-FINAL-ACCEPTANCE-0d8c5c2-v1 --tags
+          test "$(git rev-parse "$EVIDENCE_COMMIT^{commit}")" = "$EVIDENCE_COMMIT"
+          git cat-file -e "$EVIDENCE_COMMIT:$EVIDENCE_PATH"
+          git show "$EVIDENCE_COMMIT:$EVIDENCE_PATH" | grep -F "WORK_ID: S08-001-FINAL-ACCEPTANCE-AUDIT-001"
+          git show "$EVIDENCE_COMMIT:$EVIDENCE_PATH" | grep -F "REVIEWED_SHA: $TARGET"
+          git show "$EVIDENCE_COMMIT:$EVIDENCE_PATH" | grep -F "VERDICT: FINAL_ACCEPTANCE_PASS"
+          git show "$EVIDENCE_COMMIT:$EVIDENCE_PATH" | grep -F "SOURCE_REOPEN_REQUIRED: false"
+          git show "$EVIDENCE_COMMIT:$EVIDENCE_PATH" | grep -F "IMPLEMENTATION_REOPEN_REQUIRED: false"
+
+      - name: Create immutable annotated accepted checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+          TAG="checkpoint/S08-001-accepted-001"
+          git fetch origin --tags
+          if git show-ref --verify --quiet "refs/tags/$TAG"; then
+            test "$(git cat-file -t "refs/tags/$TAG")" = "tag"
+            test "$(git rev-parse "$TAG^{}")" = "$TARGET"
+            echo "CHECKPOINT_ALREADY_VALID=YES"
+            echo "TAG_OBJECT=$(git rev-parse "$TAG")"
+            exit 0
+          fi
+          git config user.name "oanhpham-kobe"
+          git config user.email "oanh.pham@eiu.edu.vn"
+          git tag -a "$TAG" "$TARGET" -m "Accept TASK-S08-001 @ $TARGET"
+          test "$(git cat-file -t "refs/tags/$TAG")" = "tag"
+          test "$(git rev-parse "$TAG^{}")" = "$TARGET"
+          echo "TAG_OBJECT=$(git rev-parse "$TAG")"
+          git push origin "refs/tags/$TAG:refs/tags/$TAG"
