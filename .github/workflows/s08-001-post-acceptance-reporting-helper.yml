@@ -33,16 +33,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('project_control/.tmp_s08_001_post_acceptance.py')
-          text = p.read_text(encoding='utf-8')
-          old = r"r'(?ms)^## Slice-08 planning state\\n.*\\Z'"
-          new = r"r'(?ms)^## Slice-08 TASK-S08-001 final-acceptance gate\\n.*\\Z'"
-          if old not in text:
-              raise SystemExit('expected CURRENT_STATE anchor literal not found in helper script')
-          p.write_text(text.replace(old, new, 1), encoding='utf-8')
-          PY
+          sed -i 's/## Slice-08 planning state/## Slice-08 TASK-S08-001 final-acceptance gate/' project_control/.tmp_s08_001_post_acceptance.py
+          grep -F "Slice-08 TASK-S08-001 final-acceptance gate" project_control/.tmp_s08_001_post_acceptance.py
           python project_control/.tmp_s08_001_post_acceptance.py
 
       - name: Validate reconciled control plane
