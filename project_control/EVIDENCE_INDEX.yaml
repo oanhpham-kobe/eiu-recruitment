@@ -8,13 +8,13 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: S08_001_INTEGRATED_AWAITING_FINAL_ACCEPTANCE_AUDIT
-  note: "TASK-S08-001 has independent implementation PASS, exact product serialization, full Web/DB Integration CI PASS, Governance CI PASS, and external integration audit PASS. Accepted checkpoint creation and TASK-S08-002 materialization remain forbidden pending independent OMP final acceptance audit."
+  status: S08_001_ACCEPTED_HARD_STOP_BEFORE_S08_002_MATERIALIZATION
+  note: "TASK-S08-001 is accepted at immutable checkpoint/S08-001-accepted-001 -> 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb after independent final acceptance PASS. TASK-S08-002 remains not materialized and is not authorized by this acceptance."
 
   S08-001-SOURCE-GATE-001:
     task: TASK-S08-001
     operation: APPLICATION_INBOX_SEARCH_AND_INDEXED_PAGINATION_HARDENING
-    status: INTEGRATED_AWAITING_FINAL_ACCEPTANCE_AUDIT
+    status: ACCEPTED
     planning_source_prompt_head: "6348fe9af137d18a2b148979583141bc8c8104b0"
     source_reconciliation: project_control/reviews/S08_001_SOURCE_RECONCILIATION_v2.md
     source_reconciliation_work_id: S08-001-SOURCE-RECONCILIATION-002
@@ -28,8 +28,6 @@ implementation_evidence:
     prompt_review_status: PASS
     prompt_review_work_id: S08-001-PROMPT-REVIEW-001
     prompt_review_reviewed_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
-    prompt_review_artifact: project_control/reviews/S08_001_PROMPT_REVIEW_141146d_v1.md
-    prompt_review_implementation_authorized: false
     implementation_started: true
     implementation_authorized: true
     implementation_branch: chatgpt/TASK-S08-001-application-inbox-search-hardening
@@ -67,14 +65,29 @@ implementation_evidence:
       implementation_reopen_required: false
       artifact: project_control/reviews/S08_001_EXTERNAL_INTEGRATION_AUDIT_3070e56_v1.md
     final_acceptance_audit:
-      status: PENDING
-      required_reviewer: OMP_EIU_REVIEWER
-      checkpoint_before_pass: FORBIDDEN
+      work_id: S08-001-FINAL-ACCEPTANCE-AUDIT-001
+      reviewer: OMP_EIU_REVIEWER
+      reviewed_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+      verdict: FINAL_ACCEPTANCE_PASS
+      source_reopen_required: false
+      implementation_reopen_required: false
+      findings_count: 0
+      evidence_branch: review/S08-001-FINAL-ACCEPTANCE-0d8c5c2-v1
+      evidence_commit: "ea0c3ec38aca2861ca2f59df9e2a1a8446aac492"
+      artifact: project_control/reviews/S08_001_FINAL_ACCEPTANCE_AUDIT_0d8c5c2_v1.md
+    implementation_acceptance:
+      accepted_checkpoint: checkpoint/S08-001-accepted-001
+      accepted_checkpoint_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+      annotated_tag_object: "4617184e5f054b6ac3f4dea5be03e7a3b7fd66d7"
+      product_integration_ci: "35880657875 PASS @ 3070e56ae06d3364f15cdc5e08d91fce090d820d"
+      product_governance_ci: "35880657901 PASS @ 3070e56ae06d3364f15cdc5e08d91fce090d820d"
+      final_acceptance_integration_ci: "35882761018 PASS @ 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+      final_acceptance_governance_ci: "35882761149 PASS @ 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+      closure_artifact: project_control/reviews/S08_001_ACCEPTANCE_CLOSURE_0d8c5c2_v1.md
+      source_reopen_required: false
+      implementation_reopen_required: false
     accepted_predecessor_slice_checkpoint: checkpoint/SLICE-07-accepted-001
     accepted_predecessor_slice_sha: "b4e06a639f9e00126c1f76549067e1f6469ebc8b"
-    superseded_before_review:
-      - project_control/reviews/S08_001_SOURCE_RECONCILIATION_v1.md
-      - project_control/prompts/SLICE-08_TASK-001_v1.md
     bounded_scope: "Existing Application Inbox search/read hardening only: accent-insensitive Name normalization/indexing, authoritative Email/index alignment, digit-normalized Phone search, canonical page-size/debounce/minimum-query behavior, PII-safe request transport, and representative query-plan evidence."
     deferred_candidate: "TASK-S08-002 Durable Distributed Rate Limiting and Abuse Controls — identified but NOT materialized."
 
