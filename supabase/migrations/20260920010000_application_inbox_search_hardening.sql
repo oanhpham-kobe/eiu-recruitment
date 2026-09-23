@@ -127,11 +127,7 @@ as $$
         '[^0-9]',
         '',
         'g'
-      ) as phone_query,
-      case
-        when p_page_size in (25, 50, 100) then p_page_size
-        else 25
-      end as effective_page_size
+      ) as phone_query
   ), query_spec as (
     select
       qi.*,
@@ -345,7 +341,6 @@ as $$
   ), paged as (
     select c.*
     from counted c
-    cross join query_spec q
     order by c.submitted_at desc, c.submission_id desc, c.candidate_id asc
     offset (
       (
@@ -354,14 +349,23 @@ as $$
           greatest(
             ceil(
               (select count(*) from filtered)::numeric
-              / q.effective_page_size
+              / case
+                  when p_page_size in (25, 50, 100) then p_page_size
+                  else 25
+                end
             )::integer,
             1
           )
         ) - 1
-      ) * q.effective_page_size
+      ) * case
+            when p_page_size in (25, 50, 100) then p_page_size
+            else 25
+          end
     )
-    limit q.effective_page_size
+    limit case
+      when p_page_size in (25, 50, 100) then p_page_size
+      else 25
+    end
   )
   select
     p.candidate_id,
