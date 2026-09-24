@@ -1,0 +1,49 @@
+name: S08-002 Pre-task Checkpoint Helper
+
+on:
+  push:
+    branches:
+      - automation/s08-002-precheckpoint-helper-v1
+
+permissions:
+  contents: write
+
+jobs:
+  checkpoint:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact materialization target
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+          grep -F 'current_task: TASK-S08-002' project_control/TASK_REGISTRY.yaml
+          grep -F 'prompt_review_status: PENDING' project_control/TASK_REGISTRY.yaml
+          grep -F 'implementation_authorized: false' project_control/TASK_REGISTRY.yaml
+          grep -F 'project_control/prompts/SLICE-08_TASK-002_v1.md' project_control/TASK_REGISTRY.yaml
+          grep -F 'project_control/reviews/S08_002_SOURCE_REVIEW_a993759_v1.md' project_control/TASK_REGISTRY.yaml
+          python project_control/validate_control_plane.py
+          python project_control/validate_omp_native.py
+          git diff --check b5240c7df268ee8989f2c1d7faefa6b69f56a4b0...HEAD
+
+      - name: Create immutable annotated pre-task checkpoint
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          TAG='checkpoint/pre-S08-002-001'
+          TARGET='c3fd09b5cbe38205802b079560aff8452c6bbe3b'
+          git fetch origin --tags --force
+          if git show-ref --verify --quiet "refs/tags/$TAG"; then
+            EXISTING="$(git rev-parse "$TAG^{}")"
+            test "$EXISTING" = "$TARGET"
+            echo "Checkpoint already exists at expected target: $EXISTING"
+          else
+            git tag -a "$TAG" "$TARGET" -m "Pre TASK-S08-002 prompt review @ $TARGET"
+            git push origin "refs/tags/$TAG"
+          fi
+          test "$(git rev-parse "$TAG^{}")" = "$TARGET"
