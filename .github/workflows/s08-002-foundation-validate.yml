@@ -1,0 +1,53 @@
+name: S08-002 Foundation Validate
+
+on:
+  push:
+    branches:
+      - validate/S08-002-foundation-a6be355
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Ensure npm 11.19.0
+        run: |
+          if [ "$(npm --version)" != "11.19.0" ]; then npm install --global npm@11.19.0; fi
+          test "$(npm --version)" = "11.19.0"
+      - run: npm ci
+      - name: Focused foundation test
+        run: node --conditions react-server --test --import tsx src/__tests__/rate-limit-foundation.test.ts
+      - name: Focused lint
+        run: npx biome check src/lib/security/rate-limit-policy.ts src/lib/security/rate-limit.ts src/lib/security/trusted-client-ip.ts src/__tests__/rate-limit-foundation.test.ts
+      - name: Typecheck
+        run: npm run typecheck
+
+  db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Start disposable local Supabase
+        run: supabase start
+      - name: Replay migrations from zero
+        run: supabase db reset
+      - name: Focused durable limiter SQL regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/durable_rate_limit_foundation_test.sql
+      - name: Database lint
+        run: supabase db lint --local --level warning
+      - name: Stop disposable local Supabase
+        if: always()
+        run: supabase stop --no-backup
