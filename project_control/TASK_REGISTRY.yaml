@@ -1,6 +1,6 @@
 version: 1
 current_slice: SLICE-08
-current_task: TASK-S08-001
+current_task: TASK-S08-002
 allowed_statuses: [PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED]
 tasks:
   TASK-S00-001:
@@ -1635,3 +1635,40 @@ tasks:
       - "Focused/new and accepted Application Inbox regressions, full web gates, disposable local DB replay, DB lint, and governance validators PASS."
     out_of_scope: "Durable distributed rate limiting/TASK-S08-002, provider runtimes, production scheduler, archive/purge/retention, backup/restore, production deployment, connected Supabase mutation, Production UAT sign-off, global accessibility recertification, and unrelated search redesign."
     next_frontier_behavior: "Lifecycle CLOSED for TASK-S08-001. Slice-08 remains IN_PROGRESS. HARD STOP before TASK-S08-002 materialization until canonical source reconciliation and its governed prompt/source gate are explicitly materialized; no deployment, connected Supabase mutation, or main mutation."
+
+  TASK-S08-002:
+    title: "Durable Distributed Rate Limiting and Abuse Controls"
+    slice: SLICE-08
+    status: PLANNED
+    lane: LANE_A
+    depends_on: [TASK-S08-001, TASK-S01-005, TASK-S02-003, TASK-S02-004, TASK-S04-002, TASK-S07-005]
+    planning_baseline_sha: "8dcb0a5d7ce1be9d82e3448c01cdc1643e3ac8c4"
+    source_reconciliation: project_control/reviews/S08_002_SOURCE_RECONCILIATION_v1.md
+    source_reconciliation_work_id: S08-002-SOURCE-RECONCILIATION-001
+    source_reconciliation_status: PASS
+    source_reopen_required: false
+    source_review_work_id: S08-002-SOURCE-REVIEW-001
+    source_review_status: PASS
+    source_review_reviewed_sha: "a99375932e95805a8b52a6a159eb94a755c88986"
+    source_review_evidence_commit: "25612895c41b7164961c06d6613f8c61cf9660de"
+    source_review_artifact: project_control/reviews/S08_002_SOURCE_REVIEW_a993759_v1.md
+    task_materialization_authorized: true
+    prompt: project_control/prompts/SLICE-08_TASK-002_v1.md
+    prompt_version: v1
+    governed_pre_task_checkpoint: checkpoint/pre-S08-002-001
+    governed_pre_task_checkpoint_status: PENDING_CREATION_AFTER_MATERIALIZATION_VALIDATION
+    prompt_review_status: PENDING
+    prompt_review_work_id: S08-002-PROMPT-REVIEW-001
+    implementation_started: false
+    implementation_authorized: false
+    implementation_review_mode: OMP_EIU_REVIEWER
+    acceptance:
+      - "Canonical initial rate-limit matrix is enforced with durable shared multi-instance state and atomic concurrency-safe consumption."
+      - "Trusted client-IP resolution rejects unapproved/forged forwarding authority; rate limiting remains additive to same-origin, Auth, RLS, RBAC, validation, optimistic locking and idempotency."
+      - "OTP request/verify, Candidate Submit/Update, reachable upload boundaries, internal free-text search, and email enqueue receive the reconciled policy without reopening accepted business contracts."
+      - "Bulk email preserves PER_ITEM_ENQUEUE_RESULT semantics and per-item/entity accounting; provider delivery throttling remains distinct from enqueue limiting."
+      - "PII/OTP/token/signed-URL/file-content/raw-search data is excluded from limiter keys/logs/audit beyond the minimum policy dimensions required for enforcement."
+      - "PDF policy remains reusable/deferred until a real PDF-generation endpoint exists; no synthetic PDF feature is introduced."
+      - "Disposable/local replay, focused rate-limit concurrency/expiry/forged-header tests, predecessor regressions, Web gates, DB lint, and governance validators are required before acceptance."
+    out_of_scope: "Provider runtime redesign, PDF product implementation, production deployment, Vercel environment mutation, connected/hosted Supabase mutation, production secrets, main mutation, accepted checkpoint movement, and unrelated business/search redesign."
+    next_frontier_behavior: "Independent prompt/source review only. Implementation remains forbidden until exact-SHA prompt review PASS is transported/persisted and a later explicit Owner implementation dispatch authorizes producer execution."

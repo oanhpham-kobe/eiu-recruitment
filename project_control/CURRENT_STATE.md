@@ -63,12 +63,23 @@
 - Accepted checkpoint verified: annotated tag object `4617184e5f054b6ac3f4dea5be03e7a3b7fd66d7` peels exactly to `0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb`, message `Accept TASK-S08-001 @ 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb`.
 - No `main` mutation, Vercel deployment, connected/hosted Supabase mutation, or production-secret use was authorized or performed by this acceptance lifecycle.
 
+## TASK-S08-002 prompt gate
+
+- `TASK-S08-002 — Durable Distributed Rate Limiting and Abuse Controls` is now materialized in the governed DAG for prompt review only.
+- Producer source reconciliation `S08-002-SOURCE-RECONCILIATION-001`: PASS; source reopen false.
+- Independent source review `S08-002-SOURCE-REVIEW-001` by `OMP_EIU_REVIEWER`: PASS on exact `a99375932e95805a8b52a6a159eb94a755c88986`; task materialization authorized; implementation not authorized.
+- Durable Owner-transported review evidence: `project_control/reviews/S08_002_SOURCE_REVIEW_a993759_v1.md` at `25612895c41b7164961c06d6613f8c61cf9660de`.
+- Governed prompt draft: `project_control/prompts/SLICE-08_TASK-002_v1.md`.
+- Intended immutable pre-task checkpoint: `checkpoint/pre-S08-002-001`; create only after materialization validators/diff pass.
+- Prompt review status: PENDING. Implementation started: false. Implementation authorized: false.
+
 ## Slice-08 frontier
 
-- Slice-08 remains `IN_PROGRESS`; accepting TASK-S08-001 does not close the slice or authorize a next task automatically.
-- `TASK-S08-002` remains an identified future candidate only and is **not materialized**.
-- Safe frontier is empty. The next possible activity is source reconciliation for a future S08 task only after a separately governed materialization decision; no implementation authority is implied.
+- Slice-08 remains `IN_PROGRESS`; current governed task is `TASK-S08-002`.
+- Safe frontier for implementation is empty while the independent prompt/source review gate is active.
+- Next allowed action is creation/verification of `checkpoint/pre-S08-002-001`, followed by independent OMP prompt review of that exact SHA.
+- A prompt-review PASS does not itself authorize implementation; explicit Owner implementation dispatch remains required.
 
 ## Scope boundary
 
-TASK-S08-001 lifecycle is `CLOSED_ACCEPTED`. HARD STOP before TASK-S08-002 materialization. Do not mutate `main`, deploy Vercel, mutate connected Supabase, use production secrets, or move the immutable TASK-S08-001 checkpoint from this reporting transition.
+TASK-S08-001 remains immutable and accepted at `checkpoint/S08-001-accepted-001`. TASK-S08-002 is materialized for prompt review only. Do not mutate `main`, deploy Vercel, mutate connected/hosted Supabase, use production secrets, move accepted checkpoints, or begin S08-002 implementation from this materialization transition.
