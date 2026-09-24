@@ -20,7 +20,9 @@ jobs:
       - name: Verify exact materialization target
         shell: bash
         run: |
-          test "$(git rev-parse HEAD)" = "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+          TARGET='c3fd09b5cbe38205802b079560aff8452c6bbe3b'
+          git checkout --detach "$TARGET"
+          test "$(git rev-parse HEAD)" = "$TARGET"
           grep -F 'current_task: TASK-S08-002' project_control/TASK_REGISTRY.yaml
           grep -F 'prompt_review_status: PENDING' project_control/TASK_REGISTRY.yaml
           grep -F 'implementation_authorized: false' project_control/TASK_REGISTRY.yaml
@@ -28,7 +30,7 @@ jobs:
           grep -F 'project_control/reviews/S08_002_SOURCE_REVIEW_a993759_v1.md' project_control/TASK_REGISTRY.yaml
           python project_control/validate_control_plane.py
           python project_control/validate_omp_native.py
-          git diff --check b5240c7df268ee8989f2c1d7faefa6b69f56a4b0...HEAD
+          git diff --check b5240c7df268ee8989f2c1d7faefa6b69f56a4b0..."$TARGET"
 
       - name: Create immutable annotated pre-task checkpoint
         shell: bash
