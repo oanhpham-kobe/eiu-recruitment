@@ -1,0 +1,26 @@
+name: S08-002 Migration Name Helper
+
+on:
+  push:
+    branches:
+      - automation/s08-002-migration-name-helper
+
+permissions:
+  contents: read
+
+jobs:
+  name:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+      - name: Generate canonical migration filename
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(find supabase/migrations -maxdepth 1 -type f -printf '%f\n' | sort)"
+          supabase migration new durable_rate_limiting
+          after="$(find supabase/migrations -maxdepth 1 -type f -printf '%f\n' | sort)"
+          comm -13 <(printf '%s\n' "$before") <(printf '%s\n' "$after")
