@@ -770,64 +770,49 @@ slice_07_planning:
     annotated_tag_object: "2e127b3dcd8e765f73366a8165dee26112788e33"
 
 slice_08_planning:
-  status: S08_001_ACCEPTED_HARD_STOP_BEFORE_S08_002_MATERIALIZATION
+  status: S08_002_MATERIALIZED_AWAITING_INDEPENDENT_PROMPT_REVIEW
   lifecycle: ACTIVE
-  selected_task: TASK-S08-001
-  planning_source_prompt_head: "6348fe9af137d18a2b148979583141bc8c8104b0"
-  source_reconciliation: project_control/reviews/S08_001_SOURCE_RECONCILIATION_v2.md
-  source_reconciliation_work_id: S08-001-SOURCE-RECONCILIATION-002
+  selected_task: TASK-S08-002
+  predecessor_task: TASK-S08-001
+  predecessor_accepted_checkpoint: checkpoint/S08-001-accepted-001
+  predecessor_accepted_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
+  source_reconciliation: project_control/reviews/S08_002_SOURCE_RECONCILIATION_v1.md
+  source_reconciliation_work_id: S08-002-SOURCE-RECONCILIATION-001
   source_reconciliation_status: PASS
   source_reopen_required: false
-  prompt: project_control/prompts/SLICE-08_TASK-001_v2.md
-  prompt_version: v2
-  governed_pre_task_checkpoint: checkpoint/pre-S08-001-001
-  governed_pre_task_checkpoint_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
-  governed_pre_task_checkpoint_tag_object: "fc10664fdee1aa3676021b0049ec25e765ce1861"
-  prompt_review_status: PASS
-  prompt_review_work_id: S08-001-PROMPT-REVIEW-001
-  implementation_started: true
-  implementation_authorized: true
-  implementation_baseline_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
-  implementation_branch: chatgpt/TASK-S08-001-application-inbox-search-hardening
+  independent_source_review:
+    work_id: S08-002-SOURCE-REVIEW-001
+    reviewer: OMP_EIU_REVIEWER
+    reviewed_sha: "a99375932e95805a8b52a6a159eb94a755c88986"
+    verdict: PASS
+    source_reopen_required: false
+    task_materialization_authorized: true
+    implementation_authorized: false
+    evidence_commit: "25612895c41b7164961c06d6613f8c61cf9660de"
+    evidence_path: project_control/reviews/S08_002_SOURCE_REVIEW_a993759_v1.md
+  prompt: project_control/prompts/SLICE-08_TASK-002_v1.md
+  prompt_version: v1
+  governed_pre_task_checkpoint: checkpoint/pre-S08-002-001
+  governed_pre_task_checkpoint_status: PENDING_CREATION_AFTER_MATERIALIZATION_VALIDATION
+  prompt_review_status: PENDING
+  prompt_review_work_id: S08-002-PROMPT-REVIEW-001
+  implementation_started: false
+  implementation_authorized: false
   producer_role: EXTERNAL_CHATGPT
-  independent_implementation_reviewer: OMP_EIU_REVIEWER
-  implementation_review_status: PASS
-  implementation_review_work_id: S08-001-IMPLEMENTATION-REREVIEW-008
-  final_candidate_sha: "d3fcdfc9c9f057e70f9c74b0dbaaa4d2594f0daf"
-  serialized_product_integration_sha: "3070e56ae06d3364f15cdc5e08d91fce090d820d"
-  serialized_integration_ci: "35880657875 PASS"
-  serialized_governance_ci: "35880657901 PASS"
-  external_integration_audit: PASS
-  external_integration_audit_work_id: S08-001-EXTERNAL-INTEGRATION-AUDIT-001
-  final_acceptance_audit_status: PASS
-  final_acceptance_audit_work_id: S08-001-FINAL-ACCEPTANCE-AUDIT-001
-  final_acceptance_reviewed_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
-  final_acceptance_verdict: FINAL_ACCEPTANCE_PASS
-  final_acceptance_evidence_branch: review/S08-001-FINAL-ACCEPTANCE-0d8c5c2-v1
-  final_acceptance_evidence_commit: "ea0c3ec38aca2861ca2f59df9e2a1a8446aac492"
-  final_acceptance_evidence_artifact: project_control/reviews/S08_001_FINAL_ACCEPTANCE_AUDIT_0d8c5c2_v1.md
-  accepted_checkpoint: checkpoint/S08-001-accepted-001
-  accepted_checkpoint_sha: "0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb"
-  accepted_checkpoint_tag_object: "4617184e5f054b6ac3f4dea5be03e7a3b7fd66d7"
-  final_acceptance_integration_ci: "35882761018 PASS"
-  final_acceptance_governance_ci: "35882761149 PASS"
-  source_reopen_required_after_acceptance: false
-  implementation_reopen_required_after_acceptance: false
-  materialized_next_task_count: 1
-  deferred_candidate_tasks:
-    - "TASK-S08-002 candidate: Durable Distributed Rate Limiting and Abuse Controls — identified but NOT materialized."
+  independent_prompt_reviewer: OMP_EIU_REVIEWER
+  materialized_next_task_count: 2
 
 safe_frontier:
   eligible_tasks: []
   skipped_due_to_dependency:
-    - "TASK-S08-001 is ACCEPTED. TASK-S08-002 remains an unmaterialized candidate and cannot enter the DAG without canonical source reconciliation and a governed prompt/source gate."
+    - "TASK-S08-002 is materialized but implementation is held pending exact-SHA independent prompt/source review and later explicit Owner implementation dispatch."
   materialization_frontier: []
-  execution_hold: "HARD STOP after TASK-S08-001 acceptance. Do not materialize TASK-S08-002, mutate main, deploy Vercel, or mutate connected Supabase from this acceptance event."
+  execution_hold: "PROMPT REVIEW HARD STOP for TASK-S08-002. Do not start implementation, mutate main, deploy Vercel, or mutate connected/hosted Supabase."
 
 stop_gate:
   status: ACTIVE
-  type: S08_002_SOURCE_RECONCILIATION_BEFORE_MATERIALIZATION_GATE
+  type: S08_002_INDEPENDENT_PROMPT_REVIEW_GATE
   source_reopen_required: false
-  resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
+  resume_on: "Independent OMP prompt/source review of checkpoint/pre-S08-002-001 returns PASS with SOURCE_REOPEN_REQUIRED=false, followed by Owner-transported persistence. Implementation still requires a separate explicit Owner dispatch."
 
-next_action: "SAFE CHECKPOINT: TASK-S08-001 lifecycle is CLOSED_ACCEPTED at checkpoint/S08-001-accepted-001. Stop before TASK-S08-002 materialization; the next work, if separately authorized by governance, is source reconciliation only."
+next_action: "SAFE CHECKPOINT: create and verify immutable checkpoint/pre-S08-002-001 after this materialization validates, then stop for independent OMP prompt/source review. Implementation remains unauthorized."

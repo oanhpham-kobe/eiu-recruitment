@@ -8,8 +8,31 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: S08_001_ACCEPTED_HARD_STOP_BEFORE_S08_002_MATERIALIZATION
-  note: "TASK-S08-001 is accepted at immutable checkpoint/S08-001-accepted-001 -> 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb after independent final acceptance PASS. TASK-S08-002 remains not materialized and is not authorized by this acceptance."
+  status: S08_002_MATERIALIZED_AWAITING_INDEPENDENT_PROMPT_REVIEW
+  note: "TASK-S08-002 is now materialized for prompt review only after independent source-reconciliation PASS. Implementation remains unauthorized; checkpoint/pre-S08-002-001 must be created and independently reviewed before any implementation dispatch."
+
+  S08-002-SOURCE-GATE-001:
+    task: TASK-S08-002
+    operation: DURABLE_DISTRIBUTED_RATE_LIMITING_AND_ABUSE_CONTROLS
+    status: MATERIALIZED_AWAITING_PROMPT_REVIEW
+    source_reconciliation: project_control/reviews/S08_002_SOURCE_RECONCILIATION_v1.md
+    source_reconciliation_work_id: S08-002-SOURCE-RECONCILIATION-001
+    source_reconciliation_reviewed_sha: "a99375932e95805a8b52a6a159eb94a755c88986"
+    source_review_work_id: S08-002-SOURCE-REVIEW-001
+    source_review_reviewer: OMP_EIU_REVIEWER
+    source_review_result: PASS
+    source_reopen_required: false
+    task_materialization_authorized: true
+    source_review_evidence_commit: "25612895c41b7164961c06d6613f8c61cf9660de"
+    source_review_evidence_path: project_control/reviews/S08_002_SOURCE_REVIEW_a993759_v1.md
+    prompt: project_control/prompts/SLICE-08_TASK-002_v1.md
+    prompt_version: v1
+    governed_pre_task_checkpoint: checkpoint/pre-S08-002-001
+    governed_pre_task_checkpoint_status: PENDING_CREATION_AFTER_MATERIALIZATION_VALIDATION
+    prompt_review_status: PENDING
+    implementation_started: false
+    implementation_authorized: false
+    bounded_scope: "Durable shared rate limiting for canonical OTP, Candidate mutation, reachable upload, internal search and email-enqueue boundaries; PDF policy reusable/deferred until a real PDF endpoint exists."
 
   S08-001-SOURCE-GATE-001:
     task: TASK-S08-001
