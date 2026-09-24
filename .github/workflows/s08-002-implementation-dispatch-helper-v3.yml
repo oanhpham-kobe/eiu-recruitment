@@ -1,0 +1,77 @@
+name: S08-002 Implementation Dispatch Helper v3
+
+on:
+  push:
+    branches:
+      - automation/s08-002-implementation-dispatch-helper-v3
+
+permissions:
+  contents: write
+
+jobs:
+  dispatch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reuse validated v2 materialization logic
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 64b35607c00d6a6d4c3e7586a424c1e7570fff94:.github/workflows/s08-002-implementation-dispatch-helper-v2.yml > /tmp/v2.yml
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          text = Path('/tmp/v2.yml').read_text()
+          m = re.search(r"      - name: Materialize prompt review evidence and Owner dispatch state\n        shell: bash\n        run: \|\n(.*?)(?=\n      - name: Validate dispatch state and scope)", text, re.S)
+          assert m, 'materialization block not found'
+          lines = []
+          for line in m.group(1).splitlines():
+              assert line.startswith('          ')
+              lines.append(line[10:])
+          Path('/tmp/materialize.sh').write_text('\n'.join(lines) + '\n')
+          PY
+          bash /tmp/materialize.sh
+
+      - name: Validate dispatch state and transient scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python project_control/validate_control_plane.py
+          python project_control/validate_omp_native.py
+          git diff --check c3fd09b5cbe38205802b079560aff8452c6bbe3b --
+          changed="$(git diff --name-only c3fd09b5cbe38205802b079560aff8452c6bbe3b -- | sort)"
+          expected="$(printf '%s\n' \
+            .github/workflows/s08-002-implementation-dispatch-helper-v3.yml \
+            project_control/AUTONOMY_RUN_STATE.yaml \
+            project_control/CURRENT_STATE.md \
+            project_control/EVIDENCE_INDEX.yaml \
+            project_control/TASK_REGISTRY.yaml \
+            project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md | sort)"
+          test "$changed" = "$expected"
+          grep -F 'prompt_review_status: PASS' project_control/TASK_REGISTRY.yaml
+          grep -F 'implementation_started: false' project_control/TASK_REGISTRY.yaml
+          grep -F 'implementation_authorized: true' project_control/TASK_REGISTRY.yaml
+
+      - name: Commit clean implementation-ready state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .github/workflows/s08-002-implementation-dispatch-helper-v3.yml
+          git add project_control .github/workflows/s08-002-implementation-dispatch-helper-v3.yml
+          git diff --cached --check
+          git commit -m 'chore(s08-002): authorize isolated implementation dispatch'
+          final_changed="$(git diff --name-only c3fd09b5cbe38205802b079560aff8452c6bbe3b...HEAD | sort)"
+          final_expected="$(printf '%s\n' \
+            project_control/AUTONOMY_RUN_STATE.yaml \
+            project_control/CURRENT_STATE.md \
+            project_control/EVIDENCE_INDEX.yaml \
+            project_control/TASK_REGISTRY.yaml \
+            project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md | sort)"
+          test "$final_changed" = "$final_expected"
+          git push origin HEAD:automation/s08-002-implementation-dispatch-helper-v3
