@@ -1,0 +1,641 @@
+name: S08-002 OTP Boundaries Helper
+
+on:
+  push:
+    branches:
+      - work/S08-002-otp-boundaries-v1
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Materialize OTP request and verify boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p src/app/auth/candidate/request-otp
+          cat > src/lib/security/rate-limit-http.ts <<'EOF'
+          import "server-only";
+
+          import { NextResponse } from "next/server";
+          import {
+            RATE_LIMITED_CODE,
+            type RateLimitDecision,
+          } from "@/lib/security/rate-limit";
+
+          const NO_STORE_HEADERS = { "Cache-Control": "no-store" } as const;
+
+          export function rateLimitUnavailableResponse() {
+            return NextResponse.json(
+              {
+                success: false,
+                error: {
+                  code: "RATE_LIMIT_UNAVAILABLE",
+                  message: "Request protection is temporarily unavailable",
+                },
+              },
+              { status: 503, headers: NO_STORE_HEADERS },
+            );
+          }
+
+          export function rateLimitResponseIfBlocked(
+            decision: RateLimitDecision,
+          ): NextResponse | null {
+            if (decision.allowed) {
+              return null;
+            }
+
+            if (decision.code !== RATE_LIMITED_CODE) {
+              return rateLimitUnavailableResponse();
+            }
+
+            const retryAfterSeconds = Math.max(
+              1,
+              Math.trunc(decision.retryAfterSeconds),
+            );
+            return NextResponse.json(
+              {
+                success: false,
+                error: {
+                  code: RATE_LIMITED_CODE,
+                  message: "Too many requests. Please retry later.",
+                  retryAfterSeconds,
+                },
+              },
+              {
+                status: 429,
+                headers: {
+                  ...NO_STORE_HEADERS,
+                  "Retry-After": String(retryAfterSeconds),
+                },
+              },
+            );
+          }
+          EOF
+
+          cat > src/app/auth/candidate/request-otp/route.ts <<'EOF'
+          import type { SupabaseClient } from "@supabase/supabase-js";
+          import { type NextRequest, NextResponse } from "next/server";
+          import {
+            consumeRateLimit as consumeDurableRateLimit,
+            type RateLimitContext,
+            type RateLimitDecision,
+          } from "@/lib/security/rate-limit";
+          import {
+            rateLimitResponseIfBlocked,
+            rateLimitUnavailableResponse,
+          } from "@/lib/security/rate-limit-http";
+          import { validateSameOrigin } from "@/lib/security/origin";
+          import { resolveTrustedClientIpFromHeaders } from "@/lib/security/trusted-client-ip";
+          import { createServerClient } from "@/lib/supabase/server";
+          import type { RateLimitPolicyCode } from "@/lib/security/rate-limit-policy";
+
+          export const dynamic = "force-dynamic";
+
+          type RateLimitConsumer = (
+            policyCode: RateLimitPolicyCode,
+            context: RateLimitContext,
+          ) => Promise<RateLimitDecision>;
+
+          export type CandidateOtpRequestRateLimitDeps = {
+            resolveTrustedIp?: (request: NextRequest) => string | null;
+            consumeRateLimit?: RateLimitConsumer;
+          };
+
+          function validationError(message: string) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: { code: "VALIDATION_ERROR", message },
+              },
+              { status: 400, headers: { "Cache-Control": "no-store" } },
+            );
+          }
+
+          export async function POST(
+            request: NextRequest,
+            _context?: unknown,
+            clientOverride?: SupabaseClient,
+            deps: CandidateOtpRequestRateLimitDeps = {},
+          ) {
+            if (!validateSameOrigin(request)) {
+              return NextResponse.json(
+                {
+                  success: false,
+                  error: {
+                    code: "FORBIDDEN",
+                    message: "Cross-origin request rejected",
+                  },
+                },
+                { status: 403, headers: { "Cache-Control": "no-store" } },
+              );
+            }
+
+            let body: { email?: unknown };
+            try {
+              body = await request.json();
+            } catch {
+              return validationError("Invalid JSON request body");
+            }
+
+            const rawEmail = body?.email;
+            if (typeof rawEmail !== "string") {
+              return validationError("Email is required");
+            }
+            const email = rawEmail.trim().toLowerCase();
+            if (
+              !email ||
+              email.length > 320 ||
+              !/^[^\s@]+@[^\s@]+$/.test(email)
+            ) {
+              return validationError("A valid email is required");
+            }
+
+            const resolveTrustedIp =
+              deps.resolveTrustedIp ??
+              ((req: NextRequest) =>
+                resolveTrustedClientIpFromHeaders(req.headers));
+            const trustedIp = resolveTrustedIp(request);
+            if (!trustedIp) {
+              return rateLimitUnavailableResponse();
+            }
+
+            const consumeRateLimit =
+              deps.consumeRateLimit ?? consumeDurableRateLimit;
+            const decision = await consumeRateLimit("CANDIDATE_OTP_REQUEST", {
+              email,
+              trustedIp,
+            });
+            const blocked = rateLimitResponseIfBlocked(decision);
+            if (blocked) {
+              return blocked;
+            }
+
+            const supabase = clientOverride ?? (await createServerClient());
+            const { error } = await supabase.auth.signInWithOtp({
+              email,
+              options: { shouldCreateUser: true },
+            });
+            if (error) {
+              return NextResponse.json(
+                {
+                  success: false,
+                  error: {
+                    code: "OTP_REQUEST_FAILED",
+                    message: "Unable to send OTP code",
+                  },
+                },
+                { status: 400, headers: { "Cache-Control": "no-store" } },
+              );
+            }
+
+            return NextResponse.json(
+              { success: true },
+              { status: 200, headers: { "Cache-Control": "no-store" } },
+            );
+          }
+          EOF
+
+          cat > src/app/auth/candidate/verify/route.ts <<'EOF'
+          import type { SupabaseClient } from "@supabase/supabase-js";
+          import { type NextRequest, NextResponse } from "next/server";
+          import { provisionCandidateIdentity } from "@/lib/auth/candidate";
+          import {
+            consumeRateLimit as consumeDurableRateLimit,
+            type RateLimitContext,
+            type RateLimitDecision,
+          } from "@/lib/security/rate-limit";
+          import {
+            rateLimitResponseIfBlocked,
+            rateLimitUnavailableResponse,
+          } from "@/lib/security/rate-limit-http";
+          import { validateSameOrigin } from "@/lib/security/origin";
+          import { resolveTrustedClientIpFromHeaders } from "@/lib/security/trusted-client-ip";
+          import type { RateLimitPolicyCode } from "@/lib/security/rate-limit-policy";
+          import { createServerClient } from "@/lib/supabase/server";
+
+          export const dynamic = "force-dynamic";
+
+          type RateLimitConsumer = (
+            policyCode: RateLimitPolicyCode,
+            context: RateLimitContext,
+          ) => Promise<RateLimitDecision>;
+
+          export type CandidateVerifyRateLimitDeps = {
+            resolveTrustedIp?: (request: NextRequest) => string | null;
+            consumeRateLimit?: RateLimitConsumer;
+          };
+
+          function validationError(message: string) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: { code: "VALIDATION_ERROR", message },
+              },
+              { status: 400, headers: { "Cache-Control": "no-store" } },
+            );
+          }
+
+          export async function POST(
+            request: NextRequest,
+            _context?: unknown,
+            clientOverride?: SupabaseClient,
+            deps: CandidateVerifyRateLimitDeps = {},
+          ) {
+            if (!validateSameOrigin(request)) {
+              return NextResponse.json(
+                {
+                  success: false,
+                  error: {
+                    code: "FORBIDDEN",
+                    message: "Cross-origin request rejected",
+                  },
+                },
+                { status: 403, headers: { "Cache-Control": "no-store" } },
+              );
+            }
+
+            let body: { email?: unknown; token?: unknown };
+            try {
+              body = await request.json();
+            } catch {
+              return validationError("Invalid JSON request body");
+            }
+
+            const rawEmail = body?.email;
+            const rawToken = body?.token;
+            if (typeof rawEmail !== "string" || typeof rawToken !== "string") {
+              return validationError("Email and OTP token are required");
+            }
+
+            const email = rawEmail.trim().toLowerCase();
+            const token = rawToken.trim();
+            if (!email || !token || email.length > 320) {
+              return validationError("Email and OTP token are required");
+            }
+
+            const resolveTrustedIp =
+              deps.resolveTrustedIp ??
+              ((req: NextRequest) =>
+                resolveTrustedClientIpFromHeaders(req.headers));
+            const trustedIp = resolveTrustedIp(request);
+            if (!trustedIp) {
+              return rateLimitUnavailableResponse();
+            }
+
+            const consumeRateLimit =
+              deps.consumeRateLimit ?? consumeDurableRateLimit;
+            const decision = await consumeRateLimit("CANDIDATE_OTP_VERIFY", {
+              identity: email,
+              trustedIp,
+            });
+            const blocked = rateLimitResponseIfBlocked(decision);
+            if (blocked) {
+              return blocked;
+            }
+
+            const supabase = clientOverride ?? (await createServerClient());
+            const { error: otpError } = await supabase.auth.verifyOtp({
+              email,
+              token,
+              type: "email",
+            });
+            if (otpError) {
+              return NextResponse.json(
+                {
+                  success: false,
+                  error: {
+                    code: "UNAUTHENTICATED",
+                    message: "Invalid or expired OTP code",
+                  },
+                },
+                { status: 401, headers: { "Cache-Control": "no-store" } },
+              );
+            }
+
+            const provisionResult = await provisionCandidateIdentity(supabase);
+            return NextResponse.json(provisionResult, {
+              status: provisionResult.success ? 200 : 400,
+              headers: { "Cache-Control": "no-store" },
+            });
+          }
+          EOF
+
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/app/login/page.tsx')
+          text = p.read_text()
+
+          anchor = '''  AUTH_EXCHANGE_FAILED: {\n    titleVi: "Lỗi trao đổi phiên / Auth exchange failed",\n    titleEn: "Auth Exchange Failed",\n    descVi:\n      "Không thể hoàn tất trao đổi phiên xác thực với Google. Vui lòng thử lại sau.",\n    descEn:\n      "Failed to exchange authorization code for session with Google. Please try again later.",\n  },\n'''
+          addition = anchor + '''  RATE_LIMITED: {\n    titleVi: "Thao tác quá thường xuyên / Too many requests",\n    titleEn: "Too Many Requests",\n    descVi:\n      "Bạn đã thực hiện thao tác này quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.",\n    descEn:\n      "Too many requests were made. Please wait before trying again.",\n  },\n  RATE_LIMIT_UNAVAILABLE: {\n    titleVi: "Tạm thời chưa thể xác thực / Temporarily unavailable",\n    titleEn: "Request Protection Unavailable",\n    descVi:\n      "Hệ thống bảo vệ yêu cầu đang tạm thời không khả dụng. Vui lòng thử lại sau.",\n    descEn:\n      "Request protection is temporarily unavailable. Please try again later.",\n  },\n  OTP_REQUEST_FAILED: {\n    titleVi: "Không thể gửi mã OTP / OTP request failed",\n    titleEn: "OTP Request Failed",\n    descVi: "Không thể gửi mã OTP lúc này. Vui lòng thử lại sau.",\n    descEn: "Unable to send an OTP code right now. Please try again later.",\n  },\n'''
+          assert text.count(anchor) == 1
+          text = text.replace(anchor, addition, 1)
+
+          old = '''    try {\n      const client = supabaseClient ?? createBrowserClient();\n      const { error } = await client.auth.signInWithOtp({\n        email: cleanEmail,\n        options: {\n          shouldCreateUser: true,\n        },\n      });\n\n      if (error) {\n        setErrorCode("UNAUTHENTICATED");\n        setErrorMessage(error.message);\n      } else {\n        setIsOtpSent(true);\n        setInfoMessage(\n          `Mã xác thực 6 chữ số đã được gửi đến ${cleanEmail}. Vui lòng kiểm tra hộp thư. / A 6-digit OTP has been sent to ${cleanEmail}. Please check your inbox.`,\n        );\n      }\n    } catch (err: unknown) {\n'''
+          new = '''    try {\n      const response = await fetch("/auth/candidate/request-otp", {\n        method: "POST",\n        headers: {\n          "Content-Type": "application/json",\n        },\n        body: JSON.stringify({ email: cleanEmail }),\n      });\n\n      let result: {\n        success?: boolean;\n        error?: { code?: string; message?: string };\n      } = {};\n      try {\n        result = await response.json();\n      } catch {\n        result = { success: false };\n      }\n\n      if (!response.ok || !result.success) {\n        const errCode =\n          result.error?.code ||\n          (response.status === 429 ? "RATE_LIMITED" : "UNAUTHENTICATED");\n        setErrorCode(errCode);\n        setErrorMessage(result.error?.message || null);\n      } else {\n        setIsOtpSent(true);\n        setInfoMessage(\n          `Mã xác thực 6 chữ số đã được gửi đến ${cleanEmail}. Vui lòng kiểm tra hộp thư. / A 6-digit OTP has been sent to ${cleanEmail}. Please check your inbox.`,\n        );\n      }\n    } catch (err: unknown) {\n'''
+          assert text.count(old) == 1
+          text = text.replace(old, new, 1)
+          p.write_text(text)
+
+          p = Path('src/__tests__/auth-routes.test.ts')
+          text = p.read_text()
+          old_import = 'import { POST as handleCandidateVerify } from "@/app/auth/candidate/verify/route";\n'
+          new_import = '''import {\n  POST as handleCandidateVerify,\n  type CandidateVerifyRateLimitDeps,\n} from "@/app/auth/candidate/verify/route";\n'''
+          assert text.count(old_import) == 1
+          text = text.replace(old_import, new_import, 1)
+          insert_after = '''function createMockClient(options: MockClientOptions = {}) {\n'''
+          idx = text.index(insert_after)
+          # Place deps before the mock client so every valid-OTP test can opt in explicitly.
+          deps = '''const candidateRateLimitDeps: CandidateVerifyRateLimitDeps = {\n  resolveTrustedIp: () => "203.0.113.10",\n  consumeRateLimit: async (policyCode) => ({\n    allowed: true,\n    policyCode,\n    rules: [],\n  }),\n};\n\n'''
+          text = text[:idx] + deps + text[idx:]
+          old_call = 'handleCandidateVerify(request, undefined, client);'
+          assert text.count(old_call) == 3
+          text = text.replace(
+              old_call,
+              'handleCandidateVerify(request, undefined, client, candidateRateLimitDeps);',
+          )
+          p.write_text(text)
+          PY
+
+          cat > src/__tests__/otp-rate-limit-boundaries.test.ts <<'EOF'
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+          import path from "node:path";
+          import test from "node:test";
+          import type { SupabaseClient } from "@supabase/supabase-js";
+          import { NextRequest } from "next/server";
+          import {
+            POST as requestOtp,
+            type CandidateOtpRequestRateLimitDeps,
+          } from "@/app/auth/candidate/request-otp/route";
+          import {
+            POST as verifyOtp,
+            type CandidateVerifyRateLimitDeps,
+          } from "@/app/auth/candidate/verify/route";
+          import type {
+            RateLimitContext,
+            RateLimitDecision,
+          } from "@/lib/security/rate-limit";
+          import type { RateLimitPolicyCode } from "@/lib/security/rate-limit-policy";
+
+          function sameOriginRequest(
+            pathName: string,
+            body: Record<string, unknown>,
+          ) {
+            return new NextRequest(`https://recruitment.example.test${pathName}`, {
+              method: "POST",
+              headers: {
+                host: "recruitment.example.test",
+                origin: "https://recruitment.example.test",
+                "content-type": "application/json",
+              },
+              body: JSON.stringify(body),
+            });
+          }
+
+          test("OTP request is same-origin server mediated and blocks before provider call", async () => {
+            let providerCalls = 0;
+            let capturedPolicy: RateLimitPolicyCode | undefined;
+            let capturedContext: RateLimitContext | undefined;
+            const client = {
+              auth: {
+                signInWithOtp: async () => {
+                  providerCalls += 1;
+                  return { error: null };
+                },
+              },
+            } as unknown as SupabaseClient;
+            const deps: CandidateOtpRequestRateLimitDeps = {
+              resolveTrustedIp: () => "203.0.113.20",
+              consumeRateLimit: async (policyCode, context) => {
+                capturedPolicy = policyCode;
+                capturedContext = context;
+                return {
+                  allowed: false,
+                  code: "RATE_LIMITED",
+                  policyCode,
+                  retryAfterSeconds: 37,
+                  blockedRules: [],
+                };
+              },
+            };
+
+            const response = await requestOtp(
+              sameOriginRequest("/auth/candidate/request-otp", {
+                email: " Candidate@Example.Test ",
+              }),
+              undefined,
+              client,
+              deps,
+            );
+
+            assert.equal(response.status, 429);
+            assert.equal(response.headers.get("Retry-After"), "37");
+            assert.equal(providerCalls, 0);
+            assert.equal(capturedPolicy, "CANDIDATE_OTP_REQUEST");
+            assert.deepEqual(capturedContext, {
+              email: "candidate@example.test",
+              trustedIp: "203.0.113.20",
+            });
+            const body = await response.json();
+            assert.equal(body.error.code, "RATE_LIMITED");
+          });
+
+          test("OTP request fails closed when trusted client IP is unavailable", async () => {
+            let providerCalls = 0;
+            const client = {
+              auth: {
+                signInWithOtp: async () => {
+                  providerCalls += 1;
+                  return { error: null };
+                },
+              },
+            } as unknown as SupabaseClient;
+
+            const response = await requestOtp(
+              sameOriginRequest("/auth/candidate/request-otp", {
+                email: "candidate@example.test",
+              }),
+              undefined,
+              client,
+              { resolveTrustedIp: () => null },
+            );
+
+            assert.equal(response.status, 503);
+            assert.equal(providerCalls, 0);
+            const body = await response.json();
+            assert.equal(body.error.code, "RATE_LIMIT_UNAVAILABLE");
+          });
+
+          test("allowed OTP request invokes provider only after limiter success", async () => {
+            let providerEmail: string | undefined;
+            const client = {
+              auth: {
+                signInWithOtp: async (params: { email: string }) => {
+                  providerEmail = params.email;
+                  return { error: null };
+                },
+              },
+            } as unknown as SupabaseClient;
+            const deps: CandidateOtpRequestRateLimitDeps = {
+              resolveTrustedIp: () => "203.0.113.21",
+              consumeRateLimit: async (policyCode) => ({
+                allowed: true,
+                policyCode,
+                rules: [],
+              }),
+            };
+
+            const response = await requestOtp(
+              sameOriginRequest("/auth/candidate/request-otp", {
+                email: " Candidate@Example.Test ",
+              }),
+              undefined,
+              client,
+              deps,
+            );
+
+            assert.equal(response.status, 200);
+            assert.equal(providerEmail, "candidate@example.test");
+          });
+
+          test("OTP verify blocks before provider and never uses token as limiter context", async () => {
+            let verifyCalls = 0;
+            let capturedContext: RateLimitContext | undefined;
+            const client = {
+              auth: {
+                verifyOtp: async () => {
+                  verifyCalls += 1;
+                  return { error: null };
+                },
+              },
+            } as unknown as SupabaseClient;
+            const deps: CandidateVerifyRateLimitDeps = {
+              resolveTrustedIp: () => "203.0.113.22",
+              consumeRateLimit: async (policyCode, context) => {
+                capturedContext = context;
+                const decision: RateLimitDecision = {
+                  allowed: false,
+                  code: "RATE_LIMITED",
+                  policyCode,
+                  retryAfterSeconds: 11,
+                  blockedRules: [],
+                };
+                return decision;
+              },
+            };
+
+            const response = await verifyOtp(
+              sameOriginRequest("/auth/candidate/verify", {
+                email: "candidate@example.test",
+                token: "654321",
+              }),
+              undefined,
+              client,
+              deps,
+            );
+
+            assert.equal(response.status, 429);
+            assert.equal(response.headers.get("Retry-After"), "11");
+            assert.equal(verifyCalls, 0);
+            assert.deepEqual(capturedContext, {
+              identity: "candidate@example.test",
+              trustedIp: "203.0.113.22",
+            });
+            assert.equal(JSON.stringify(capturedContext).includes("654321"), false);
+          });
+
+          test("OTP request rejects cross-origin traffic before limiter/provider", async () => {
+            let limiterCalls = 0;
+            const request = new NextRequest(
+              "https://recruitment.example.test/auth/candidate/request-otp",
+              {
+                method: "POST",
+                headers: {
+                  host: "recruitment.example.test",
+                  origin: "https://attacker.example.test",
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify({ email: "candidate@example.test" }),
+              },
+            );
+            const response = await requestOtp(request, undefined, undefined, {
+              resolveTrustedIp: () => "203.0.113.23",
+              consumeRateLimit: async (policyCode) => {
+                limiterCalls += 1;
+                return { allowed: true, policyCode, rules: [] };
+              },
+            });
+            assert.equal(response.status, 403);
+            assert.equal(limiterCalls, 0);
+          });
+
+          test("login client no longer invokes Supabase signInWithOtp directly", () => {
+            const source = fs.readFileSync(
+              path.join(process.cwd(), "src/app/login/page.tsx"),
+              "utf8",
+            );
+            assert.doesNotMatch(source, /signInWithOtp/);
+            assert.match(source, /\/auth\/candidate\/request-otp/);
+          });
+          EOF
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          if [ "$(npm --version)" != "11.19.0" ]; then npm install --global npm@11.19.0; fi
+          npm ci
+
+      - name: Focused OTP boundary tests
+        run: |
+          node --conditions react-server --test --import tsx \
+            src/__tests__/rate-limit-foundation.test.ts \
+            src/__tests__/auth-routes.test.ts \
+            src/__tests__/otp-rate-limit-boundaries.test.ts \
+            src/__tests__/login-ui.test.ts
+
+      - name: Focused lint and typecheck
+        run: |
+          npx biome check \
+            src/lib/security/rate-limit-http.ts \
+            src/app/auth/candidate/request-otp/route.ts \
+            src/app/auth/candidate/verify/route.ts \
+            src/app/login/page.tsx \
+            src/__tests__/auth-routes.test.ts \
+            src/__tests__/otp-rate-limit-boundaries.test.ts
+          npm run typecheck
+
+      - name: Commit clean validated OTP tranche
+        shell: bash
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .github/workflows/s08-002-otp-boundaries-helper.yml
+          git add web .github/workflows/s08-002-otp-boundaries-helper.yml
+          git diff --cached --check
+          git commit -m 'feat(s08-002): enforce OTP rate-limit boundaries'
+          changed="$(git diff --name-only 38b249dc47926ba6a6397ba23a0bc3c754e40607...HEAD | sort)"
+          expected="$(printf '%s\n' \
+            web/src/__tests__/auth-routes.test.ts \
+            web/src/__tests__/otp-rate-limit-boundaries.test.ts \
+            web/src/app/auth/candidate/request-otp/route.ts \
+            web/src/app/auth/candidate/verify/route.ts \
+            web/src/app/login/page.tsx \
+            web/src/lib/security/rate-limit-http.ts | sort)"
+          test "$changed" = "$expected"
+          git push origin HEAD:work/S08-002-otp-boundaries-v1
