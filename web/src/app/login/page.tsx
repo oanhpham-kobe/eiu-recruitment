@@ -79,6 +79,27 @@ export const CANONICAL_AUTH_ERRORS: Record<string, AuthErrorContent> = {
     descEn:
       "Failed to exchange authorization code for session with Google. Please try again later.",
   },
+  RATE_LIMITED: {
+    titleVi: "Thao tác quá thường xuyên / Too many requests",
+    titleEn: "Too Many Requests",
+    descVi:
+      "Bạn đã thực hiện thao tác này quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.",
+    descEn: "Too many requests were made. Please wait before trying again.",
+  },
+  RATE_LIMIT_UNAVAILABLE: {
+    titleVi: "Tạm thời chưa thể xác thực / Temporarily unavailable",
+    titleEn: "Request Protection Unavailable",
+    descVi:
+      "Hệ thống bảo vệ yêu cầu đang tạm thời không khả dụng. Vui lòng thử lại sau.",
+    descEn:
+      "Request protection is temporarily unavailable. Please try again later.",
+  },
+  OTP_REQUEST_FAILED: {
+    titleVi: "Không thể gửi mã OTP / OTP request failed",
+    titleEn: "OTP Request Failed",
+    descVi: "Không thể gửi mã OTP lúc này. Vui lòng thử lại sau.",
+    descEn: "Unable to send an OTP code right now. Please try again later.",
+  },
 };
 
 export function resolveAuthError(
@@ -192,17 +213,30 @@ export function LoginContent({
     setInfoMessage(null);
 
     try {
-      const client = supabaseClient ?? createBrowserClient();
-      const { error } = await client.auth.signInWithOtp({
-        email: cleanEmail,
-        options: {
-          shouldCreateUser: true,
+      const response = await fetch("/auth/candidate/request-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ email: cleanEmail }),
       });
 
-      if (error) {
-        setErrorCode("UNAUTHENTICATED");
-        setErrorMessage(error.message);
+      let result: {
+        success?: boolean;
+        error?: { code?: string; message?: string };
+      } = {};
+      try {
+        result = await response.json();
+      } catch {
+        result = { success: false };
+      }
+
+      if (!response.ok || !result.success) {
+        const errCode =
+          result.error?.code ||
+          (response.status === 429 ? "RATE_LIMITED" : "UNAUTHENTICATED");
+        setErrorCode(errCode);
+        setErrorMessage(result.error?.message || null);
       } else {
         setIsOtpSent(true);
         setInfoMessage(
