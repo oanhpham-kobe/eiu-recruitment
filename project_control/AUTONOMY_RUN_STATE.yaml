@@ -770,7 +770,7 @@ slice_07_planning:
     annotated_tag_object: "2e127b3dcd8e765f73366a8165dee26112788e33"
 
 slice_08_planning:
-  status: S08_002_IMPLEMENTATION_AUTHORIZED_READY
+  status: S08_002_IMPLEMENTATION_IN_PROGRESS
   lifecycle: ACTIVE
   selected_task: TASK-S08-002
   predecessor_task: TASK-S08-001
@@ -801,7 +801,9 @@ slice_08_planning:
   prompt_review_reviewed_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
   prompt_review_artifact: project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md
   prompt_review_evidence_commit: "a8bffe71ddca48093759f2903d19ee8c1a18202d"
-  implementation_started: false
+  implementation_started: true
+  implementation_foundation_sha: "a6be3552743801db7aa46e45b29917d81e315a6b"
+  implementation_foundation_validation_run: "36035922103"
   implementation_authorized: true
   implementation_authorization_basis: "Explicit Owner dispatch ('tiếp tục') after independent prompt/source PASS."
   implementation_baseline_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
@@ -823,4 +825,4 @@ stop_gate:
   source_reopen_required: false
   resume_on: "Producer may begin TASK-S08-002 implementation from exact governed baseline c3fd09b5cbe38205802b079560aff8452c6bbe3b on chatgpt/TASK-S08-002-durable-rate-limiting. Independent OMP implementation review remains mandatory before integration."
 
-next_action: "SAFE CHECKPOINT: begin TASK-S08-002 implementation on chatgpt/TASK-S08-002-durable-rate-limiting from governed baseline c3fd09b5cbe38205802b079560aff8452c6bbe3b; preserve all deployment/main/hosted-Supabase boundaries and stop at an independently reviewable candidate SHA."
+next_action: "Continue TASK-S08-002 implementation from validated foundation a6be3552743801db7aa46e45b29917d81e315a6b on the isolated task branch; preserve deployment/main/hosted-Supabase boundaries and stop at an independently reviewable full-task candidate SHA."

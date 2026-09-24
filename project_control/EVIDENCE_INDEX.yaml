@@ -8,8 +8,8 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: S08_002_IMPLEMENTATION_AUTHORIZED_READY
-  note: "TASK-S08-002 prompt/source review PASS is persisted and explicit Owner implementation dispatch has been received. Implementation is authorized but has not started; execution is isolated to the task branch."
+  status: S08_002_IMPLEMENTATION_IN_PROGRESS
+  note: "TASK-S08-002 implementation is in progress on the isolated task branch. Foundation a6be3552743801db7aa46e45b29917d81e315a6b passed focused Web/DB verification in GitHub Actions run 36035922103; independent full-task implementation review remains pending."
 
   S08-002-SOURCE-GATE-001:
     task: TASK-S08-002
@@ -36,7 +36,9 @@ implementation_evidence:
     prompt_review_reviewed_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
     prompt_review_artifact: project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md
     prompt_review_evidence_commit: "a8bffe71ddca48093759f2903d19ee8c1a18202d"
-    implementation_started: false
+    implementation_started: true
+    implementation_foundation_sha: "a6be3552743801db7aa46e45b29917d81e315a6b"
+    implementation_foundation_validation_run: "36035922103"
     implementation_authorized: true
     implementation_baseline_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
     implementation_branch: chatgpt/TASK-S08-002-durable-rate-limiting
