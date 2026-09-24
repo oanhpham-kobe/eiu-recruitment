@@ -57,7 +57,7 @@ integration:
   prior_incomplete_acceptance_ci: "35878089069 @ 1d68f9fea0116b0c279a053a06b4befa49fac1fc failed only on CI fixture ordering before Inbox assertions; repaired by independently reviewed R8 ordering-only workflow delta. Earlier 35517082611 @ 46b5a1f0516f1701195143636a019ff5af92d08e exposed SQLSTATE 42P10 and was repaired before final candidate."
   last_task_acceptance_governance_ci_run: "35882761149"
   last_task_acceptance_governance_ci_result: PASS
-  current_prompt_review_target_sha: "141146d52a05b0d698178ba7ef097690d5ef2a27"
+  current_prompt_review_target_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
 
 
 authorization:
@@ -770,7 +770,7 @@ slice_07_planning:
     annotated_tag_object: "2e127b3dcd8e765f73366a8165dee26112788e33"
 
 slice_08_planning:
-  status: S08_002_MATERIALIZED_AWAITING_INDEPENDENT_PROMPT_REVIEW
+  status: S08_002_IMPLEMENTATION_AUTHORIZED_READY
   lifecycle: ACTIVE
   selected_task: TASK-S08-002
   predecessor_task: TASK-S08-001
@@ -793,26 +793,34 @@ slice_08_planning:
   prompt: project_control/prompts/SLICE-08_TASK-002_v1.md
   prompt_version: v1
   governed_pre_task_checkpoint: checkpoint/pre-S08-002-001
-  governed_pre_task_checkpoint_status: PENDING_CREATION_AFTER_MATERIALIZATION_VALIDATION
-  prompt_review_status: PENDING
+  governed_pre_task_checkpoint_status: VERIFIED
+  governed_pre_task_checkpoint_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+  governed_pre_task_checkpoint_tag_object: "f5d9b5b2d5e3ef86514d23bb76f8ccc76b9ef003"
+  prompt_review_status: PASS
   prompt_review_work_id: S08-002-PROMPT-REVIEW-001
+  prompt_review_reviewed_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+  prompt_review_artifact: project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md
+  prompt_review_evidence_commit: "a8bffe71ddca48093759f2903d19ee8c1a18202d"
   implementation_started: false
-  implementation_authorized: false
+  implementation_authorized: true
+  implementation_authorization_basis: "Explicit Owner dispatch ('tiếp tục') after independent prompt/source PASS."
+  implementation_baseline_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+  implementation_branch: chatgpt/TASK-S08-002-durable-rate-limiting
   producer_role: EXTERNAL_CHATGPT
   independent_prompt_reviewer: OMP_EIU_REVIEWER
   materialized_next_task_count: 2
 
 safe_frontier:
-  eligible_tasks: []
-  skipped_due_to_dependency:
-    - "TASK-S08-002 is materialized but implementation is held pending exact-SHA independent prompt/source review and later explicit Owner implementation dispatch."
+  eligible_tasks:
+    - TASK-S08-002
+  skipped_due_to_dependency: []
   materialization_frontier: []
-  execution_hold: "PROMPT REVIEW HARD STOP for TASK-S08-002. Do not start implementation, mutate main, deploy Vercel, or mutate connected/hosted Supabase."
+  execution_hold: null
 
 stop_gate:
-  status: ACTIVE
-  type: S08_002_INDEPENDENT_PROMPT_REVIEW_GATE
+  status: RELEASED_TO_IMPLEMENTATION
+  type: S08_002_IMPLEMENTATION_DISPATCH_GATE
   source_reopen_required: false
-  resume_on: "Independent OMP prompt/source review of checkpoint/pre-S08-002-001 returns PASS with SOURCE_REOPEN_REQUIRED=false, followed by Owner-transported persistence. Implementation still requires a separate explicit Owner dispatch."
+  resume_on: "Producer may begin TASK-S08-002 implementation from exact governed baseline c3fd09b5cbe38205802b079560aff8452c6bbe3b on chatgpt/TASK-S08-002-durable-rate-limiting. Independent OMP implementation review remains mandatory before integration."
 
-next_action: "SAFE CHECKPOINT: create and verify immutable checkpoint/pre-S08-002-001 after this materialization validates, then stop for independent OMP prompt/source review. Implementation remains unauthorized."
+next_action: "SAFE CHECKPOINT: begin TASK-S08-002 implementation on chatgpt/TASK-S08-002-durable-rate-limiting from governed baseline c3fd09b5cbe38205802b079560aff8452c6bbe3b; preserve all deployment/main/hosted-Supabase boundaries and stop at an independently reviewable candidate SHA."

@@ -1656,11 +1656,21 @@ tasks:
     prompt: project_control/prompts/SLICE-08_TASK-002_v1.md
     prompt_version: v1
     governed_pre_task_checkpoint: checkpoint/pre-S08-002-001
-    governed_pre_task_checkpoint_status: PENDING_CREATION_AFTER_MATERIALIZATION_VALIDATION
-    prompt_review_status: PENDING
+    governed_pre_task_checkpoint_status: VERIFIED
+    governed_pre_task_checkpoint_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+    governed_pre_task_checkpoint_tag_object: "f5d9b5b2d5e3ef86514d23bb76f8ccc76b9ef003"
+    prompt_review_status: PASS
     prompt_review_work_id: S08-002-PROMPT-REVIEW-001
+    prompt_review_reviewed_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+    prompt_review_artifact: project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md
+    prompt_review_evidence_commit: "a8bffe71ddca48093759f2903d19ee8c1a18202d"
+    prompt_review_implementation_authorized: false
     implementation_started: false
-    implementation_authorized: false
+    implementation_authorized: true
+    implementation_authorization_basis: "Explicit Owner dispatch ('tiếp tục') after independent prompt/source PASS; implementation may begin only on the isolated task branch under existing boundaries."
+    implementation_baseline_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+    implementation_branch: chatgpt/TASK-S08-002-durable-rate-limiting
+    producer: EXTERNAL_CHATGPT
     implementation_review_mode: OMP_EIU_REVIEWER
     acceptance:
       - "Canonical initial rate-limit matrix is enforced with durable shared multi-instance state and atomic concurrency-safe consumption."

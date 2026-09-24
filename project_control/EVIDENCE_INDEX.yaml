@@ -8,8 +8,8 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
-  status: S08_002_MATERIALIZED_AWAITING_INDEPENDENT_PROMPT_REVIEW
-  note: "TASK-S08-002 is now materialized for prompt review only after independent source-reconciliation PASS. Implementation remains unauthorized; checkpoint/pre-S08-002-001 must be created and independently reviewed before any implementation dispatch."
+  status: S08_002_IMPLEMENTATION_AUTHORIZED_READY
+  note: "TASK-S08-002 prompt/source review PASS is persisted and explicit Owner implementation dispatch has been received. Implementation is authorized but has not started; execution is isolated to the task branch."
 
   S08-002-SOURCE-GATE-001:
     task: TASK-S08-002
@@ -28,10 +28,18 @@ implementation_evidence:
     prompt: project_control/prompts/SLICE-08_TASK-002_v1.md
     prompt_version: v1
     governed_pre_task_checkpoint: checkpoint/pre-S08-002-001
-    governed_pre_task_checkpoint_status: PENDING_CREATION_AFTER_MATERIALIZATION_VALIDATION
-    prompt_review_status: PENDING
+    governed_pre_task_checkpoint_status: VERIFIED
+    governed_pre_task_checkpoint_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+    governed_pre_task_checkpoint_tag_object: "f5d9b5b2d5e3ef86514d23bb76f8ccc76b9ef003"
+    prompt_review_status: PASS
+    prompt_review_work_id: S08-002-PROMPT-REVIEW-001
+    prompt_review_reviewed_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+    prompt_review_artifact: project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md
+    prompt_review_evidence_commit: "a8bffe71ddca48093759f2903d19ee8c1a18202d"
     implementation_started: false
-    implementation_authorized: false
+    implementation_authorized: true
+    implementation_baseline_sha: "c3fd09b5cbe38205802b079560aff8452c6bbe3b"
+    implementation_branch: chatgpt/TASK-S08-002-durable-rate-limiting
     bounded_scope: "Durable shared rate limiting for canonical OTP, Candidate mutation, reachable upload, internal search and email-enqueue boundaries; PDF policy reusable/deferred until a real PDF endpoint exists."
 
   S08-001-SOURCE-GATE-001:

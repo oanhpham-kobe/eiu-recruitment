@@ -70,16 +70,17 @@
 - Independent source review `S08-002-SOURCE-REVIEW-001` by `OMP_EIU_REVIEWER`: PASS on exact `a99375932e95805a8b52a6a159eb94a755c88986`; task materialization authorized; implementation not authorized.
 - Durable Owner-transported review evidence: `project_control/reviews/S08_002_SOURCE_REVIEW_a993759_v1.md` at `25612895c41b7164961c06d6613f8c61cf9660de`.
 - Governed prompt draft: `project_control/prompts/SLICE-08_TASK-002_v1.md`.
-- Intended immutable pre-task checkpoint: `checkpoint/pre-S08-002-001`; create only after materialization validators/diff pass.
-- Prompt review status: PENDING. Implementation started: false. Implementation authorized: false.
+- Immutable pre-task checkpoint: `checkpoint/pre-S08-002-001` -> `c3fd09b5cbe38205802b079560aff8452c6bbe3b`; annotated tag object `f5d9b5b2d5e3ef86514d23bb76f8ccc76b9ef003`.
+- Independent prompt/source review `S08-002-PROMPT-REVIEW-001`: PASS on exact `c3fd09b5cbe38205802b079560aff8452c6bbe3b`, source reopen false, findings NONE. Evidence persisted at `project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md` (`a8bffe71ddca48093759f2903d19ee8c1a18202d`).
+- Explicit Owner implementation dispatch received after PASS. Implementation authorized: true. Implementation started: false.
+- Isolated implementation branch: `chatgpt/TASK-S08-002-durable-rate-limiting` from exact governed baseline `c3fd09b5cbe38205802b079560aff8452c6bbe3b`.
 
 ## Slice-08 frontier
 
 - Slice-08 remains `IN_PROGRESS`; current governed task is `TASK-S08-002`.
-- Safe frontier for implementation is empty while the independent prompt/source review gate is active.
-- Next allowed action is creation/verification of `checkpoint/pre-S08-002-001`, followed by independent OMP prompt review of that exact SHA.
-- A prompt-review PASS does not itself authorize implementation; explicit Owner implementation dispatch remains required.
+- TASK-S08-002 is implementation-ready on its isolated branch; no product write has started yet.
+- Next allowed action is producer implementation from the exact governed baseline, followed by producer self-audit and independent OMP implementation review before any integration serialization.
 
 ## Scope boundary
 
-TASK-S08-001 remains immutable and accepted at `checkpoint/S08-001-accepted-001`. TASK-S08-002 is materialized for prompt review only. Do not mutate `main`, deploy Vercel, mutate connected/hosted Supabase, use production secrets, move accepted checkpoints, or begin S08-002 implementation from this materialization transition.
+TASK-S08-001 remains immutable and accepted at `checkpoint/S08-001-accepted-001`. TASK-S08-002 implementation is authorized only on its isolated task branch. Do not mutate `main`, deploy Vercel, mutate connected/hosted Supabase, use production secrets, move accepted checkpoints, or bypass independent implementation review.
