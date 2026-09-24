@@ -76,26 +76,27 @@ jobs:
           p.write_text(text)
           PY
 
-      - name: Validate dispatch state and scope
+      - name: Validate dispatch state and transient scope
         shell: bash
         run: |
           set -euo pipefail
           python project_control/validate_control_plane.py
           python project_control/validate_omp_native.py
+          git diff --check c3fd09b5cbe38205802b079560aff8452c6bbe3b --
           changed="$(git diff --name-only c3fd09b5cbe38205802b079560aff8452c6bbe3b -- | sort)"
           expected="$(printf '%s\n' \
+            .github/workflows/s08-002-implementation-dispatch-helper-v2.yml \
             project_control/AUTONOMY_RUN_STATE.yaml \
             project_control/CURRENT_STATE.md \
             project_control/EVIDENCE_INDEX.yaml \
             project_control/TASK_REGISTRY.yaml \
             project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md | sort)"
           test "$changed" = "$expected"
-          git diff --check c3fd09b5cbe38205802b079560aff8452c6bbe3b --
           grep -F 'prompt_review_status: PASS' project_control/TASK_REGISTRY.yaml
           grep -F 'implementation_started: false' project_control/TASK_REGISTRY.yaml
           grep -F 'implementation_authorized: true' project_control/TASK_REGISTRY.yaml
 
-      - name: Commit final helper tree
+      - name: Commit clean implementation-ready state
         shell: bash
         run: |
           set -euo pipefail
@@ -105,4 +106,12 @@ jobs:
           git add project_control .github/workflows/s08-002-implementation-dispatch-helper-v2.yml
           git diff --cached --check
           git commit -m 'chore(s08-002): authorize isolated implementation dispatch'
+          final_changed="$(git diff --name-only c3fd09b5cbe38205802b079560aff8452c6bbe3b...HEAD | sort)"
+          final_expected="$(printf '%s\n' \
+            project_control/AUTONOMY_RUN_STATE.yaml \
+            project_control/CURRENT_STATE.md \
+            project_control/EVIDENCE_INDEX.yaml \
+            project_control/TASK_REGISTRY.yaml \
+            project_control/reviews/S08_002_PROMPT_REVIEW_c3fd09b_v1.md | sort)"
+          test "$final_changed" = "$final_expected"
           git push origin HEAD:automation/s08-002-implementation-dispatch-helper-v2
