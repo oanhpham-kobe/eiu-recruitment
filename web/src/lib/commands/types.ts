@@ -37,6 +37,8 @@ export enum CommandErrorCode {
   HISTORICAL_SUBMISSION_READ_ONLY = "HISTORICAL_SUBMISSION_READ_ONLY",
   ALREADY_EXISTS_INACTIVE = "ALREADY_EXISTS_INACTIVE",
   INVALID_HIERARCHY = "INVALID_HIERARCHY",
+  RATE_LIMITED = "RATE_LIMITED",
+  RATE_LIMIT_UNAVAILABLE = "RATE_LIMIT_UNAVAILABLE",
   INTERNAL_ERROR = "INTERNAL_ERROR",
 }
 
@@ -64,6 +66,7 @@ export type CommandResult<T> =
 
 export type VerifiedActor = {
   authUserId: string;
+  candidateId?: string | null;
   email: string;
   isActive: boolean;
   roles: string[];
