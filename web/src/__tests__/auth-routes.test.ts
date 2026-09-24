@@ -3,7 +3,10 @@ import test from "node:test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest } from "next/server";
 import { GET as handleCallback } from "@/app/auth/callback/route";
-import { POST as handleCandidateVerify } from "@/app/auth/candidate/verify/route";
+import {
+  type CandidateVerifyRateLimitDeps,
+  POST as handleCandidateVerify,
+} from "@/app/auth/candidate/verify/route";
 import { POST as handleSignout } from "@/app/auth/signout/route";
 import { getServerSession } from "@/lib/auth/session";
 
@@ -27,6 +30,15 @@ interface MockClientOptions {
   ) => Promise<{ data: unknown; error: { message: string } | null }>;
   tableData?: Record<string, { data: unknown; error: unknown }>;
 }
+
+const candidateRateLimitDeps: CandidateVerifyRateLimitDeps = {
+  resolveTrustedIp: () => "203.0.113.10",
+  consumeRateLimit: async (policyCode) => ({
+    allowed: true,
+    policyCode,
+    rules: [],
+  }),
+};
 
 function createMockClient(options: MockClientOptions = {}) {
   let signOutCalled = false;
@@ -345,7 +357,12 @@ test("candidate verify: returns 401 UNAUTHENTICATED on invalid OTP", async () =>
       }),
     },
   );
-  const response = await handleCandidateVerify(request, undefined, client);
+  const response = await handleCandidateVerify(
+    request,
+    undefined,
+    client,
+    candidateRateLimitDeps,
+  );
   assert.equal(response.status, 401);
   const body = await response.json();
   assert.equal(body.success, false);
@@ -379,7 +396,12 @@ test("candidate verify: maps provisioning failure to 400 with failure payload", 
       }),
     },
   );
-  const response = await handleCandidateVerify(request, undefined, client);
+  const response = await handleCandidateVerify(
+    request,
+    undefined,
+    client,
+    candidateRateLimitDeps,
+  );
   assert.equal(response.status, 400);
   const body = await response.json();
   assert.equal(body.success, false);
@@ -419,7 +441,12 @@ test("candidate verify: succeeds on valid OTP and returns provisioned candidate 
       }),
     },
   );
-  const response = await handleCandidateVerify(request, undefined, client);
+  const response = await handleCandidateVerify(
+    request,
+    undefined,
+    client,
+    candidateRateLimitDeps,
+  );
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.success, true);

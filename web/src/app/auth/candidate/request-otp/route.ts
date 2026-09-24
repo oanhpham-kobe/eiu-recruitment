@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
-import { provisionCandidateIdentity } from "@/lib/auth/candidate";
 import { validateSameOrigin } from "@/lib/security/origin";
 import {
   consumeRateLimit as consumeDurableRateLimit,
@@ -22,7 +21,7 @@ type RateLimitConsumer = (
   context: RateLimitContext,
 ) => Promise<RateLimitDecision>;
 
-export type CandidateVerifyRateLimitDeps = {
+export type CandidateOtpRequestRateLimitDeps = {
   resolveTrustedIp?: (request: NextRequest) => string | null;
   consumeRateLimit?: RateLimitConsumer;
 };
@@ -41,7 +40,7 @@ export async function POST(
   request: NextRequest,
   _context?: unknown,
   clientOverride?: SupabaseClient,
-  deps: CandidateVerifyRateLimitDeps = {},
+  deps: CandidateOtpRequestRateLimitDeps = {},
 ) {
   if (!validateSameOrigin(request)) {
     return NextResponse.json(
@@ -56,7 +55,7 @@ export async function POST(
     );
   }
 
-  let body: { email?: unknown; token?: unknown };
+  let body: { email?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -64,15 +63,12 @@ export async function POST(
   }
 
   const rawEmail = body?.email;
-  const rawToken = body?.token;
-  if (typeof rawEmail !== "string" || typeof rawToken !== "string") {
-    return validationError("Email and OTP token are required");
+  if (typeof rawEmail !== "string") {
+    return validationError("Email is required");
   }
-
   const email = rawEmail.trim().toLowerCase();
-  const token = rawToken.trim();
-  if (!email || !token || email.length > 320) {
-    return validationError("Email and OTP token are required");
+  if (!email || email.length > 320 || !/^[^\s@]+@[^\s@]+$/.test(email)) {
+    return validationError("A valid email is required");
   }
 
   const resolveTrustedIp =
@@ -84,8 +80,8 @@ export async function POST(
   }
 
   const consumeRateLimit = deps.consumeRateLimit ?? consumeDurableRateLimit;
-  const decision = await consumeRateLimit("CANDIDATE_OTP_VERIFY", {
-    identity: email,
+  const decision = await consumeRateLimit("CANDIDATE_OTP_REQUEST", {
+    email,
     trustedIp,
   });
   const blocked = rateLimitResponseIfBlocked(decision);
@@ -94,27 +90,25 @@ export async function POST(
   }
 
   const supabase = clientOverride ?? (await createServerClient());
-  const { error: otpError } = await supabase.auth.verifyOtp({
+  const { error } = await supabase.auth.signInWithOtp({
     email,
-    token,
-    type: "email",
+    options: { shouldCreateUser: true },
   });
-  if (otpError) {
+  if (error) {
     return NextResponse.json(
       {
         success: false,
         error: {
-          code: "UNAUTHENTICATED",
-          message: "Invalid or expired OTP code",
+          code: "OTP_REQUEST_FAILED",
+          message: "Unable to send OTP code",
         },
       },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
     );
   }
 
-  const provisionResult = await provisionCandidateIdentity(supabase);
-  return NextResponse.json(provisionResult, {
-    status: provisionResult.success ? 200 : 400,
-    headers: { "Cache-Control": "no-store" },
-  });
+  return NextResponse.json(
+    { success: true },
+    { status: 200, headers: { "Cache-Control": "no-store" } },
+  );
 }
