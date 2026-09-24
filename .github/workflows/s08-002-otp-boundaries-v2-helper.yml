@@ -1,0 +1,95 @@
+name: S08-002 OTP Boundaries v2 Helper
+
+on:
+  push:
+    branches:
+      - work/S08-002-otp-boundaries-v2
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Reuse exact v1 product materialization
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 7cb07a082e66261953d7bd6fd668298294468a7a:.github/workflows/s08-002-otp-boundaries-helper.yml > /tmp/v1.yml
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('/tmp/v1.yml').read_text()
+          start = "      - name: Materialize OTP request and verify boundaries\n        shell: bash\n        run: |\n"
+          end = "\n      - name: Install dependencies"
+          assert text.count(start) == 1
+          body = text.split(start, 1)[1].split(end, 1)[0]
+          lines = []
+          for line in body.splitlines():
+              assert not line or line.startswith('          ')
+              lines.append(line[10:] if line else '')
+          Path('/tmp/materialize.sh').write_text('\n'.join(lines) + '\n')
+          PY
+          bash /tmp/materialize.sh
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          if [ "$(npm --version)" != "11.19.0" ]; then npm install --global npm@11.19.0; fi
+          test "$(npm --version)" = "11.19.0"
+          npm ci
+
+      - name: Focused OTP boundary tests
+        run: |
+          node --conditions react-server --test --import tsx \
+            src/__tests__/rate-limit-foundation.test.ts \
+            src/__tests__/auth-routes.test.ts \
+            src/__tests__/otp-rate-limit-boundaries.test.ts \
+            src/__tests__/login-ui.test.ts
+
+      - name: Focused lint and typecheck
+        run: |
+          npx biome check \
+            src/lib/security/rate-limit-http.ts \
+            src/app/auth/candidate/request-otp/route.ts \
+            src/app/auth/candidate/verify/route.ts \
+            src/app/login/page.tsx \
+            src/__tests__/auth-routes.test.ts \
+            src/__tests__/otp-rate-limit-boundaries.test.ts
+          npm run typecheck
+
+      - name: Commit clean validated OTP tranche
+        shell: bash
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          rm .github/workflows/s08-002-otp-boundaries-v2-helper.yml
+          git add web .github/workflows/s08-002-otp-boundaries-v2-helper.yml
+          git diff --cached --check
+          git commit -m 'feat(s08-002): enforce OTP rate-limit boundaries'
+          changed="$(git diff --name-only 38b249dc47926ba6a6397ba23a0bc3c754e40607...HEAD | sort)"
+          expected="$(printf '%s\n' \
+            web/src/__tests__/auth-routes.test.ts \
+            web/src/__tests__/otp-rate-limit-boundaries.test.ts \
+            web/src/app/auth/candidate/request-otp/route.ts \
+            web/src/app/auth/candidate/verify/route.ts \
+            web/src/app/login/page.tsx \
+            web/src/lib/security/rate-limit-http.ts | sort)"
+          test "$changed" = "$expected"
+          git push origin HEAD:work/S08-002-otp-boundaries-v2
