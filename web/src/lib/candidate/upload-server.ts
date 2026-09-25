@@ -101,7 +101,11 @@ async function resolveCandidateActor(client: SupabaseClient) {
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
-  if (candidateError || !candidate?.candidate_id || candidate.is_active !== true) {
+  if (
+    candidateError ||
+    !candidate?.candidate_id ||
+    candidate.is_active !== true
+  ) {
     return null;
   }
 
@@ -132,8 +136,7 @@ export async function reserveCandidateUploadBoundary(
   trustedIp: string,
   deps: CandidateUploadBoundaryDeps = {},
 ): Promise<
-  | { success: true; data: ReserveCandidateUploadData }
-  | CandidateUploadFailure
+  { success: true; data: ReserveCandidateUploadData } | CandidateUploadFailure
 > {
   if (!trustedIp?.trim()) {
     return fail(
@@ -227,8 +230,7 @@ export async function completeCandidateUploadBoundary(
   trustedIp: string,
   deps: CandidateUploadBoundaryDeps = {},
 ): Promise<
-  | { success: true; data: CompleteCandidateUploadData }
-  | CandidateUploadFailure
+  { success: true; data: CompleteCandidateUploadData } | CandidateUploadFailure
 > {
   if (!trustedIp?.trim()) {
     return fail(
@@ -286,13 +288,15 @@ export async function completeCandidateUploadBoundary(
     );
   }
 
-  const inspectReservation = deps.inspectReservation ?? inspectUploadReservation;
+  const inspectReservation =
+    deps.inspectReservation ?? inspectUploadReservation;
   const inspected = await inspectReservation(input.reservationId);
   if (!inspected.success) {
     return fail(inspected.code, inspected.error);
   }
 
-  const recordInspection = deps.recordInspection ?? recordInspectedUploadReservation;
+  const recordInspection =
+    deps.recordInspection ?? recordInspectedUploadReservation;
   const recorded = await recordInspection(
     {
       uploadReservationId: input.reservationId,
@@ -307,13 +311,16 @@ export async function completeCandidateUploadBoundary(
     return fail(recorded.error.code, recorded.error.message);
   }
 
-  const scan = await adminClient.rpc("request_candidate_document_scan_as_actor", {
-    p_actor_auth_user_id: actor.authUserId,
-    p_candidate_form_session_id: input.sessionId,
-    p_upload_reservation_id: input.reservationId,
-    p_action_code: input.actionCode ?? "ADD",
-    p_target_logical_document_id: input.targetLogicalDocumentId ?? null,
-  });
+  const scan = await adminClient.rpc(
+    "request_candidate_document_scan_as_actor",
+    {
+      p_actor_auth_user_id: actor.authUserId,
+      p_candidate_form_session_id: input.sessionId,
+      p_upload_reservation_id: input.reservationId,
+      p_action_code: input.actionCode ?? "ADD",
+      p_target_logical_document_id: input.targetLogicalDocumentId ?? null,
+    },
+  );
   if (scan.error || !scan.data || typeof scan.data !== "object") {
     return fail("INTERNAL_ERROR", "Unable to create document scan request");
   }

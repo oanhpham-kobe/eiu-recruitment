@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   cancelDocumentChangeAction,
-  completeAndStageUploadAction,
   continueCleanDocumentScanAction,
-  reserveUploadAction,
   stageCandidateDocumentDeleteAction,
 } from "@/app/candidate/candidate-actions";
 import {
@@ -36,6 +34,35 @@ export type StagedDocumentItem = {
 };
 
 type PendingDocumentItem = Omit<StagedDocumentItem, "changeId">;
+
+type UploadApiResponse<T> =
+  | { success: true; data: T }
+  | {
+      success: false;
+      error?: { code?: string; message?: string; retryAfterSeconds?: number };
+    };
+
+async function postUploadBoundary<T>(
+  pathName: string,
+  body: Record<string, unknown>,
+): Promise<T> {
+  const response = await fetch(pathName, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    credentials: "same-origin",
+    cache: "no-store",
+    body: JSON.stringify(body),
+  });
+  const payload = (await response
+    .json()
+    .catch(() => null)) as UploadApiResponse<T> | null;
+  if (!response.ok || !payload || payload.success !== true) {
+    const message =
+      payload && payload.success === false ? payload.error?.message : undefined;
+    throw new Error(message || "Upload request failed");
+  }
+  return payload.data;
+}
 
 function isTerminalScanError(code: string | undefined): boolean {
   return (
@@ -184,21 +211,19 @@ export function DocumentUploader({
 
       // Authoritative reservation flow:
       // 1. Reserve upload reservation on server
-      const reserveRes = await reserveUploadAction({
+      const reservation = await postUploadBoundary<{
+        reservationId: string;
+        tempBucket: string;
+        tempPath: string;
+        signedUrl: string;
+        token: string;
+      }>("/api/candidate/uploads/reserve", {
         sessionId,
         intendedDocumentTypeId: docType.id,
         filename: file.name,
         declaredMimeType: file.type || undefined,
         expectedMaxSize: file.size,
       });
-
-      if (!reserveRes.success || !reserveRes.data) {
-        throw new Error(
-          reserveRes.error || "Không thể tạo reservation tải tệp",
-        );
-      }
-
-      const reservation = reserveRes.data;
 
       // 2. Upload the bytes through the one-use signed token. There is no
       // successful completion path when the browser upload is skipped.
@@ -218,22 +243,19 @@ export function DocumentUploader({
 
       // 3. The request path never scans or stages. PENDING_SCAN deliberately
       // has no changeId and must not enter the staged-document collection.
-      const scanRequest = await completeAndStageUploadAction({
+      const scanRequest = await postUploadBoundary<{
+        kind: "PENDING_SCAN";
+        requestId: string;
+        reservationId: string;
+      }>("/api/candidate/uploads/complete", {
         sessionId,
         reservationId: reservation.reservationId,
         intendedDocumentTypeId: docType.id,
         actualSize: file.size,
         mimeType: file.type || "application/pdf",
       });
-
-      if (!scanRequest.success || !scanRequest.data) {
-        throw new Error(
-          scanRequest.error || "Không thể tạo yêu cầu quét bảo mật tệp",
-        );
-      }
-      if (scanRequest.data.kind !== "PENDING_SCAN") {
+      if (scanRequest.kind !== "PENDING_SCAN")
         throw new Error("Unexpected scan request state");
-      }
 
       // Keep pending work outside the staged-document collection. The effect
       // retries the server-owned continuation until a trusted CLEAN result

@@ -5,6 +5,10 @@ import type { StagedDocumentItem } from "@/components/candidate/DocumentUploader
 import type { CandidateSubmissionSummary } from "@/components/candidate/SubmissionsList";
 import { provisionCandidateIdentity } from "@/lib/auth/candidate";
 import {
+  completeCandidateUploadBoundary,
+  reserveCandidateUploadBoundary,
+} from "@/lib/candidate/upload-server";
+import {
   type SubmitCandidateSubmissionInput,
   submitCandidateSubmission,
   type UpdateCandidateSubmissionInput,
@@ -16,17 +20,11 @@ import {
   startCandidateFormSession,
 } from "@/lib/commands/form-session";
 import {
-  authorizeCandidateUploadScan,
   cancelCandidateDocumentChange,
   continueCleanCandidateDocumentScan,
-  createSignedUploadUrlForReservation,
-  recordInspectedUploadReservation,
-  requestCandidateDocumentScan,
-  reserveCandidateFormUpload,
   stageCandidateDocumentChange,
 } from "@/lib/commands/storage-reservation";
 import { resolveTrustedClientIpFromHeaders } from "@/lib/security/trusted-client-ip";
-import { inspectUploadReservation } from "@/lib/storage/upload-scanner";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -583,44 +581,14 @@ export async function reserveUploadAction(input: {
   declaredMimeType?: string;
   expectedMaxSize?: number;
 }) {
-  const supabase = await createServerClient();
-  const reserveRes = await reserveCandidateFormUpload(
-    {
-      candidateFormSessionId: input.sessionId,
-      intendedDocumentTypeId: input.intendedDocumentTypeId,
-      originalFilename: input.filename,
-      declaredMimeType: input.declaredMimeType,
-      expectedMaxSize: input.expectedMaxSize,
-    },
-    { client: supabase },
-  );
-
-  if (!reserveRes.success) {
-    return { success: false, error: reserveRes.error.message };
-  }
-
-  const reservation = reserveRes.data;
-
-  // Create signed upload URL
-  const signedRes = await createSignedUploadUrlForReservation(
-    { uploadReservationId: reservation.upload_reservation_id },
-    { client: supabase },
-  );
-
-  if (!signedRes.success) {
-    return { success: false, error: signedRes.error.message };
-  }
-
-  return {
-    success: true,
-    data: {
-      reservationId: reservation.upload_reservation_id,
-      tempBucket: reservation.temp_bucket,
-      tempPath: reservation.temp_path,
-      signedUrl: signedRes.data.signedUrl,
-      token: signedRes.data.token,
-    },
-  };
+  const trustedIp = resolveTrustedClientIpFromHeaders(await headers());
+  if (!trustedIp)
+    return {
+      success: false as const,
+      error: "Request protection is temporarily unavailable",
+      code: "RATE_LIMIT_UNAVAILABLE",
+    };
+  return reserveCandidateUploadBoundary(input, trustedIp);
 }
 
 export async function completeAndStageUploadAction(input: {
@@ -633,77 +601,14 @@ export async function completeAndStageUploadAction(input: {
   checksumSha256?: string;
   mimeType?: string;
 }) {
-  const supabase = await createServerClient();
-  const authorization = await authorizeCandidateUploadScan(
-    {
-      candidateFormSessionId: input.sessionId,
-      uploadReservationId: input.reservationId,
-    },
-    { client: supabase },
-  );
-  if (!authorization.success) {
+  const trustedIp = resolveTrustedClientIpFromHeaders(await headers());
+  if (!trustedIp)
     return {
-      success: false,
-      error: authorization.error.message,
-      code: authorization.error.code,
+      success: false as const,
+      error: "Request protection is temporarily unavailable",
+      code: "RATE_LIMIT_UNAVAILABLE",
     };
-  }
-
-  // The business request inspects private Storage but never contacts a scanner
-  // or supplies a verdict. Durable worker processing begins after commit.
-  const inspected = await inspectUploadReservation(input.reservationId);
-  if (!inspected.success) {
-    return { success: false, error: inspected.error, code: inspected.code };
-  }
-  const admin = createAdminClient();
-  if (!admin) {
-    return {
-      success: false,
-      error: "Trusted upload inspection is not configured",
-      code: "UPLOAD_INSPECTION_REQUIRED",
-    };
-  }
-  const recorded = await recordInspectedUploadReservation(
-    {
-      uploadReservationId: input.reservationId,
-      actualSizeBytes: inspected.data.actualSizeBytes,
-      detectedMimeType: inspected.data.detectedMimeType,
-      checksumSha256: inspected.data.checksumSha256,
-      magicBytesVerified: inspected.data.magicBytesVerified,
-    },
-    admin,
-  );
-  if (!recorded.success) {
-    return {
-      success: false,
-      error: recorded.error.message,
-      code: recorded.error.code,
-    };
-  }
-  const requested = await requestCandidateDocumentScan(
-    {
-      candidateFormSessionId: input.sessionId,
-      uploadReservationId: input.reservationId,
-      actionCode: input.actionCode ?? "ADD",
-      targetLogicalDocumentId: input.targetLogicalDocumentId,
-    },
-    supabase,
-  );
-  if (!requested.success) {
-    return {
-      success: false,
-      error: requested.error.message,
-      code: requested.error.code,
-    };
-  }
-  return {
-    success: true as const,
-    data: {
-      kind: "PENDING_SCAN" as const,
-      requestId: requested.data.document_scan_request_id,
-      reservationId: input.reservationId,
-    },
-  };
+  return completeCandidateUploadBoundary(input, trustedIp);
 }
 
 export async function continueCleanDocumentScanAction(
