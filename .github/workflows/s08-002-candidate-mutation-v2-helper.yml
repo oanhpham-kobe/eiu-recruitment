@@ -90,17 +90,23 @@ jobs:
 
       - name: Install Web dependencies
         working-directory: web
-        run: npm ci
+        run: |
+          test "$(npm --version)" = "11.19.0"
+          npm ci
 
       - name: Focused Web regression
         working-directory: web
-        run: npx tsx --test src/__tests__/candidate-mutation-rate-limit.test.ts
+        run: |
+          node --conditions react-server --test --import tsx \
+            src/__tests__/rate-limit-foundation.test.ts \
+            src/__tests__/candidate-mutation-rate-limit.test.ts \
+            src/__tests__/candidate-portal.test.ts
 
       - name: Web lint and full typecheck
         working-directory: web
         run: |
           npx biome check src/__tests__/candidate-mutation-rate-limit.test.ts src/app/candidate/candidate-actions.ts src/lib/commands/candidate-submission.ts src/lib/commands/types.ts
-          npx tsc --noEmit
+          npm run typecheck
 
       - name: Start disposable local Supabase
         run: supabase start
@@ -115,7 +121,7 @@ jobs:
         run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/candidate_submission_rate_limit_wrappers_test.sql
 
       - name: Database lint
-        run: supabase db lint --level warning
+        run: supabase db lint --local --level warning
 
       - name: Stop disposable local Supabase
         if: always()
