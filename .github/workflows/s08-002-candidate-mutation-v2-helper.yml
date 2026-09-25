@@ -31,6 +31,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git fetch --depth=1 origin 17a53491aef8b38f29c4abc374edd1c028ba29ef
           git fetch --depth=1 origin d0b092b1850f97da75426faf39c0726da6f83b08
           git checkout d0b092b1850f97da75426faf39c0726da6f83b08 -- \
             supabase/migrations/20260924180336_candidate_submission_rate_limit_wrappers.sql \
