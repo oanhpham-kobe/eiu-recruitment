@@ -1,0 +1,142 @@
+name: S08-002 Candidate Mutation V2 Helper
+
+on:
+  push:
+    branches:
+      - work/S08-002-candidate-mutation-v2
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+
+      - name: Materialize exact R1 product tree and repair canonical RPC signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin d0b092b1850f97da75426faf39c0726da6f83b08
+          git checkout d0b092b1850f97da75426faf39c0726da6f83b08 -- \
+            supabase/migrations/20260924180336_candidate_submission_rate_limit_wrappers.sql \
+            supabase/tests/candidate_submission_rate_limit_wrappers_test.sql \
+            web/src/__tests__/candidate-mutation-rate-limit.test.ts \
+            web/src/app/candidate/candidate-actions.ts \
+            web/src/lib/commands/candidate-submission.ts \
+            web/src/lib/commands/types.ts
+          python - <<'PY'
+          from pathlib import Path
+
+          migration = Path('supabase/migrations/20260924180336_candidate_submission_rate_limit_wrappers.sql')
+          s = migration.read_text()
+          s = s.replace(
+              'uuid, text, text, date, text, text, text, jsonb, jsonb, jsonb, text, uuid',
+              'uuid, text, text, date, text, text, jsonb, text, uuid',
+          )
+          for line in (
+              '  p_candidate_notes text default null,\n',
+              "  p_work_experiences jsonb default '[]'::jsonb,\n",
+              "  p_activities jsonb default '[]'::jsonb,\n",
+              '    p_candidate_notes => p_candidate_notes,\n',
+              '    p_work_experiences => p_work_experiences,\n',
+              '    p_activities => p_activities,\n',
+          ):
+              s = s.replace(line, '')
+          s = s.replace(
+              'uuid, text, text, uuid, text, text, date, text, text, text, jsonb, jsonb, jsonb, text, uuid',
+              'uuid, text, text, uuid, text, text, date, text, text, jsonb, text, uuid',
+          )
+          s = s.replace(
+              'uuid, text, uuid, text, text, date, text, text, text, jsonb, jsonb, jsonb, text, uuid',
+              'uuid, text, uuid, text, text, date, text, text, jsonb, text, uuid',
+          )
+          migration.write_text(s)
+
+          test = Path('supabase/tests/candidate_submission_rate_limit_wrappers_test.sql')
+          t = test.read_text()
+          t = t.replace(
+              'uuid,text,text,date,text,text,text,jsonb,jsonb,jsonb,text,uuid',
+              'uuid,text,text,date,text,text,jsonb,text,uuid',
+          )
+          t = t.replace(
+              'uuid,text,text,uuid,text,text,date,text,text,text,jsonb,jsonb,jsonb,text,uuid',
+              'uuid,text,text,uuid,text,text,date,text,text,jsonb,text,uuid',
+          )
+          t = t.replace(
+              'uuid,text,uuid,text,text,date,text,text,text,jsonb,jsonb,jsonb,text,uuid',
+              'uuid,text,uuid,text,text,date,text,text,jsonb,text,uuid',
+          )
+          test.write_text(t)
+          PY
+
+          test "$(git diff --name-only 17a53491aef8b38f29c4abc374edd1c028ba29ef | wc -l)" -eq 6
+
+      - name: Install Web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Focused Web regression
+        working-directory: web
+        run: npx tsx --test src/__tests__/candidate-mutation-rate-limit.test.ts
+
+      - name: Web lint and full typecheck
+        working-directory: web
+        run: |
+          npx biome check src/__tests__/candidate-mutation-rate-limit.test.ts src/app/candidate/candidate-actions.ts src/lib/commands/candidate-submission.ts src/lib/commands/types.ts
+          npx tsc --noEmit
+
+      - name: Start disposable local Supabase
+        run: supabase start
+
+      - name: Replay migrations from zero
+        run: supabase db reset
+
+      - name: Foundation regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/durable_rate_limit_foundation_test.sql
+
+      - name: Candidate wrapper regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/candidate_submission_rate_limit_wrappers_test.sql
+
+      - name: Database lint
+        run: supabase db lint --level warning
+
+      - name: Stop disposable local Supabase
+        if: always()
+        run: supabase stop --no-backup
+
+      - name: Commit exact validated six-file product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/s08-002-candidate-mutation-v2-helper.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          expected=$(cat <<'EOF'
+          supabase/migrations/20260924180336_candidate_submission_rate_limit_wrappers.sql
+          supabase/tests/candidate_submission_rate_limit_wrappers_test.sql
+          web/src/__tests__/candidate-mutation-rate-limit.test.ts
+          web/src/app/candidate/candidate-actions.ts
+          web/src/lib/commands/candidate-submission.ts
+          web/src/lib/commands/types.ts
+          EOF
+          )
+          actual="$(git diff --name-only 17a53491aef8b38f29c4abc374edd1c028ba29ef | sort)"
+          test "$actual" = "$(printf '%s\n' "$expected" | sort)"
+          git add -A
+          git commit -m 'feat(s08-002): harden candidate mutation rate limits'
+          git push origin HEAD:work/S08-002-candidate-mutation-v2
