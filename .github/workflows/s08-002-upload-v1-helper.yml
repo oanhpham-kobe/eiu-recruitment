@@ -1,0 +1,887 @@
+name: S08-002 Upload V1 Helper
+
+on:
+  push:
+    branches:
+      - work/S08-002-upload-v1
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+
+      - name: Materialize upload HTTP and Server Action boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p web/src/app/api/candidate/uploads/complete
+          cat > web/src/app/api/candidate/uploads/complete/route.ts <<'EOF'
+          import { type NextRequest, NextResponse } from "next/server";
+          import {
+            type CompleteCandidateUploadInput,
+            completeCandidateUploadBoundary,
+          } from "@/lib/candidate/upload-server";
+          import { validateSameOrigin } from "@/lib/security/origin";
+          import { resolveTrustedClientIpFromHeaders } from "@/lib/security/trusted-client-ip";
+
+          export const dynamic = "force-dynamic";
+
+          export type CandidateUploadCompleteRouteDeps = {
+            resolveTrustedIp?: (request: NextRequest) => string | null;
+            completeBoundary?: typeof completeCandidateUploadBoundary;
+          };
+
+          const NO_STORE = { "Cache-Control": "no-store" } as const;
+
+          function errorResponse(
+            code: string,
+            message: string,
+            retryAfterSeconds?: number,
+          ) {
+            const status =
+              code === "RATE_LIMITED"
+                ? 429
+                : code === "RATE_LIMIT_UNAVAILABLE"
+                  ? 503
+                  : code === "UNAUTHENTICATED"
+                    ? 401
+                    : code === "FORBIDDEN"
+                      ? 403
+                      : code === "INTERNAL_ERROR"
+                        ? 500
+                        : 400;
+            const retry =
+              code === "RATE_LIMITED" && retryAfterSeconds && retryAfterSeconds > 0
+                ? Math.trunc(retryAfterSeconds)
+                : undefined;
+            return NextResponse.json(
+              {
+                success: false,
+                error: {
+                  code,
+                  message,
+                  ...(retry ? { retryAfterSeconds: retry } : {}),
+                },
+              },
+              {
+                status,
+                headers: retry
+                  ? { ...NO_STORE, "Retry-After": String(retry) }
+                  : NO_STORE,
+              },
+            );
+          }
+
+          function isCompleteInput(value: unknown): value is CompleteCandidateUploadInput {
+            if (!value || typeof value !== "object") return false;
+            const input = value as Record<string, unknown>;
+            return (
+              typeof input.sessionId === "string" &&
+              typeof input.reservationId === "string" &&
+              typeof input.intendedDocumentTypeId === "string" &&
+              typeof input.actualSize === "number" &&
+              (input.actionCode === undefined ||
+                input.actionCode === "ADD" ||
+                input.actionCode === "REPLACE") &&
+              (input.targetLogicalDocumentId === undefined ||
+                typeof input.targetLogicalDocumentId === "string") &&
+              (input.mimeType === undefined || typeof input.mimeType === "string")
+            );
+          }
+
+          export async function POST(
+            request: NextRequest,
+            _context?: unknown,
+            deps: CandidateUploadCompleteRouteDeps = {},
+          ) {
+            if (!validateSameOrigin(request)) {
+              return errorResponse("FORBIDDEN", "Cross-origin request rejected");
+            }
+
+            let body: unknown;
+            try {
+              body = await request.json();
+            } catch {
+              return errorResponse("VALIDATION_ERROR", "Invalid JSON request body");
+            }
+            if (!isCompleteInput(body)) {
+              return errorResponse("VALIDATION_ERROR", "Invalid upload completion request");
+            }
+
+            const trustedIp = (deps.resolveTrustedIp ?? ((req: NextRequest) =>
+              resolveTrustedClientIpFromHeaders(req.headers)))(request);
+            if (!trustedIp) {
+              return errorResponse(
+                "RATE_LIMIT_UNAVAILABLE",
+                "Request protection is temporarily unavailable",
+              );
+            }
+
+            const result = await (
+              deps.completeBoundary ?? completeCandidateUploadBoundary
+            )(body, trustedIp);
+            if (!result.success) {
+              return errorResponse(
+                result.code,
+                result.error,
+                result.retryAfterSeconds,
+              );
+            }
+
+            return NextResponse.json(result, { status: 200, headers: NO_STORE });
+          }
+          EOF
+
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('web/src/app/candidate/candidate-actions.ts')
+          s = p.read_text()
+          s = s.replace(
+              'import { provisionCandidateIdentity } from "@/lib/auth/candidate";\n',
+              'import { provisionCandidateIdentity } from "@/lib/auth/candidate";\nimport {\n  completeCandidateUploadBoundary,\n  reserveCandidateUploadBoundary,\n} from "@/lib/candidate/upload-server";\n',
+              1,
+          )
+          for name in (
+              '  authorizeCandidateUploadScan,\n',
+              '  createSignedUploadUrlForReservation,\n',
+              '  recordInspectedUploadReservation,\n',
+              '  requestCandidateDocumentScan,\n',
+              '  reserveCandidateFormUpload,\n',
+          ):
+              s = s.replace(name, '', 1)
+          s = s.replace('import { inspectUploadReservation } from "@/lib/storage/upload-scanner";\n', '', 1)
+
+          reserve_pattern = re.compile(
+              r'export async function reserveUploadAction\(input: \{.*?\n\}\) \{.*?\n\}\n\nexport async function completeAndStageUploadAction',
+              re.S,
+          )
+          reserve_replacement = '''export async function reserveUploadAction(input: {
+            sessionId: string;
+            intendedDocumentTypeId: string;
+            filename: string;
+            declaredMimeType?: string;
+            expectedMaxSize?: number;
+          }) {
+            const trustedIp = resolveTrustedClientIpFromHeaders(await headers());
+            if (!trustedIp) {
+              return {
+                success: false as const,
+                error: "Request protection is temporarily unavailable",
+                code: "RATE_LIMIT_UNAVAILABLE",
+              };
+            }
+            return reserveCandidateUploadBoundary(input, trustedIp);
+          }
+
+          export async function completeAndStageUploadAction'''
+          s, count = reserve_pattern.subn(reserve_replacement, s, count=1)
+          assert count == 1, 'reserveUploadAction replacement failed'
+
+          complete_pattern = re.compile(
+              r'export async function completeAndStageUploadAction\(input: \{.*?\n\}\) \{.*?\n\}\n\nexport async function continueCleanDocumentScanAction',
+              re.S,
+          )
+          complete_replacement = '''export async function completeAndStageUploadAction(input: {
+            sessionId: string;
+            reservationId: string;
+            intendedDocumentTypeId: string;
+            actualSize: number;
+            actionCode?: "ADD" | "REPLACE";
+            targetLogicalDocumentId?: string;
+            checksumSha256?: string;
+            mimeType?: string;
+          }) {
+            const trustedIp = resolveTrustedClientIpFromHeaders(await headers());
+            if (!trustedIp) {
+              return {
+                success: false as const,
+                error: "Request protection is temporarily unavailable",
+                code: "RATE_LIMIT_UNAVAILABLE",
+              };
+            }
+            return completeCandidateUploadBoundary(input, trustedIp);
+          }
+
+          export async function continueCleanDocumentScanAction'''
+          s, count = complete_pattern.subn(complete_replacement, s, count=1)
+          assert count == 1, 'completeAndStageUploadAction replacement failed'
+          p.write_text(s)
+
+          p = Path('web/src/components/candidate/DocumentUploader.tsx')
+          s = p.read_text()
+          s = s.replace('  completeAndStageUploadAction,\n', '', 1)
+          s = s.replace('  reserveUploadAction,\n', '', 1)
+          marker = 'type PendingDocumentItem = Omit<StagedDocumentItem, "changeId">;\n'
+          helper = '''type PendingDocumentItem = Omit<StagedDocumentItem, "changeId">;
+
+          type UploadApiResponse<T> =
+            | { success: true; data: T }
+            | {
+                success: false;
+                error?: { code?: string; message?: string; retryAfterSeconds?: number };
+              };
+
+          async function postUploadBoundary<T>(
+            pathName: string,
+            body: Record<string, unknown>,
+          ): Promise<T> {
+            const response = await fetch(pathName, {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              credentials: "same-origin",
+              cache: "no-store",
+              body: JSON.stringify(body),
+            });
+            const payload = (await response.json().catch(() => null)) as
+              | UploadApiResponse<T>
+              | null;
+            if (!response.ok || !payload || payload.success !== true) {
+              const message =
+                payload && payload.success === false
+                  ? payload.error?.message
+                  : undefined;
+              throw new Error(message || "Upload request failed");
+            }
+            return payload.data;
+          }
+          '''
+          assert marker in s
+          s = s.replace(marker, helper, 1)
+
+          old = '''      const reserveRes = await reserveUploadAction({
+                sessionId,
+                intendedDocumentTypeId: docType.id,
+                filename: file.name,
+                declaredMimeType: file.type || undefined,
+                expectedMaxSize: file.size,
+              });
+
+              if (!reserveRes.success || !reserveRes.data) {
+                throw new Error(
+                  reserveRes.error || "Không thể tạo reservation tải tệp",
+                );
+              }
+
+              const reservation = reserveRes.data;
+          '''
+          new = '''      const reservation = await postUploadBoundary<{
+                reservationId: string;
+                tempBucket: string;
+                tempPath: string;
+                signedUrl: string;
+                token: string;
+              }>("/api/candidate/uploads/reserve", {
+                sessionId,
+                intendedDocumentTypeId: docType.id,
+                filename: file.name,
+                declaredMimeType: file.type || undefined,
+                expectedMaxSize: file.size,
+              });
+          '''
+          assert old in s, 'reserve UI block not found'
+          s = s.replace(old, new, 1)
+
+          old = '''      const scanRequest = await completeAndStageUploadAction({
+                sessionId,
+                reservationId: reservation.reservationId,
+                intendedDocumentTypeId: docType.id,
+                actualSize: file.size,
+                mimeType: file.type || "application/pdf",
+              });
+
+              if (!scanRequest.success || !scanRequest.data) {
+                throw new Error(
+                  scanRequest.error || "Không thể tạo yêu cầu quét bảo mật tệp",
+                );
+              }
+              if (scanRequest.data.kind !== "PENDING_SCAN") {
+                throw new Error("Unexpected scan request state");
+              }
+          '''
+          new = '''      const scanRequest = await postUploadBoundary<{
+                kind: "PENDING_SCAN";
+                requestId: string;
+                reservationId: string;
+              }>("/api/candidate/uploads/complete", {
+                sessionId,
+                reservationId: reservation.reservationId,
+                intendedDocumentTypeId: docType.id,
+                actualSize: file.size,
+                mimeType: file.type || "application/pdf",
+              });
+
+              if (scanRequest.kind !== "PENDING_SCAN") {
+                throw new Error("Unexpected scan request state");
+              }
+          '''
+          assert old in s, 'complete UI block not found'
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+
+      - name: Generate Interview upload migration and regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          before=$(find supabase/migrations -maxdepth 1 -type f -name '*_interview_upload_rate_limit_boundaries.sql' | wc -l)
+          test "$before" -eq 0
+          supabase migration new interview_upload_rate_limit_boundaries
+          migration=$(find supabase/migrations -maxdepth 1 -type f -name '*_interview_upload_rate_limit_boundaries.sql')
+          test -n "$migration"
+          cat > "$migration" <<'SQL'
+          -- TASK-S08-002 — Interview upload durable rate-limit boundaries.
+          -- No UI is introduced. Existing authenticated direct RPC execution is
+          -- removed; service-only wrappers enforce the shared UPLOAD policy.
+
+          revoke execute on function public.reserve_interview_upload(uuid, uuid)
+            from public, anon, authenticated;
+          grant execute on function public.reserve_interview_upload(uuid, uuid)
+            to postgres, service_role;
+
+          revoke execute on function public.finalize_interview_upload(
+            uuid, uuid, text, text, text, text, bigint, text, integer
+          ) from public, anon, authenticated;
+          grant execute on function public.finalize_interview_upload(
+            uuid, uuid, text, text, text, text, bigint, text, integer
+          ) to postgres, service_role;
+
+          create or replace function public.reserve_interview_upload_rate_limited(
+            p_actor_auth_user_id uuid,
+            p_identity_key_digest text,
+            p_trusted_ip_key_digest text,
+            p_interview_id uuid,
+            p_document_type_id uuid
+          ) returns jsonb
+          language plpgsql
+          security definer
+          set search_path = ''
+          as $$
+          declare
+            v_previous_sub text;
+            v_actor uuid;
+            v_limit jsonb;
+            v_result jsonb;
+          begin
+            if coalesce(p_identity_key_digest, '') !~ '^[0-9a-f]{64}$'
+              or coalesce(p_trusted_ip_key_digest, '') !~ '^[0-9a-f]{64}$' then
+              return pg_catalog.jsonb_build_object(
+                'success', false,
+                'error_code', 'RATE_LIMIT_UNAVAILABLE',
+                'message', 'Request protection context is unavailable'
+              );
+            end if;
+
+            v_previous_sub := pg_catalog.current_setting('request.jwt.claim.sub', true);
+            perform pg_catalog.set_config('request.jwt.claim.sub', p_actor_auth_user_id::text, true);
+            v_actor := private.interview_command_actor('interviews.documents');
+            if v_actor is null
+              or (not private.is_root_admin() and not private.has_permission('interviews.manage')) then
+              perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+              return pg_catalog.jsonb_build_object(
+                'success', false,
+                'error_code', case when v_actor is null then 'UNAUTHENTICATED' else 'FORBIDDEN' end
+              );
+            end if;
+
+            begin
+              v_limit := public.consume_rate_limit_rules(
+                'UPLOAD',
+                pg_catalog.jsonb_build_array(
+                  pg_catalog.jsonb_build_object(
+                    'ruleCode', 'IDENTITY_15M',
+                    'keyDigest', p_identity_key_digest,
+                    'limit', 30,
+                    'windowSeconds', 900
+                  ),
+                  pg_catalog.jsonb_build_object(
+                    'ruleCode', 'IP_15M',
+                    'keyDigest', p_trusted_ip_key_digest,
+                    'limit', 100,
+                    'windowSeconds', 900
+                  )
+                )
+              );
+            exception when others then
+              perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+              return pg_catalog.jsonb_build_object(
+                'success', false,
+                'error_code', 'RATE_LIMIT_UNAVAILABLE',
+                'message', 'Request protection is temporarily unavailable'
+              );
+            end;
+
+            if coalesce((v_limit->>'allowed')::boolean, false) is not true then
+              perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+              return pg_catalog.jsonb_build_object(
+                'success', false,
+                'error_code', 'RATE_LIMITED',
+                'message', 'Too many upload attempts. Please retry later.',
+                'data', pg_catalog.jsonb_build_object(
+                  'retry_after_seconds', coalesce((v_limit->>'retryAfterSeconds')::integer, 1)
+                )
+              );
+            end if;
+
+            v_result := public.reserve_interview_upload(p_interview_id, p_document_type_id);
+            perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+            return v_result;
+          exception when others then
+            perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+            raise;
+          end;
+          $$;
+
+          revoke all on function public.reserve_interview_upload_rate_limited(
+            uuid, text, text, uuid, uuid
+          ) from public, anon, authenticated;
+          grant execute on function public.reserve_interview_upload_rate_limited(
+            uuid, text, text, uuid, uuid
+          ) to postgres, service_role;
+
+          create or replace function public.finalize_interview_upload_rate_limited(
+            p_actor_auth_user_id uuid,
+            p_identity_key_digest text,
+            p_trusted_ip_key_digest text,
+            p_reservation_id uuid,
+            p_logical_document_id_or_null uuid,
+            p_storage_bucket text,
+            p_storage_path text,
+            p_original_filename text,
+            p_mime_type text,
+            p_file_size_bytes bigint,
+            p_checksum_sha256 text,
+            p_expected_logical_version_or_null integer
+          ) returns jsonb
+          language plpgsql
+          security definer
+          set search_path = ''
+          as $$
+          declare
+            v_previous_sub text;
+            v_actor uuid;
+            v_limit jsonb;
+            v_result jsonb;
+          begin
+            if coalesce(p_identity_key_digest, '') !~ '^[0-9a-f]{64}$'
+              or coalesce(p_trusted_ip_key_digest, '') !~ '^[0-9a-f]{64}$' then
+              return pg_catalog.jsonb_build_object(
+                'success', false,
+                'error_code', 'RATE_LIMIT_UNAVAILABLE',
+                'message', 'Request protection context is unavailable'
+              );
+            end if;
+
+            v_previous_sub := pg_catalog.current_setting('request.jwt.claim.sub', true);
+            perform pg_catalog.set_config('request.jwt.claim.sub', p_actor_auth_user_id::text, true);
+            v_actor := private.interview_command_actor('interviews.documents');
+            if v_actor is null
+              or (not private.is_root_admin() and not private.has_permission('interviews.manage')) then
+              perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+              return pg_catalog.jsonb_build_object(
+                'success', false,
+                'error_code', case when v_actor is null then 'UNAUTHENTICATED' else 'FORBIDDEN' end
+              );
+            end if;
+
+            begin
+              v_limit := public.consume_rate_limit_rules(
+                'UPLOAD',
+                pg_catalog.jsonb_build_array(
+                  pg_catalog.jsonb_build_object(
+                    'ruleCode', 'IDENTITY_15M',
+                    'keyDigest', p_identity_key_digest,
+                    'limit', 30,
+                    'windowSeconds', 900
+                  ),
+                  pg_catalog.jsonb_build_object(
+                    'ruleCode', 'IP_15M',
+                    'keyDigest', p_trusted_ip_key_digest,
+                    'limit', 100,
+                    'windowSeconds', 900
+                  )
+                )
+              );
+            exception when others then
+              perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+              return pg_catalog.jsonb_build_object(
+                'success', false,
+                'error_code', 'RATE_LIMIT_UNAVAILABLE',
+                'message', 'Request protection is temporarily unavailable'
+              );
+            end;
+
+            if coalesce((v_limit->>'allowed')::boolean, false) is not true then
+              perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+              return pg_catalog.jsonb_build_object(
+                'success', false,
+                'error_code', 'RATE_LIMITED',
+                'message', 'Too many upload attempts. Please retry later.',
+                'data', pg_catalog.jsonb_build_object(
+                  'retry_after_seconds', coalesce((v_limit->>'retryAfterSeconds')::integer, 1)
+                )
+              );
+            end if;
+
+            v_result := public.finalize_interview_upload(
+              p_reservation_id,
+              p_logical_document_id_or_null,
+              p_storage_bucket,
+              p_storage_path,
+              p_original_filename,
+              p_mime_type,
+              p_file_size_bytes,
+              p_checksum_sha256,
+              p_expected_logical_version_or_null
+            );
+            perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+            return v_result;
+          exception when others then
+            perform pg_catalog.set_config('request.jwt.claim.sub', coalesce(v_previous_sub, ''), true);
+            raise;
+          end;
+          $$;
+
+          revoke all on function public.finalize_interview_upload_rate_limited(
+            uuid, text, text, uuid, uuid, text, text, text, text, bigint, text, integer
+          ) from public, anon, authenticated;
+          grant execute on function public.finalize_interview_upload_rate_limited(
+            uuid, text, text, uuid, uuid, text, text, text, text, bigint, text, integer
+          ) to postgres, service_role;
+          SQL
+
+          cat > supabase/tests/interview_upload_rate_limit_boundaries_test.sql <<'SQL'
+          -- TASK-S08-002 Interview upload rate-limit boundary regression.
+          \set ON_ERROR_STOP on
+          begin;
+          do $$
+          declare
+            v_actor uuid := '00000000-0000-0000-0000-000000008202'::uuid;
+            v_result jsonb;
+            v_before bigint;
+            v_after bigint;
+          begin
+            assert not pg_catalog.has_function_privilege(
+              'authenticated', 'public.reserve_interview_upload(uuid,uuid)', 'EXECUTE'
+            ), 'authenticated must not execute legacy interview reserve';
+            assert not pg_catalog.has_function_privilege(
+              'authenticated',
+              'public.finalize_interview_upload(uuid,uuid,text,text,text,text,bigint,text,integer)',
+              'EXECUTE'
+            ), 'authenticated must not execute legacy interview finalize';
+            assert pg_catalog.has_function_privilege(
+              'service_role', 'public.reserve_interview_upload(uuid,uuid)', 'EXECUTE'
+            ), 'service role must retain legacy interview reserve';
+            assert pg_catalog.has_function_privilege(
+              'service_role',
+              'public.finalize_interview_upload(uuid,uuid,text,text,text,text,bigint,text,integer)',
+              'EXECUTE'
+            ), 'service role must retain legacy interview finalize';
+            assert not pg_catalog.has_function_privilege(
+              'authenticated',
+              'public.reserve_interview_upload_rate_limited(uuid,text,text,uuid,uuid)',
+              'EXECUTE'
+            ), 'browser must not execute interview reserve wrapper';
+            assert not pg_catalog.has_function_privilege(
+              'authenticated',
+              'public.finalize_interview_upload_rate_limited(uuid,text,text,uuid,uuid,text,text,text,text,bigint,text,integer)',
+              'EXECUTE'
+            ), 'browser must not execute interview finalize wrapper';
+            assert pg_catalog.has_function_privilege(
+              'service_role',
+              'public.reserve_interview_upload_rate_limited(uuid,text,text,uuid,uuid)',
+              'EXECUTE'
+            ), 'service role must execute interview reserve wrapper';
+            assert pg_catalog.has_function_privilege(
+              'service_role',
+              'public.finalize_interview_upload_rate_limited(uuid,text,text,uuid,uuid,text,text,text,text,bigint,text,integer)',
+              'EXECUTE'
+            ), 'service role must execute interview finalize wrapper';
+
+            select pg_catalog.count(*) into v_before from private.rate_limit_buckets;
+            v_result := public.reserve_interview_upload_rate_limited(
+              v_actor, pg_catalog.repeat('a',64), pg_catalog.repeat('b',64),
+              '00000000-0000-0000-0000-000000008203'::uuid,
+              '00000000-0000-0000-0000-000000008204'::uuid
+            );
+            assert v_result->>'error_code' in ('UNAUTHENTICATED','FORBIDDEN'),
+              'unknown internal actor must fail before limiter debit';
+            select pg_catalog.count(*) into v_after from private.rate_limit_buckets;
+            assert v_after = v_before, 'unauthorized interview actor must not debit quota';
+
+            assert pg_catalog.pg_get_functiondef(
+              'public.reserve_interview_upload_rate_limited(uuid,text,text,uuid,uuid)'::regprocedure
+            ) like '%''UPLOAD''%', 'interview reserve wrapper must bind UPLOAD policy';
+            assert pg_catalog.pg_get_functiondef(
+              'public.reserve_interview_upload_rate_limited(uuid,text,text,uuid,uuid)'::regprocedure
+            ) like '%''limit'', 30%', 'interview reserve wrapper must bind 30/15m identity limit';
+            assert pg_catalog.pg_get_functiondef(
+              'public.finalize_interview_upload_rate_limited(uuid,text,text,uuid,uuid,text,text,text,text,bigint,text,integer)'::regprocedure
+            ) like '%''limit'', 100%', 'interview finalize wrapper must bind 100/15m IP limit';
+          end;
+          $$;
+          rollback;
+          SQL
+
+      - name: Materialize focused Web regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > web/src/__tests__/candidate-upload-rate-limit.test.ts <<'EOF'
+          import assert from "node:assert/strict";
+          import fs from "node:fs";
+          import path from "node:path";
+          import test from "node:test";
+          import { NextRequest } from "next/server";
+          import { POST as completeUpload } from "@/app/api/candidate/uploads/complete/route";
+          import { POST as reserveUpload } from "@/app/api/candidate/uploads/reserve/route";
+
+          function sameOriginRequest(pathName: string, body: Record<string, unknown>) {
+            return new NextRequest(`https://recruitment.example.test${pathName}`, {
+              method: "POST",
+              headers: {
+                host: "recruitment.example.test",
+                origin: "https://recruitment.example.test",
+                "content-type": "application/json",
+              },
+              body: JSON.stringify(body),
+            });
+          }
+
+          test("upload reserve returns literal 429 and Retry-After", async () => {
+            let boundaryCalls = 0;
+            const response = await reserveUpload(
+              sameOriginRequest("/api/candidate/uploads/reserve", {
+                sessionId: "00000000-0000-0000-0000-000000008101",
+                intendedDocumentTypeId: "00000000-0000-0000-0000-000000008102",
+                filename: "cv.pdf",
+                expectedMaxSize: 123,
+              }),
+              undefined,
+              {
+                resolveTrustedIp: () => "203.0.113.101",
+                reserveBoundary: async (_input, trustedIp) => {
+                  boundaryCalls += 1;
+                  assert.equal(trustedIp, "203.0.113.101");
+                  return {
+                    success: false as const,
+                    code: "RATE_LIMITED",
+                    error: "Too many upload attempts",
+                    retryAfterSeconds: 41,
+                  };
+                },
+              },
+            );
+            assert.equal(boundaryCalls, 1);
+            assert.equal(response.status, 429);
+            assert.equal(response.headers.get("Retry-After"), "41");
+          });
+
+          test("upload completion returns literal 429 before any boundary work", async () => {
+            let boundaryCalls = 0;
+            const response = await completeUpload(
+              sameOriginRequest("/api/candidate/uploads/complete", {
+                sessionId: "00000000-0000-0000-0000-000000008101",
+                reservationId: "00000000-0000-0000-0000-000000008103",
+                intendedDocumentTypeId: "00000000-0000-0000-0000-000000008102",
+                actualSize: 123,
+                mimeType: "application/pdf",
+              }),
+              undefined,
+              {
+                resolveTrustedIp: () => "203.0.113.102",
+                completeBoundary: async (_input, trustedIp) => {
+                  boundaryCalls += 1;
+                  assert.equal(trustedIp, "203.0.113.102");
+                  return {
+                    success: false as const,
+                    code: "RATE_LIMITED",
+                    error: "Too many upload attempts",
+                    retryAfterSeconds: 17,
+                  };
+                },
+              },
+            );
+            assert.equal(boundaryCalls, 1);
+            assert.equal(response.status, 429);
+            assert.equal(response.headers.get("Retry-After"), "17");
+          });
+
+          test("upload routes fail closed when trusted IP is unavailable", async () => {
+            let calls = 0;
+            const response = await reserveUpload(
+              sameOriginRequest("/api/candidate/uploads/reserve", {
+                sessionId: "s",
+                intendedDocumentTypeId: "d",
+                filename: "cv.pdf",
+              }),
+              undefined,
+              {
+                resolveTrustedIp: () => null,
+                reserveBoundary: async () => {
+                  calls += 1;
+                  throw new Error("must not run");
+                },
+              },
+            );
+            assert.equal(response.status, 503);
+            assert.equal(calls, 0);
+          });
+
+          test("upload reserve rejects cross-origin traffic before boundary", async () => {
+            let calls = 0;
+            const request = new NextRequest(
+              "https://recruitment.example.test/api/candidate/uploads/reserve",
+              {
+                method: "POST",
+                headers: {
+                  host: "recruitment.example.test",
+                  origin: "https://attacker.example.test",
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify({
+                  sessionId: "s",
+                  intendedDocumentTypeId: "d",
+                  filename: "cv.pdf",
+                }),
+              },
+            );
+            const response = await reserveUpload(request, undefined, {
+              resolveTrustedIp: () => "203.0.113.103",
+              reserveBoundary: async () => {
+                calls += 1;
+                throw new Error("must not run");
+              },
+            });
+            assert.equal(response.status, 403);
+            assert.equal(calls, 0);
+          });
+
+          test("Candidate upload UI uses HTTP reserve/complete but CLEAN continuation stays server-owned", () => {
+            const source = fs.readFileSync(
+              path.join(process.cwd(), "src/components/candidate/DocumentUploader.tsx"),
+              "utf8",
+            );
+            assert.match(source, /\/api\/candidate\/uploads\/reserve/);
+            assert.match(source, /\/api\/candidate\/uploads\/complete/);
+            assert.doesNotMatch(source, /reserveUploadAction/);
+            assert.doesNotMatch(source, /completeAndStageUploadAction/);
+            assert.match(source, /continueCleanDocumentScanAction/);
+          });
+
+          test("legacy Candidate upload Server Actions delegate through trusted-IP boundaries", () => {
+            const source = fs.readFileSync(
+              path.join(process.cwd(), "src/app/candidate/candidate-actions.ts"),
+              "utf8",
+            );
+            assert.match(source, /reserveCandidateUploadBoundary\(input, trustedIp\)/);
+            assert.match(source, /completeCandidateUploadBoundary\(input, trustedIp\)/);
+            assert.match(source, /resolveTrustedClientIpFromHeaders\(await headers\(\)\)/);
+          });
+
+          test("completion limiter is evaluated before private Storage inspection", () => {
+            const source = fs.readFileSync(
+              path.join(process.cwd(), "src/lib/candidate/upload-server.ts"),
+              "utf8",
+            );
+            const gate = source.indexOf("authorize_candidate_upload_completion_rate_limited");
+            const inspect = source.indexOf("inspectUploadReservation");
+            const scan = source.indexOf("request_candidate_document_scan_as_actor");
+            assert.ok(gate >= 0 && inspect >= 0 && scan >= 0);
+            assert.ok(gate < inspect, "limiter gate must precede Storage inspection");
+            assert.ok(inspect < scan, "scan request must follow allowed inspection");
+          });
+          EOF
+
+      - name: Format touched Web files
+        working-directory: web
+        run: |
+          npm ci
+          npx biome check --write \
+            src/app/api/candidate/uploads/reserve/route.ts \
+            src/app/api/candidate/uploads/complete/route.ts \
+            src/lib/candidate/upload-server.ts \
+            src/app/candidate/candidate-actions.ts \
+            src/components/candidate/DocumentUploader.tsx \
+            src/__tests__/candidate-upload-rate-limit.test.ts
+
+      - name: Focused Web regressions
+        working-directory: web
+        run: |
+          node --conditions react-server --test --import tsx \
+            src/__tests__/rate-limit-foundation.test.ts \
+            src/__tests__/candidate-mutation-rate-limit.test.ts \
+            src/__tests__/candidate-upload-rate-limit.test.ts \
+            src/__tests__/candidate-portal.test.ts
+
+      - name: Web lint and full typecheck
+        working-directory: web
+        run: |
+          npx biome check \
+            src/app/api/candidate/uploads/reserve/route.ts \
+            src/app/api/candidate/uploads/complete/route.ts \
+            src/lib/candidate/upload-server.ts \
+            src/app/candidate/candidate-actions.ts \
+            src/components/candidate/DocumentUploader.tsx \
+            src/__tests__/candidate-upload-rate-limit.test.ts
+          npm run typecheck
+
+      - name: Start disposable local Supabase
+        run: supabase start
+
+      - name: Replay migrations from zero
+        run: supabase db reset
+
+      - name: Foundation regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/durable_rate_limit_foundation_test.sql
+
+      - name: Candidate mutation rate-limit regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/candidate_submission_rate_limit_wrappers_test.sql
+
+      - name: Candidate upload rate-limit regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/candidate_upload_rate_limit_boundaries_test.sql
+
+      - name: Interview upload rate-limit regression
+        run: docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_upload_rate_limit_boundaries_test.sql
+
+      - name: Database lint
+        run: supabase db lint --local --level warning
+
+      - name: Stop disposable local Supabase
+        if: always()
+        run: supabase stop --no-backup
+
+      - name: Commit exact validated upload product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/s08-002-upload-v1-helper.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --check 2a1da20463303162cad00892de904d6d1b2f8439
+          changed=$(git diff --name-only 2a1da20463303162cad00892de904d6d1b2f8439 | sort)
+          echo "$changed"
+          test "$(printf '%s\n' "$changed" | grep -c '^\.github/workflows/' || true)" -eq 0
+          test "$(printf '%s\n' "$changed" | wc -l)" -eq 10
+          test "$(printf '%s\n' "$changed" | grep -c '^supabase/migrations/.*_interview_upload_rate_limit_boundaries\.sql$')" -eq 1
+          git add -A
+          git commit -m 'feat(s08-002): harden upload rate-limit boundaries'
+          git push origin HEAD:work/S08-002-upload-v1
