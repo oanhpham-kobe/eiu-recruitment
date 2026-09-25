@@ -8,6 +8,10 @@ import {
   type TrustedCommandDefinition,
   type VerifiedActor,
 } from "@/lib/commands/types";
+import {
+  buildDurableRateLimitRules,
+  digestRateLimitPrincipal,
+} from "@/lib/security/rate-limit";
 import { createServerClient } from "@/lib/supabase/server";
 
 const UUID_REGEX =
@@ -56,6 +60,8 @@ export type UpdateCandidateSubmissionData = {
 export type CandidateSubmissionCommandDeps = {
   supabase?: SupabaseClient;
   client?: SupabaseClient;
+  actorClient?: SupabaseClient;
+  trustedIp?: string;
   resolveActor?: (client?: SupabaseClient) => Promise<VerifiedActor | null>;
 };
 
@@ -87,6 +93,7 @@ async function defaultResolveActor(
 
   return {
     authUserId: user.id,
+    candidateId: candidate.candidate_id,
     email: user.email,
     isActive: candidate.is_active,
     roles: ["candidate"],
@@ -219,6 +226,7 @@ function formatChildArrays(input: SubmitCandidateSubmissionInput) {
 
 export function createSubmitCandidateSubmissionCommand(
   supabase: SupabaseClient,
+  trustedIp?: string,
 ): TrustedCommandDefinition<
   SubmitCandidateSubmissionInput,
   string,
@@ -255,12 +263,43 @@ export function createSubmitCandidateSubmissionCommand(
       return { success: true, data: rawInput };
     },
 
-    async execute(_actor, validated) {
+    async execute(actor, validated) {
       const { education } = formatChildArrays(validated);
+      if (!actor.candidateId || !trustedIp) {
+        return {
+          success: false,
+          error: {
+            code: CommandErrorCode.RATE_LIMIT_UNAVAILABLE,
+            message: "Request protection context is unavailable",
+          },
+        };
+      }
+      const rules = buildDurableRateLimitRules("CANDIDATE_SUBMIT", {
+        candidateId: actor.candidateId,
+        trustedIp,
+      });
+      const candidateKeyDigest = rules.find(
+        (rule) => rule.ruleCode === "CANDIDATE_1H",
+      )?.keyDigest;
+      if (!candidateKeyDigest) {
+        return {
+          success: false,
+          error: {
+            code: CommandErrorCode.RATE_LIMIT_UNAVAILABLE,
+            message: "Request protection context is unavailable",
+          },
+        };
+      }
 
       const { data, error } = await supabase.rpc(
-        "submit_candidate_submission",
+        "submit_candidate_submission_rate_limited",
         {
+          p_actor_auth_user_id: actor.authUserId,
+          p_candidate_key_digest: candidateKeyDigest,
+          p_trusted_ip_key_digest: digestRateLimitPrincipal(
+            "TRUSTED_IP",
+            trustedIp,
+          ),
           p_candidate_form_session_id: validated.candidateFormSessionId,
           p_full_name: validated.fullName.trim(),
           p_phone: validated.phone.trim(),
@@ -328,6 +367,7 @@ export function createSubmitCandidateSubmissionCommand(
 
 export function createUpdateCandidateSubmissionCommand(
   supabase: SupabaseClient,
+  trustedIp?: string,
 ): TrustedCommandDefinition<
   UpdateCandidateSubmissionInput,
   string,
@@ -364,12 +404,36 @@ export function createUpdateCandidateSubmissionCommand(
       return { success: true, data: rawInput };
     },
 
-    async execute(_actor, validated) {
+    async execute(actor, validated) {
       const { education } = formatChildArrays(validated);
+      if (!actor.candidateId || !trustedIp) {
+        return {
+          success: false,
+          error: {
+            code: CommandErrorCode.RATE_LIMIT_UNAVAILABLE,
+            message: "Request protection context is unavailable",
+          },
+        };
+      }
+      const candidateIpKeyDigest = buildDurableRateLimitRules(
+        "CANDIDATE_UPDATE",
+        { candidateId: actor.candidateId, trustedIp },
+      )[0]?.keyDigest;
+      if (!candidateIpKeyDigest) {
+        return {
+          success: false,
+          error: {
+            code: CommandErrorCode.RATE_LIMIT_UNAVAILABLE,
+            message: "Request protection context is unavailable",
+          },
+        };
+      }
 
       const { data, error } = await supabase.rpc(
-        "update_candidate_submission",
+        "update_candidate_submission_rate_limited",
         {
+          p_actor_auth_user_id: actor.authUserId,
+          p_candidate_ip_key_digest: candidateIpKeyDigest,
           p_candidate_form_session_id: validated.candidateFormSessionId,
           p_full_name: validated.fullName.trim(),
           p_phone: validated.phone.trim(),
@@ -439,20 +503,30 @@ export async function submitCandidateSubmission(
   input: SubmitCandidateSubmissionInput,
   deps: CandidateSubmissionCommandDeps = {},
 ): Promise<CommandResult<SubmitCandidateSubmissionData>> {
-  const supabase = deps.supabase ?? deps.client ?? (await createServerClient());
+  const actorClient =
+    deps.actorClient ?? deps.client ?? (await createServerClient());
+  const mutationClient = deps.supabase ?? deps.client ?? actorClient;
   const resolveActor =
-    deps.resolveActor ?? (() => defaultResolveActor(supabase));
+    deps.resolveActor ?? (() => defaultResolveActor(actorClient));
   const runner = createCommandRunner({ resolveActor });
-  return runner(createSubmitCandidateSubmissionCommand(supabase), input);
+  return runner(
+    createSubmitCandidateSubmissionCommand(mutationClient, deps.trustedIp),
+    input,
+  );
 }
 
 export async function updateCandidateSubmission(
   input: UpdateCandidateSubmissionInput,
   deps: CandidateSubmissionCommandDeps = {},
 ): Promise<CommandResult<UpdateCandidateSubmissionData>> {
-  const supabase = deps.supabase ?? deps.client ?? (await createServerClient());
+  const actorClient =
+    deps.actorClient ?? deps.client ?? (await createServerClient());
+  const mutationClient = deps.supabase ?? deps.client ?? actorClient;
   const resolveActor =
-    deps.resolveActor ?? (() => defaultResolveActor(supabase));
+    deps.resolveActor ?? (() => defaultResolveActor(actorClient));
   const runner = createCommandRunner({ resolveActor });
-  return runner(createUpdateCandidateSubmissionCommand(supabase), input);
+  return runner(
+    createUpdateCandidateSubmissionCommand(mutationClient, deps.trustedIp),
+    input,
+  );
 }

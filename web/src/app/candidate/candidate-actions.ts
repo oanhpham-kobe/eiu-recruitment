@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import type { StagedDocumentItem } from "@/components/candidate/DocumentUploader";
 import type { CandidateSubmissionSummary } from "@/components/candidate/SubmissionsList";
 import { provisionCandidateIdentity } from "@/lib/auth/candidate";
@@ -24,6 +25,7 @@ import {
   reserveCandidateFormUpload,
   stageCandidateDocumentChange,
 } from "@/lib/commands/storage-reservation";
+import { resolveTrustedClientIpFromHeaders } from "@/lib/security/trusted-client-ip";
 import { inspectUploadReservation } from "@/lib/storage/upload-scanner";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerClient } from "@/lib/supabase/server";
@@ -749,7 +751,20 @@ export async function submitCandidateSubmissionAction(
   input: SubmitCandidateSubmissionInput,
 ) {
   const supabase = await createServerClient();
-  const res = await submitCandidateSubmission(input, { supabase });
+  const trustedIp = resolveTrustedClientIpFromHeaders(await headers());
+  const admin = createAdminClient();
+  if (!trustedIp || !admin) {
+    return {
+      success: false,
+      error: "Request protection is temporarily unavailable",
+      code: "RATE_LIMIT_UNAVAILABLE",
+    };
+  }
+  const res = await submitCandidateSubmission(input, {
+    supabase: admin,
+    actorClient: supabase,
+    trustedIp,
+  });
   if (!res.success) {
     return {
       success: false,
@@ -765,7 +780,20 @@ export async function updateCandidateSubmissionAction(
   input: UpdateCandidateSubmissionInput,
 ) {
   const supabase = await createServerClient();
-  const res = await updateCandidateSubmission(input, { supabase });
+  const trustedIp = resolveTrustedClientIpFromHeaders(await headers());
+  const admin = createAdminClient();
+  if (!trustedIp || !admin) {
+    return {
+      success: false,
+      error: "Request protection is temporarily unavailable",
+      code: "RATE_LIMIT_UNAVAILABLE",
+    };
+  }
+  const res = await updateCandidateSubmission(input, {
+    supabase: admin,
+    actorClient: supabase,
+    trustedIp,
+  });
   if (!res.success) {
     return {
       success: false,
