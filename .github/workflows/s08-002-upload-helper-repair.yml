@@ -1,0 +1,44 @@
+name: S08-002 Upload Helper Repair
+on:
+  push:
+    branches:
+      - work/S08-002-upload-v1
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Repair helper transform anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/s08-002-upload-v1-helper.yml')
+          s = p.read_text()
+          old = """          assert old in s, 'reserve UI block not found'\n          s = s.replace(old, new, 1)\n"""
+          new = """          reserve_ui_pattern = re.compile(\n              r'      const reserveRes = await reserveUploadAction\\(\\{.*?      const reservation = reserveRes\\.data;\\n',\n              re.S,\n          )\n          s, count = reserve_ui_pattern.subn(new, s, count=1)\n          assert count == 1, 'reserve UI block not found'\n"""
+          assert old in s
+          s = s.replace(old, new, 1)
+          old = """          assert old in s, 'complete UI block not found'\n          s = s.replace(old, new, 1)\n"""
+          new = """          complete_ui_pattern = re.compile(\n              r'      const scanRequest = await completeAndStageUploadAction\\(\\{.*?      if \\(scanRequest\\.data\\.kind !== \\\"PENDING_SCAN\\\"\\) \\{\\n        throw new Error\\(\\\"Unexpected scan request state\\\"\\);\\n      \\}\\n',\n              re.S,\n          )\n          s, count = complete_ui_pattern.subn(new, s, count=1)\n          assert count == 1, 'complete UI block not found'\n"""
+          assert old in s
+          s = s.replace(old, new, 1)
+          old = "          rm .github/workflows/s08-002-upload-v1-helper.yml\n"
+          new = "          rm .github/workflows/s08-002-upload-v1-helper.yml\n          rm -f .github/.trigger-s08-upload\n"
+          assert old in s
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+          rm .github/workflows/s08-002-upload-helper-repair.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/s08-002-upload-v1-helper.yml .github/workflows/s08-002-upload-helper-repair.yml
+          git diff --cached --check
+          git commit -m 'ci(s08-002): repair upload helper semantic transforms'
+          git push origin HEAD:work/S08-002-upload-v1
