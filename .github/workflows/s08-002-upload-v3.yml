@@ -1,0 +1,128 @@
+name: S08-002 Upload V3 Validate
+
+on:
+  push:
+    branches:
+      - work/S08-002-upload-v3
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - uses: supabase/setup-cli@v1.6.0
+        with:
+          version: 2.116.0
+
+      - name: Replay validated v2 materialization and repair brittle Interview assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          workflow = Path('.github/workflows/s08-002-upload-materialize-v2.yml')
+          lines = workflow.read_text().splitlines()
+          start = next(i for i, line in enumerate(lines) if line.strip() == '- name: Materialize upload tranche product files')
+          run_line = next(i for i in range(start + 1, len(lines)) if lines[i].strip() == 'run: |')
+          end = next(i for i in range(run_line + 1, len(lines)) if lines[i].startswith('      - name:'))
+          body = []
+          for line in lines[run_line + 1:end]:
+              body.append(line[10:] if line.startswith('          ') else line)
+          script = Path('/tmp/s08-upload-materialize-v2.sh')
+          script.write_text('\n'.join(body) + '\n')
+          subprocess.run(['bash', str(script)], check=True)
+
+          test_path = Path('supabase/tests/interview_upload_rate_limit_boundaries_test.sql')
+          text = test_path.read_text()
+          old_reserve = "  assert pg_catalog.pg_get_functiondef('public.reserve_interview_upload_rate_limited(uuid,text,text,uuid,uuid)'::regprocedure) like '%''limit'', 30%';"
+          new_reserve = "  assert pg_catalog.pg_get_functiondef('public.reserve_interview_upload_rate_limited(uuid,text,text,uuid,uuid)'::regprocedure) ~ $re$'limit'[[:space:]]*,[[:space:]]*30$re$;"
+          old_finalize = "  assert pg_catalog.pg_get_functiondef('public.finalize_interview_upload_rate_limited(uuid,text,text,uuid,uuid,text,text,text,text,bigint,text,integer)'::regprocedure) like '%''limit'', 100%';"
+          new_finalize = "  assert pg_catalog.pg_get_functiondef('public.finalize_interview_upload_rate_limited(uuid,text,text,uuid,uuid,text,text,text,text,bigint,text,integer)'::regprocedure) ~ $re$'limit'[[:space:]]*,[[:space:]]*100$re$;"
+          assert old_reserve in text
+          assert old_finalize in text
+          text = text.replace(old_reserve, new_reserve, 1).replace(old_finalize, new_finalize, 1)
+          test_path.write_text(text)
+          PY
+
+      - name: Web focused regression, formatting, and typecheck
+        working-directory: web
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npx biome check --write \
+            src/app/api/candidate/uploads/reserve/route.ts \
+            src/app/api/candidate/uploads/complete/route.ts \
+            src/lib/candidate/upload-server.ts \
+            src/app/candidate/candidate-actions.ts \
+            src/components/candidate/DocumentUploader.tsx \
+            src/__tests__/candidate-upload-rate-limit.test.ts
+          node --conditions react-server --test --import tsx \
+            src/__tests__/rate-limit-foundation.test.ts \
+            src/__tests__/candidate-mutation-rate-limit.test.ts \
+            src/__tests__/candidate-upload-rate-limit.test.ts \
+            src/__tests__/candidate-portal.test.ts
+          npx biome check \
+            src/app/api/candidate/uploads/reserve/route.ts \
+            src/app/api/candidate/uploads/complete/route.ts \
+            src/lib/candidate/upload-server.ts \
+            src/app/candidate/candidate-actions.ts \
+            src/components/candidate/DocumentUploader.tsx \
+            src/__tests__/candidate-upload-rate-limit.test.ts
+          npm run typecheck
+
+      - name: Start disposable Supabase
+        run: supabase start
+
+      - name: Replay migrations from zero
+        run: supabase db reset
+
+      - name: Run rate-limit SQL regressions and DB lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/durable_rate_limit_foundation_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/candidate_submission_rate_limit_wrappers_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/candidate_upload_rate_limit_boundaries_test.sql
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/interview_upload_rate_limit_boundaries_test.sql
+          supabase db lint --local --level error
+
+      - name: Stop disposable Supabase
+        if: always()
+        run: supabase stop --no-backup
+
+      - name: Commit validated product files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            supabase/migrations/20260925141600_candidate_upload_rate_limit_boundaries.sql \
+            supabase/migrations/20260925160402_interview_upload_rate_limit_boundaries.sql \
+            supabase/tests/candidate_upload_rate_limit_boundaries_test.sql \
+            supabase/tests/interview_upload_rate_limit_boundaries_test.sql \
+            web/src/app/api/candidate/uploads/reserve/route.ts \
+            web/src/app/api/candidate/uploads/complete/route.ts \
+            web/src/lib/candidate/upload-server.ts \
+            web/src/app/candidate/candidate-actions.ts \
+            web/src/components/candidate/DocumentUploader.tsx \
+            web/src/__tests__/candidate-upload-rate-limit.test.ts
+          git diff --cached --check
+          git commit -m 'feat(s08-002): validate upload rate-limit boundaries'
+          git push origin HEAD:work/S08-002-upload-v3
