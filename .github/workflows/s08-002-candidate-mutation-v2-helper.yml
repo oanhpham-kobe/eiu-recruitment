@@ -85,6 +85,7 @@ jobs:
           test.write_text(t)
           PY
 
+          rm .github/workflows/s08-002-candidate-mutation-v2-helper.yml
           test "$(git diff --name-only 17a53491aef8b38f29c4abc374edd1c028ba29ef | wc -l)" -eq 6
 
       - name: Install Web dependencies
@@ -124,7 +125,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/s08-002-candidate-mutation-v2-helper.yml
+          rm -f .github/workflows/s08-002-candidate-mutation-v2-helper.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           expected=$(cat <<'EOF'
