@@ -1,6 +1,6 @@
 # DR-03 — Runtime Architecture: Sound Boundaries vs Accidental Duplication
 
-Status: IN PROGRESS
+Status: COMPLETE
 Research date: 2026-09-26
 Evidence baseline: `8dcb0a5d7ce1be9d82e3448c01cdc1643e3ac8c4`
 Parent index: `project_control/research/REPO_DEEP_RESEARCH_2026-09-26.md`
@@ -10,7 +10,7 @@ Research mode: read/diagnose only; no runtime implementation mutation.
 
 - [x] DR-03A — map request/read/write boundaries for Candidate, HR Application, Interview and Report flows.
 - [x] DR-03B — inspect authorization/validation/RPC/RLS overlap and classify KEEP vs SIMPLIFY candidates.
-- [ ] DR-03C — inspect cross-cutting infrastructure abstractions and identify real architecture risks versus ordinary refactor debt.
+- [x] DR-03C — inspect cross-cutting infrastructure abstractions and identify real architecture risks versus ordinary refactor debt.
 
 ## DR-03A — Runtime boundary map
 
@@ -127,7 +127,7 @@ Representative path:
 - invokes named PostgreSQL RPCs for atomic interview lifecycle operations;
 - maps domain/RPC error codes to safe user-facing messages.
 
-Classification: **KEEP trust/transaction boundary; inspect duplication in DR-03B.** Interview implements its own actor/permission/validation/RPC wrapper instead of the generic command runner.
+Classification: **KEEP trust/transaction boundary.** Interview implements its own actor/permission/validation/RPC wrapper instead of the generic command runner; the duplication is addressed below as a simplification opportunity.
 
 ### Reports flow
 
@@ -151,7 +151,7 @@ Representative path:
 - uses RPCs for report page reads and report mutations;
 - normalizes trusted command responses.
 
-Classification: **KEEP server/RPC boundary; inspect permission granularity and duplicated command plumbing in DR-03B.**
+Classification: **KEEP server/RPC boundary.**
 
 ### Read-path vs write-path distinction
 
@@ -176,21 +176,6 @@ KEEP unless contradicted by later evidence:
 - trusted RPCs for atomic/versioned/idempotent business mutations;
 - Server Actions as UI transport boundary;
 - safe error normalization rather than exposing raw database failures.
-
-### DR-03A debt signals to inspect next
-
-Not yet classified as defects:
-
-1. Multiple command frameworks/patterns coexist:
-   - generic `createCommandRunner` + `TrustedCommandDefinition`;
-   - Interview-local `actorContext` / `authorized` / `withPermission` / `executeRpc`;
-   - Reports-local `authorizedClient` / validators / `normalizeCommandResponse`;
-   - other command families may use additional patterns.
-2. Permission checking occurs in UI capability calculation, server adapters, command adapters, RPCs and RLS. Some is necessary defense in depth; some may be semantic duplication.
-3. Read adapters can become large because they own filtering, query composition and projection shaping.
-4. Server Action files sometimes contain substantial read/workflow orchestration rather than being uniformly thin.
-
-These are DR-03B questions, not rewrite evidence.
 
 ## DR-03B — Authorization / validation / RPC / RLS overlap
 
@@ -362,17 +347,130 @@ Those would reduce security/correctness without addressing the actual maintainab
 
 - HR Report TypeScript mutation functions using a coarse `reports.view` authorized client. Fine-grained authorization remains enforced by both DB-returned UI capabilities and the mutation RPCs themselves.
 
-## Next checkpoint
+## DR-03C — Cross-cutting infrastructure and actual architecture risks
 
-`DR-03C — cross-cutting infrastructure / real architecture risks`
+Status: COMPLETE
 
-Inspect:
+### 1. Service-role / admin client boundary — broadly sound, keep narrow
 
-- service-role/admin client usage and whether it is tightly scoped;
-- upload scanner/provider and storage abstractions;
-- logging/audit/error handling consistency;
-- middleware/security headers/origin defenses;
-- cache behavior and server/client secret boundaries;
-- whether large read/client components are architecture risks or ordinary refactor debt.
+`web/src/lib/supabase/admin.ts` is `server-only`; the service-role key is read only by `web/src/lib/env/server.ts`, also `server-only`. The ordinary server client remains a user-context client, while admin access is explicitly opt-in through `createAdminClient()`.
 
-DR-03C should end with a final architecture verdict: KEEP / SIMPLIFY / actual risk, and then close DR-03 before moving to throughput/governance DR-04.
+The repository also has a build/client-bundle test that scans `.next/static` for service-role secret identifiers.
+
+Verified production-oriented admin uses include operations that genuinely require privileged storage/service behavior, such as:
+
+- inspecting a private/quarantine upload after a user-context authorization step;
+- recording trusted upload inspection metadata;
+- generating a short-lived storage signed URL only after authenticated `submissions.view` authorization and a fail-closed document-access audit RPC.
+
+The document preview route streams bytes server-side instead of returning the signed storage URL to the browser.
+
+Classification: **KEEP.** No evidence was found of ordinary HR/Candidate business mutations being performed wholesale through service-role.
+
+Maintainability guard: the generic `createAdminClient()` primitive is powerful. Prefer continuing to wrap it behind narrow provider/operation functions rather than increasing direct admin-client call sites.
+
+### 2. Upload inspection and malware scanning are intentionally separate contracts
+
+`upload-scanner.ts` performs trusted **content inspection**, not malware adjudication. It validates actual byte length, computes SHA-256, detects supported magic signatures/MIME shape and records whether extension/MIME agree.
+
+`completeAndStageUploadAction` explicitly states that the request path does **not** contact a malware scanner or supply a verdict. It records inspection metadata and creates a durable scan request, returning `PENDING_SCAN`. A separate continuation path stages the document only after a CLEAN worker result exists.
+
+Classification: **KEEP architecture boundary.** Do not mislabel magic-byte inspection as antivirus scanning and do not collapse the durable worker boundary into the web request just to simplify code.
+
+Whether a real production scanner/worker/provider is connected is a DR-05 production-readiness question.
+
+### 3. Storage cleanup provider abstraction is appropriately narrow
+
+`StorageCleanupProvider` exposes exact-object removal and normalizes provider errors into timeout/temporary/unavailable categories. It carefully distinguishes an authoritative missing object from bucket missing/permission/generic errors rather than treating every 404 as success.
+
+Classification: **KEEP.** This is a good example of a provider boundary that isolates external-service semantics without creating a general repository abstraction layer.
+
+### 4. Security headers / browser boundary — strong baseline
+
+Middleware applies a nonce-based CSP and headers including:
+
+- `default-src 'self'`;
+- nonce/strict-dynamic scripts;
+- no objects;
+- no framing (`frame-ancestors 'none'`, `X-Frame-Options: DENY`);
+- same-origin forms/base;
+- `nosniff`;
+- restrictive referrer policy;
+- camera/microphone/geolocation disabled.
+
+The repository also includes focused security-header/CSP browser tests. Sensitive response helpers use `private, no-store`, and the document-preview endpoint adds no-store, `nosniff`, and a sandboxed document CSP.
+
+Classification: **KEEP.** This is not where simplification effort should be spent.
+
+### 5. Same-origin helper exists; no broad origin-bypass finding established
+
+`validateSameOrigin` derives the expected origin from forwarded host/protocol and rejects missing or mismatched Origin/Referer inputs. The repository includes origin tests.
+
+DR-03 did not perform an exhaustive endpoint-by-endpoint CSRF audit, so no claim is made that every state-changing route manually invokes this helper. Next.js Server Actions also have their own framework-level request protections. A dedicated external security review, if desired later, should test behavior rather than infer it from helper presence alone.
+
+### 6. MEDIUM — error/logging hygiene is inconsistent across architecture paths
+
+A redacting logger exists and removes bearer/JWT/signed-URL/credential/OTP patterns plus sensitive-key fields. The generic command runner uses the shared logging path for unexpected errors.
+
+Other paths still use local/raw error handling. In particular, the document preview route returns `error.message` directly in the unexpected `500` response branch. Upstream known document failures are mostly converted to safe domain errors, but an unexpected thrown provider/runtime error can therefore be reflected to the client.
+
+Classification: **HARDEN, not architectural rewrite.** Replace unexpected external response bodies with a fixed safe message/request ID and log the redacted detail server-side. Standardize command/route logging on the shared redaction helper.
+
+This is a verified error-boundary weakness; it is **not** evidence that sensitive data has actually been leaked in production.
+
+### 7. Large UI/read modules are refactorability debt, not trust-boundary failure
+
+At the baseline tree, several workflow files are large:
+
+- `SubmissionDetailDrawer.tsx` ≈ 51.5 KB;
+- `HrReportView.tsx` ≈ 44.5 KB;
+- `InterviewPage.tsx` ≈ 42.4 KB;
+- `ApplicationInboxTable.tsx` ≈ 34.1 KB;
+- `interview/server.ts` ≈ 27.7 KB;
+- `candidate-actions.ts` ≈ 23.0 KB.
+
+The large components coordinate legitimate workflow state, stale-version refresh, dialogs, drawers, email/document operations and optimistic/dirty-state behavior. Their size increases change-collision and regression risk, but their existence does not invalidate the server/RPC/RLS architecture.
+
+Classification: **SIMPLIFY incrementally.** Extract workflow-specific hooks/subcomponents/adapters when touching those areas; do not create a standalone rewrite project unless measured change cost justifies it.
+
+## DR-03 final architecture verdict
+
+### KEEP
+
+- Next.js server boundary around trusted logic;
+- user-context Supabase server client for ordinary reads/mutations;
+- PostgreSQL RPCs for transactional business commands;
+- RLS as database backstop;
+- optimistic version/idempotency/locking rules in SQL;
+- narrow service-role operations for trusted storage/worker infrastructure;
+- server-side signed-URL streaming and fail-closed document access auditing;
+- CSP/security headers and sensitive-cache controls;
+- durable worker boundary for scan/cleanup/provider work.
+
+### SIMPLIFY / STANDARDIZE
+
+- three different TypeScript command-plumbing styles;
+- actor/session/RPC-result/error-mapping duplication;
+- capability-policy representations where contract tests can keep UI and RPC expectations aligned;
+- large workflow components and oversized read/action modules, incrementally;
+- redacted logging usage across all command/route paths.
+
+### HARDEN
+
+- never reflect unexpected raw `error.message` from API 500 responses;
+- prefer narrow privileged providers around service-role use;
+- keep intentional permission differences documented/tested to prevent drift.
+
+### REWRITE?
+
+**NO.** The evidence does not justify a framework, data-model or authorization rewrite. The core architecture is coherent and security-conscious. The identified problems are localized consistency/refactor/error-boundary issues that can be repaired while preserving accepted contracts.
+
+## Next research unit
+
+`DR-04 — CI / governance / review lifecycle throughput`
+
+Split into small checkpoints:
+
+- `DR-04A` — quantify representative task lifecycle stages and commit/review churn from Git history/evidence.
+- `DR-04B` — inspect CI workflow cost/serialization and distinguish necessary regression protection from repeated full-suite expense.
+- `DR-04C` — classify governance controls as KEEP / LIGHTEN / AUTOMATE / REMOVE-DUPLICATION and identify the critical-path bottlenecks.
