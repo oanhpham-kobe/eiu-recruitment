@@ -1,6 +1,6 @@
 # DR-04C — Governance / Evidence Serialization Simplification
 
-Status: IN PROGRESS — CHECKPOINT 1
+Status: COMPLETE
 Research date: 2026-09-27
 Repository: `oanhpham-kobe/eiu-recruitment`
 Technical evidence baseline: `8dcb0a5d7ce1be9d82e3448c01cdc1643e3ac8c4`
@@ -116,7 +116,7 @@ After that PASS, the accepted checkpoint points to `0d8c5c2`, while a later gove
 
 Persisting review evidence into the integration branch **before** final acceptance changes the SHA. That new SHA then becomes the thing that must be independently audited and CI-verified.
 
-This is self-induced SHA churn. The policy's non-candidate evidence-branch rule exists specifically to avoid review evidence mutating its own review target.
+This is self-induced SHA churn. The policy's non-candidate evidence-branch rule already provides a way to avoid review evidence mutating its own review target.
 
 ---
 
@@ -142,7 +142,7 @@ Again, the extra exact-SHA review target is created by moving evidence/state ont
 
 ---
 
-## 5. What is actually necessary?
+## 5. What is actually necessary for an ordinary task?
 
 ### Structurally necessary
 
@@ -152,7 +152,7 @@ For a normal task where serialization changes SHA:
 2. **Independent OMP final equivalence/acceptance review of exact `P`**.
 3. **Applicable exact-SHA CI on `P`** according to impact/full-gate policy.
 4. **Immutable accepted checkpoint** pointing to `P` after both review + CI PASS.
-5. **One canonical governance closure commit `G`** after acceptance to record the now-known facts that could not truthfully exist before the review/checkpoint:
+5. **One canonical governance closure commit `G`** after acceptance to record facts that could not truthfully exist before the review/checkpoint:
    - task `DONE` / accepted implementation SHA `P`;
    - accepted checkpoint/tag identity;
    - final review evidence pointer;
@@ -178,7 +178,7 @@ Review outputs can be persisted to append-only evidence branches during the gate
 
 ---
 
-## 6. Proposed minimal task lifecycle serialization
+## 6. Proposed minimal ordinary-task serialization
 
 When serialized integration changes candidate identity:
 
@@ -189,7 +189,7 @@ reviewed candidate C
 -> independent OMP exact-SHA equivalence/final acceptance review of P
    -> persist reviewer output on review/<...> evidence branch
 -> exact-SHA Integration/Governance CI on P
-   (or CI then review if the gate contract chooses that order; both must bind P)
+   (or CI then review if the gate contract chooses that order; both bind P)
 -> review PASS + CI PASS
 -> create immutable checkpoint/TASK-accepted tag -> P
 -> one governance closure commit G
@@ -209,7 +209,74 @@ The later canonical-state commit `G` is not misrepresented as a new accepted pro
 
 ---
 
-## 7. Control classification at checkpoint 1
+## 7. Last-task-of-slice behavior
+
+S07-005 provides a concrete slice-closing sample.
+
+After final acceptance target `0caf8335`, the branch advanced through exactly two commits before the Slice-07 composition rereview target:
+
+1. `63563a7c09205ece81f334ecbedb49333faba44e`
+   - `docs(governance): persist S07-005 final acceptance audit`
+2. `b4e06a639f9e00126c1f76549067e1f6469ebc8b`
+   - `chore(governance): close accepted S07-005 task`
+   - changes task status `REVIEW -> DONE` and routes the control plane to independent Slice-07 closing composition rereview.
+
+Evidence later records:
+
+- `SLICE-07-CLOSING-REVIEW-002`;
+- closing rereview SHA `b4e06a639f9e00126c1f76549067e1f6469ebc8b`;
+- verdict `PASS`;
+- source reopen `false`;
+- slice completeness `true`;
+- findings `NONE`.
+
+### What can be consolidated
+
+The two S07 commits above represent one logical post-task-acceptance transition and can be one atomic closure bundle:
+
+- persist/link final task review evidence;
+- mark task DONE;
+- record checkpoint/CI provenance;
+- regenerate derived views;
+- route directly to slice composition review.
+
+There is no policy/validator requirement for `persist audit` and `close accepted task` to be separate integration commits.
+
+### What should remain separate
+
+The **slice acceptance transition after composition review** is a genuinely new fact and should remain a separate canonical transition.
+
+Policy explicitly orders slice composition review after individual task acceptance. Before composition PASS, the system cannot truthfully claim:
+
+- Slice DONE;
+- slice accepted checkpoint;
+- next-slice advancement authorized by slice closure.
+
+Therefore the minimal safe last-task-of-slice flow is:
+
+```text
+product SHA P
+-> task final review + task CI PASS on P
+-> task checkpoint -> P
+-> one task-closure / slice-review-target commit G
+   (task DONE; slice still IN_PROGRESS; composition review pending)
+-> independent slice composition review of G
+-> broader exact-SHA regression gate on G when required
+-> slice review PASS + CI PASS
+-> immutable slice accepted checkpoint -> G
+-> one slice-closure / continuation commit H
+   (slice DONE; persist composition evidence; recompute/materialize next frontier)
+-> path-aware governance validation on H
+-> continue
+```
+
+This preserves temporal truth. Trying to mark Slice DONE in `G` before composition review would weaken the current ordering and is not recommended.
+
+For the last task in a slice, **two post-product governance state transitions are therefore justified**: one after task acceptance and one after slice acceptance. More than those requires specific evidence of a distinct fact boundary.
+
+---
+
+## 8. Final control classification
 
 ### KEEP
 
@@ -218,35 +285,53 @@ The later canonical-state commit `G` is not misrepresented as a new accepted pro
 - targeted re-review after repair;
 - final OMP exact integration equivalence review when serialization changes SHA;
 - exact-SHA CI;
-- immutable accepted checkpoint;
-- slice-closing composition review;
-- separate append-only evidence branch semantics.
+- immutable task checkpoint;
+- slice-closing composition review + slice checkpoint;
+- append-only evidence branch semantics;
+- one truthful state transition after each independently established acceptance boundary.
 
 ### REMOVE DUPLICATION / STOP TREATING AS MANDATORY GATE
 
-- separate `EXTERNAL_CHATGPT integration audit` as a mandatory acceptance gate when independent OMP final equivalence review already covers serialization equivalence;
+- separate `EXTERNAL_CHATGPT integration audit` as a mandatory gate when independent OMP final equivalence review already covers serialization equivalence;
 - integration-branch commit solely to import review artifacts before final acceptance;
-- final audit of a governance SHA that only exists because review evidence was copied onto integration first.
+- final audit of a governance SHA that only exists because review evidence was copied onto integration first;
+- separate `persist audit` and `close accepted task` commits when both can be one atomic post-acceptance closure bundle.
 
 ### CONSOLIDATE
 
-After final task acceptance, persist all canonical acceptance state in one governance closure commit where possible rather than separate `accept`, `route`, and `close accepted lifecycle` commits.
+Ordinary accepted task:
+
+- target = one post-acceptance governance closure commit.
+
+Last task of slice:
+
+- target = one task-closure/slice-review-target commit;
+- then one separate slice-closure/continuation commit after composition PASS.
 
 ### AUTOMATE
 
-Generate the closure bundle atomically from verified facts:
+Generate each closure bundle atomically from verified facts:
 
-- accepted task/checkpoint SHA;
+- accepted task/slice checkpoint SHA;
 - OMP evidence branch + evidence commit/path;
-- CI run IDs/results;
+- exact CI run IDs/results;
 - changed-file / product-provenance proof;
 - lane release and safe-frontier recomputation;
+- task/slice registry mutation;
 - derived state regeneration.
 
-Validator should reject partial bundles rather than requiring several intermediate commits.
+Add validator rules that reject partial acceptance bundles instead of relying on multiple intermediate commits to make missing fields visible.
 
 ---
 
-## 8. Remaining DR-04C check
+## 9. DR-04C verdict
 
-Before marking DR-04C complete, inspect slice-closing behavior for the last task in a slice. Determine whether task acceptance closure and slice composition target can safely share a canonical state transition, or whether policy ordering requires one additional slice-only closure commit.
+DR-04C is COMPLETE.
+
+The existing governance model does not need fewer independent safety gates; it needs **cleaner separation between immutable reviewed product SHAs, append-only evidence, and canonical state transitions**.
+
+The highest-value simplification is:
+
+> Review the actual product integration SHA, keep review artifacts off that target until acceptance is decided, checkpoint that reviewed/CI-proven SHA, then persist all resulting canonical state atomically.
+
+This removes self-induced SHA churn while preserving exact-SHA review, CI provenance, immutable recovery anchors, and truthful AUTONOMOUS continuation semantics.
