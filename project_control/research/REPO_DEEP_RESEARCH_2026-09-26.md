@@ -18,6 +18,8 @@ Each unit should be independently completable and checkpointed here before movin
 - [x] DR-00 — establish immutable research baseline and repository control-plane map.
 - [x] DR-01 — reconstruct canonical Phase-1 product scope vs implemented user-facing runtime.
 - [ ] DR-02 — reconstruct slice/task state machine and detect planning/state mismatches.
+  - [x] DR-02A — reconstruct authoritative/derived control-plane state without judgment.
+  - [ ] DR-02B — compare state semantics with canonical product/runtime truth and identify planner blind spots.
 - [ ] DR-03 — inspect runtime architecture and distinguish sound boundaries from accidental duplication/debt.
 - [ ] DR-04 — inspect CI/governance/review lifecycle cost and identify throughput bottlenecks.
 - [ ] DR-05 — inspect production-readiness gaps: deployment, email delivery, storage/documents, security/ops.
@@ -142,6 +144,89 @@ DR-01 does not equate a visible button/page with production readiness. External 
 
 Likewise, the official report PDF layout remains a separate concern from the implemented `/reports` web experience.
 
+## DR-02A — Control-plane state map
+
+Status: COMPLETE
+Evidence baseline: `8dcb0a5d7ce1be9d82e3448c01cdc1643e3ac8c4`
+
+This subsection records what the control plane says before interpreting whether those semantics are sufficient.
+
+### Authority layering
+
+`CURRENT_STATE.md` explicitly identifies itself as a **derived / non-authoritative** handoff snapshot. It names these sources as authoritative for state:
+
+- runtime/autonomy state: `AUTONOMY_RUN_STATE.yaml`;
+- DAG/task state: `TASK_REGISTRY.yaml`;
+- slice state: `SLICE_REGISTRY.yaml`;
+- exact code/history: Git.
+
+### Task Registry state
+
+`TASK_REGISTRY.yaml` declares:
+
+- `current_slice: SLICE-08`;
+- `current_task: TASK-S08-001`;
+- allowed statuses: `PLANNED, READY, IN_PROGRESS, REVIEW, BLOCKED, DONE, SUPERSEDED, CANCELLED`.
+
+At the same baseline:
+
+- `TASK-S06-001`: `DONE`;
+- `TASK-S06-002`: `DONE`;
+- all five materialized Slice-07 tasks are `DONE`/accepted;
+- `TASK-S08-001`: `DONE`;
+- `TASK-S08-002` is mentioned only as future/out-of-scope/frontier behavior and is **not materialized as a task entry**.
+
+The `current_task` pointer therefore points to a completed/accepted task, not to a currently executable task.
+
+### Slice Registry state
+
+`SLICE_REGISTRY.yaml` declares:
+
+- Slice-00 through Slice-07 (plus Design-System hardening) as `DONE`;
+- `SLICE-06: Master Data / Users & Permissions` as `DONE`, current task `TASK-S06-002`;
+- `SLICE-07: Email / Documents / Activity / Workers` as `DONE`, current task `TASK-S07-005`;
+- `SLICE-08: Search / Performance / Ops / Release Hardening` as `IN_PROGRESS`, current task `TASK-S08-001`;
+- global `current_slice: SLICE-08`.
+
+Thus slice `current_task` fields function at least partly as last/current-known task pointers, not necessarily runnable-frontier pointers.
+
+### Autonomy Run State
+
+`AUTONOMY_RUN_STATE.yaml` records:
+
+- `execution_mode: AUTONOMOUS`;
+- run `status: ACTIVE`;
+- `auto_advance: ENABLED`;
+- `parallel_scheduler: ENABLED`;
+- `max_active_implementation_tasks: 2`;
+- `active_workers: []`;
+- `last_accepted_task.id: TASK-S08-001`;
+- accepted S08-001 checkpoint at `0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb`;
+- current reporting classification `GOVERNANCE_ONLY` after accepted application state.
+
+The run state also retains extensive historical planning/review blocks from prior slices alongside the current frontier state.
+
+### Derived Current State snapshot
+
+`CURRENT_STATE.md` says:
+
+- `TASK-S08-001` lifecycle is `CLOSED_ACCEPTED`;
+- Slice-08 remains `IN_PROGRESS`;
+- `TASK-S08-002` is an identified future candidate only and is **not materialized**;
+- safe frontier is empty;
+- hard stop before TASK-S08-002 materialization;
+- no next implementation authority is implied.
+
+This is compatible with `active_workers: []` even though the autonomy run itself remains `ACTIVE` and auto-advance is enabled.
+
+### DR-02A state-machine snapshot
+
+At the research baseline, the effective control-plane state is therefore:
+
+`AUTONOMOUS RUN ACTIVE` → `SLICE-08 IN_PROGRESS` → `LAST/CURRENT POINTER = TASK-S08-001 DONE/CLOSED_ACCEPTED` → `NO MATERIALIZED NEXT TASK` → `SAFE FRONTIER EMPTY / HARD STOP`
+
+This is only a reconstruction. Whether this representation is semantically safe, whether `DONE` is overloaded, and whether the empty frontier incorrectly hides canonical product work are DR-02B questions.
+
 ## Research rules
 
 1. Do not infer DONE from slice labels alone; compare canonical product truth, task exclusions, runtime surface, and production behavior.
@@ -153,11 +238,12 @@ Likewise, the official report PDF layout remains a separate concern from the imp
 
 ## Next unit
 
-`DR-02 — slice/task state machine and planning-state correctness`
+`DR-02B — state semantics vs canonical product/runtime truth`
 
-Split into small checkpoints:
+Questions:
 
-- `DR-02A` — reconstruct the current state machine from Slice Registry, Task Registry, Autonomy Run State and Current State without judging it yet.
-- `DR-02B` — compare those states with canonical product/runtime truth; identify false completeness, stale pointers, ambiguous DONE semantics or planner blind spots.
-
-Only after DR-02B should the research recommend how the control-plane completion model should change.
+- Does slice `DONE` mean task-DAG closure, product-surface completion, or both?
+- Can an autonomous planner discover missing canonical UI when the owning slice is already `DONE`?
+- Are `current_task` and `current_slice` action pointers or reporting pointers, and is that distinction machine-readable?
+- Does `ACTIVE + auto_advance ENABLED + empty safe frontier` have a deterministic recovery/materialization rule?
+- Does the control plane separately represent product completeness, implementation acceptance and production readiness, or are those concepts conflated?
