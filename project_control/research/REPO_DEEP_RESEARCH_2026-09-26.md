@@ -17,9 +17,9 @@ Each unit should be independently completable and checkpointed here before movin
 
 - [x] DR-00 — establish immutable research baseline and repository control-plane map.
 - [x] DR-01 — reconstruct canonical Phase-1 product scope vs implemented user-facing runtime.
-- [ ] DR-02 — reconstruct slice/task state machine and detect planning/state mismatches.
+- [x] DR-02 — reconstruct slice/task state machine and detect planning/state mismatches.
   - [x] DR-02A — reconstruct authoritative/derived control-plane state without judgment.
-  - [ ] DR-02B — compare state semantics with canonical product/runtime truth and identify planner blind spots.
+  - [x] DR-02B — compare state semantics with canonical product/runtime truth and identify planner blind spots.
 - [ ] DR-03 — inspect runtime architecture and distinguish sound boundaries from accidental duplication/debt.
 - [ ] DR-04 — inspect CI/governance/review lifecycle cost and identify throughput bottlenecks.
 - [ ] DR-05 — inspect production-readiness gaps: deployment, email delivery, storage/documents, security/ops.
@@ -78,6 +78,18 @@ Likely direction: extract workflow hooks and focused subcomponents while preserv
 At the research baseline, the integration branch is hundreds of commits ahead of `main` and the project has accumulated hundreds of GitHub Actions runs. Commit/run count is not itself a defect, but combined with exact-SHA review, repair/re-review and serialized evidence gates it is a strong signal that governance verification may be consuming a large fraction of elapsed delivery time.
 
 DR-04 will quantify representative task lifecycles rather than relying on raw counts alone.
+
+### F-08 — Slice-DONE validator checks materialized tasks, not canonical feature completeness
+
+Governance explicitly says slice status represents completion of the slice's user/business feature scope. However, `validate_control_plane.py` considers a `DONE` slice structurally valid when every **materialized member task** is `DONE`; it has no check that all canonical feature requirements were materialized into tasks. This allows a missing-task problem to pass validation as complete.
+
+This is the control-plane mechanism behind the Slice-06 false-completeness state.
+
+### F-09 — Derived traceability is materially stale
+
+`TRACEABILITY_STATUS.csv` says it is reconciled only through accepted checkpoint TASK-S05-002 and still reports S06 Master Data/User/RBAC commands as `NOT_STARTED`, despite S06-001/S06-002 being accepted and the slice being `DONE` in authoritative registries.
+
+It is correctly marked non-authoritative, so this is not a scheduler corruption. It is nevertheless a human/reviewer handoff risk and evidence that reporting regeneration is not keeping pace with accepted implementation.
 
 ## DR-01 — Canonical Phase-1 product scope vs implemented runtime
 
@@ -172,7 +184,7 @@ At the same baseline:
 
 - `TASK-S06-001`: `DONE`;
 - `TASK-S06-002`: `DONE`;
-- all five materialized Slice-07 tasks are `DONE`/accepted;
+- all five materialized Slice-07 tasks are accepted;
 - `TASK-S08-001`: `DONE`;
 - `TASK-S08-002` is mentioned only as future/out-of-scope/frontier behavior and is **not materialized as a task entry**.
 
@@ -219,13 +231,107 @@ The run state also retains extensive historical planning/review blocks from prio
 
 This is compatible with `active_workers: []` even though the autonomy run itself remains `ACTIVE` and auto-advance is enabled.
 
+### Stop gate correction
+
+A deeper read confirms that `AUTONOMY_RUN_STATE.yaml` **does persist an explicit stop gate**:
+
+- `status: ACTIVE`;
+- `type: S08_002_SOURCE_RECONCILIATION_BEFORE_MATERIALIZATION_GATE`;
+- resume condition requires a separately materialized canonical S08-002 source-reconciliation/prompt lifecycle.
+
+Therefore the current hold is not merely an unstructured empty frontier. Any earlier suspicion that no stop gate existed is rejected by exact source evidence.
+
 ### DR-02A state-machine snapshot
 
 At the research baseline, the effective control-plane state is therefore:
 
-`AUTONOMOUS RUN ACTIVE` → `SLICE-08 IN_PROGRESS` → `LAST/CURRENT POINTER = TASK-S08-001 DONE/CLOSED_ACCEPTED` → `NO MATERIALIZED NEXT TASK` → `SAFE FRONTIER EMPTY / HARD STOP`
+`AUTONOMOUS RUN ACTIVE` → `SLICE-08 IN_PROGRESS` → `LAST/CURRENT POINTER = TASK-S08-001 DONE/CLOSED_ACCEPTED` → `NO MATERIALIZED NEXT TASK` → `SAFE FRONTIER EMPTY` → `EXPLICIT S08-002 MATERIALIZATION STOP GATE ACTIVE`
 
-This is only a reconstruction. Whether this representation is semantically safe, whether `DONE` is overloaded, and whether the empty frontier incorrectly hides canonical product work are DR-02B questions.
+## DR-02B — State semantics vs canonical product/runtime truth
+
+Status: COMPLETE
+Evidence baseline: `8dcb0a5d7ce1be9d82e3448c01cdc1643e3ac8c4`
+
+### 1. HIGH — Slice-06 `DONE` violates the governance meaning of slice completion
+
+The autonomy policy states explicitly:
+
+> Slice status represents completion of that slice's user/business feature scope.
+
+But canonical product truth requires two Phase-1 administration surfaces that are absent from runtime, while the only materialized Slice-06 tasks explicitly exclude those surfaces.
+
+Therefore Slice-06 `DONE` is not merely a naming preference; it contradicts the stated governance semantics of slice completion.
+
+### 2. Root cause — validator proves task closure, not scope coverage
+
+`validate_control_plane.py` validates a `DONE` slice by collecting its materialized member tasks and requiring each member to be `DONE`. It does **not** verify that canonical requirements for the slice were all represented by materialized tasks.
+
+Consequently:
+
+`ALL MATERIALIZED TASKS DONE` can incorrectly imply `SLICE DONE` even when `REQUIRED TASK NEVER MATERIALIZED`.
+
+This is exactly the failure shape observed in Slice-06.
+
+A recovery should not weaken task acceptance. It should add a scope-completeness/materialization check before a slice may become `DONE`.
+
+### 3. Autonomous frontier has a prior-slice discovery blind spot
+
+The autonomy policy is stronger than the current validator: after task CI it requires the Coordinator to inspect current/next incomplete slices, canonical source for remaining source-backed work, unmaterialized work, and OPEN_GAPS before declaring true no-safe-frontier.
+
+However, the authoritative slice registry already marks Slice-06 complete, and OPEN_GAPS does not record the missing Master Data or Users & Permissions UI. There is no machine-readable canonical-requirement → materialized-task coverage map that would force the planner to rediscover the omission.
+
+Thus the outer loop can be procedurally correct against its registries while still inheriting a false-complete prior slice.
+
+### 4. The S08 stop gate is structurally explicit but does not repair the earlier product omission
+
+The S08 stop gate truthfully blocks automatic materialization of the identified S08-002 candidate until its own governed source-reconciliation lifecycle exists. That is materially better than an unexplained empty frontier.
+
+But the stop gate is scoped to S08-002. It does not establish that **all canonical Phase-1 work across already-DONE slices is exhausted**. Because Slice-06 is falsely complete, global product completeness cannot be inferred from the S08 frontier hold.
+
+DR-02 does not yet assert that S08-002 itself should be auto-materialized; that depends on source sufficiency and later recovery prioritization. The stronger verified statement is that S06 UI work must be restored to the plan regardless of the S08-002 decision.
+
+### 5. `current_task` is a reporting pointer, not a runnable-work pointer
+
+At baseline, `current_task=TASK-S08-001` while that task is `DONE`. The validator intentionally permits `current_slice=IN_PROGRESS` with `current_task=DONE` if no non-terminal materialized members remain.
+
+This is internally consistent, but the field name is semantically overloaded. A machine or human that interprets `current_task` as executable work can be misled.
+
+Recommended model direction for DR-07 consideration:
+
+- preserve `last_accepted_task` / `last_materialized_task` for reporting;
+- represent `active_task` and `safe_frontier.eligible_tasks` as execution truth;
+- avoid using one `current_task` field for both historical pointer and action pointer semantics.
+
+### 6. Derived traceability is stale enough to mislead independent review
+
+`TRACEABILITY_STATUS.csv` labels itself derived/non-authoritative and says it is reconciled only through TASK-S05-002. It still reports S06 Master Data and Internal User/RBAC commands as `NOT_STARTED` despite accepted S06 implementations.
+
+Because scheduling correctly ignores this file, this is not the cause of the Slice-06 bug. But Astra/OMP or an Owner using it as a status map could reach incorrect conclusions unless warned.
+
+Recovery direction: either regenerate this reporting surface from authoritative registries/evidence automatically, or remove claims that cannot be kept current. Do not create another status authority.
+
+### 7. Product completeness, task acceptance and production readiness need separate dimensions
+
+The current repository already partially distinguishes them in prose, but the registry status model mainly exposes task/slice lifecycle state. This makes `DONE` easy to overread.
+
+The evidence now supports treating at least these dimensions independently:
+
+- **task acceptance** — exact task contract accepted/CI verified;
+- **slice feature completeness** — all canonical user/business scope represented and accepted;
+- **product Phase-1 completeness** — all required Phase-1 surfaces/workflows complete;
+- **production readiness** — deployment/provider/ops/UAT/security-release gates complete.
+
+A task can be accepted while its slice is incomplete; a Phase-1 feature can be complete while the product is not production-ready.
+
+### DR-02 conclusion
+
+The control plane is not broadly corrupt. Its authoritative registries, exact-SHA evidence and explicit stop-gate mechanics are internally disciplined. The critical defect is narrower and repairable:
+
+**slice completion is validated against the set of tasks that happened to be materialized, not against a canonical feature-coverage contract.**
+
+That defect allowed backend-only Slice-06 tasks to close a slice whose user-facing Phase-1 scope was still incomplete.
+
+Preferred recovery direction is therefore **repair the planning/completeness model and add the missing focused UI tasks**, not discard accepted implementation or rebuild governance from scratch.
 
 ## Research rules
 
@@ -238,12 +344,12 @@ This is only a reconstruction. Whether this representation is semantically safe,
 
 ## Next unit
 
-`DR-02B — state semantics vs canonical product/runtime truth`
+`DR-03 — runtime architecture: sound boundaries vs accidental duplication/debt`
 
-Questions:
+Split into small checkpoints:
 
-- Does slice `DONE` mean task-DAG closure, product-surface completion, or both?
-- Can an autonomous planner discover missing canonical UI when the owning slice is already `DONE`?
-- Are `current_task` and `current_slice` action pointers or reporting pointers, and is that distinction machine-readable?
-- Does `ACTIVE + auto_advance ENABLED + empty safe frontier` have a deterministic recovery/materialization rule?
-- Does the control plane separately represent product completeness, implementation acceptance and production readiness, or are those concepts conflated?
+- `DR-03A` — map request/read/write boundaries for Candidate, HR Application, Interview and Report flows.
+- `DR-03B` — inspect authorization/validation/RPC/RLS overlap and classify KEEP vs SIMPLIFY candidates.
+- `DR-03C` — inspect cross-cutting infrastructure abstractions and identify real architecture risks versus ordinary refactor debt.
+
+No framework/data-model rewrite recommendation should be made unless DR-03 produces concrete evidence that accepted boundaries are fundamentally unsound.
