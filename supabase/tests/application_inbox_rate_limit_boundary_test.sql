@@ -103,29 +103,44 @@ select pg_catalog.set_config(
 );
 set role authenticated;
 
--- Empty query and filter/pagination reads remain free.
+-- Empty query remains free. The request itself runs as authenticated; private
+-- limiter state is inspected only after RESET ROLE so the test does not weaken
+-- the production privilege boundary it is meant to verify.
+perform pg_catalog.count(*)
+from public.list_application_inbox(
+  '', 'ALL', null, null,
+  'ALL', 'ALL', 'ALL', 1, 25
+);
+
+reset role;
+
 do $$
 declare
   v_rows bigint;
 begin
-  perform pg_catalog.count(*)
-  from public.list_application_inbox(
-    '', 'ALL', null, null,
-    'ALL', 'ALL', 'ALL', 1, 25
-  );
-
   select pg_catalog.count(*) into v_rows
   from private.rate_limit_buckets
   where policy_code = 'INTERNAL_SEARCH';
   assert v_rows = 0,
     'empty Application Inbox query must not create/debit search quota';
+end;
+$$;
 
-  perform pg_catalog.count(*)
-  from public.list_application_inbox(
-    '', 'NEW', '2026-09-01', '2026-09-30',
-    'ACTIVE', 'NEW', 'NO_APPLICATION', 3, 50
-  );
+set role authenticated;
 
+-- Filter/pagination changes with empty free-text query also remain free.
+perform pg_catalog.count(*)
+from public.list_application_inbox(
+  '', 'NEW', '2026-09-01', '2026-09-30',
+  'ACTIVE', 'NEW', 'NO_APPLICATION', 3, 50
+);
+
+reset role;
+
+do $$
+declare
+  v_rows bigint;
+begin
   select pg_catalog.count(*) into v_rows
   from private.rate_limit_buckets
   where policy_code = 'INTERNAL_SEARCH';
@@ -134,19 +149,23 @@ begin
 end;
 $$;
 
+set role authenticated;
+
 -- Any normalized non-empty free-text attempt debits exactly one actor bucket,
 -- even when the search happens to return no rows.
+perform pg_catalog.count(*)
+from public.list_application_inbox(
+  'Nguyen', 'ALL', null, null,
+  'ALL', 'ALL', 'ALL', 1, 25
+);
+
+reset role;
+
 do $$
 declare
   v_rows bigint;
   v_count integer;
 begin
-  perform pg_catalog.count(*)
-  from public.list_application_inbox(
-    'Nguyen', 'ALL', null, null,
-    'ALL', 'ALL', 'ALL', 1, 25
-  );
-
   select pg_catalog.count(*), pg_catalog.max(request_count)
     into v_rows, v_count
   from private.rate_limit_buckets
@@ -160,8 +179,6 @@ begin
 end;
 $$;
 
-reset role;
-
 -- Caller without submissions.view/root authority receives no rows and is
 -- rejected before the rate-limit gate, so denied probes cannot burn quota.
 select pg_catalog.set_config(
@@ -174,8 +191,6 @@ set role authenticated;
 do $$
 declare
   v_result_count bigint;
-  v_bucket_count bigint;
-  v_request_count integer;
 begin
   select pg_catalog.count(*) into v_result_count
   from public.list_application_inbox(
@@ -184,7 +199,16 @@ begin
   );
   assert v_result_count = 0,
     'unauthorized Application Inbox caller must receive no rows';
+end;
+$$;
 
+reset role;
+
+do $$
+declare
+  v_bucket_count bigint;
+  v_request_count integer;
+begin
   select pg_catalog.count(*), pg_catalog.max(request_count)
     into v_bucket_count, v_request_count
   from private.rate_limit_buckets
@@ -194,8 +218,6 @@ begin
     'unauthorized Application Inbox caller must not consume search quota';
 end;
 $$;
-
-reset role;
 
 -- Force the authorized actor bucket to the canonical threshold in the current
 -- fixed window, then verify the public RPC surfaces the transport contract.
@@ -229,7 +251,6 @@ declare
   v_message text;
   v_detail text;
   v_detail_json jsonb;
-  v_request_count integer;
 begin
   begin
     perform pg_catalog.count(*)
@@ -254,7 +275,15 @@ begin
     assert ((v_detail_json->'headers'->>'Retry-After')::integer) between 1 and 60,
       'blocked Application Inbox search must expose authoritative Retry-After';
   end;
+end;
+$$;
 
+reset role;
+
+do $$
+declare
+  v_request_count integer;
+begin
   select request_count into v_request_count
   from private.rate_limit_buckets
   where policy_code = 'INTERNAL_SEARCH'
@@ -265,5 +294,4 @@ begin
 end;
 $$;
 
-reset role;
 rollback;
