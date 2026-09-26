@@ -106,7 +106,7 @@ set role authenticated;
 -- Empty query remains free. The request itself runs as authenticated; private
 -- limiter state is inspected only after RESET ROLE so the test does not weaken
 -- the production privilege boundary it is meant to verify.
-perform pg_catalog.count(*)
+select pg_catalog.count(*)
 from public.list_application_inbox(
   '', 'ALL', null, null,
   'ALL', 'ALL', 'ALL', 1, 25
@@ -129,7 +129,7 @@ $$;
 set role authenticated;
 
 -- Filter/pagination changes with empty free-text query also remain free.
-perform pg_catalog.count(*)
+select pg_catalog.count(*)
 from public.list_application_inbox(
   '', 'NEW', '2026-09-01', '2026-09-30',
   'ACTIVE', 'NEW', 'NO_APPLICATION', 3, 50
@@ -153,7 +153,7 @@ set role authenticated;
 
 -- Any normalized non-empty free-text attempt debits exactly one actor bucket,
 -- even when the search happens to return no rows.
-perform pg_catalog.count(*)
+select pg_catalog.count(*)
 from public.list_application_inbox(
   'Nguyen', 'ALL', null, null,
   'ALL', 'ALL', 'ALL', 1, 25
