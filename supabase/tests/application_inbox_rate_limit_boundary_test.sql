@@ -232,12 +232,12 @@ set request_count = 120,
     window_seconds = 60,
     window_started_at = pg_catalog.to_timestamp(
       pg_catalog.floor(
-        pg_catalog.extract(epoch from pg_catalog.clock_timestamp()) / 60
+        pg_catalog.date_part('epoch', pg_catalog.clock_timestamp()) / 60
       ) * 60
     ),
     expires_at = pg_catalog.to_timestamp(
       pg_catalog.floor(
-        pg_catalog.extract(epoch from pg_catalog.clock_timestamp()) / 60
+        pg_catalog.date_part('epoch', pg_catalog.clock_timestamp()) / 60
       ) * 60
     ) + pg_catalog.make_interval(secs => 60),
     updated_at = pg_catalog.clock_timestamp()
