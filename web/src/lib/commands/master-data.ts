@@ -285,15 +285,18 @@ export function createUpdateMasterItemCommand(
         const code =
           CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
           CommandErrorCode.INTERNAL_ERROR;
+        const message =
+          code === CommandErrorCode.STALE_VERSION
+            ? "Dữ liệu đã bị thay đổi bởi người khác (phiên bản cũ). Vui lòng tải lại dữ liệu."
+            : result.message || "Failed to update master item";
         return {
           success: false,
           error: {
             code,
-            message: result.message || "Failed to update master item",
+            message,
           },
         };
       }
-
       return {
         success: true,
         data: result.data,
@@ -416,12 +419,15 @@ export function createDeleteOrInactivateMasterItemCommand(
         const code =
           CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
           CommandErrorCode.INTERNAL_ERROR;
+        const message =
+          code === CommandErrorCode.STALE_VERSION
+            ? "Dữ liệu đã bị thay đổi bởi người khác (phiên bản cũ). Vui lòng tải lại dữ liệu."
+            : result.message || "Failed to delete or inactivate master item";
         return {
           success: false,
           error: {
             code,
-            message:
-              result.message || "Failed to delete or inactivate master item",
+            message,
           },
         };
       }

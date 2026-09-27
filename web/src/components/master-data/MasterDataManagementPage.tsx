@@ -41,7 +41,11 @@ export const MASTER_CATALOG_OPTIONS: readonly MasterCatalogOption[] = [
     labelVi: "Ngành / Tổ",
     labelEn: "Department Teams",
   },
-  { type: "positions", labelVi: "Vị trí tuyển dụng", labelEn: "Positions" },
+  {
+    type: "positions",
+    labelVi: "Vị trí tuyển dụng",
+    labelEn: "Positions",
+  },
   {
     type: "position_groups",
     labelVi: "Nhóm vị trí",
@@ -119,6 +123,7 @@ export function MasterDataManagementPage({
   // Alerts & announcements
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Modal states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -145,11 +150,13 @@ export function MasterDataManagementPage({
   const [formGroupId, setFormGroupId] = useState("");
   const [formSubmitting, setFormSubmitting] = useState(false);
 
-  // References for focus restoration
+  // References for focus restoration and containment
   const createTriggerRef = useRef<HTMLButtonElement>(null);
   const actionTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>(
     {},
   );
+  const lastActiveTriggerRef = useRef<HTMLElement | null>(null);
+  const activeModalRef = useRef<HTMLDivElement>(null);
 
   const searchInputId = useId();
   const catalogSelectId = useId();
@@ -216,6 +223,7 @@ export function MasterDataManagementPage({
 
   // Open Create Modal
   const openCreateModal = () => {
+    lastActiveTriggerRef.current = createTriggerRef.current;
     setFormCode("");
     setFormNameVi("");
     setFormNameEn("");
@@ -228,11 +236,14 @@ export function MasterDataManagementPage({
     setFormTeamId("");
     setFormGroupId(dependencies.positionGroups[0]?.position_group_id || "");
     setErrorMessage(null);
+    setModalError(null);
     setIsCreateOpen(true);
   };
 
   // Open Edit Modal
   const openEditModal = (item: MasterDataItemRecord) => {
+    lastActiveTriggerRef.current =
+      actionTriggerRefs.current[`edit-${item.id}`] ?? null;
     setEditingItem(item);
     setFormCode(item.code);
     setFormNameVi(item.nameVi);
@@ -249,21 +260,26 @@ export function MasterDataManagementPage({
     setFormTeamId(String(item.metadata?.department_team_id || ""));
     setFormGroupId(String(item.metadata?.position_group_id || ""));
     setErrorMessage(null);
+    setModalError(null);
   };
 
-  // Close modals & restore focus
+  // Close modals & restore focus to initiating trigger
   const closeModals = useCallback(() => {
     setIsCreateOpen(false);
     setEditingItem(null);
     setDeletingItem(null);
     setFormSubmitting(false);
+    setModalError(null);
+    setTimeout(() => {
+      lastActiveTriggerRef.current?.focus();
+    }, 0);
   }, []);
 
   // Handle Create Submit
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormSubmitting(true);
-    setErrorMessage(null);
+    setModalError(null);
 
     const payload: Record<string, unknown> = {};
 
@@ -299,9 +315,8 @@ export function MasterDataManagementPage({
       setSuccessMessage(`Đã tạo thành công mục danh mục "${formNameVi}".`);
       closeModals();
       await loadCatalogData(selectedCatalog);
-      createTriggerRef.current?.focus();
     } else {
-      setErrorMessage(res.error);
+      setModalError(res.error);
     }
   };
 
@@ -310,16 +325,16 @@ export function MasterDataManagementPage({
     e.preventDefault();
     if (!editingItem) return;
     setFormSubmitting(true);
-    setErrorMessage(null);
+    setModalError(null);
 
     const payload: Record<string, unknown> = {};
 
     if (selectedCatalog === "rooms") {
       payload.display_name = formNameVi.trim();
-      if (formBuilding.trim()) payload.building = formBuilding.trim();
+      payload.building = formBuilding.trim() || null;
     } else {
       payload.name_vi = formNameVi.trim();
-      if (formNameEn.trim()) payload.name_en = formNameEn.trim();
+      payload.name_en = formNameEn.trim() || null;
     }
 
     if (selectedCatalog === "position_groups") {
@@ -341,12 +356,16 @@ export function MasterDataManagementPage({
 
     if (res.success) {
       setSuccessMessage(`Đã cập nhật thành công mục danh mục "${formNameVi}".`);
-      const targetId = editingItem.id;
       closeModals();
       await loadCatalogData(selectedCatalog);
-      actionTriggerRefs.current[`edit-${targetId}`]?.focus();
     } else {
-      setErrorMessage(res.error);
+      const isStale =
+        res.code === "STALE_VERSION" || res.error?.includes("STALE_VERSION");
+      setModalError(
+        isStale
+          ? "Dữ liệu đã bị thay đổi bởi người khác (phiên bản cũ). Vui lòng đóng hộp thoại và tải lại trang."
+          : res.error,
+      );
     }
   };
 
@@ -354,7 +373,7 @@ export function MasterDataManagementPage({
   const handleDeleteConfirm = async () => {
     if (!deletingItem) return;
     setFormSubmitting(true);
-    setErrorMessage(null);
+    setModalError(null);
 
     const res = await deleteOrInactivateMasterItemAction(
       selectedCatalog,
@@ -372,21 +391,67 @@ export function MasterDataManagementPage({
       setSuccessMessage(msg);
       closeModals();
       await loadCatalogData(selectedCatalog);
-      createTriggerRef.current?.focus();
     } else {
-      setErrorMessage(res.error);
+      const isStale =
+        res.code === "STALE_VERSION" || res.error?.includes("STALE_VERSION");
+      setModalError(
+        isStale
+          ? "Dữ liệu đã bị thay đổi bởi người khác (phiên bản cũ). Vui lòng đóng hộp thoại và tải lại trang."
+          : res.error,
+      );
     }
   };
 
-  // Esc key closes modals
+  // Dialog focus trapping and keydown handling
   useEffect(() => {
+    const isAnyModalOpen =
+      isCreateOpen || Boolean(editingItem) || Boolean(deletingItem);
+    if (!isAnyModalOpen) return;
+
+    // Focus first interactive control inside modal
+    const modal = activeModalRef.current;
+    if (modal) {
+      const focusable = modal.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length > 0) {
+        focusable[0].focus();
+      }
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (isCreateOpen || editingItem || deletingItem) {
-          closeModals();
+        closeModals();
+        return;
+      }
+
+      if (e.key === "Tab") {
+        const container = activeModalRef.current;
+        if (!container) return;
+        const focusableElements = Array.from(
+          container.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (focusableElements.length === 0) return;
+
+        const first = focusableElements[0];
+        const last = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
         }
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isCreateOpen, editingItem, deletingItem, closeModals]);
@@ -618,10 +683,21 @@ export function MasterDataManagementPage({
                         </button>
                         {item.isActive && (
                           <button
+                            ref={(el) => {
+                              actionTriggerRefs.current[`delete-${item.id}`] =
+                                el;
+                            }}
                             type="button"
                             className="btn-secondary btn-sm"
                             style={{ color: "#dc2626" }}
-                            onClick={() => setDeletingItem(item)}
+                            onClick={() => {
+                              lastActiveTriggerRef.current =
+                                actionTriggerRefs.current[
+                                  `delete-${item.id}`
+                                ] ?? null;
+                              setDeletingItem(item);
+                              setModalError(null);
+                            }}
                           >
                             Xóa / Ngừng HĐ
                           </button>
@@ -639,6 +715,7 @@ export function MasterDataManagementPage({
         {isCreateOpen && (
           <div className="modal-overlay" role="presentation">
             <div
+              ref={activeModalRef}
               className="modal-content"
               role="dialog"
               aria-modal="true"
@@ -660,6 +737,16 @@ export function MasterDataManagementPage({
 
               <form onSubmit={handleCreateSubmit}>
                 <div className="modal-body">
+                  {modalError && (
+                    <div
+                      className="ui-alert ui-alert--error"
+                      role="alert"
+                      style={{ marginBottom: "1rem" }}
+                    >
+                      {modalError}
+                    </div>
+                  )}
+
                   <div className="form-group">
                     <label className="form-label" htmlFor="create-code">
                       Mã định danh (Code){" "}
@@ -929,6 +1016,7 @@ export function MasterDataManagementPage({
         {editingItem && (
           <div className="modal-overlay" role="presentation">
             <div
+              ref={activeModalRef}
               className="modal-content"
               role="dialog"
               aria-modal="true"
@@ -950,6 +1038,16 @@ export function MasterDataManagementPage({
 
               <form onSubmit={handleEditSubmit}>
                 <div className="modal-body">
+                  {modalError && (
+                    <div
+                      className="ui-alert ui-alert--error"
+                      role="alert"
+                      style={{ marginBottom: "1rem" }}
+                    >
+                      {modalError}
+                    </div>
+                  )}
+
                   <div className="form-group">
                     <label className="form-label" htmlFor="edit-code">
                       Mã định danh (Bất biến theo hợp đồng)
@@ -1113,6 +1211,7 @@ export function MasterDataManagementPage({
         {deletingItem && (
           <div className="modal-overlay" role="presentation">
             <div
+              ref={activeModalRef}
               className="modal-content"
               role="dialog"
               aria-modal="true"
@@ -1133,6 +1232,16 @@ export function MasterDataManagementPage({
               </div>
 
               <div className="modal-body">
+                {modalError && (
+                  <div
+                    className="ui-alert ui-alert--error"
+                    role="alert"
+                    style={{ marginBottom: "1rem" }}
+                  >
+                    {modalError}
+                  </div>
+                )}
+
                 <p>
                   Bạn có chắc chắn muốn xóa hoặc ngừng hoạt động mục danh mục:{" "}
                   <strong>{deletingItem.nameVi}</strong> (Mã:{" "}

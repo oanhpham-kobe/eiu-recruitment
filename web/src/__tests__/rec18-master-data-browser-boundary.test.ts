@@ -43,7 +43,10 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
               export async function createMasterItemAction() {
                 return { success: true, data: { master_type: "organizational_units", master_id: "u-new", version_no: 1, is_active: true } };
               }
-              export async function updateMasterItemAction() {
+              export async function updateMasterItemAction(type, id, payload, ver) {
+                if (payload && payload.name_vi === "Trigger Stale") {
+                  return { success: false, code: "STALE_VERSION", error: "Dữ liệu đã bị thay đổi bởi người khác (phiên bản cũ)." };
+                }
                 return { success: true, data: { master_type: "organizational_units", master_id: "u-001", version_no: 2, is_active: true } };
               }
               export async function deleteOrInactivateMasterItemAction() {
@@ -282,6 +285,78 @@ test("B1.7: Limited HR without master_data.manage is denied management actions",
       await page.locator('.master-data-table button:has-text("Sửa")').count(),
       0,
     );
+  } finally {
+    await page.close();
+  }
+});
+
+test("B1.8: Dialog focus trap and focus restoration on dismiss", async () => {
+  const page = await setupPage();
+  try {
+    const createBtn = page.locator('button:has-text("+ Thêm mới")');
+    await createBtn.click();
+    await page.waitForSelector('div[role="dialog"]');
+
+    // Initial focus is inside the dialog (close button or first input)
+    const isFocusInside = await page.evaluate(() => {
+      const dialog = document.querySelector('div[role="dialog"]');
+      return dialog ? dialog.contains(document.activeElement) : false;
+    });
+    assert.equal(isFocusInside, true);
+
+    // Press Escape to dismiss
+    await page.keyboard.press("Escape");
+    await page.waitForSelector('div[role="dialog"]', { state: "detached" });
+    // Focus restored to the create button
+    await page.waitForFunction(() => {
+      const btn = document.querySelector(".btn-primary");
+      return document.activeElement === btn;
+    });
+  } finally {
+    await page.close();
+  }
+});
+
+test("B1.9: STALE_VERSION conflict error renders inside modal and keeps dialog open", async () => {
+  const page = await setupPage();
+  try {
+    await page.click(
+      '.master-data-table tbody tr:first-child button:has-text("Sửa")',
+    );
+    await page.waitForSelector('div[role="dialog"]');
+
+    // Enter name that triggers STALE_VERSION in our stub
+    const nameInput = page.locator("#edit-name-vi");
+    await nameInput.fill("Trigger Stale");
+
+    // Click submit
+    await page.click('button[type="submit"]:has-text("Lưu thay đổi")');
+
+    // Dialog remains open
+    assert.equal(await page.locator('div[role="dialog"]').count(), 1);
+
+    // Modal-local error alert is displayed
+    const modalError = await page.textContent(".modal-body .ui-alert--error");
+    assert.ok(modalError?.includes("phiên bản cũ"));
+  } finally {
+    await page.close();
+  }
+});
+
+test("B1.10: Typography of action buttons and badges satisfies minimum 16px", async () => {
+  const page = await setupPage();
+  try {
+    const btnFontSize = await page.evaluate(() => {
+      const btn = document.querySelector(".btn-sm");
+      return btn ? window.getComputedStyle(btn).fontSize : null;
+    });
+    assert.equal(btnFontSize, "16px");
+
+    const badgeFontSize = await page.evaluate(() => {
+      const badge = document.querySelector(".badge");
+      return badge ? window.getComputedStyle(badge).fontSize : null;
+    });
+    assert.equal(badgeFontSize, "16px");
   } finally {
     await page.close();
   }

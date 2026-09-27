@@ -24,7 +24,7 @@ export interface MasterDataItemRecord {
   metadata?: Record<string, unknown>;
 }
 
-export const MASTER_TYPE_PK: Record<MasterDataType, string> = {
+const MASTER_TYPE_PK: Record<MasterDataType, string> = {
   organizational_units: "unit_id",
   department_teams: "department_team_id",
   positions: "position_id",
