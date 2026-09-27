@@ -3,11 +3,11 @@ export type PublicSupabaseEnv = {
   publishableKey: string;
 };
 
-function requirePublicEnvironmentVariable(name: string): string {
-  const value = process.env[name]?.trim();
+function requirePublicSupabaseUrl(): string {
+  const value = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 
   if (!value) {
-    throw new Error(`${name} must be configured`);
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL must be configured");
   }
 
   return value;
@@ -25,7 +25,7 @@ export function getPublicSupabaseEnv(): PublicSupabaseEnv {
   }
 
   return {
-    url: requirePublicEnvironmentVariable("NEXT_PUBLIC_SUPABASE_URL"),
+    url: requirePublicSupabaseUrl(),
     publishableKey,
   };
 }

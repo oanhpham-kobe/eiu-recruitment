@@ -1,6 +1,53 @@
 import { Buffer } from "node:buffer";
 
+import {
+  type CookieOptions,
+  createServerClient as createSupabaseServerClient,
+} from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+
+import { getPublicSupabaseEnv } from "@/lib/env/client";
+
+type RequestCookie = {
+  name: string;
+  value: string;
+};
+
+type CookiesToSet = Array<{
+  name: string;
+  value: string;
+  options: CookieOptions;
+}>;
+
+type SessionClientFactoryOptions = {
+  cookieOptions: CookieOptions;
+
+  cookies: {
+    getAll: () => RequestCookie[];
+    setAll: (
+      cookiesToSet: CookiesToSet,
+      headers: Record<string, string>,
+    ) => void;
+  };
+};
+
+type SessionClientFactory = (
+  url: string,
+  publishableKey: string,
+  options: SessionClientFactoryOptions,
+) => {
+  auth: {
+    getUser: () => Promise<unknown>;
+  };
+};
+
+function createSessionClient(
+  url: string,
+  publishableKey: string,
+  options: SessionClientFactoryOptions,
+) {
+  return createSupabaseServerClient(url, publishableKey, options);
+}
 
 function getSupabaseOrigin(): string | undefined {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,7 +82,52 @@ function createContentSecurityPolicy(nonce: string): string {
   ].join("; ");
 }
 
-export function middleware(request: NextRequest) {
+/**
+ * Refreshes the cookie session before a route reads it. Updated cookies and
+ * cache-control headers must travel with the same response.
+ */
+export async function refreshSupabaseSession(
+  request: NextRequest,
+  requestHeaders: Headers,
+  sessionClientFactory: SessionClientFactory = createSessionClient,
+) {
+  const { url, publishableKey } = getPublicSupabaseEnv();
+  let response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+
+  const supabase = sessionClientFactory(url, publishableKey, {
+    cookieOptions: { secure: process.env.NODE_ENV === "production" },
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet, headers) {
+        for (const { name, value } of cookiesToSet) {
+          request.cookies.set(name, value);
+        }
+
+        requestHeaders.set("cookie", request.cookies.toString());
+        response = NextResponse.next({
+          request: { headers: requestHeaders },
+        });
+
+        for (const { name, value, options } of cookiesToSet) {
+          response.cookies.set(name, value, options);
+        }
+        for (const [name, value] of Object.entries(headers)) {
+          response.headers.set(name, value);
+        }
+      },
+    },
+  });
+
+  await supabase.auth.getUser();
+
+  return response;
+}
+
+export async function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const contentSecurityPolicy = createContentSecurityPolicy(nonce);
   const requestHeaders = new Headers(request.headers);
@@ -44,9 +136,7 @@ export function middleware(request: NextRequest) {
   requestHeaders.set("Content-Security-Policy", contentSecurityPolicy);
   requestHeaders.set("x-pathname", request.nextUrl.pathname);
 
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  const response = await refreshSupabaseSession(request, requestHeaders);
 
   response.headers.set("Content-Security-Policy", contentSecurityPolicy);
   response.headers.set("x-nonce", nonce);
