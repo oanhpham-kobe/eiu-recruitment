@@ -22,10 +22,23 @@ test("limited HR navigation follows granted view permissions", () => {
     hrefs(["HR"], ["submissions.view", "interviews.view", "reports.view"]),
     ["/", "/interviews", "/reports"],
   );
+  assert.deepEqual(
+    hrefs(["HR"], ["master_data.manage"]),
+    ["/reports", "/master-data"],
+  );
+  assert.deepEqual(
+    hrefs(["HR"], ["submissions.view", "master_data.manage"]),
+    ["/", "/reports", "/master-data"],
+  );
 });
 
 test("Root Admin sees all implemented internal modules", () => {
-  assert.deepEqual(hrefs(["ROOT_ADMIN"], []), ["/", "/interviews", "/reports"]);
+  assert.deepEqual(hrefs(["ROOT_ADMIN"], []), [
+    "/",
+    "/interviews",
+    "/reports",
+    "/master-data",
+  ]);
 });
 
 test("missing identity fails closed", () => {
