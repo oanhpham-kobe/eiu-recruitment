@@ -150,6 +150,9 @@ export function MasterDataManagementPage({
   const [formGroupId, setFormGroupId] = useState("");
   const [formSubmitting, setFormSubmitting] = useState(false);
 
+  // Post-refresh focus target key (e.g. "edit-u-001" or "create-trigger")
+  const [focusTargetKey, setFocusTargetKey] = useState<string | null>(null);
+
   // References for focus restoration and containment
   const createTriggerRef = useRef<HTMLButtonElement>(null);
   const actionTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>(
@@ -263,17 +266,38 @@ export function MasterDataManagementPage({
     setModalError(null);
   };
 
-  // Close modals & restore focus to initiating trigger
-  const closeModals = useCallback(() => {
+  // Close modals & optionally restore focus to initiating trigger
+  const closeModals = useCallback((restoreFocus = true) => {
     setIsCreateOpen(false);
     setEditingItem(null);
     setDeletingItem(null);
     setFormSubmitting(false);
     setModalError(null);
-    setTimeout(() => {
-      lastActiveTriggerRef.current?.focus();
-    }, 0);
+    if (restoreFocus) {
+      setTimeout(() => {
+        lastActiveTriggerRef.current?.focus();
+      }, 0);
+    }
   }, []);
+
+  // Post-refresh focus restoration effect
+  useEffect(() => {
+    if (!focusTargetKey || loading) return;
+
+    if (focusTargetKey === "create-trigger") {
+      createTriggerRef.current?.focus();
+      setFocusTargetKey(null);
+      return;
+    }
+
+    const targetEl = actionTriggerRefs.current[focusTargetKey];
+    if (targetEl && document.contains(targetEl)) {
+      targetEl.focus();
+    } else {
+      createTriggerRef.current?.focus();
+    }
+    setFocusTargetKey(null);
+  }, [focusTargetKey, loading]);
 
   // Handle Create Submit
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -313,7 +337,8 @@ export function MasterDataManagementPage({
 
     if (res.success) {
       setSuccessMessage(`Đã tạo thành công mục danh mục "${formNameVi}".`);
-      closeModals();
+      closeModals(false);
+      setFocusTargetKey("create-trigger");
       await loadCatalogData(selectedCatalog);
     } else {
       setModalError(res.error);
@@ -327,6 +352,7 @@ export function MasterDataManagementPage({
     setFormSubmitting(true);
     setModalError(null);
 
+    const targetKey = `edit-${editingItem.id}`;
     const payload: Record<string, unknown> = {};
 
     if (selectedCatalog === "rooms") {
@@ -356,7 +382,8 @@ export function MasterDataManagementPage({
 
     if (res.success) {
       setSuccessMessage(`Đã cập nhật thành công mục danh mục "${formNameVi}".`);
-      closeModals();
+      closeModals(false);
+      setFocusTargetKey(targetKey);
       await loadCatalogData(selectedCatalog);
     } else {
       const isStale =
@@ -389,7 +416,8 @@ export function MasterDataManagementPage({
           ? `Mục danh mục "${deletingItem.nameVi}" đã chuyển sang trạng thái Ngừng hoạt động (do đã có dữ liệu tham chiếu trong hệ thống).`
           : `Đã xóa vĩnh viễn mục danh mục "${deletingItem.nameVi}" (chưa có dữ liệu tham chiếu).`;
       setSuccessMessage(msg);
-      closeModals();
+      closeModals(false);
+      setFocusTargetKey("create-trigger");
       await loadCatalogData(selectedCatalog);
     } else {
       const isStale =
@@ -421,7 +449,7 @@ export function MasterDataManagementPage({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        closeModals();
+        closeModals(true);
         return;
       }
 
@@ -728,7 +756,7 @@ export function MasterDataManagementPage({
                 <button
                   type="button"
                   className="btn-secondary btn-sm"
-                  onClick={closeModals}
+                  onClick={() => closeModals(true)}
                   aria-label="Đóng"
                 >
                   ✕
@@ -994,7 +1022,7 @@ export function MasterDataManagementPage({
                   <button
                     type="button"
                     className="btn-secondary"
-                    onClick={closeModals}
+                    onClick={() => closeModals(true)}
                     disabled={formSubmitting}
                   >
                     Hủy bỏ
@@ -1029,7 +1057,7 @@ export function MasterDataManagementPage({
                 <button
                   type="button"
                   className="btn-secondary btn-sm"
-                  onClick={closeModals}
+                  onClick={() => closeModals(true)}
                   aria-label="Đóng"
                 >
                   ✕
@@ -1189,7 +1217,7 @@ export function MasterDataManagementPage({
                   <button
                     type="button"
                     className="btn-secondary"
-                    onClick={closeModals}
+                    onClick={() => closeModals(true)}
                     disabled={formSubmitting}
                   >
                     Hủy bỏ
@@ -1224,7 +1252,7 @@ export function MasterDataManagementPage({
                 <button
                   type="button"
                   className="btn-secondary btn-sm"
-                  onClick={closeModals}
+                  onClick={() => closeModals(true)}
                   aria-label="Đóng"
                 >
                   ✕
@@ -1270,7 +1298,7 @@ export function MasterDataManagementPage({
                 <button
                   type="button"
                   className="btn-secondary"
-                  onClick={closeModals}
+                  onClick={() => closeModals(true)}
                   disabled={formSubmitting}
                 >
                   Hủy bỏ

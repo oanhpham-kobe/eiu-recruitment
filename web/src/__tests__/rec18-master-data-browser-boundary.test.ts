@@ -37,8 +37,12 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
           }));
           b.onLoad({ filter: /.*/, namespace: "stub-actions" }, () => ({
             contents: `
+              let currentItems = [
+                { id: "u-001", code: "CNTT", nameVi: "Khoa Công nghệ thông tin", nameEn: "Faculty of IT", isActive: true, versionNo: 1 },
+                { id: "u-002", code: "QTKD", nameVi: "Khoa Quản trị kinh doanh", nameEn: "Faculty of BA", isActive: false, versionNo: 2 },
+              ];
               export async function getMasterDataItemsAction(type) {
-                return { success: true, data: [] };
+                return { success: true, data: currentItems };
               }
               export async function createMasterItemAction() {
                 return { success: true, data: { master_type: "organizational_units", master_id: "u-new", version_no: 1, is_active: true } };
@@ -47,7 +51,12 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
                 if (payload && payload.name_vi === "Trigger Stale") {
                   return { success: false, code: "STALE_VERSION", error: "Dữ liệu đã bị thay đổi bởi người khác (phiên bản cũ)." };
                 }
-                return { success: true, data: { master_type: "organizational_units", master_id: "u-001", version_no: 2, is_active: true } };
+                const found = currentItems.find(x => x.id === id);
+                if (found) {
+                  found.nameVi = payload.name_vi;
+                  found.versionNo += 1;
+                }
+                return { success: true, data: { master_type: "organizational_units", master_id: id, version_no: 2, is_active: true } };
               }
               export async function deleteOrInactivateMasterItemAction() {
                 return { success: true, data: { master_type: "organizational_units", master_id: "u-001", version_no: 2, outcome: "INACTIVATED" } };
@@ -357,6 +366,35 @@ test("B1.10: Typography of action buttons and badges satisfies minimum 16px", as
       return badge ? window.getComputedStyle(badge).fontSize : null;
     });
     assert.equal(badgeFontSize, "16px");
+  } finally {
+    await page.close();
+  }
+});
+test("B1.11: Successful edit mutation restores keyboard focus to the refreshed edit button", async () => {
+  const page = await setupPage();
+  try {
+    await page.click(
+      '.master-data-table tbody tr:first-child button:has-text("Sửa")',
+    );
+    await page.waitForSelector('div[role="dialog"]');
+
+    // Edit the name
+    const nameInput = page.locator("#edit-name-vi");
+    await nameInput.fill("Khoa CNTT Đã Sửa");
+
+    // Click submit
+    await page.click('button[type="submit"]:has-text("Lưu thay đổi")');
+
+    // Dialog closes
+    await page.waitForSelector('div[role="dialog"]', { state: "detached" });
+
+    // Focus is restored to the refreshed Sửa button on the first row
+    await page.waitForFunction(() => {
+      const btn = document.querySelector(
+        ".master-data-table tbody tr:first-child .actions-cell button",
+      );
+      return document.activeElement === btn;
+    });
   } finally {
     await page.close();
   }
