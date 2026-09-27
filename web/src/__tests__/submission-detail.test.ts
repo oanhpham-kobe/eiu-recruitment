@@ -1560,6 +1560,9 @@ async function getDrawerBrowserBundle() {
               export async function getSubmissionDetailAction() { return { success: false, error: 'stub' }; }
               export async function openSubmissionAction() { return { success: true }; }
               export async function updateSubmissionHrNoteAction() { return { success: false, error: 'stub' }; }
+              export async function updateSubmissionAggregateAction() { return { success: true }; }
+              export async function getRecruitmentSourcesAction() { return []; }
+              export async function getQualificationLevelsAction() { return []; }
               export async function getDocumentSignedUrlAction() { return { success: false, error: 'stub' }; }
               export async function getAssignmentOptionsAction() { return { success: false, error: 'stub' }; }
               export async function createApplicationAction() { return { success: false, error: 'stub' }; }

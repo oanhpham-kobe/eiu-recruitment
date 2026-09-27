@@ -40,7 +40,11 @@ import {
   type OpenSubmissionData,
   openSubmission,
   type SubmissionStatusCommandDeps,
+  type UpdateSubmissionAggregateData,
+  type UpdateSubmissionAggregateInput,
+  updateSubmissionAggregateByHr,
 } from "@/lib/commands/submission-status";
+import { createServerClient } from "@/lib/supabase/server";
 
 export async function queryApplicationInbox(input: {
   filters: ApplicationInboxFilters;
@@ -108,6 +112,81 @@ export async function openSubmissionAction(
       code: "INTERNAL_ERROR",
     };
   }
+}
+
+export async function updateSubmissionAggregateAction(
+  input: UpdateSubmissionAggregateInput,
+  deps: SubmissionStatusCommandDeps = {},
+): Promise<
+  | { success: true; data: UpdateSubmissionAggregateData }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    const result = await updateSubmissionAggregateByHr(input, deps);
+    if (!result.success) {
+      return {
+        success: false,
+        error:
+          result.error?.message ??
+          "Không thể cập nhật thông tin phiếu ứng tuyển.",
+        code: result.error?.code,
+      };
+    }
+    return { success: true, data: result.data };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Không thể cập nhật thông tin phiếu ứng tuyển.",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
+export async function getRecruitmentSourcesAction(): Promise<
+  Array<{ recruitment_source_id: string; code: string; name_vi: string }>
+> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("recruitment_sources")
+    .select("recruitment_source_id, code, name_vi")
+    .eq("is_active", true)
+    .order("name_vi", { ascending: true });
+  return (
+    (data as Array<{
+      recruitment_source_id: string;
+      code: string;
+      name_vi: string;
+    }> | null) || []
+  ).map((r) => ({
+    recruitment_source_id: r.recruitment_source_id,
+    code: r.code,
+    name_vi: r.name_vi,
+  }));
+}
+
+export async function getQualificationLevelsAction(): Promise<
+  Array<{ qualification_id: string; code: string; name_vi: string }>
+> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("qualification_levels")
+    .select("qualification_id, code, name_vi")
+    .eq("is_active", true)
+    .order("code", { ascending: true });
+  return (
+    (data as Array<{
+      qualification_id: string;
+      code: string;
+      name_vi: string;
+    }> | null) || []
+  ).map((q) => ({
+    qualification_id: q.qualification_id,
+    code: q.code,
+    name_vi: q.name_vi,
+  }));
 }
 
 export async function getDocumentSignedUrlAction(options: {

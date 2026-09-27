@@ -129,6 +129,9 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
               export async function getSubmissionDetailAction() { return { success: false, error: 'stub' }; }
               export async function updateSubmissionHrNoteAction() { return { success: false, error: 'stub' }; }
               export async function openSubmissionAction() { return { success: true }; }
+              export async function updateSubmissionAggregateAction() { return { success: true }; }
+              export async function getRecruitmentSourcesAction() { return []; }
+              export async function getQualificationLevelsAction() { return []; }
             `,
           }));
         },

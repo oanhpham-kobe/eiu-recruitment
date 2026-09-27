@@ -1174,6 +1174,43 @@ textarea {
   border-color: var(--eiu-blue);
 }
 
+.drawer-input,
+.drawer-select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  font-size: 16px;
+  font-family: inherit;
+  line-height: 1.5;
+  color: var(--ink-950);
+  background: var(--surface);
+}
+
+.drawer-input:focus-visible,
+.drawer-select:focus-visible {
+  outline: 2px solid var(--eiu-blue);
+  border-color: var(--eiu-blue);
+}
+
+.drawer-immutable-hint {
+  font-size: 16px;
+  color: var(--ink-600);
+  font-style: italic;
+  display: block;
+  margin-top: 4px;
+}
+
+.drawer-edu-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+}
+
+.drawer-add-edu-btn {
+  margin-top: var(--space-3);
+}
+
 .drawer-hr-note-text {
   white-space: pre-wrap;
   word-break: break-word;
