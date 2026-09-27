@@ -310,6 +310,12 @@ jobs:
           CONTAINER_NAME: supabase_db_eiu-recruitment-dev
         run: |
           bash supabase/tests/recovery_rec18_master_data_lifecycle_test.sh
+
+      - name: Execute REC-19 Users & Permissions Lifecycle & RBAC Assertions
+        env:
+          CONTAINER_NAME: supabase_db_eiu-recruitment-dev
+        run: |
+          bash supabase/tests/recovery_rec19_users_permissions_test.sh
       - name: Reset local database for standalone bulk replay
         run: supabase db reset
 
