@@ -128,6 +128,7 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
               export async function getDocumentSignedUrlAction() { return { success: false, error: 'stub' }; }
               export async function getSubmissionDetailAction() { return { success: false, error: 'stub' }; }
               export async function updateSubmissionHrNoteAction() { return { success: false, error: 'stub' }; }
+              export async function openSubmissionAction() { return { success: true }; }
             `,
           }));
         },

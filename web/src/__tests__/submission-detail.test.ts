@@ -1558,6 +1558,7 @@ async function getDrawerBrowserBundle() {
           b.onLoad({ filter: /.*/, namespace: "stub-actions" }, () => ({
             contents: `
               export async function getSubmissionDetailAction() { return { success: false, error: 'stub' }; }
+              export async function openSubmissionAction() { return { success: true }; }
               export async function updateSubmissionHrNoteAction() { return { success: false, error: 'stub' }; }
               export async function getDocumentSignedUrlAction() { return { success: false, error: 'stub' }; }
               export async function getAssignmentOptionsAction() { return { success: false, error: 'stub' }; }
