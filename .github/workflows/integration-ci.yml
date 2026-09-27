@@ -148,6 +148,9 @@ jobs:
         run: npm run typecheck
 
       - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://project.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: test-publishable-key
         run: npm run build
 
       - name: Install Playwright Chromium
