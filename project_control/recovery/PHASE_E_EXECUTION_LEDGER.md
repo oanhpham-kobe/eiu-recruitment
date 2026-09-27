@@ -4,7 +4,7 @@ MASTER_PLAN: `review/astra-strategic-review-20260927:project_control/astra_revie
 MASTER_PLAN_SHA256: `928c5bb4c32289dc5a7a0979531f5f26769c4e5f228cb2f5fbea9ee16f09826c`
 EXECUTION_MODE: `AUTONOMOUS`
 CURRENT_INTEGRATION_BRANCH: `autonomy/continuous-integration-20260905-01`
-CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (last accepted integration: `72369fe94852fabd1f99f306c31d2e1ace2c64c0`)
+CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (Package-004 integration candidate: `fc8264ee161a0b3a39f60cb05ca029705a61e38b`; exact-SHA CI pending)
 
 ## Accepted recovery packages
 
@@ -16,18 +16,18 @@ CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (last accepted integration: `72369
 
 LAST_ACCEPTED_PACKAGE: `Recovery Package 003`
 ACCEPTED_REC_SET: `REC-01, REC-02, REC-03, REC-04`
-ACTIVE_PACKAGE: `Recovery Package 004 — REC-05 explicit HR open and Candidate edit boundary`
+ACTIVE_PACKAGE: `Recovery Package 004 — exact-SHA CI pending`
 ACTIVE_PACKAGE_BASE_SHA: `04d6e6c`
 ACTIVE_BRANCH: `implementation/recovery-package-004-hr-open`
 ACTIVE_WORKTREE: `D:/orca/recruitment/.worktrees/maintenance/recovery-package-004-hr-open`
 DEPENDENCIES: `REC-01, REC-02, REC-03, and REC-04 accepted; REC-05 is dependency-ready.`
 OWNER_GATES: `O-EXEC and O-LOCAL apply to the next local package; O-AUTH/O-ENV remain closed for connected configuration.`
-CANDIDATE_SHA: `NONE`
-REVIEW_STATUS: `Independent product/security review required before Package-004 acceptance.`
+CANDIDATE_SHA: `d3f67ecfd629cb8c5a452174366624921b212356`
+REVIEW_STATUS: `Independent product/security review PASS (explicit open intent, duplicate click protection, view-only nonmutating reads, Candidate save vs HR open clean serialization and draft preservation, 60 web tests pass). Exact-SHA CI pending.`
 CI_RUNS: `Package 001: 36323009513, 36323083024; Package 002: 36326090416, 36326090418; Package 003: 36332367274, 36332367253`
 CHECKPOINT_REF: `checkpoint/recovery-package-001-accepted-001 -> f6e22c123381fc047b3eb22abbe790f482984135; checkpoint/recovery-package-002-accepted-001 -> 87a2d1ed264d66a1b18468cc831d165dbd25f4e9; checkpoint/recovery-package-003-accepted-001 -> 72369fe94852fabd1f99f306c31d2e1ace2c64c0`
 CLOUD_MUTATION_STATUS: `NONE`
 BLOCKED_REC: `REC-10/REC-11 blocked by O-ABUSE; REC-12 blocked by REC-04 plus O-SOURCE; cloud-dependent REC-07 onward remain blocked by closed target/provider gates.`
-NEXT_READY_REC: `REC-05 — Package 004 active.`
-RESUME_POINT: `Implement REC-05 explicit HR open action, drawer/table wiring, and candidate edit boundary.`
-LAST_UPDATED_UTC: `2026-09-27T16:25:00Z`
+NEXT_READY_REC: `REC-05 integrated pending exact-SHA CI.`
+RESUME_POINT: `Run exact-SHA integration and governance CI on candidate SHA; tag checkpoint upon clean PASS.`
+LAST_UPDATED_UTC: `2026-09-27T17:05:00Z`
