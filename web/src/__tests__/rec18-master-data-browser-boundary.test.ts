@@ -318,7 +318,7 @@ test("B1.8: Dialog focus trap and focus restoration on dismiss", async () => {
     await page.waitForSelector('div[role="dialog"]', { state: "detached" });
     // Focus restored to the create button
     await page.waitForFunction(() => {
-      const btn = document.querySelector(".btn-primary");
+      const btn = document.querySelector(".master-data-btn-primary");
       return document.activeElement === btn;
     });
   } finally {
@@ -356,13 +356,13 @@ test("B1.10: Typography of action buttons and badges satisfies minimum 16px", as
   const page = await setupPage();
   try {
     const btnFontSize = await page.evaluate(() => {
-      const btn = document.querySelector(".btn-sm");
+      const btn = document.querySelector(".master-data-btn-secondary");
       return btn ? window.getComputedStyle(btn).fontSize : null;
     });
     assert.equal(btnFontSize, "16px");
 
     const badgeFontSize = await page.evaluate(() => {
-      const badge = document.querySelector(".badge");
+      const badge = document.querySelector(".master-data-badge");
       return badge ? window.getComputedStyle(badge).fontSize : null;
     });
     assert.equal(badgeFontSize, "16px");

@@ -505,7 +505,7 @@ export function MasterDataManagementPage({
               <button
                 ref={createTriggerRef}
                 type="button"
-                className="btn-primary"
+                className="master-data-btn-primary"
                 onClick={openCreateModal}
               >
                 + Thêm mới / Create New
@@ -687,11 +687,11 @@ export function MasterDataManagementPage({
                     </td>
                     <td>
                       {item.isActive ? (
-                        <span className="badge badge--active">
+                        <span className="master-data-badge master-data-badge--active">
                           Đang hoạt động
                         </span>
                       ) : (
-                        <span className="badge badge--inactive">
+                        <span className="master-data-badge master-data-badge--inactive">
                           Ngừng hoạt động
                         </span>
                       )}
@@ -704,7 +704,7 @@ export function MasterDataManagementPage({
                             actionTriggerRefs.current[`edit-${item.id}`] = el;
                           }}
                           type="button"
-                          className="btn-secondary btn-sm"
+                          className="master-data-btn-secondary"
                           onClick={() => openEditModal(item)}
                         >
                           Sửa
@@ -716,7 +716,7 @@ export function MasterDataManagementPage({
                                 el;
                             }}
                             type="button"
-                            className="btn-secondary btn-sm"
+                            className="master-data-btn-secondary"
                             style={{ color: "#dc2626" }}
                             onClick={() => {
                               lastActiveTriggerRef.current =
@@ -755,7 +755,7 @@ export function MasterDataManagementPage({
                 </h2>
                 <button
                   type="button"
-                  className="btn-secondary btn-sm"
+                  className="master-data-btn-secondary"
                   onClick={() => closeModals(true)}
                   aria-label="Đóng"
                 >
@@ -1021,7 +1021,7 @@ export function MasterDataManagementPage({
                 <div className="modal-footer">
                   <button
                     type="button"
-                    className="btn-secondary"
+                    className="master-data-btn-secondary"
                     onClick={() => closeModals(true)}
                     disabled={formSubmitting}
                   >
@@ -1029,7 +1029,7 @@ export function MasterDataManagementPage({
                   </button>
                   <button
                     type="submit"
-                    className="btn-primary"
+                    className="master-data-btn-primary"
                     disabled={formSubmitting}
                   >
                     {formSubmitting ? "Đang lưu..." : "Tạo mới"}
@@ -1056,7 +1056,7 @@ export function MasterDataManagementPage({
                 </h2>
                 <button
                   type="button"
-                  className="btn-secondary btn-sm"
+                  className="master-data-btn-secondary"
                   onClick={() => closeModals(true)}
                   aria-label="Đóng"
                 >
@@ -1216,7 +1216,7 @@ export function MasterDataManagementPage({
                 <div className="modal-footer">
                   <button
                     type="button"
-                    className="btn-secondary"
+                    className="master-data-btn-secondary"
                     onClick={() => closeModals(true)}
                     disabled={formSubmitting}
                   >
@@ -1224,7 +1224,7 @@ export function MasterDataManagementPage({
                   </button>
                   <button
                     type="submit"
-                    className="btn-primary"
+                    className="master-data-btn-primary"
                     disabled={formSubmitting}
                   >
                     {formSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
@@ -1251,7 +1251,7 @@ export function MasterDataManagementPage({
                 </h2>
                 <button
                   type="button"
-                  className="btn-secondary btn-sm"
+                  className="master-data-btn-secondary"
                   onClick={() => closeModals(true)}
                   aria-label="Đóng"
                 >
@@ -1297,7 +1297,7 @@ export function MasterDataManagementPage({
               <div className="modal-footer">
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="master-data-btn-secondary"
                   onClick={() => closeModals(true)}
                   disabled={formSubmitting}
                 >
@@ -1305,7 +1305,7 @@ export function MasterDataManagementPage({
                 </button>
                 <button
                   type="button"
-                  className="btn-danger"
+                  className="master-data-btn-danger"
                   onClick={handleDeleteConfirm}
                   disabled={formSubmitting}
                 >
