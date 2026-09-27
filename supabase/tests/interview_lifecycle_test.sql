@@ -207,10 +207,12 @@ begin
   select count(*) into n from public.interview_documents where logical_document_id=logical_id; assert n=1,'HR can select interview document';
   select count(*) into n from public.interview_reports where interview_report_id=report1; assert n=1,'HR can select interview report'; execute 'reset role';
 
-  -- Positive test: current participant sees session documents and reports when visible.
+  -- Positive test: current participant sees session documents when visible.
+  -- After F02 repair, raw interview_reports access is denied to Interviewers
+  -- (they use the safe RPC get_interviewer_report_page instead).
   perform set_config('request.jwt.claims',jsonb_build_object('sub',i1_auth::text)::text,true); execute 'set local role authenticated';
   select count(*) into n from public.interview_document_logicals where logical_document_id=logical_id; assert n=1,'participant can select logical document';
-  select count(*) into n from public.interview_reports where interview_report_id=report1; assert n=1,'participant can select report';
+  select count(*) into n from public.interview_reports where interview_report_id=report1; assert n=0,'participant must NOT select raw report (F02 confidentiality repair)';
   select count(*) into n from public.interview_documents where logical_document_id=logical_id; assert n=1,'participant can select interview document';
 
   -- Negative test: non-participant outsider denied on all three.

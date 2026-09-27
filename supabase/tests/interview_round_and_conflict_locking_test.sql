@@ -286,17 +286,17 @@ begin
   where interview_id = v_int1_id;
 
   -- ---------------------------------------------------------------------------
-  -- 6. Test RLS: Interviewer Visibility
+  -- 6. Test RLS: Interviewer raw table access DENIED (F02 confidentiality repair)
   -- ---------------------------------------------------------------------------
-  -- Switch to the authenticated database role: postgres bypasses RLS and
-  -- cannot prove the interviewer visibility policy.
+  -- After the F02 repair, Interviewers no longer have raw table SELECT on
+  -- public.interviews. They use the safe RPC get_interviewer_report_page instead.
   perform set_config('request.jwt.claims', jsonb_build_object('sub', v_interviewer1_auth_id::text)::text, true);
   execute 'set local role authenticated';
 
   select count(*) into v_count
   from public.interviews
   where interview_id = v_int1_id;
-  assert v_count = 1, 'Interviewer 1 must be able to view their assigned interview';
+  assert v_count = 0, 'Interviewer must NOT have raw table SELECT on interviews (F02 repair)';
 
   select count(*) into v_count
   from public.interviews
@@ -312,7 +312,7 @@ begin
   select count(*) into v_count
   from public.interviews
   where interview_id = v_int1_id;
-  assert v_count = 0, 'Interviewer must NOT be able to view interview when visible_to_interviewers is false';
+  assert v_count = 0, 'Interviewer must NOT be able to view interview regardless of visible_to_interviewers';
   execute 'reset role';
 
   -- ---------------------------------------------------------------------------
