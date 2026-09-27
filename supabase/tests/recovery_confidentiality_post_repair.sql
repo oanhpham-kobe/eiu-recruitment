@@ -1,6 +1,6 @@
 -- RECOVERY PACKAGE 001: F02 Confidentiality Post-Repair Verification
 -- Pre-condition: recovery_confidentiality_fixture.sql committed,
---                20260917010000_f02_interview_confidentiality_repair.sql applied.
+--                20260927010000_f02_interview_confidentiality_repair.sql applied.
 -- Proves: Interviewer contextual arms removed; confidential fields no longer
 -- leak via raw table SELECT; safe RPCs still work; HR/Root retain full access.
 
