@@ -304,6 +304,12 @@ jobs:
           CONTAINER_NAME: supabase_db_eiu-recruitment-dev
         run: |
           bash supabase/tests/storage_cleanup_upgrade_path_test.sh
+
+      - name: Execute REC-18 Master Data Lifecycle & Concurrency Assertions
+        env:
+          CONTAINER_NAME: supabase_db_eiu-recruitment-dev
+        run: |
+          bash supabase/tests/recovery_rec18_master_data_lifecycle_test.sh
       - name: Reset local database for standalone bulk replay
         run: supabase db reset
 

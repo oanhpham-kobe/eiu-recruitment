@@ -21,11 +21,17 @@ const REPORTS_NAV_ITEM: NavItem = {
   labelVi: "Báo cáo phỏng vấn",
   labelEn: "Interview Reports",
 };
+const MASTER_DATA_NAV_ITEM: NavItem = {
+  href: "/master-data",
+  labelVi: "Danh mục",
+  labelEn: "Master Data",
+};
 
 export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
   APPLICATIONS_NAV_ITEM,
   INTERVIEWS_NAV_ITEM,
   REPORTS_NAV_ITEM,
+  MASTER_DATA_NAV_ITEM,
 ];
 
 export interface InternalNavigationIdentity {
@@ -54,5 +60,8 @@ export function resolveInternalNavItems(
   // contextual and is enforced by the report read/write backend contracts.
   items.push(REPORTS_NAV_ITEM);
 
+  if (identity.permissions.includes("master_data.manage")) {
+    items.push(MASTER_DATA_NAV_ITEM);
+  }
   return items;
 }
