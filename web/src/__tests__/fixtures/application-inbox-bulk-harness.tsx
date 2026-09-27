@@ -7,7 +7,10 @@ import type {
 } from "@/lib/application-inbox/model";
 import type { SubmissionDetail } from "@/lib/application-inbox/submission-detail-model";
 import type { BulkSetCandidateActiveData } from "@/lib/commands/candidate-lifecycle";
-import type { BulkSetLatestSubmissionManualStatusData } from "@/lib/commands/submission-status";
+import type {
+  BulkSetLatestSubmissionManualStatusData,
+  OpenSubmissionData,
+} from "@/lib/commands/submission-status";
 import "@/app/globals.css";
 
 declare global {
@@ -41,6 +44,12 @@ declare global {
               hr_note: string | null;
               version_no: number;
             };
+          }
+        | { success: false; error: string; code?: string };
+      openSubmissionResult?:
+        | {
+            success: true;
+            data: OpenSubmissionData;
           }
         | { success: false; error: string; code?: string };
     };
@@ -207,7 +216,61 @@ export function ApplicationInboxBulkHarness() {
         },
       };
     },
+    openSubmissionAction: async (submissionId: string) => {
+      window.__BULK_HARNESS_LOGS__ = window.__BULK_HARNESS_LOGS__ ?? [];
+      window.__BULK_HARNESS_LOGS__.push({
+        event: "openSubmission",
+        payload: { submissionId },
+      });
+      if (window.__BULK_HARNESS_DATA__?.openSubmissionResult) {
+        return window.__BULK_HARNESS_DATA__.openSubmissionResult;
+      }
+      return {
+        success: true as const,
+        data: {
+          submission_id: submissionId,
+          candidate_id: "candidate-1",
+          status_code: "READ" as const,
+          full_name: "Nguyễn Thị An",
+          email: "an@example.com",
+          phone: "0901 234 567",
+          date_of_birth: "1995-08-15",
+          gender: "FEMALE",
+          address: "Hà Nội",
+          candidate_notes: null,
+          submitted_at: "2026-09-02T09:00:00.000Z",
+          version_no: 2,
+        },
+      };
+    },
     drawerActions: {
+      openSubmission: async (submissionId: string) => {
+        window.__BULK_HARNESS_LOGS__ = window.__BULK_HARNESS_LOGS__ ?? [];
+        window.__BULK_HARNESS_LOGS__.push({
+          event: "openSubmission",
+          payload: { submissionId },
+        });
+        if (window.__BULK_HARNESS_DATA__?.openSubmissionResult) {
+          return window.__BULK_HARNESS_DATA__.openSubmissionResult;
+        }
+        return {
+          success: true as const,
+          data: {
+            submission_id: submissionId,
+            candidate_id: "candidate-1",
+            status_code: "READ" as const,
+            full_name: "Nguyễn Thị An",
+            email: "an@example.com",
+            phone: "0901 234 567",
+            date_of_birth: "1995-08-15",
+            gender: "FEMALE",
+            address: "Hà Nội",
+            candidate_notes: null,
+            submitted_at: "2026-09-02T09:00:00.000Z",
+            version_no: 2,
+          },
+        };
+      },
       getSubmissionDetail: async (submissionId: string) => {
         window.__BULK_HARNESS_LOGS__ = window.__BULK_HARNESS_LOGS__ ?? [];
         window.__BULK_HARNESS_LOGS__.push({

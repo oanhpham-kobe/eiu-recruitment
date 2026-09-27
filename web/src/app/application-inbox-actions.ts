@@ -37,6 +37,9 @@ import {
 import {
   type BulkSetLatestSubmissionManualStatusData,
   bulkSetLatestSubmissionManualStatus,
+  type OpenSubmissionData,
+  openSubmission,
+  type SubmissionStatusCommandDeps,
 } from "@/lib/commands/submission-status";
 
 export async function queryApplicationInbox(input: {
@@ -73,6 +76,35 @@ export async function getSubmissionDetailAction(
         error instanceof Error
           ? error.message
           : "Không thể tải thông tin chi tiết phiếu ứng tuyển.",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
+export async function openSubmissionAction(
+  submissionId: string,
+  deps: SubmissionStatusCommandDeps = {},
+): Promise<
+  | { success: true; data: OpenSubmissionData }
+  | { success: false; error: string; code?: string }
+> {
+  try {
+    const result = await openSubmission({ submissionId }, deps);
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error?.message ?? "Không thể mở phiếu ứng tuyển.",
+        code: result.error?.code,
+      };
+    }
+    return { success: true, data: result.data };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Không thể mở phiếu ứng tuyển.",
       code: "INTERNAL_ERROR",
     };
   }

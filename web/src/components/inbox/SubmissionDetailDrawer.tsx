@@ -13,6 +13,7 @@ import {
   getAssignmentOptionsAction,
   getDocumentSignedUrlAction,
   getSubmissionDetailAction,
+  openSubmissionAction,
   updateSubmissionHrNoteAction,
 } from "@/app/application-inbox-actions";
 import type { SubmissionStatus } from "@/lib/application-inbox/model";
@@ -30,6 +31,7 @@ export interface SubmissionDetailDrawerProps {
   submissionId: string;
   isOpen: boolean;
   onClose: () => void;
+  isExplicitOpen?: boolean;
   onSubmissionUpdated?: (detail: {
     submissionId: string;
     hrNote: string | null;
@@ -39,6 +41,7 @@ export interface SubmissionDetailDrawerProps {
     hasActiveApplication?: boolean;
   }) => void;
   actions?: {
+    openSubmission?: typeof openSubmissionAction;
     getSubmissionDetail?: typeof getSubmissionDetailAction;
     updateSubmissionHrNote?: typeof updateSubmissionHrNoteAction;
     getDocumentSignedUrl?: typeof getDocumentSignedUrlAction;
@@ -93,6 +96,7 @@ export function SubmissionDetailDrawer({
   submissionId,
   isOpen,
   onClose,
+  isExplicitOpen = true,
   onSubmissionUpdated,
   actions,
 }: SubmissionDetailDrawerProps) {
@@ -194,10 +198,24 @@ export function SubmissionDetailDrawer({
     setShowAssignForm(false);
     setActiveDuplicateWarning(null);
 
+    const openAction = actions?.openSubmission ?? openSubmissionAction;
     const fetchDetail =
       actions?.getSubmissionDetail ?? getSubmissionDetailAction;
-    fetchDetail(submissionId)
-      .then((res) => {
+
+    async function load() {
+      try {
+        if (isExplicitOpen && openAction) {
+          try {
+            await openAction(submissionId);
+          } catch (openErr) {
+            console.warn(
+              "[SubmissionDetailDrawer] openSubmission warning:",
+              openErr,
+            );
+          }
+        }
+        if (!active) return;
+        const res = await fetchDetail(submissionId);
         if (!active) return;
         if (res.success) {
           setDetail(res.data);
@@ -215,23 +233,31 @@ export function SubmissionDetailDrawer({
         } else {
           setErrorMessage(res.error);
         }
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (!active) return;
         setErrorMessage(
           err instanceof Error
             ? err.message
             : "Lỗi không xác định khi tải chi tiết.",
         );
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    }
+
+    load();
 
     return () => {
       active = false;
     };
-  }, [isOpen, submissionId, actions?.getSubmissionDetail, onSubmissionUpdated]);
+  }, [
+    isOpen,
+    submissionId,
+    isExplicitOpen,
+    actions?.openSubmission,
+    actions?.getSubmissionDetail,
+    onSubmissionUpdated,
+  ]);
 
   const isDirty = isEditMode && (detail?.hr_note ?? "") !== editedHrNote;
 

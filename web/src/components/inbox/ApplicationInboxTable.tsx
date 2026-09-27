@@ -12,6 +12,7 @@ import {
 import {
   bulkSetCandidateActiveAction,
   bulkSetLatestSubmissionManualStatusAction,
+  openSubmissionAction,
   queryApplicationInbox,
 } from "@/app/application-inbox-actions";
 import {
@@ -81,6 +82,7 @@ export interface ApplicationInboxTableActions {
   queryApplicationInbox?: typeof queryApplicationInbox;
   bulkSetLatestSubmissionManualStatusAction?: typeof bulkSetLatestSubmissionManualStatusAction;
   bulkSetCandidateActiveAction?: typeof bulkSetCandidateActiveAction;
+  openSubmissionAction?: typeof openSubmissionAction;
   drawerActions?: SubmissionDetailDrawerProps["actions"];
 }
 
@@ -225,6 +227,9 @@ export function ApplicationInboxTable({
   const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(
     null,
   );
+  const [openingSubmissionId, setOpeningSubmissionId] = useState<string | null>(
+    null,
+  );
   const [isBulkActionPending, setIsBulkActionPending] = useState(false);
   const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
@@ -299,12 +304,20 @@ export function ApplicationInboxTable({
     [],
   );
 
-  const handleOpenSubmission = useCallback((submissionId: string) => {
-    setActiveSubmissionId(submissionId);
-  }, []);
+  const handleOpenSubmission = useCallback(
+    (submissionId: string) => {
+      if (openingSubmissionId === submissionId) {
+        return;
+      }
+      setOpeningSubmissionId(submissionId);
+      setActiveSubmissionId(submissionId);
+    },
+    [openingSubmissionId],
+  );
 
   const handleCloseDrawer = useCallback(() => {
     setActiveSubmissionId(null);
+    setOpeningSubmissionId(null);
   }, []);
 
   const loadPage = useCallback(
@@ -1016,7 +1029,13 @@ export function ApplicationInboxTable({
         isOpen={activeSubmissionId !== null}
         onClose={handleCloseDrawer}
         onSubmissionUpdated={handleSubmissionUpdated}
-        actions={actions?.drawerActions}
+        actions={{
+          ...actions?.drawerActions,
+          openSubmission:
+            actions?.openSubmissionAction ??
+            actions?.drawerActions?.openSubmission ??
+            openSubmissionAction,
+        }}
       />
       {isInactiveModalOpen && (
         <div
