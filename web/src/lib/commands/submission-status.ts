@@ -80,6 +80,32 @@ export type CorrectSubmissionCandidateFieldsData = {
   version_no: number;
   changed_fields: string[];
 };
+
+export type UpdateSubmissionAggregateInput = {
+  submissionId: string;
+  expectedVersion: number;
+  fullName?: string | null;
+  phone?: string | null;
+  dateOfBirth?: string | null;
+  genderCode?: string | null;
+  currentAddress?: string | null;
+  recruitmentSourceId?: string | null;
+  hrNote?: string | null;
+  education?: Array<{
+    periodText?: string | null;
+    institutionName?: string | null;
+    majorName?: string | null;
+    degreeName?: string | null;
+    qualificationId?: string | null;
+  }> | null;
+  reason?: string | null;
+};
+
+export type UpdateSubmissionAggregateData = {
+  submission_id: string;
+  version_no: number;
+  changed_fields: string[];
+};
 export type BulkLatestSubmissionStatusItemInput = {
   candidateId: string;
   expectedLatestSubmissionId: string;
@@ -867,4 +893,154 @@ export async function correctSubmissionCandidateFieldsByHr(
     deps.resolveActor ?? (() => defaultResolveActor(supabase));
   const runner = createCommandRunner({ resolveActor });
   return runner(createCorrectSubmissionCandidateFieldsCommand(supabase), input);
+}
+
+export function createUpdateSubmissionAggregateCommand(
+  supabase: SupabaseClient,
+): TrustedCommandDefinition<
+  UpdateSubmissionAggregateInput,
+  string,
+  UpdateSubmissionAggregateInput,
+  UpdateSubmissionAggregateData
+> {
+  return {
+    name: "update_submission_aggregate_by_hr",
+    extractTarget(input) {
+      return input.submissionId;
+    },
+    authorize(actor) {
+      const canEdit =
+        actor.permissions.includes("submissions.edit") ||
+        actor.roles.includes("ROOT_ADMIN");
+
+      if (!canEdit) {
+        return {
+          authorized: false,
+          code: CommandErrorCode.FORBIDDEN,
+          reason: "Permission submissions.edit required",
+        };
+      }
+
+      return { authorized: true };
+    },
+    validate(input) {
+      if (!input.submissionId || !UUID_REGEX.test(input.submissionId)) {
+        return {
+          success: false,
+          error: "Invalid submissionId UUID",
+        };
+      }
+
+      if (
+        typeof input.expectedVersion !== "number" ||
+        input.expectedVersion <= 0 ||
+        !Number.isInteger(input.expectedVersion)
+      ) {
+        return {
+          success: false,
+          error: "expectedVersion must be a positive integer",
+        };
+      }
+
+      return { success: true, data: input };
+    },
+    async execute(_actor, validated) {
+      const { data, error } = await supabase.rpc(
+        "update_submission_aggregate_by_hr",
+        {
+          p_submission_id: validated.submissionId,
+          p_expected_version: validated.expectedVersion,
+          p_full_name:
+            validated.fullName !== undefined
+              ? validated.fullName?.trim() || null
+              : null,
+          p_phone:
+            validated.phone !== undefined
+              ? validated.phone?.trim() || null
+              : null,
+          p_date_of_birth:
+            validated.dateOfBirth !== undefined
+              ? validated.dateOfBirth?.trim() || null
+              : null,
+          p_gender_code:
+            validated.genderCode !== undefined
+              ? validated.genderCode?.toUpperCase().trim() || null
+              : null,
+          p_current_address:
+            validated.currentAddress !== undefined
+              ? validated.currentAddress?.trim() || null
+              : null,
+          p_recruitment_source_id:
+            validated.recruitmentSourceId !== undefined
+              ? validated.recruitmentSourceId || null
+              : null,
+          p_hr_note: validated.hrNote !== undefined ? validated.hrNote : null,
+          p_education: validated.education
+            ? validated.education.map((e) => ({
+                period_text: e.periodText?.trim() || null,
+                institution_name: e.institutionName?.trim() || "",
+                major_name: e.majorName?.trim() || "",
+                degree_name: e.degreeName?.trim() || "",
+                qualification_id: e.qualificationId || null,
+              }))
+            : null,
+          p_reason: validated.reason?.trim() || null,
+        },
+      );
+
+      if (error) {
+        return {
+          success: false,
+          error: {
+            code: CommandErrorCode.INTERNAL_ERROR,
+            message: error.message,
+          },
+        };
+      }
+
+      const result = data as {
+        success: boolean;
+        error_code?: string;
+        message?: string;
+        submission_id?: string;
+        version_no?: number;
+        changed_fields?: string[];
+      };
+
+      if (!result.success) {
+        const rawCode = result.error_code ? String(result.error_code) : "";
+        const code =
+          CommandErrorCode[rawCode as keyof typeof CommandErrorCode] ??
+          CommandErrorCode.INTERNAL_ERROR;
+        return {
+          success: false,
+          error: {
+            code,
+            message:
+              result.message || "Failed to update submission aggregate by HR",
+          },
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          submission_id: result.submission_id ?? "",
+          version_no: result.version_no ?? 1,
+          changed_fields: result.changed_fields || [],
+        },
+      };
+    },
+  };
+}
+
+export async function updateSubmissionAggregateByHr(
+  input: UpdateSubmissionAggregateInput,
+  deps: SubmissionStatusCommandDeps = {},
+): Promise<CommandResult<UpdateSubmissionAggregateData>> {
+  const supabase = deps.client ?? (await createServerClient());
+  const resolveActor =
+    deps.resolveActor ?? (() => defaultResolveActor(supabase));
+  const runner = createCommandRunner({ resolveActor });
+  return runner(createUpdateSubmissionAggregateCommand(supabase), input);
 }

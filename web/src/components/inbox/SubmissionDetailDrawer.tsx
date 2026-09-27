@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useTransition,
@@ -12,9 +13,12 @@ import {
   createApplicationAction,
   getAssignmentOptionsAction,
   getDocumentSignedUrlAction,
+  getQualificationLevelsAction,
+  getRecruitmentSourcesAction,
   getSubmissionDetailAction,
   openSubmissionAction,
-  updateSubmissionHrNoteAction,
+  updateSubmissionAggregateAction,
+  type updateSubmissionHrNoteAction,
 } from "@/app/application-inbox-actions";
 import type { SubmissionStatus } from "@/lib/application-inbox/model";
 import type {
@@ -44,6 +48,9 @@ export interface SubmissionDetailDrawerProps {
     openSubmission?: typeof openSubmissionAction;
     getSubmissionDetail?: typeof getSubmissionDetailAction;
     updateSubmissionHrNote?: typeof updateSubmissionHrNoteAction;
+    updateSubmissionAggregate?: typeof updateSubmissionAggregateAction;
+    getRecruitmentSources?: typeof getRecruitmentSourcesAction;
+    getQualificationLevels?: typeof getQualificationLevelsAction;
     getDocumentSignedUrl?: typeof getDocumentSignedUrlAction;
     getAssignmentOptions?: typeof getAssignmentOptionsAction;
     createApplication?: typeof createApplicationAction;
@@ -106,7 +113,29 @@ export function SubmissionDetailDrawer({
 
   // Edit Mode state
   const [isEditMode, setIsEditMode] = useState(false);
+  const [editedFullName, setEditedFullName] = useState("");
+  const [editedPhone, setEditedPhone] = useState("");
+  const [editedDateOfBirth, setEditedDateOfBirth] = useState("");
+  const [editedGender, setEditedGender] = useState("MALE");
+  const [editedAddress, setEditedAddress] = useState("");
+  const [editedSourceId, setEditedSourceId] = useState("");
   const [editedHrNote, setEditedHrNote] = useState("");
+  const [editedEducation, setEditedEducation] = useState<
+    Array<{
+      education_id?: string;
+      period_text: string;
+      institution: string;
+      major: string;
+      qualification_id: string;
+      qualification_name?: string;
+    }>
+  >([]);
+  const [recruitmentSources, setRecruitmentSources] = useState<
+    Array<{ recruitment_source_id: string; code: string; name_vi: string }>
+  >([]);
+  const [qualificationLevels, setQualificationLevels] = useState<
+    Array<{ qualification_id: string; code: string; name_vi: string }>
+  >([]);
   const [isSavingNote, startSaveNoteTransition] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -149,11 +178,14 @@ export function SubmissionDetailDrawer({
   const hrNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
   const triggerElementRef = useRef<HTMLElement | null>(null);
   const discardDialogRef = useRef<HTMLDivElement>(null);
+  const fullNameInputRef = useRef<HTMLInputElement>(null);
   const cancelDiscardBtnRef = useRef<HTMLButtonElement>(null);
   const previewModalRef = useRef<HTMLDivElement>(null);
   const previewCloseBtnRef = useRef<HTMLButtonElement>(null);
   const previewTriggerRef = useRef<HTMLElement | null>(null);
-  const focusTargetRef = useRef<"editButton" | "hrNoteTextarea" | null>(null);
+  const focusTargetRef = useRef<
+    "editButton" | "hrNoteTextarea" | "fullNameInput" | null
+  >(null);
   const prevIsOpenRef = useRef(false);
 
   // Initial focus enters drawer when opened (post-commit)
@@ -171,7 +203,10 @@ export function SubmissionDetailDrawer({
 
   // React post-commit focus transition mechanism (no setTimeout)
   useIsomorphicLayoutEffect(() => {
-    if (focusTargetRef.current === "hrNoteTextarea") {
+    if (focusTargetRef.current === "fullNameInput") {
+      focusTargetRef.current = null;
+      fullNameInputRef.current?.focus();
+    } else if (focusTargetRef.current === "hrNoteTextarea") {
       focusTargetRef.current = null;
       hrNoteTextareaRef.current?.focus();
     } else if (focusTargetRef.current === "editButton") {
@@ -259,14 +294,123 @@ export function SubmissionDetailDrawer({
     onSubmissionUpdated,
   ]);
 
-  const isDirty = isEditMode && (detail?.hr_note ?? "") !== editedHrNote;
+  const isDirty = useMemo(() => {
+    if (!isEditMode || !detail) return false;
+    if (editedFullName !== detail.full_name) return true;
+    if ((detail.phone ?? "") !== editedPhone) return true;
+    if ((detail.date_of_birth ?? "") !== editedDateOfBirth) return true;
+    if ((detail.gender_code ?? "MALE") !== editedGender) return true;
+    if ((detail.current_address ?? "") !== editedAddress) return true;
+    if ((detail.recruitment_source_id ?? "") !== editedSourceId) return true;
+    if ((detail.hr_note ?? "") !== editedHrNote) return true;
+    if (editedEducation.length !== detail.education.length) return true;
+    for (let i = 0; i < editedEducation.length; i++) {
+      const a = editedEducation[i];
+      const b = detail.education[i];
+      if (
+        (a.period_text ?? "") !== (b.period_text ?? "") ||
+        (a.institution ?? "") !== (b.institution ?? "") ||
+        (a.major ?? "") !== (b.major ?? "") ||
+        (a.qualification_id ?? "") !== (b.qualification_id ?? "")
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }, [
+    isEditMode,
+    detail,
+    editedFullName,
+    editedPhone,
+    editedDateOfBirth,
+    editedGender,
+    editedAddress,
+    editedSourceId,
+    editedHrNote,
+    editedEducation,
+  ]);
 
   const handleEnterEditMode = useCallback(() => {
+    if (!detail) return;
     setIsEditMode(true);
-    setEditedHrNote(detail?.hr_note ?? "");
+    setEditedFullName(detail.full_name);
+    setEditedPhone(detail.phone ?? "");
+    setEditedDateOfBirth(detail.date_of_birth ?? "");
+    setEditedGender(detail.gender_code ?? "MALE");
+    setEditedAddress(detail.current_address ?? "");
+    setEditedSourceId(detail.recruitment_source_id ?? "");
+    setEditedHrNote(detail.hr_note ?? "");
+    setEditedEducation(
+      detail.education.map((e) => ({
+        education_id: e.education_id,
+        period_text: e.period_text ?? "",
+        institution: e.institution ?? "",
+        major: e.major ?? "",
+        qualification_id: e.qualification_id ?? "",
+        qualification_name: e.qualification_name ?? "",
+      })),
+    );
     setSaveError(null);
     focusTargetRef.current = "hrNoteTextarea";
-  }, [detail?.hr_note]);
+
+    const loadSources =
+      actions?.getRecruitmentSources ?? getRecruitmentSourcesAction;
+    loadSources()
+      .then((sources) => {
+        if (Array.isArray(sources)) {
+          setRecruitmentSources(sources);
+        }
+      })
+      .catch((err) => {
+        console.warn("[SubmissionDetailDrawer] getRecruitmentSources:", err);
+      });
+
+    const loadQuals =
+      actions?.getQualificationLevels ?? getQualificationLevelsAction;
+    loadQuals()
+      .then((quals) => {
+        if (Array.isArray(quals)) {
+          setQualificationLevels(quals);
+        }
+      })
+      .catch((err) => {
+        console.warn("[SubmissionDetailDrawer] getQualificationLevels:", err);
+      });
+  }, [detail, actions?.getRecruitmentSources, actions?.getQualificationLevels]);
+
+  const handleAddEducation = useCallback(() => {
+    setEditedEducation((prev) => [
+      ...prev,
+      {
+        education_id: crypto.randomUUID(),
+        period_text: "",
+        institution: "",
+        major: "",
+        qualification_id: "",
+        qualification_name: "",
+      },
+    ]);
+  }, []);
+
+  const handleRemoveEducation = useCallback((index: number) => {
+    setEditedEducation((prev) => prev.filter((_, idx) => idx !== index));
+  }, []);
+
+  const handleEducationChange = useCallback(
+    (
+      index: number,
+      field: "period_text" | "institution" | "major" | "qualification_id",
+      value: string,
+    ) => {
+      setEditedEducation((prev) =>
+        prev.map((item, idx) => {
+          if (idx !== index) return item;
+          return { ...item, [field]: value };
+        }),
+      );
+    },
+    [],
+  );
 
   const handleCancelEdit = useCallback(() => {
     if (isDirty) {
@@ -275,10 +419,9 @@ export function SubmissionDetailDrawer({
       return;
     }
     setIsEditMode(false);
-    setEditedHrNote(detail?.hr_note ?? "");
     setSaveError(null);
     focusTargetRef.current = "editButton";
-  }, [isDirty, detail?.hr_note]);
+  }, [isDirty]);
 
   const handleRequestClose = useCallback(() => {
     if (isDirty) {
@@ -417,7 +560,25 @@ export function SubmissionDetailDrawer({
   const handleConfirmDiscard = () => {
     setShowDiscardConfirm(false);
     setIsEditMode(false);
-    setEditedHrNote(detail?.hr_note ?? "");
+    if (detail) {
+      setEditedFullName(detail.full_name);
+      setEditedPhone(detail.phone ?? "");
+      setEditedDateOfBirth(detail.date_of_birth ?? "");
+      setEditedGender(detail.gender_code ?? "MALE");
+      setEditedAddress(detail.current_address ?? "");
+      setEditedSourceId(detail.recruitment_source_id ?? "");
+      setEditedHrNote(detail.hr_note ?? "");
+      setEditedEducation(
+        detail.education.map((e) => ({
+          education_id: e.education_id,
+          period_text: e.period_text ?? "",
+          institution: e.institution ?? "",
+          major: e.major ?? "",
+          qualification_id: e.qualification_id ?? "",
+          qualification_name: e.qualification_name ?? "",
+        })),
+      );
+    }
     setSaveError(null);
 
     if (discardAction === "close_drawer") {
@@ -433,42 +594,121 @@ export function SubmissionDetailDrawer({
     if (!detail) return;
     setSaveError(null);
 
+    const trimmedName = editedFullName.trim();
+    if (!trimmedName) {
+      setSaveError("Họ và tên không được để trống.");
+      return;
+    }
+    if (trimmedName.length > 200) {
+      setSaveError("Họ và tên không được vượt quá 200 ký tự.");
+      return;
+    }
+    const trimmedPhone = editedPhone.trim();
+    if (trimmedPhone.length > 32) {
+      setSaveError("Số điện thoại không được vượt quá 32 ký tự.");
+      return;
+    }
+    const trimmedAddress = editedAddress.trim();
+    if (trimmedAddress.length > 500) {
+      setSaveError("Địa chỉ không được vượt quá 500 ký tự.");
+      return;
+    }
+
     startSaveNoteTransition(async () => {
+      const hasAggregateAction =
+        Boolean(actions?.updateSubmissionAggregate) ||
+        !actions?.updateSubmissionHrNote;
+
+      if (!hasAggregateAction && actions?.updateSubmissionHrNote) {
+        const res = await actions.updateSubmissionHrNote({
+          submissionId: detail.submission_id,
+          hrNote: editedHrNote.trim() ? editedHrNote.trim() : null,
+          expectedVersion: detail.version_no,
+        });
+
+        if (res.success) {
+          setDetail((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  hr_note: res.data.hr_note ?? null,
+                  version_no: res.data.version_no,
+                }
+              : null,
+          );
+          focusTargetRef.current = "editButton";
+          setIsEditMode(false);
+          onSubmissionUpdated?.({
+            submissionId: detail.submission_id,
+            hrNote: res.data.hr_note ?? null,
+            versionNo: res.data.version_no,
+            status: detail.status_code,
+            hasApplication: detail.applications.some((a) => a.is_active),
+            hasActiveApplication: detail.applications.some((a) => a.is_active),
+          });
+        } else {
+          if (res.code === "STALE_VERSION") {
+            setSaveError(
+              "Dữ liệu đã thay đổi bởi người khác (STALE_VERSION). Vui lòng tải lại trang để xem nội dung mới nhất.",
+            );
+          } else {
+            setSaveError(res.error || "Không thể lưu ghi chú HR.");
+          }
+        }
+        return;
+      }
+
       const updateAction =
-        actions?.updateSubmissionHrNote ?? updateSubmissionHrNoteAction;
+        actions?.updateSubmissionAggregate ?? updateSubmissionAggregateAction;
       const res = await updateAction({
         submissionId: detail.submission_id,
-        hrNote: editedHrNote.trim() ? editedHrNote.trim() : null,
         expectedVersion: detail.version_no,
+        fullName: trimmedName,
+        phone: trimmedPhone || null,
+        dateOfBirth: editedDateOfBirth || null,
+        genderCode: editedGender,
+        currentAddress: trimmedAddress || null,
+        recruitmentSourceId: editedSourceId || null,
+        hrNote: editedHrNote.trim() ? editedHrNote.trim() : null,
+        education: editedEducation.map((e) => ({
+          periodText: e.period_text || null,
+          institutionName: e.institution || null,
+          majorName: e.major || null,
+          qualificationId: e.qualification_id || null,
+        })),
       });
 
       if (res.success) {
-        setDetail((prev) =>
-          prev
-            ? {
-                ...prev,
-                hr_note: res.data.hr_note ?? null,
-                version_no: res.data.version_no,
-              }
-            : null,
-        );
-        focusTargetRef.current = "editButton";
         setIsEditMode(false);
-        onSubmissionUpdated?.({
-          submissionId: detail.submission_id,
-          hrNote: res.data.hr_note ?? null,
-          versionNo: res.data.version_no,
-          status: detail.status_code,
-          hasApplication: detail.applications.some((a) => a.is_active),
-          hasActiveApplication: detail.applications.some((a) => a.is_active),
-        });
+        setSaveError(null);
+        focusTargetRef.current = "editButton";
+        const fetchDetail =
+          actions?.getSubmissionDetail ?? getSubmissionDetailAction;
+        const refreshed = await fetchDetail(detail.submission_id);
+        if (refreshed.success) {
+          setDetail(refreshed.data);
+          onSubmissionUpdated?.({
+            submissionId: refreshed.data.submission_id,
+            hrNote: refreshed.data.hr_note ?? null,
+            versionNo: refreshed.data.version_no,
+            status: refreshed.data.status_code,
+            hasApplication: refreshed.data.applications.some(
+              (a) => a.is_active,
+            ),
+            hasActiveApplication: refreshed.data.applications.some(
+              (a) => a.is_active,
+            ),
+          });
+        }
       } else {
         if (res.code === "STALE_VERSION") {
           setSaveError(
             "Dữ liệu đã thay đổi bởi người khác (STALE_VERSION). Vui lòng tải lại trang để xem nội dung mới nhất.",
           );
         } else {
-          setSaveError(res.error || "Không thể lưu ghi chú HR.");
+          setSaveError(
+            res.error || "Không thể cập nhật thông tin phiếu ứng tuyển.",
+          );
         }
       }
     });
@@ -796,34 +1036,140 @@ export function SubmissionDetailDrawer({
                 <table className="drawer-kv-table">
                   <tbody>
                     <tr>
-                      <th scope="row">Họ và tên:</th>
-                      <td>{detail.full_name}</td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Email:</th>
-                      <td>{detail.email}</td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Ngày sinh:</th>
-                      <td>{formatDate(detail.date_of_birth)}</td>
-                    </tr>
-                    <tr>
-                      <th scope="row">Giới tính:</th>
+                      <th scope="row">
+                        <label htmlFor="drawer-full-name-input">
+                          Họ và tên:
+                        </label>
+                      </th>
                       <td>
-                        {detail.gender_code === "MALE"
-                          ? "Nam"
-                          : detail.gender_code === "FEMALE"
-                            ? "Nữ"
-                            : "—"}
+                        {isEditMode ? (
+                          <div className="drawer-edit-field">
+                            <input
+                              ref={fullNameInputRef}
+                              id="drawer-full-name-input"
+                              className="drawer-input"
+                              type="text"
+                              value={editedFullName}
+                              onChange={(e) =>
+                                setEditedFullName(e.target.value)
+                              }
+                              required
+                              maxLength={200}
+                              placeholder="Họ và tên ứng viên..."
+                            />
+                          </div>
+                        ) : (
+                          detail.full_name
+                        )}
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">Số điện thoại:</th>
-                      <td>{detail.phone ?? "—"}</td>
+                      <th scope="row">Email:</th>
+                      <td>
+                        {detail.email}
+                        {isEditMode && (
+                          <small className="drawer-immutable-hint">
+                            (Email đã xác minh — không thể chỉnh sửa)
+                          </small>
+                        )}
+                      </td>
                     </tr>
                     <tr>
-                      <th scope="row">Địa chỉ hiện tại:</th>
-                      <td>{detail.current_address ?? "—"}</td>
+                      <th scope="row">
+                        <label htmlFor="drawer-dob-input">Ngày sinh:</label>
+                      </th>
+                      <td>
+                        {isEditMode ? (
+                          <div className="drawer-edit-field">
+                            <input
+                              id="drawer-dob-input"
+                              className="drawer-input"
+                              type="date"
+                              value={editedDateOfBirth}
+                              onChange={(e) =>
+                                setEditedDateOfBirth(e.target.value)
+                              }
+                              max={new Date().toISOString().split("T")[0]}
+                            />
+                          </div>
+                        ) : (
+                          formatDate(detail.date_of_birth)
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">
+                        <label htmlFor="drawer-gender-select">Giới tính:</label>
+                      </th>
+                      <td>
+                        {isEditMode ? (
+                          <div className="drawer-edit-field">
+                            <select
+                              id="drawer-gender-select"
+                              className="drawer-select"
+                              value={editedGender}
+                              onChange={(e) => setEditedGender(e.target.value)}
+                            >
+                              <option value="MALE">Nam</option>
+                              <option value="FEMALE">Nữ</option>
+                            </select>
+                          </div>
+                        ) : detail.gender_code === "MALE" ? (
+                          "Nam"
+                        ) : detail.gender_code === "FEMALE" ? (
+                          "Nữ"
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">
+                        <label htmlFor="drawer-phone-input">
+                          Số điện thoại:
+                        </label>
+                      </th>
+                      <td>
+                        {isEditMode ? (
+                          <div className="drawer-edit-field">
+                            <input
+                              id="drawer-phone-input"
+                              className="drawer-input"
+                              type="tel"
+                              value={editedPhone}
+                              onChange={(e) => setEditedPhone(e.target.value)}
+                              maxLength={32}
+                              placeholder="Số điện thoại liên lạc..."
+                            />
+                          </div>
+                        ) : (
+                          (detail.phone ?? "—")
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">
+                        <label htmlFor="drawer-address-input">
+                          Địa chỉ hiện tại:
+                        </label>
+                      </th>
+                      <td>
+                        {isEditMode ? (
+                          <div className="drawer-edit-field">
+                            <input
+                              id="drawer-address-input"
+                              className="drawer-input"
+                              type="text"
+                              value={editedAddress}
+                              onChange={(e) => setEditedAddress(e.target.value)}
+                              maxLength={500}
+                              placeholder="Địa chỉ cư trú..."
+                            />
+                          </div>
+                        ) : (
+                          (detail.current_address ?? "—")
+                        )}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -837,7 +1183,146 @@ export function SubmissionDetailDrawer({
                 <h3 id="sec-education" className="drawer-section__title">
                   2. Học vấn (Education)
                 </h3>
-                {detail.education.length === 0 ? (
+                {isEditMode ? (
+                  <div className="drawer-list">
+                    {editedEducation.length === 0 ? (
+                      <p className="drawer-empty-text">
+                        Chưa có thông tin học vấn.
+                      </p>
+                    ) : (
+                      editedEducation.map((edu, idx) => (
+                        <div
+                          key={edu.education_id || idx}
+                          className="drawer-sub-item"
+                        >
+                          <table className="drawer-kv-table">
+                            <tbody>
+                              <tr>
+                                <th scope="row">
+                                  <label htmlFor={`drawer-edu-period-${idx}`}>
+                                    Thời gian:
+                                  </label>
+                                </th>
+                                <td>
+                                  <input
+                                    id={`drawer-edu-period-${idx}`}
+                                    className="drawer-input"
+                                    type="text"
+                                    value={edu.period_text}
+                                    onChange={(e) =>
+                                      handleEducationChange(
+                                        idx,
+                                        "period_text",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="Ví dụ: 2013 - 2017"
+                                  />
+                                </td>
+                              </tr>
+                              <tr>
+                                <th scope="row">
+                                  <label htmlFor={`drawer-edu-qual-${idx}`}>
+                                    Trình độ / Bằng cấp:
+                                  </label>
+                                </th>
+                                <td>
+                                  <select
+                                    id={`drawer-edu-qual-${idx}`}
+                                    className="drawer-select"
+                                    value={edu.qualification_id}
+                                    onChange={(e) =>
+                                      handleEducationChange(
+                                        idx,
+                                        "qualification_id",
+                                        e.target.value,
+                                      )
+                                    }
+                                  >
+                                    <option value="">
+                                      -- Chọn trình độ / bằng cấp --
+                                    </option>
+                                    {qualificationLevels.map((q) => (
+                                      <option
+                                        key={q.qualification_id}
+                                        value={q.qualification_id}
+                                      >
+                                        {q.name_vi}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                              </tr>
+                              <tr>
+                                <th scope="row">
+                                  <label htmlFor={`drawer-edu-major-${idx}`}>
+                                    Chuyên ngành:
+                                  </label>
+                                </th>
+                                <td>
+                                  <input
+                                    id={`drawer-edu-major-${idx}`}
+                                    className="drawer-input"
+                                    type="text"
+                                    value={edu.major}
+                                    onChange={(e) =>
+                                      handleEducationChange(
+                                        idx,
+                                        "major",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="Chuyên ngành đào tạo..."
+                                  />
+                                </td>
+                              </tr>
+                              <tr>
+                                <th scope="row">
+                                  <label htmlFor={`drawer-edu-inst-${idx}`}>
+                                    Cơ sở đào tạo:
+                                  </label>
+                                </th>
+                                <td>
+                                  <input
+                                    id={`drawer-edu-inst-${idx}`}
+                                    className="drawer-input"
+                                    type="text"
+                                    value={edu.institution}
+                                    onChange={(e) =>
+                                      handleEducationChange(
+                                        idx,
+                                        "institution",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="Trường / Cơ sở đào tạo..."
+                                  />
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <div className="drawer-edu-actions">
+                            <button
+                              type="button"
+                              className="btn-secondary btn-sm"
+                              onClick={() => handleRemoveEducation(idx)}
+                              aria-label={`Xóa mục học vấn ${idx + 1}`}
+                            >
+                              Xóa học vấn
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    <button
+                      type="button"
+                      className="btn-secondary btn-sm drawer-add-edu-btn"
+                      onClick={handleAddEducation}
+                    >
+                      + Thêm học vấn
+                    </button>
+                  </div>
+                ) : detail.education.length === 0 ? (
                   <p className="drawer-empty-text">
                     Chưa có thông tin học vấn.
                   </p>
@@ -871,7 +1356,6 @@ export function SubmissionDetailDrawer({
                   </div>
                 )}
               </section>
-
               {/* 3. Working Experiences (HR only) */}
               <section
                 className="drawer-section"
@@ -1079,8 +1563,39 @@ export function SubmissionDetailDrawer({
                       </td>
                     </tr>
                     <tr>
-                      <th scope="row">Nguồn tuyển dụng:</th>
-                      <td>{detail.recruitment_source_name ?? "—"}</td>
+                      <th scope="row">
+                        <label htmlFor="drawer-source-select">
+                          Nguồn tuyển dụng:
+                        </label>
+                      </th>
+                      <td>
+                        {isEditMode ? (
+                          <div className="drawer-edit-field">
+                            <select
+                              id="drawer-source-select"
+                              className="drawer-select"
+                              value={editedSourceId}
+                              onChange={(e) =>
+                                setEditedSourceId(e.target.value)
+                              }
+                            >
+                              <option value="">
+                                -- Chọn nguồn tuyển dụng (Tùy chọn) --
+                              </option>
+                              {recruitmentSources.map((s) => (
+                                <option
+                                  key={s.recruitment_source_id}
+                                  value={s.recruitment_source_id}
+                                >
+                                  {s.name_vi}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          (detail.recruitment_source_name ?? "—")
+                        )}
+                      </td>
                     </tr>
                   </tbody>
                 </table>

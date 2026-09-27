@@ -246,6 +246,30 @@ export function SubmissionDetailDrawerHarness() {
         },
       };
     },
+    updateSubmissionAggregate: async (input: unknown) => {
+      logHarnessEvent("updateSubmissionAggregate", input);
+      return {
+        success: true as const,
+        data: {
+          submission_id: detail.submission_id,
+          version_no: detail.version_no + 1,
+          changed_fields: ["full_name", "hr_note"],
+        },
+      };
+    },
+    getRecruitmentSources: async () => [
+      {
+        recruitment_source_id: "src-1",
+        code: "WEBSITE",
+        name_vi: "Website EIU",
+      },
+      { recruitment_source_id: "src-2", code: "LINKEDIN", name_vi: "LinkedIn" },
+    ],
+    getQualificationLevels: async () => [
+      { qualification_id: "qual-1", code: "BACHELOR", name_vi: "Cử nhân" },
+      { qualification_id: "qual-2", code: "MASTER", name_vi: "Thạc sĩ" },
+      { qualification_id: "qual-3", code: "DOCTOR", name_vi: "Tiến sĩ" },
+    ],
   };
 
   return (
