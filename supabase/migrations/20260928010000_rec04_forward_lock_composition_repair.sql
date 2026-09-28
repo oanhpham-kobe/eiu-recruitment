@@ -1292,15 +1292,18 @@ begin
     and i.end_at is not null
     and i.end_at > clock_timestamp();
 
-  -- Maintenance commands update interviews.updated_by after this statement.
-  -- Lock actor plus touched Users as one sorted row/advisory set first.
-  select coalesce(array_agg(distinct q.app_user_id order by q.app_user_id), array[]::uuid[])
-  into v_lock_ids
-  from (select unnest(v_user_ids) as app_user_id union all select private.current_app_user_id()) q
-  where q.app_user_id is not null;
-  perform 1 from public.app_users u where u.app_user_id = any(v_lock_ids)
-  order by u.app_user_id for update;
-  perform private.lock_internal_user_ids(v_lock_ids);
+  -- A statement that makes every participant non-current has no selected-user
+  -- set. Its command locks the complete before/after composition before that
+  -- first write; never acquire the actor alone here ahead of a later reorder.
+  if cardinality(v_user_ids) > 0 then
+    select coalesce(array_agg(distinct q.app_user_id order by q.app_user_id), array[]::uuid[])
+    into v_lock_ids
+    from (select unnest(v_user_ids) as app_user_id union all select private.current_app_user_id()) q
+    where q.app_user_id is not null;
+    perform 1 from public.app_users u where u.app_user_id = any(v_lock_ids)
+    order by u.app_user_id for update;
+    perform private.lock_internal_user_ids(v_lock_ids);
+  end if;
 
   if exists (
     select 1
