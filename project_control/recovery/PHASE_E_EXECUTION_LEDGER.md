@@ -4,7 +4,7 @@ MASTER_PLAN: `review/astra-strategic-review-20260927:project_control/astra_revie
 MASTER_PLAN_SHA256: `928c5bb4c32289dc5a7a0979531f5f26769c4e5f228cb2f5fbea9ee16f09826c`
 EXECUTION_MODE: `AUTONOMOUS`
 CURRENT_INTEGRATION_BRANCH: `autonomy/continuous-integration-20260905-01`
-CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (last accepted integration: `cea80492cbaf5364177372cf93b0a2c0db923c56`)
+CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (last accepted integration: `b61d24a544c2ae77f0a8c2053dd329e4697ff7ea`)
 
 ## Accepted recovery packages
 
@@ -17,9 +17,10 @@ CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (last accepted integration: `cea80
 | Recovery Package 005 | REC-15 (F09) | `6d40c34e83ec5043a60dbb6107386d4bdfbf6544` | Merged as `b7a4387ff06c37bffca1d1406cbba705f5edbf6f`; exact CI SHA `b802548e32ac7a8500e543cd62d5b464b7ac6ba0` | `checkpoint/recovery-package-005-accepted-001` | Integration `36339150628` PASS; Governance `36339150620` PASS | Independent domain/security review PASS (atomic aggregate save, pre-validated education replacement, immutable email, optimistic versioning, active master data validation, profile cache refresh, dirty discard confirmation, 67 web tests pass) |
 | Recovery Package 006 | REC-18 | `43eb920b1186b60e4292ca14efe1b1fe3968bd92` | Merged as `619d0e34e7c1a2f603e9d92c7a8e3679009c5bf1`; exact CI SHA `db1a47b1c3132e0c904fa15594b2da85586a111a` | `checkpoint/recovery-package-006-accepted-001` | Integration `36342175434` PASS; Governance `36342175464` PASS | Independent domain/security review PASS (all 11 business catalogs supported, module-private server action exports, full modal keyboard trap and post-refresh focus restoration, 16px typography, null on cleared optional fields, explicit STALE_VERSION handling, 21 web tests and 5 database concurrency scenarios pass) |
 | Recovery Package 007 | REC-19 | `8f7e481ff4151536602326f2c3e929983dcd2b19` | Merged as `9a6f138954889b8ca01699d534fb9a44b1192f1a`; exact CI SHA `cea80492cbaf5364177372cf93b0a2c0db923c56` | `checkpoint/recovery-package-007-accepted-001` | Integration `36361950308` PASS; Governance `36361950283` PASS | Independent domain/security review PASS (client-safe permissions catalog, async-only server action exports, bound email strictly protected for all actors, non-root HR lockout restricted, 22 web tests and 5 database RBAC/lifecycle scenarios pass) |
+| Recovery Package 008 | REC-04 forward repair | `0c579533739df023985a9744977ac5f570669fae` | Merged as `b61d24a544c2ae77f0a8c2053dd329e4697ff7ea`; exact CI SHA `0c579533739df023985a9744977ac5f570669fae` | `checkpoint/recovery-package-008-accepted-001` | Integration `36369685728` PASS | Independent domain/security review PASS (reproduced P1 concurrency regressions repaired, sorted user composition enforced across all crossed lifecycle commands, participant maintenance pre-locking established, update_submission_by_hr version requirement tightened, all 5 forward concurrency scenarios and existing correctness/opposing suites pass) |
 
-LAST_ACCEPTED_PACKAGE: `Recovery Package 007`
-ACCEPTED_REC_SET: `REC-01, REC-02, REC-03, REC-04, REC-05, REC-15, REC-18, REC-19`
+LAST_ACCEPTED_PACKAGE: `Recovery Package 008`
+ACCEPTED_REC_SET: `REC-01, REC-02, REC-03, REC-04 (forward repair complete), REC-05, REC-15, REC-18, REC-19`
 ACTIVE_PACKAGE: `NONE`
 ACTIVE_PACKAGE_BASE_SHA: `NONE`
 ACTIVE_BRANCH: `NONE`
@@ -27,11 +28,11 @@ ACTIVE_WORKTREE: `NONE`
 DEPENDENCIES: `REC-01, REC-02, REC-03, REC-04, REC-05, REC-15, REC-18, and REC-19 accepted; REC-20 is dependency-ready.`
 OWNER_GATES: `O-EXEC and O-LOCAL apply to the next local package; O-AUTH/O-ENV remain closed for connected configuration.`
 CANDIDATE_SHA: `NONE`
-REVIEW_STATUS: `Package 007 accepted after independent domain/security review, exact-SHA CI, and checkpoint creation.`
-CI_RUNS: `Package 001: 36323009513, 36323083024; Package 002: 36326090416, 36326090418; Package 003: 36332367274, 36332367253; Package 004: 36335049384, 36335049335; Package 005: 36339150628, 36339150620; Package 006: 36342175434, 36342175464; Package 007: 36361950308, 36361950283`
-CHECKPOINT_REF: `checkpoint/recovery-package-001-accepted-001 -> f6e22c123381fc047b3eb22abbe790f482984135; checkpoint/recovery-package-002-accepted-001 -> 87a2d1ed264d66a1b18468cc831d165dbd25f4e9; checkpoint/recovery-package-003-accepted-001 -> 72369fe94852fabd1f99f306c31d2e1ace2c64c0; checkpoint/recovery-package-004-accepted-001 -> 2466ad4e23c761f15d43e993294a3dda4c9d8e50; checkpoint/recovery-package-005-accepted-001 -> b802548e32ac7a8500e543cd62d5b464b7ac6ba0; checkpoint/recovery-package-006-accepted-001 -> db1a47b1c3132e0c904fa15594b2da85586a111a; checkpoint/recovery-package-007-accepted-001 -> cea80492cbaf5364177372cf93b0a2c0db923c56`
+REVIEW_STATUS: `Package 008 accepted after independent domain/security review, exact-SHA CI, and checkpoint creation.`
+CI_RUNS: `Package 001: 36323009513, 36323083024; Package 002: 36326090416, 36326090418; Package 003: 36332367274, 36332367253; Package 004: 36335049384, 36335049335; Package 005: 36339150628, 36339150620; Package 006: 36342175434, 36342175464; Package 007: 36361950308, 36361950283; Package 008: 36369685728`
+CHECKPOINT_REF: `checkpoint/recovery-package-001-accepted-001 -> f6e22c123381fc047b3eb22abbe790f482984135; checkpoint/recovery-package-002-accepted-001 -> 87a2d1ed264d66a1b18468cc831d165dbd25f4e9; checkpoint/recovery-package-003-accepted-001 -> 72369fe94852fabd1f99f306c31d2e1ace2c64c0; checkpoint/recovery-package-004-accepted-001 -> 2466ad4e23c761f15d43e993294a3dda4c9d8e50; checkpoint/recovery-package-005-accepted-001 -> b802548e32ac7a8500e543cd62d5b464b7ac6ba0; checkpoint/recovery-package-006-accepted-001 -> db1a47b1c3132e0c904fa15594b2da85586a111a; checkpoint/recovery-package-007-accepted-001 -> cea80492cbaf5364177372cf93b0a2c0db923c56; checkpoint/recovery-package-008-accepted-001 -> 0c579533739df023985a9744977ac5f570669fae`
 CLOUD_MUTATION_STATUS: `NONE`
-BLOCKED_REC: `REC-10/REC-11 blocked by O-ABUSE; REC-12 blocked by REC-04 plus O-SOURCE; cloud-dependent REC-07 onward remain blocked by closed target/provider gates.`
+BLOCKED_REC: `REC-10/REC-11 blocked by O-ABUSE; REC-12 blocked by O-SOURCE; cloud-dependent REC-07 onward remain blocked by closed target/provider gates.`
 NEXT_READY_REC: `REC-20 — Content-correct generated PDF.`
-RESUME_POINT: `Initialize Recovery Package 008 for REC-20 (Content-correct generated PDF) from the accepted integration head.`
-LAST_UPDATED_UTC: `2026-09-28T00:30:00Z`
+RESUME_POINT: `Initialize next package for REC-20 (Content-correct generated PDF) from the accepted integration head.`
+LAST_UPDATED_UTC: `2026-09-28T02:45:00Z`
