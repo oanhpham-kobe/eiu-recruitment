@@ -12,7 +12,7 @@
 #   PG3: Role & Permission Administration:
 #     Root Admin assigns HR role with defaults (assign_hr_role_with_defaults)
 #     Root Admin grants/revokes granular permissions (grant/revoke_hr_permission)
-#     Root Admin revokes HR role (revoke_hr_role_and_permissions)
+#     Root Admin revokes HR role (remove_hr_role)
 #   PG4: Optimistic Version Concurrency:
 #     Mismatched expected_version_no rejected with STALE_VERSION
 #   PG5: Security Boundary:
@@ -51,6 +51,7 @@ suffix="$(new_uuid | tr -d '-' | cut -c1-12)"
 # Root Admin fixture
 root_user_id="$(new_uuid)"
 root_auth_uid="$(new_uuid)"
+root_owned=true
 
 # HR Manager fixture
 hr_user_id="$(new_uuid)"
@@ -67,25 +68,54 @@ target_auth_uid="$(new_uuid)"
 cleanup() {
   echo "==> Cleaning up test fixtures..."
   psql_exec <<SQL >/dev/null 2>&1 || true
-delete from public.app_user_permissions where app_user_id in ('$root_user_id'::uuid, '$hr_user_id'::uuid, '$staff_user_id'::uuid, '$target_user_id'::uuid);
-delete from public.app_user_roles where app_user_id in ('$root_user_id'::uuid, '$hr_user_id'::uuid, '$staff_user_id'::uuid, '$target_user_id'::uuid);
-delete from public.app_users where app_user_id in ('$root_user_id'::uuid, '$hr_user_id'::uuid, '$staff_user_id'::uuid, '$target_user_id'::uuid);
-delete from auth.users where id in ('$root_auth_uid'::uuid, '$hr_auth_uid'::uuid, '$staff_auth_uid'::uuid, '$target_auth_uid'::uuid);
+delete from public.app_user_permissions where app_user_id in ('$hr_user_id'::uuid, '$staff_user_id'::uuid, '$target_user_id'::uuid);
+delete from public.app_user_roles where app_user_id in ('$hr_user_id'::uuid, '$staff_user_id'::uuid, '$target_user_id'::uuid);
+delete from public.app_users where app_user_id in ('$hr_user_id'::uuid, '$staff_user_id'::uuid, '$target_user_id'::uuid);
+delete from auth.users where id in ('$hr_auth_uid'::uuid, '$staff_auth_uid'::uuid, '$target_auth_uid'::uuid);
 SQL
+  if [[ "$root_owned" == true ]]; then
+    psql_exec <<SQL >/dev/null 2>&1 || true
+delete from public.app_users where app_user_id = '$root_user_id'::uuid;
+delete from auth.users where id = '$root_auth_uid'::uuid;
+SQL
+  fi
 }
 trap cleanup EXIT
+
+echo "==> Resolving Root Admin actor..."
+root_record="$(psql_exec -qAt -F '|' -c "select app_user_id::text, coalesce(auth_user_id::text,'') from public.app_users where is_root_admin=true order by app_user_id limit 1;" | tr -d '\r')"
+if [[ -n "$root_record" ]]; then
+  IFS='|' read -r existing_root_id existing_auth_id <<< "$root_record"
+  root_user_id="$existing_root_id"
+  if [[ -n "$existing_auth_id" ]]; then
+    root_auth_uid="$existing_auth_id"
+  else
+    root_auth_uid="$(new_uuid)"
+    psql_exec <<SQL
+insert into auth.users (id, email) values ('$root_auth_uid'::uuid, 'root_auth_$suffix@eiu.edu.vn');
+update public.app_users set auth_user_id = '$root_auth_uid'::uuid where app_user_id = '$root_user_id'::uuid;
+SQL
+  fi
+  root_owned=false
+  echo "Reusing existing Root Admin: $root_user_id (auth: $root_auth_uid)"
+else
+  psql_exec <<SQL
+insert into auth.users (id, email) values ('$root_auth_uid'::uuid, 'rec19_root_$suffix@eiu.edu.vn');
+insert into public.app_users (app_user_id, auth_user_id, email, full_name, is_active, is_root_admin)
+values ('$root_user_id'::uuid, '$root_auth_uid'::uuid, 'rec19_root_$suffix@eiu.edu.vn', 'Root Admin $suffix', true, true);
+SQL
+  echo "Created fresh Root Admin: $root_user_id (auth: $root_auth_uid)"
+fi
 
 echo "==> Setting up security actors and permissions..."
 psql_exec <<SQL
 insert into auth.users (id, email)
 values
-  ('$root_auth_uid'::uuid, 'rec19_root_$suffix@eiu.edu.vn'),
   ('$hr_auth_uid'::uuid, 'rec19_hr_$suffix@eiu.edu.vn'),
   ('$staff_auth_uid'::uuid, 'rec19_staff_$suffix@eiu.edu.vn');
 
 insert into public.app_users (app_user_id, auth_user_id, email, full_name, is_active, is_root_admin)
 values
-  ('$root_user_id'::uuid, '$root_auth_uid'::uuid, 'rec19_root_$suffix@eiu.edu.vn', 'Root Admin $suffix', true, true),
   ('$hr_user_id'::uuid, '$hr_auth_uid'::uuid, 'rec19_hr_$suffix@eiu.edu.vn', 'HR Manager $suffix', true, false),
   ('$staff_user_id'::uuid, '$staff_auth_uid'::uuid, 'rec19_staff_$suffix@eiu.edu.vn', 'Staff $suffix', true, false);
 
@@ -149,12 +179,15 @@ echo "PASS: Scenario 1 - Directory Lifecycle"
 # SCENARIO 2: Root Admin Protection & Identity-Bound Email Protection
 # =============================================================================
 echo "==> Running Scenario 2: Root Admin Protection & Bound Email Protection..."
+# Get current Root Admin version
+root_ver=$(psql_exec -qAt -c "select version_no from public.app_users where app_user_id = '$root_user_id'::uuid;")
+
 # Attempting to inactivate Root Admin
 res_s2_root_lock=$(run_as_actor "$root_auth_uid" "
 select public.set_internal_user_active(
   '$root_user_id'::uuid,
   false,
-  1,
+  $root_ver,
   gen_random_uuid()
 );
 ")
@@ -280,7 +313,7 @@ select public.remove_hr_role(
 s3_rev_all_success=$(psql_exec -qAt -c "select ('$res_s3_revoke_all'::jsonb ->> 'success')::boolean;")
 s3_rev_all_ver=$(psql_exec -qAt -c "select ('$res_s3_revoke_all'::jsonb -> 'data' ->> 'version_no')::int;")
 if [[ "$s3_rev_all_success" != "t" || "$s3_rev_all_ver" != "$((s3_revoke_ver + 1))" ]]; then
-  echo "FAIL: Scenario 3 revoke_hr_role_and_permissions failed"
+  echo "FAIL: Scenario 3 remove_hr_role failed"
   exit 1
 fi
 echo "PASS: Scenario 3 - Role & Permission Administration"
