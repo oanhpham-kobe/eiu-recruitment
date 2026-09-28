@@ -235,12 +235,15 @@ values ('$format_id'::uuid, 'F_${suffix}', 'Format ${suffix}', false);
 
 insert into public.app_users(app_user_id, auth_user_id, full_name, email, is_active, is_root_admin)
 values
-  ('$actor_id'::uuid, '$actor_auth_id'::uuid, 'Actor ${suffix}', 'actor_${suffix}@eiu.edu.vn', true, true),
+  ('$actor_id'::uuid, '$actor_auth_id'::uuid, 'Actor ${suffix}', 'actor_${suffix}@eiu.edu.vn', true, false),
   ('$interviewer_id'::uuid, '$interviewer_auth_id'::uuid, 'Interviewer ${suffix}', 'interviewer_${suffix}@eiu.edu.vn', true, false);
 
 insert into public.app_user_roles(app_user_id, role_code) values
   ('$actor_id'::uuid, 'HR');
 
+insert into public.app_user_permissions(app_user_id, permission_code, granted_by)
+select '$actor_id'::uuid, p.permission_code, '$actor_id'::uuid
+from public.permissions p;
 
 -- Scenario 1 fixtures: app_1 has round 1 with interview_note (non-empty -> inactivates)
 insert into public.candidates(candidate_id, auth_user_id, email, is_active)
