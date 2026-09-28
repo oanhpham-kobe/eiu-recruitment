@@ -514,3 +514,27 @@ test("B1.11: Successful edit mutation restores keyboard focus to the refreshed e
     await page.close();
   }
 });
+
+test("B1.12: Non-root directory manager cannot lock HR user", async () => {
+  const page = await setupPage({
+    identity: {
+      roles: ["HR"],
+      permissions: ["users.directory_manage"],
+    },
+  });
+  try {
+    // Row 2 is HR Lead. Non-root directory manager should NOT see Khóa on row 2
+    const hrRowLockCount = await page
+      .locator('.users-table tbody tr:nth-child(2) button:has-text("Khóa")')
+      .count();
+    assert.equal(hrRowLockCount, 0);
+
+    // Row 3 is regular Staff (not HR, not Root). Non-root directory manager CAN see Mở khóa on row 3
+    const staffRowLockCount = await page
+      .locator('.users-table tbody tr:nth-child(3) button:has-text("Mở khóa")')
+      .count();
+    assert.equal(staffRowLockCount, 1);
+  } finally {
+    await page.close();
+  }
+});

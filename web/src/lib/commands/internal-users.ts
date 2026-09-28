@@ -1,6 +1,10 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  DELEGABLE_PERMISSIONS,
+  type PermissionDefinition,
+} from "@/lib/auth/permissions";
 import { getServerSession } from "@/lib/auth/session";
 import { createCommandRunner } from "@/lib/commands/runner";
 import {
@@ -10,6 +14,8 @@ import {
   type VerifiedActor,
 } from "@/lib/commands/types";
 import { createServerClient } from "@/lib/supabase/server";
+
+export { DELEGABLE_PERMISSIONS, type PermissionDefinition };
 
 export interface UserCommandDeps {
   client?: SupabaseClient;

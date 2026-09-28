@@ -12,7 +12,6 @@ import {
 import {
   assignHrRoleAction,
   createInternalUserAction,
-  DELEGABLE_PERMISSIONS,
   getUserManagementDependenciesAction,
   getUserPermissionsAction,
   grantHrPermissionAction,
@@ -28,6 +27,7 @@ import {
   type InternalNavigationIdentity,
   resolveInternalNavItems,
 } from "@/components/shell/navigation";
+import { DELEGABLE_PERMISSIONS } from "@/lib/auth/permissions";
 
 export interface UsersManagementPageProps {
   identity?: InternalNavigationIdentity | null;
@@ -293,7 +293,7 @@ export function UsersManagementPage({
       unitId: formUnitId || null,
     };
 
-    if (isRootAdmin || !editingUser.identityBound) {
+    if (!editingUser.identityBound) {
       patch.email = formEmail.trim().toLowerCase();
     }
 
@@ -731,7 +731,7 @@ export function UsersManagementPage({
                             </button>
                           )}
 
-                          {!user.isRootAdmin && (
+                          {!user.isRootAdmin && (isRootAdmin || !user.isHr) && (
                             <button
                               ref={(el) => {
                                 actionTriggerRefs.current[
@@ -920,12 +920,13 @@ export function UsersManagementPage({
                   <div className="form-group">
                     <label className="form-label" htmlFor="edit-email">
                       Email EIU{" "}
-                      {editingUser.identityBound && !isRootAdmin && (
+                      {editingUser.identityBound && (
                         <span
                           className="text-muted"
                           style={{ fontWeight: 400 }}
                         >
-                          (Đã liên kết Auth — chỉ Root Admin mới được sửa email)
+                          (Đã liên kết Auth — email cố định; thay đổi danh tính
+                          yêu cầu quy trình bảo mật riêng)
                         </span>
                       )}
                     </label>
@@ -935,7 +936,7 @@ export function UsersManagementPage({
                       className="form-input"
                       value={formEmail}
                       onChange={(e) => setFormEmail(e.target.value)}
-                      disabled={editingUser.identityBound && !isRootAdmin}
+                      disabled={editingUser.identityBound}
                       required
                     />
                   </div>
