@@ -16,10 +16,13 @@
 # =============================================================================
 set -euo pipefail
 
-container_name="${CONTAINER_NAME:-supabase_db_eiu-recruitment-dev}"
+container_name="${1:-${CONTAINER_NAME:-supabase_db_eiu-recruitment-dev}}"
+database_name="${2:-${DATABASE_NAME:-postgres}}"
+socket_dir="${3:-${PGHOST:-}}"
+port="${4:-${PGPORT:-5432}}"
 
 psql_exec() {
-  docker exec -i "$container_name" psql -v ON_ERROR_STOP=1 -U postgres -d postgres "$@"
+  docker exec -i "$container_name" psql -h "$socket_dir" -p "$port" -v ON_ERROR_STOP=1 -U postgres -d "$database_name" "$@"
 }
 
 new_uuid() {
@@ -101,9 +104,10 @@ int_7_valid="$(new_uuid)"
 int_7_target="$(new_uuid)"
 run_sql_file() {
   local sql="$1"
+  sql="${sql/; select public./; set local role authenticated; select public.}"
   local out="$2"
   printf '%s\n' "$sql" | docker exec -i "$container_name" \
-    psql -v ON_ERROR_STOP=1 -U postgres -d postgres >"$out" 2>&1
+    psql -h "$socket_dir" -p "$port" -v ON_ERROR_STOP=1 -U postgres -d "$database_name" >"$out" 2>&1
 }
 
 registered_apps=()
