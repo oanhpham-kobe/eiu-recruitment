@@ -4,7 +4,7 @@ MASTER_PLAN: `review/astra-strategic-review-20260927:project_control/astra_revie
 MASTER_PLAN_SHA256: `928c5bb4c32289dc5a7a0979531f5f26769c4e5f228cb2f5fbea9ee16f09826c`
 EXECUTION_MODE: `AUTONOMOUS`
 CURRENT_INTEGRATION_BRANCH: `autonomy/continuous-integration-20260905-01`
-CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (last accepted integration: `b61d24a544c2ae77f0a8c2053dd329e4697ff7ea`)
+CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (last accepted integration: `b61d24a544c2ae77f0a8c2053dd329e4697ff7ea` / reporting HEAD: `bb40a6bb4f72e1ce1488aaa97de1e75e53c98712`)
 
 ## Accepted recovery packages
 
@@ -29,7 +29,7 @@ DEPENDENCIES: `REC-01, REC-02, REC-03, REC-04, REC-05, REC-15, REC-18, and REC-1
 OWNER_GATES: `O-EXEC and O-LOCAL apply to the next local package; O-AUTH/O-ENV remain closed for connected configuration.`
 CANDIDATE_SHA: `NONE`
 REVIEW_STATUS: `Package 008 accepted after independent domain/security review, exact-SHA CI, and checkpoint creation.`
-CI_RUNS: `Package 001: 36323009513, 36323083024; Package 002: 36326090416, 36326090418; Package 003: 36332367274, 36332367253; Package 004: 36335049384, 36335049335; Package 005: 36339150628, 36339150620; Package 006: 36342175434, 36342175464; Package 007: 36361950308, 36361950283; Package 008: 36369685728`
+CI_RUNS: `Package 001: 36323009513, 36323083024; Package 002: 36326090416, 36326090418; Package 003: 36332367274, 36332367253; Package 004: 36335049384, 36335049335; Package 005: 36339150628, 36339150620; Package 006: 36342175434, 36342175464; Package 007: 36361950308, 36361950283; Package 008: 36369685728, 36371009734, 36371009701`
 CHECKPOINT_REF: `checkpoint/recovery-package-001-accepted-001 -> f6e22c123381fc047b3eb22abbe790f482984135; checkpoint/recovery-package-002-accepted-001 -> 87a2d1ed264d66a1b18468cc831d165dbd25f4e9; checkpoint/recovery-package-003-accepted-001 -> 72369fe94852fabd1f99f306c31d2e1ace2c64c0; checkpoint/recovery-package-004-accepted-001 -> 2466ad4e23c761f15d43e993294a3dda4c9d8e50; checkpoint/recovery-package-005-accepted-001 -> b802548e32ac7a8500e543cd62d5b464b7ac6ba0; checkpoint/recovery-package-006-accepted-001 -> db1a47b1c3132e0c904fa15594b2da85586a111a; checkpoint/recovery-package-007-accepted-001 -> cea80492cbaf5364177372cf93b0a2c0db923c56; checkpoint/recovery-package-008-accepted-001 -> 0c579533739df023985a9744977ac5f570669fae`
 CLOUD_MUTATION_STATUS: `NONE`
 BLOCKED_REC: `REC-10/REC-11 blocked by O-ABUSE; REC-12 blocked by O-SOURCE; cloud-dependent REC-07 onward remain blocked by closed target/provider gates.`
