@@ -1,5 +1,5 @@
 -- =============================================================================
--- RECOVERY PACKAGE 003: REC-04 Coordinated Transaction Correctness Test
+-- REC-04 Coordinated Transaction Correctness Test
 --
 -- Proves:
 --   1. Catalog registration: all repaired functions exist with empty search_path,
@@ -15,6 +15,8 @@
 --      leaves rows, outcomes, audits, and cleanup queue completely unchanged.
 --   6. F04: Deterministic lock ordering and revalidation: inactive parent
 --      applications and non-latest rounds are safely rejected after acquisition.
+--   7. REC-04 Forward: update_submission_by_hr requires a positive optimistic
+--      version and preserves state on every rejected version token.
 -- =============================================================================
 
 \set ON_ERROR_STOP on
@@ -90,7 +92,7 @@ declare
   v_audit_payload jsonb;
 begin
   raise notice '====================================================================';
-  raise notice '=== RECOVERY PACKAGE 003: REC-04 TRANSACTION CORRECTNESS TESTS   ===';
+  raise notice '=== REC-04 TRANSACTION CORRECTNESS TESTS                         ===';
   raise notice '====================================================================';
 
   -- ---------------------------------------------------------------------------
@@ -121,12 +123,29 @@ begin
   where is_active
   limit 1;
 
-  -- HR User with full permissions
-  insert into public.app_users(auth_user_id, full_name, email, is_active, is_root_admin)
-  values (v_hr_auth, 'Rec04 HR', 'hr_' || s || '@eiu.edu.vn', true, true)
-  returning app_user_id into v_hr_user;
+  -- Reuse the singleton root when an integration fixture already provides it.
+  -- A disposable replay database has no root, so create one only in that case.
+  select auth_user_id, app_user_id into v_hr_auth, v_hr_user
+  from public.app_users
+  where is_root_admin and is_active
+  order by app_user_id
+  limit 1;
+  if not found then
+    v_hr_auth := gen_random_uuid();
+    insert into public.app_users(auth_user_id, full_name, email, is_active, is_root_admin)
+    values (v_hr_auth, 'Rec04 HR', 'hr_' || s || '@eiu.edu.vn', true, true)
+    returning app_user_id into v_hr_user;
+  end if;
 
-  insert into public.app_user_roles(app_user_id, role_code) values (v_hr_user, 'HR');
+  insert into public.app_user_roles(app_user_id, role_code)
+  values (v_hr_user, 'HR')
+  on conflict do nothing;
+
+  insert into public.app_user_permissions(app_user_id, permission_code, granted_by)
+  values
+    (v_hr_user, 'interviews.participants', v_hr_user),
+    (v_hr_user, 'interviews.view', v_hr_user)
+  on conflict do nothing;
 
   -- Interviewer 1
   insert into public.app_users(auth_user_id, full_name, email, is_active, is_root_admin)
@@ -937,6 +956,46 @@ begin
     'FAIL: Interview 2 report status must be WAITING_FOR_REPORT';
 
   raise notice 'PASS: bulk_change_report_status functional verification passed.';
+
+  -- ===========================================================================
+  -- CHECK 11: Submission HR-note writer requires a positive version token
+  -- ===========================================================================
+  raise notice '--- Check 11: update_submission_by_hr optimistic version requirement ---';
+
+  select version_no into v_ver from public.submissions where submission_id = v_sub1;
+  v_r := public.update_submission_by_hr(v_sub1, 'REC-04 forward note', v_ver);
+  assert (v_r->>'success')::boolean,
+    'FAIL: update_submission_by_hr must accept its current version: ' || v_r::text;
+
+  select version_no into v_ver2 from public.submissions where submission_id = v_sub1;
+  select count(*) into v_initial_audit_count
+  from public.security_audit_log
+  where entity_id = v_sub1;
+
+  v_r := public.update_submission_by_hr(v_sub1, 'must not write', null);
+  assert (v_r->>'success')::boolean = false and v_r->>'error_code' = 'VALIDATION_ERROR',
+    'FAIL: explicit NULL expected version must be rejected: ' || v_r::text;
+  v_r := public.update_submission_by_hr(v_sub1, 'must not write');
+  assert (v_r->>'success')::boolean = false and v_r->>'error_code' = 'VALIDATION_ERROR',
+    'FAIL: omitted expected version must be rejected: ' || v_r::text;
+  v_r := public.update_submission_by_hr(v_sub1, 'must not write', 0);
+  assert (v_r->>'success')::boolean = false and v_r->>'error_code' = 'VALIDATION_ERROR',
+    'FAIL: zero expected version must be rejected: ' || v_r::text;
+  v_r := public.update_submission_by_hr(v_sub1, 'must not write', -1);
+  assert (v_r->>'success')::boolean = false and v_r->>'error_code' = 'VALIDATION_ERROR',
+    'FAIL: negative expected version must be rejected: ' || v_r::text;
+  v_r := public.update_submission_by_hr(v_sub1, 'must not write', v_ver);
+  assert (v_r->>'success')::boolean = false and v_r->>'error_code' = 'STALE_VERSION',
+    'FAIL: stale expected version must be rejected: ' || v_r::text;
+
+  assert (select hr_note from public.submissions where submission_id = v_sub1) = 'REC-04 forward note',
+    'FAIL: rejected version token modified the HR note';
+  assert (select version_no from public.submissions where submission_id = v_sub1) = v_ver2,
+    'FAIL: rejected version token modified the submission version';
+  assert (select count(*) from public.security_audit_log where entity_id = v_sub1) = v_initial_audit_count,
+    'FAIL: rejected version token created a durable audit side effect';
+
+  raise notice 'PASS: update_submission_by_hr rejects missing, invalid, and stale version tokens without writes.';
 
   raise notice '====================================================================';
   raise notice '=== ALL REC-04 ASSERTIONS PASSED SUCCESSFULLY                    ===';

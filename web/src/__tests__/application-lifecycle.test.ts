@@ -318,6 +318,39 @@ test("7. AC-HR-NOTE-STALE: Version mismatch in update_submission_by_hr returns S
   }
 });
 
+test("8. REC-04-F06: submission-note adapter rejects missing, zero, negative, and unsafe version tokens before RPC", async () => {
+  let rpcCalls = 0;
+  const mockSupabase = createMockSupabase({
+    rpcHandlers: {
+      update_submission_by_hr: () => {
+        rpcCalls += 1;
+        return { success: true };
+      },
+    },
+  });
+
+  for (const expectedVersion of [
+    undefined,
+    0,
+    -1,
+    Number.MAX_SAFE_INTEGER + 1,
+  ]) {
+    const result = await updateSubmissionByHr(
+      {
+        submissionId: sampleSubmissionId,
+        hrNote: "must not reach SQL",
+        expectedVersion,
+      } as unknown as Parameters<typeof updateSubmissionByHr>[0],
+      { client: mockSupabase, resolveActor: async () => hrActor },
+    );
+    assert.equal(result.success, false);
+    if (!result.success) {
+      assert.equal(result.error.code, CommandErrorCode.VALIDATION_ERROR);
+    }
+  }
+  assert.equal(rpcCalls, 0);
+});
+
 test("8. AC-APP-AUTH-01: Unauthorized caller without required permissions rejected with FORBIDDEN", async () => {
   const mockSupabase = createMockSupabase({});
 
@@ -345,7 +378,7 @@ test("8. AC-APP-AUTH-01: Unauthorized caller without required permissions reject
   }
 
   const editResult = await updateSubmissionByHr(
-    { submissionId: sampleSubmissionId, hrNote: "note" },
+    { submissionId: sampleSubmissionId, hrNote: "note", expectedVersion: 1 },
     { client: mockSupabase, resolveActor: async () => unauthorizedActor },
   );
   assert.equal(editResult.success, false);
