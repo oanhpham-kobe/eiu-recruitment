@@ -31,6 +31,14 @@ test("limited HR navigation follows granted view permissions", () => {
     "/reports",
     "/master-data",
   ]);
+  assert.deepEqual(hrefs(["HR"], ["users.directory_read"]), [
+    "/reports",
+    "/users",
+  ]);
+  assert.deepEqual(hrefs(["HR"], ["users.directory_manage"]), [
+    "/reports",
+    "/users",
+  ]);
 });
 
 test("Root Admin sees all implemented internal modules", () => {
@@ -39,6 +47,7 @@ test("Root Admin sees all implemented internal modules", () => {
     "/interviews",
     "/reports",
     "/master-data",
+    "/users",
   ]);
 });
 

@@ -26,12 +26,18 @@ const MASTER_DATA_NAV_ITEM: NavItem = {
   labelVi: "Danh mục",
   labelEn: "Master Data",
 };
+const USERS_NAV_ITEM: NavItem = {
+  href: "/users",
+  labelVi: "Người dùng & Phân quyền",
+  labelEn: "Users & Permissions",
+};
 
 export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
   APPLICATIONS_NAV_ITEM,
   INTERVIEWS_NAV_ITEM,
   REPORTS_NAV_ITEM,
   MASTER_DATA_NAV_ITEM,
+  USERS_NAV_ITEM,
 ];
 
 export interface InternalNavigationIdentity {
@@ -62,6 +68,13 @@ export function resolveInternalNavItems(
 
   if (identity.permissions.includes("master_data.manage")) {
     items.push(MASTER_DATA_NAV_ITEM);
+  }
+  if (
+    identity.permissions.includes("users.directory_read") ||
+    identity.permissions.includes("users.directory_manage") ||
+    identity.permissions.includes("users.permissions_manage")
+  ) {
+    items.push(USERS_NAV_ITEM);
   }
   return items;
 }
