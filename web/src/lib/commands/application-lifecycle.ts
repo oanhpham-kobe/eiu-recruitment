@@ -52,7 +52,7 @@ export type DeleteOrInactivateApplicationData = {
 export type UpdateSubmissionByHrInput = {
   submissionId: string;
   hrNote?: string | null;
-  expectedVersion?: number;
+  expectedVersion: number;
 };
 
 export type UpdateSubmissionByHrData = {
@@ -389,12 +389,12 @@ export function createUpdateSubmissionByHrCommand(
         return { success: false, error: "Invalid submissionId UUID" };
       }
       if (
-        input.expectedVersion !== undefined &&
-        (typeof input.expectedVersion !== "number" || input.expectedVersion < 1)
+        !Number.isSafeInteger(input.expectedVersion) ||
+        input.expectedVersion < 1
       ) {
         return {
           success: false,
-          error: "expectedVersion must be a positive integer",
+          error: "expectedVersion must be a positive safe integer",
         };
       }
       return { success: true, data: input };
@@ -403,7 +403,7 @@ export function createUpdateSubmissionByHrCommand(
       const { data, error } = await supabase.rpc("update_submission_by_hr", {
         p_submission_id: validated.submissionId,
         p_hr_note: validated.hrNote?.trim() || null,
-        p_expected_version: validated.expectedVersion ?? null,
+        p_expected_version: validated.expectedVersion,
       });
 
       if (error) {

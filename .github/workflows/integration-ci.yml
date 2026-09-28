@@ -264,6 +264,18 @@ jobs:
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/copy_interview_schedule_test.sql
 
+      - name: Execute REC-04 transaction correctness regressions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/recovery_transaction_correctness_test.sql
+
+      - name: Execute REC-04 existing opposing concurrency regressions
+        run: |
+          bash supabase/tests/recovery_transaction_concurrency_test.sh
+
+      - name: Execute REC-04 forward lock-composition concurrency regressions
+        run: |
+          bash supabase/tests/recovery_rec04_forward_concurrency_test.sh
+
       - name: Seed REC-03 F02 confidentiality fixture
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/recovery_confidentiality_fixture.sql
