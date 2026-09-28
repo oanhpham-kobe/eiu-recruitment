@@ -123,12 +123,29 @@ begin
   where is_active
   limit 1;
 
-  -- HR User with full permissions
-  insert into public.app_users(auth_user_id, full_name, email, is_active, is_root_admin)
-  values (v_hr_auth, 'Rec04 HR', 'hr_' || s || '@eiu.edu.vn', true, true)
-  returning app_user_id into v_hr_user;
+  -- Reuse the singleton root when an integration fixture already provides it.
+  -- A disposable replay database has no root, so create one only in that case.
+  select auth_user_id, app_user_id into v_hr_auth, v_hr_user
+  from public.app_users
+  where is_root_admin and is_active
+  order by app_user_id
+  limit 1;
+  if not found then
+    v_hr_auth := gen_random_uuid();
+    insert into public.app_users(auth_user_id, full_name, email, is_active, is_root_admin)
+    values (v_hr_auth, 'Rec04 HR', 'hr_' || s || '@eiu.edu.vn', true, true)
+    returning app_user_id into v_hr_user;
+  end if;
 
-  insert into public.app_user_roles(app_user_id, role_code) values (v_hr_user, 'HR');
+  insert into public.app_user_roles(app_user_id, role_code)
+  values (v_hr_user, 'HR')
+  on conflict do nothing;
+
+  insert into public.app_user_permissions(app_user_id, permission_code, granted_by)
+  values
+    (v_hr_user, 'interviews.participants', v_hr_user),
+    (v_hr_user, 'interviews.view', v_hr_user)
+  on conflict do nothing;
 
   -- Interviewer 1
   insert into public.app_users(auth_user_id, full_name, email, is_active, is_root_admin)
