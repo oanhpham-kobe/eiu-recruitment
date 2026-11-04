@@ -6,7 +6,7 @@
 
 - Branch: `implementation/recovery-package-009-rec04-residual-deadlocks`.
 - Local product repair commit: `118c87cfb2d0385a8e2135bbedfb547bb699d186`.
-- Remote branch last observed at `325d3a5e5357d94ec0db891231345bb4606abb93`; no push was performed.
+- Owner authorized GitHub synchronization on 2026-11-05. The publication includes product repair `118c87cfb2d0385a8e2135bbedfb547bb699d186` and its verification handoff; resolve the current remote reporting HEAD directly from Git.
 - Integration branch last observed at `690097d44771a607c05f0c4991c7cf93e121910a`.
 - Package009 is **NOT ACCEPTED / NOT INTEGRATED**. Historical packages001–008/checkpoints remain unchanged.
 - Owner resumed local repairs and existing workflow testing, plus planning for a new internal questionnaire/report feature. The old handoff interruption is superseded for this local work only. Mail/scanner configuration is deferred by Owner.
