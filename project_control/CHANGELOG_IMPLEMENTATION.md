@@ -185,3 +185,10 @@ This compact backfill records accepted checkpoints that were already present in 
 - Product repair commit: `118c87cfb2d0385a8e2135bbedfb547bb699d186`; fresh local evidence: 383 web tests,45 database steps,50-migration replay,49→50 upgrade smoke,10 governance tests, independent review and dependency audit0.
 - Evidence: `project_control/reviews/LOCAL_WORKFLOW_REPAIR_2026-11-05.md`. Package009 remains unaccepted/unintegrated; no push/deployment/hosted operation.
 - Internal-questionnaire/consolidation research proposal added; Owner templates and controlled source decisions remain prerequisites.
+
+## 2026-11-05 — Internal questionnaire and consolidated report local candidate
+
+- Owner promoted the feature through CR-INTERVIEW-FEEDBACK-20261105 and selected existing qualitative questions for trial; implemented private versioned questionnaire/assignment/response/consolidation persistence and production UI, plus an isolated synthetic preview.
+- Fixed discovered login hydration, safe internal return URLs, unequal pagination and keyboard access to long submitted answers; synchronized canonical source indexes and stale manifest metadata.
+- Product candidate `2361c4a084bb00242bc03bfa1eb1464c45787a44`:400 web tests,47 database steps/51-migration replay,71 new SQL assertions,7 new synchronized races,10 governance tests and independent read-only exact-SHA review PASS.
+- Evidence: `project_control/reviews/INTERNAL_INTERVIEW_FEEDBACK_LOCAL_2026-11-05.md`. Development branch publication is authorized; no main integration, hosted operation, production readiness or Package009 acceptance is inferred.

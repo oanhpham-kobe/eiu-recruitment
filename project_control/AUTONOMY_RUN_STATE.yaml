@@ -830,7 +830,7 @@ stop_gate:
   source_reopen_required: false
   resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
-next_action: "Finish local verification, independent review and authorized development-branch synchronization of CR-INTERVIEW-FEEDBACK-20261105. Keep Package009 unaccepted and preserve the S08/REC/source/provider holds; no main integration or production deployment is released."
+next_action: "Verify authorized development-branch synchronization from Git, then obtain Owner trial feedback and official report/dossier samples. Local CR-INTERVIEW-FEEDBACK-20261105 verification/review passed. Keep Package009 unaccepted and preserve S08/REC/source/provider holds; no main integration or production deployment is released."
 
 # Owner resumed local repairs and new-feature planning on 2026-11-05.
 # This does not release the historical S08/provider/source gates above.
@@ -855,7 +855,9 @@ owner_feature_work:
   base_sha: c5a0a4243186d92287493f68973d88939e314476
   candidate_resolution: DIRECT_GIT_RUNTIME
   source: recruitment_webapp/review_pack/101_INTERNAL_INTERVIEW_FEEDBACK.md
-  status: LOCAL_VERIFIED_PENDING_INDEPENDENT_REVIEW
+  status: LOCAL_REVIEWED_NOT_INTEGRATED
+  product_candidate_sha: 2361c4a084bb00242bc03bfa1eb1464c45787a44
+  independent_review_sha: 2361c4a084bb00242bc03bfa1eb1464c45787a44
   accepted: false
   local_only: true
   owner_scope: Implement questionnaire and consolidated report using the existing five qualitative questions for trial; show a synthetic local preview. Real mail/scanner services and official report/dossier templates remain deferred.

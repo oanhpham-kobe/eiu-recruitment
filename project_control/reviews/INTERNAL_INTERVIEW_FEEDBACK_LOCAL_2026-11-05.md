@@ -2,7 +2,9 @@
 
 Date: 2026-11-05. Branch: `codex/interview-feedback-consolidation-20261105`.
 Base: `c5a0a4243186d92287493f68973d88939e314476`.
-State: local verification PASS; exact-candidate independent review/publication pending.
+Product candidate: `2361c4a084bb00242bc03bfa1eb1464c45787a44`.
+State: local verification and independent exact-candidate read-only review PASS.
+The development branch is Owner-authorized for publication; resolve reporting HEAD and remote equality directly from Git.
 This is not OMP acceptance, recovery acceptance, production readiness or GitHub CI evidence.
 
 ## Implementation
@@ -55,7 +57,19 @@ keyboard feedback, long submitted-answer keyboard scrolling and unequal paging
 - A legacy CSS token failed the design check; current declared tokens now pass.
 - The untouched baseline prototype app.js did not match its old manifest row. Working bytes equalled the base Git blob; only the stale size/hash receipt was corrected.
 
-## Limits
+## Independent exact-candidate review
+
+Read-only reviewer inspected all51 changed files against the base and returned
+PASS on `2361c4a084bb00242bc03bfa1eb1464c45787a44`, with no outstanding blocking
+findings. Previous lock/binding/chain checks, both pagination defects and long-answer
+keyboard access findings were closed. Fresh independent checks:11 focused
+adapter/redirect tests PASS, all137 review-manifest entries matched, prototype
+source unchanged, CRLF-aware whitespace check PASS and working tree clean.
+The reviewer did not repeat database mutations or the full browser suite; those
+remain the parent's fresh verification evidence above. This collaboration review
+is not formal OMP acceptance or a production authorization.
+
+## Remaining limits
 
 Real Google/provider configuration was not performed; browser provider calls are
 intercepted. Persistence/authorization proof uses actual local PostgreSQL roles.

@@ -5,6 +5,7 @@
 ## Active local feature — 2026-11-05
 
 - Branch: `codex/interview-feedback-consolidation-20261105`, based on `c5a0a4243186d92287493f68973d88939e314476`. Resolve current candidate/reporting HEAD directly from Git.
+- Product candidate: `2361c4a084bb00242bc03bfa1eb1464c45787a44`; independent read-only review PASS on that exact SHA. Later reporting commits do not imply another product acceptance.
 - Owner authorized implementation and local preview; selected existing five qualitative questions, assigned bound internal reviewers, and deferred real providers.
 - Canonical additive source: `recruitment_webapp/review_pack/101_INTERNAL_INTERVIEW_FEEDBACK.md`. RPC reference: `project_control/research/INTERVIEW_FEEDBACK_RPC.md`.
 - Implemented immutable questionnaire versions, exact-round assignments, own draft/submit, HR tracking/individual inspection, revocation, pinned consolidation/approval and browser printing.
@@ -18,7 +19,7 @@
 - 10 governance regressions, source515/515 and design73/73 PASS. Final manifest/control checks and exact-candidate review are recorded in the feature evidence.
 - Real Next smoke: both entry paths preserve internal-login return paths with zero browser errors. Provider requests are intercepted tests, not a real Google login.
 - Evidence: `project_control/reviews/INTERNAL_INTERVIEW_FEEDBACK_LOCAL_2026-11-05.md`.
-- Independent exact-candidate review/publication pending until the evidence receipt records them. No accepted checkpoint or GitHub CI PASS is implied.
+- Independent exact-candidate review PASS; receipt: `EVIDENCE_INDEX.yaml:implementation_evidence.INTERNAL-INTERVIEW-FEEDBACK-20261105`. Owner authorized development-branch publication; verify current remote HEAD directly. No OMP acceptance, accepted checkpoint or GitHub CI PASS is implied.
 
 ## Follow-up boundaries
 

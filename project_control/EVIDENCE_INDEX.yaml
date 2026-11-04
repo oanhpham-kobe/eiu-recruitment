@@ -8,6 +8,23 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
+  INTERNAL-INTERVIEW-FEEDBACK-20261105:
+    operation: LOCAL_INTERNAL_INTERVIEW_FEEDBACK_AND_CONSOLIDATION
+    status: LOCALLY_REVIEWED_NOT_ACCEPTED
+    branch: codex/interview-feedback-consolidation-20261105
+    product_candidate_sha: "2361c4a084bb00242bc03bfa1eb1464c45787a44"
+    independent_review_sha: "2361c4a084bb00242bc03bfa1eb1464c45787a44"
+    independent_review: PASS
+    review_kind: READ_ONLY_CODEX_COLLABORATION_NOT_FORMAL_OMP_ACCEPTANCE
+    web_tests: "400 PASS; 0 failed; 0 skipped"
+    local_database_sequence: "47/47 PASS, including prior45 steps, new71 SQL assertions and7 synchronized races"
+    clean_replay: "51 migrations PASS"
+    governance_regressions: "10 PASS"
+    canonical_validators: "515/515 source;73/73 design;565 manifest checks PASS"
+    github_ci: NOT_USED_FOR_LOCAL_VERIFICATION
+    accepted: false
+    artifact: project_control/reviews/INTERNAL_INTERVIEW_FEEDBACK_LOCAL_2026-11-05.md
+
   LOCAL-WORKFLOW-REPAIR-20261105:
     operation: LOCAL_RECOVERY_WORKFLOW_REPAIR
     status: VERIFIED_LOCALLY_NOT_ACCEPTED
