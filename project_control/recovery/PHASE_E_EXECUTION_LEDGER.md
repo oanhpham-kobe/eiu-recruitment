@@ -29,8 +29,8 @@ ACTIVE_BRANCH: `implementation/recovery-package-009-rec04-residual-deadlocks`
 ACTIVE_WORKTREE: `DIRECT_GIT_RUNTIME`
 DEPENDENCIES: `Historical packages 001–008 remain accepted within scope. Package009 residual repair is open; REC-20 depends on unresolved REC-12 and is not dependency-ready.`
 OWNER_GATES: `O-EXEC and O-LOCAL apply to the next local package; O-AUTH/O-ENV remain closed for connected configuration.`
-CANDIDATE_SHA: `DIRECT_GIT_RUNTIME — local repair remains unaccepted`
-REVIEW_STATUS: `Package008 historical acceptance retained. Package009 local actor/target repair independently reviewed; final workflow verification and exact-final-SHA acceptance CI remain required.`
+CANDIDATE_SHA: `118c87cfb2d0385a8e2135bbedfb547bb699d186`
+REVIEW_STATUS: `Package008 historical acceptance retained. Package009 local actor/target repair independently reviewed; final local workflow verification passed; exact-final-SHA acceptance CI remains required.`
 CI_RUNS: `Package 001: 36323009513, 36323083024; Package 002: 36326090416, 36326090418; Package 003: 36332367274, 36332367253; Package 004: 36335049384, 36335049335; Package 005: 36339150628, 36339150620; Package 006: 36342175434, 36342175464; Package 007: 36361950308, 36361950283; Package 008: 36369685728, 36371009734, 36371009701`
 CHECKPOINT_REF: `checkpoint/recovery-package-001-accepted-001 -> f6e22c123381fc047b3eb22abbe790f482984135; checkpoint/recovery-package-002-accepted-001 -> 87a2d1ed264d66a1b18468cc831d165dbd25f4e9; checkpoint/recovery-package-003-accepted-001 -> 72369fe94852fabd1f99f306c31d2e1ace2c64c0; checkpoint/recovery-package-004-accepted-001 -> 2466ad4e23c761f15d43e993294a3dda4c9d8e50; checkpoint/recovery-package-005-accepted-001 -> b802548e32ac7a8500e543cd62d5b464b7ac6ba0; checkpoint/recovery-package-006-accepted-001 -> db1a47bc61a63586fb38ebc5e5e3689740ec1587; checkpoint/recovery-package-007-accepted-001 -> cea8049f9a2784214ede59649a31a9ee18e4c26e; checkpoint/recovery-package-008-accepted-001 -> 0c579533739df023985a9744977ac5f570669fae`
 CLOUD_MUTATION_STATUS: `NONE`

@@ -8,6 +8,20 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
+  LOCAL-WORKFLOW-REPAIR-20261105:
+    operation: LOCAL_RECOVERY_WORKFLOW_REPAIR
+    status: VERIFIED_LOCALLY_NOT_ACCEPTED
+    product_repair_sha: "118c87cfb2d0385a8e2135bbedfb547bb699d186"
+    web_tests: "383 PASS; 0 failed; 0 skipped"
+    local_database_sequence: "45/45 PASS, including physical Storage"
+    clean_replay: "50 migrations PASS"
+    upgrade: "49-to-50 Candidate sentinel smoke PASS"
+    governance_regressions: "10 PASS"
+    independent_review: PASS
+    dependency_audit: "0 vulnerabilities"
+    github_ci: NOT_RUN
+    artifact: project_control/reviews/LOCAL_WORKFLOW_REPAIR_2026-11-05.md
+
   status: S08_001_ACCEPTED_HARD_STOP_BEFORE_S08_002_MATERIALIZATION
   note: "TASK-S08-001 is accepted at immutable checkpoint/S08-001-accepted-001 -> 0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb after independent final acceptance PASS. TASK-S08-002 remains not materialized and is not authorized by this acceptance."
 

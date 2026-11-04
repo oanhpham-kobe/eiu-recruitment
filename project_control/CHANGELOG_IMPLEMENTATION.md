@@ -177,3 +177,11 @@ This compact backfill records accepted checkpoints that were already present in 
 - Immutable `checkpoint/S04-004-accepted-001` points exactly to `7fa6f5805d4c17c0d92889a3786ae03a577a5ae8`; final OMP acceptance review SHA = CI SHA = accepted checkpoint SHA.
 - No main mutation, Vercel deployment, or connected Supabase migration application was performed.
 - Slice-04 remains IN_PROGRESS until its composition review and one broader slice-closing regression gate pass.
+
+## 2026-11-05 — Local workflow repair and internal-feedback planning
+
+- Repaired actor/target audit lock composition, management shell composition, safe document preview failures and REC05 canonical fixture.
+- Added meaningful concurrency/CI/recovery reporting coverage and patched Next/dependency advisories.
+- Product repair commit: `118c87cfb2d0385a8e2135bbedfb547bb699d186`; fresh local evidence: 383 web tests,45 database steps,50-migration replay,49→50 upgrade smoke,10 governance tests, independent review and dependency audit0.
+- Evidence: `project_control/reviews/LOCAL_WORKFLOW_REPAIR_2026-11-05.md`. Package009 remains unaccepted/unintegrated; no push/deployment/hosted operation.
+- Internal-questionnaire/consolidation research proposal added; Owner templates and controlled source decisions remain prerequisites.
