@@ -1,6 +1,6 @@
 # Kế hoạch phiếu nhận xét phỏng vấn và báo cáo tổng hợp
 
-Ngày: 05/11/2026. Trạng thái: đề xuất để Owner cung cấp mẫu và duyệt hành vi; chưa triển khai tính năng mới. Owner đã xác nhận chỉ dùng cho người nội bộ có tài khoản @eiu.edu.vn.
+Ngày: 05/11/2026. Owner đã yêu cầu triển khai local và chọn mẫu nhận xét hiện có để chạy thử. Hành vi được chốt cho bản đầu nằm tại `recruitment_webapp/review_pack/101_INTERNAL_INTERVIEW_FEEDBACK.md` (CR-INTERVIEW-FEEDBACK-20261105); kế hoạch dưới đây giữ bối cảnh và các bước sau, không thay thế contract đó. Người nhận chỉ là nội bộ có tài khoản @eiu.edu.vn đã binding và được phân công.
 
 Owner chọn hoàn thiện và kiểm thử local trước; cấu hình dịch vụ gửi email/quét virus thật sẽ làm sau. Không báo provider đã sẵn sàng từ kết quả local.
 

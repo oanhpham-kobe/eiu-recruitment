@@ -1,0 +1,267 @@
+.feedback-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  color: var(--ink-950);
+  font-size: 1rem;
+  line-height: 1.6;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.feedback-page h1 {
+  font-size: 1.75rem;
+  color: var(--eiu-blue, #144069);
+}
+.feedback-page h2 {
+  font-size: 1.4rem;
+  margin-top: 1.5rem;
+  color: #144069;
+}
+.feedback-page h3 {
+  font-size: 1.15rem;
+}
+.feedback-page h4 {
+  font-size: 1rem;
+}
+.feedback-page section,
+.feedback-panel {
+  min-width: 0;
+  margin-bottom: 1.5rem;
+}
+.feedback-page fieldset {
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+.feedback-page legend {
+  font-weight: 600;
+  padding: 0 0.4rem;
+}
+.feedback-page p {
+  overflow-wrap: anywhere;
+}
+.feedback-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  font-size: 1rem;
+}
+.feedback-field input,
+.feedback-field select,
+.feedback-field textarea {
+  font: inherit;
+  color: inherit;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0.65rem;
+  border: 1px solid #64748b;
+  border-radius: 6px;
+  background: #fff;
+}
+.feedback-field textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+.feedback-field :disabled {
+  background: #f1f5f9;
+  color: #475569;
+}
+.feedback-check {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  min-height: 44px;
+  font-size: 1rem;
+}
+.feedback-check input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+.feedback-actions button {
+  white-space: normal;
+  height: auto;
+  min-height: 44px;
+}
+.feedback-context,
+.feedback-notice {
+  padding: 1rem;
+  background: #edf3f8;
+  border-left: 4px solid #144069;
+  border-radius: 6px;
+  margin: 1rem 0;
+}
+.feedback-context p {
+  margin: 0.35rem 0;
+}
+.feedback-error {
+  padding: 1rem;
+  background: #fff1f2;
+  border-left: 4px solid #b91c1c;
+  color: #991b1b;
+}
+.feedback-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.feedback-page table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 540px;
+  font-size: 1rem;
+}
+.feedback-page caption {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.5rem 0;
+}
+.feedback-page th,
+.feedback-page td {
+  padding: 0.8rem;
+  border-bottom: 1px solid #cbd5e1;
+  text-align: left;
+  vertical-align: top;
+}
+.feedback-page th {
+  background: #edf3f8;
+}
+.feedback-page td .ui-button {
+  margin: 0.5rem 0;
+  display: block;
+}
+.feedback-page a {
+  color: #144069;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+.feedback-page :focus-visible {
+  outline: 3px solid #a78656;
+  outline-offset: 3px;
+}
+.feedback-question {
+  padding: 0.75rem;
+  border-bottom: 1px solid #cbd5e1;
+}
+.feedback-invitations li {
+  padding: 0.6rem 0;
+}
+.feedback-print-report {
+  padding: 1.5rem;
+  background: white;
+  border: 1px solid #cbd5e1;
+  margin-top: 1.5rem;
+}
+.feedback-plain-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.feedback-preview-banner {
+  background: #fff3cd;
+  color: #513c06;
+  padding: 1rem;
+  font-size: 1rem;
+}
+.feedback-preview-banner select,
+.feedback-preview-banner button {
+  font: inherit;
+  min-height: 44px;
+  margin: 0.35rem;
+}
+@media (max-width: 600px) {
+  .feedback-page h1 {
+    font-size: 1.5rem;
+  }
+  .feedback-page fieldset,
+  .feedback-print-report {
+    padding: 0.75rem;
+  }
+  .feedback-actions {
+    align-items: stretch;
+  }
+  .feedback-actions button {
+    max-width: 100%;
+  }
+  .feedback-preview-banner label {
+    display: block;
+  }
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .feedback-print-report,
+  .feedback-print-report * {
+    visibility: visible;
+  }
+  .feedback-print-report {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: #000;
+    font-size: 12pt;
+  }
+  .feedback-print-report section {
+    break-inside: auto;
+  }
+  .feedback-print-report h2,
+  .feedback-print-report h3,
+  .feedback-print-report h4 {
+    break-after: avoid;
+    color: #000;
+  }
+  .feedback-print-report p {
+    orphans: 3;
+    widows: 3;
+  }
+  .feedback-no-print,
+  .feedback-preview-banner {
+    display: none;
+  }
+  html,
+  body,
+  #app-root,
+  .shell,
+  .shell-main,
+  main.content {
+    display: block;
+    height: auto;
+    overflow: visible;
+    background: white;
+  }
+  .feedback-page {
+    max-width: none;
+    margin: 0;
+  }
+}
+
+@media print {
+  .sidebar,
+  .topbar,
+  .skip-link,
+  .mobile-navigation {
+    display: none;
+  }
+  .feedback-page > :not(:has(.feedback-print-report)) {
+    display: none;
+  }
+  .feedback-page
+    section:has(> .feedback-print-report)
+    > :not(.feedback-print-report) {
+    display: none;
+  }
+}

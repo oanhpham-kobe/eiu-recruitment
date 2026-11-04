@@ -24,3 +24,6 @@ Delete Email History,No,Yes,If emails.history_view + emails.history_delete + par
 Active/Inactive HR-role internal user,No,No,No — Root only,No,Yes
 Change Application HR owner,No,Yes,If applications.manage,No,Yes
 Candidate email identity recovery,No,No,If candidates.identity_manage,No,Yes
+Manage feedback templates/collections/consolidation,No,Yes,interviews.manage AND reports.view,No,Yes
+Read/submit own feedback invitation,No,Only if exact current participant,Only if exact current participant,Own invitation and allowed context,Only own invitation when participant
+Read consolidated feedback snapshot,No,Yes,interviews.manage AND reports.view,No,Yes

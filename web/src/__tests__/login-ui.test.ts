@@ -8,7 +8,7 @@ import {
   CANONICAL_AUTH_ERRORS,
   LoginContent,
   resolveAuthError,
-} from "@/app/login/page";
+} from "@/components/auth/LoginContent";
 
 /**
  * Universal HTML serializer for React element trees under react-server conditions

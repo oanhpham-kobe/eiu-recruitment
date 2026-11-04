@@ -21,6 +21,11 @@ const REPORTS_NAV_ITEM: NavItem = {
   labelVi: "Báo cáo phỏng vấn",
   labelEn: "Interview Reports",
 };
+const FEEDBACK_NAV_ITEM: NavItem = {
+  href: "/interview-feedback",
+  labelVi: "Nhận xét phỏng vấn",
+  labelEn: "Interview feedback",
+};
 const MASTER_DATA_NAV_ITEM: NavItem = {
   href: "/master-data",
   labelVi: "Danh mục",
@@ -36,6 +41,7 @@ export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
   APPLICATIONS_NAV_ITEM,
   INTERVIEWS_NAV_ITEM,
   REPORTS_NAV_ITEM,
+  FEEDBACK_NAV_ITEM,
   MASTER_DATA_NAV_ITEM,
   USERS_NAV_ITEM,
 ];
@@ -65,6 +71,7 @@ export function resolveInternalNavItems(
   // Reports are shared: HR uses reports.view while Interviewer access is
   // contextual and is enforced by the report read/write backend contracts.
   items.push(REPORTS_NAV_ITEM);
+  items.push(FEEDBACK_NAV_ITEM);
 
   if (identity.permissions.includes("master_data.manage")) {
     items.push(MASTER_DATA_NAV_ITEM);

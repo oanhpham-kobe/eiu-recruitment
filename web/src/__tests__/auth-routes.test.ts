@@ -666,3 +666,34 @@ test("getServerSession: returns unauthenticated if candidate record is not found
   assert.equal(session.isAuthenticated, false);
   assert.equal(session.user, null);
 });
+
+test("callback: decoded control characters cannot turn an internal-looking path into an external redirect", async () => {
+  const client = createMockClient({
+    rpc: async () => ({
+      data: {
+        success: true,
+        data: {
+          app_user_id: "u-1",
+          auth_user_id: "auth-1",
+          email: "staff@eiu.edu.vn",
+          full_name: "Staff",
+          is_root_admin: false,
+          roles: ["HR"],
+          permissions: [],
+        },
+      },
+      error: null,
+    }),
+  });
+  for (const next of [
+    "/\n/evil.example.test",
+    "/\t/evil.example.test",
+    "/\r/evil.example.test",
+  ]) {
+    const request = new NextRequest(
+      `https://app.example.test/auth/callback?code=valid-code&next=${encodeURIComponent(next)}`,
+    );
+    const response = await handleCallback(request, undefined, client);
+    assert.equal(response.headers.get("location"), "https://app.example.test/");
+  }
+});

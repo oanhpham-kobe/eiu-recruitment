@@ -458,3 +458,28 @@ All backend commands, TypeScript adapters, and RPCs use this canonical stable er
 | `ACTIVE_APPLICATION_OWNER_REASSIGN_REQUIRED` | Cannot inactivate HR user or remove HR role while user owns active Applications |
 | `FUTURE_INTERVIEW_PARTICIPANT_REASSIGN_REQUIRED` | Cannot inactivate user while user is current participant on future operational interview |
 | `USER_INACTIVE_NOT_SELECTABLE` | Inactive internal user cannot be re-added as active participant |
+
+## CR-INTERVIEW-FEEDBACK-20261105 — additive local-first commands
+
+The complete feature contract is `101_INTERNAL_INTERVIEW_FEEDBACK.md`; the legacy
+commands and report/outcome rules above retain their existing semantics.
+
+| Command | Authority | Transaction |
+|---|---|---|
+| `publish_interview_feedback_template` | `interviews.manage` AND `reports.view`, or Root | Publish a new immutable plain-text questionnaire version; actor-scoped idempotency and audit |
+| `create_interview_feedback_collection` | Same HR authority | Exact current round/selected participants; one collection, invitations and provider-paused notification intents atomically |
+| `save_interview_feedback_response` | Active bound exact invitation owner/current participant | Optimistic draft/submit, required-answer validation, deadline/context check, immutable submission and safe identical retry |
+| `revoke_interview_feedback_invitation` | Same HR authority | Versioned outstanding-only revocation; keep original evaluator denominator |
+| `save_interview_feedback_consolidation` | Same HR authority | Complete original evaluator set; pinned attributed snapshot, versioned title/summary draft and immutable approval |
+
+All mutations recheck authorization after the shared lifecycle locks. New reads
+`get_interview_feedback_workspace`, `get_interview_feedback_collection`, and
+`get_interview_feedback_invitation` return explicit allowlisted projections.
+The invitation endpoint always returns OWN mode, including for HR participants.
+Private feature tables have no raw authenticated access. Notification intent
+persistence is not email delivery. Browser printing is not an official PDF export.
+
+Additional stable errors: `CONTEXT_NOT_WRITABLE`, `DEADLINE_PASSED`,
+`REQUIRED_ANSWER_MISSING`, `ALREADY_SUBMITTED`, `INVITATION_REVOKED`,
+`COMPLETENESS_REQUIRED`, `ALREADY_APPROVED`; existing auth/validation/version
+errors remain applicable. No private backend exception text is shown in the UI.

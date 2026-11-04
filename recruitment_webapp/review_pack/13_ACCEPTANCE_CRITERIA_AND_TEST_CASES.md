@@ -365,3 +365,13 @@ Production go-live additionally requires the checklist in `45_PRODUCTION_UAT_GAT
 - **AC-DETAIL-PURE-01:** `get_submission_detail()` is a pure read and never mutates Submission status from NEW to READ; only explicit user-intent `open_submission()` may execute NEW->READ transition.
 - **AC-DOC-MAT-01:** Candidate document staged ADD creates a new logical document header without requiring `UNIQUE(submission_id, document_type_id)`; multiple logical files of the same type may coexist; Candidate-created rows set candidate creator/uploader metadata and NULL app_user.
 
+## CR-INTERVIEW-FEEDBACK-20261105 acceptance
+
+- **AC-IF-01:** Actual authenticated identities prove own-only invitation access, private-table/helper denial, inactive/unbound/unassigned rejection, positive limited-HR authorization with both permissions and rejection with either missing. HR invitation endpoint remains OWN.
+- **AC-IF-02:** Published question versions are immutable; publishing another version preserves questions on existing collections. Only ordered bounded plain-text questions, no scoring.
+- **AC-IF-03:** Exact current round and selected current bound participants are enforced. Repeated/concurrent creation produces one collection/invitation/paused intent per selection; UI never claims delivery.
+- **AC-IF-04:** Stale drafts do not overwrite data; identical submit retries do not duplicate audit. Required answers and deadlines are enforced. Hidden/final/inactive/historical contexts reject draft writes. Submitted answers remain immutable and keyboard-readable in full.
+- **AC-IF-05:** Original evaluator denominator survives revocation/removal/inactivation. Incomplete or unavailable sets cannot consolidate/approve. Snapshot pins template, safe candidate context, every evaluator, answer version and submission time; draft edits never rewrite it.
+- **AC-IF-06:** Real synchronized database sessions prove create retry, same-user draft conflict, revoke/submit, remove/approve, post-wait permission revocation, next-round/submit and existing email-lock composition without deadlocks or unauthorized commits.
+- **AC-IF-07:** Browser proves assignment, draft reload, separate evaluator submission, HR individual inspection, full attributed consolidation/approval/print; keyboard required-field feedback, responsive containment, pagination selection consistency and explicit fresh-version reload preserve user intent. Production auth and legacy decision/status remain unchanged.
+

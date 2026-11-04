@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { provisionInternalUserIdentity } from "@/lib/auth/internal";
+import { safeInternalPath } from "@/lib/auth/safe-internal-path";
 import { createServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -12,15 +13,7 @@ export async function GET(
 ) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const rawNext = requestUrl.searchParams.get("next") || "/";
-
-  // Open redirect defense: reject external protocols, protocol-relative, and backslash bypasses
-  const next =
-    rawNext.startsWith("/") &&
-    !rawNext.startsWith("//") &&
-    !rawNext.startsWith("/\\")
-      ? rawNext
-      : "/";
+  const next = safeInternalPath(requestUrl.searchParams.get("next"));
 
   if (!code) {
     return NextResponse.redirect(

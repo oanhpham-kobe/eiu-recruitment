@@ -6,6 +6,13 @@
 **Technical Architecture:** v1.18 **TECHNICAL SPECIFICATION FROZEN**  
 **Production Ready:** **NO**
 
+## Owner-authorized additive feature — 05/11/2026
+
+`101_INTERNAL_INTERVIEW_FEEDBACK.md` governs the local-first questionnaire and
+consolidated-report extension (CR-INTERVIEW-FEEDBACK-20261105). Owner selected the
+existing five qualitative questions for the trial. Legacy report/decision rules,
+official PDF layout deferral and production gates remain unchanged.
+
 ## 1. Mục đích của v1.18
 v1.18 giữ nguyên Business Logic Core v1.2, four-gate implementation model và executable Responsive Prototype v1.10; tích hợp toàn diện các quyết định Owner Decisions A–K và hoàn thiện chuẩn hóa source trước thềm Slice 04. Technical Architecture v1.18 vẫn là TECHNICAL SPECIFICATION FROZEN; Implementation Gate = READY TO IMPLEMENT; Production Ready = NO.
 

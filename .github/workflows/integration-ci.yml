@@ -376,6 +376,13 @@ jobs:
           CONTAINER_NAME: supabase_db_eiu-recruitment-dev
         run: bash supabase/tests/storage_cleanup_local_storage_test.sh
 
+      - name: Execute internal interview feedback authorization and snapshot assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/internal_interview_feedback_test.sql
+
+      - name: Execute internal interview feedback lifecycle and concurrency assertions
+        run: python3 supabase/tests/internal_interview_feedback_concurrency_test.py --container supabase_db_eiu-recruitment-dev
+
       - name: Lint local database at error level
         run: supabase db lint --local --level error
 

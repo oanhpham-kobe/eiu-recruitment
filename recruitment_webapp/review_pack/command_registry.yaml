@@ -1033,7 +1033,69 @@ commands:
   - root_or_explicit_identity_manage_permission
   - unique_new_email
   - historical_submission_email_snapshot_preserved
+- command: publish_interview_feedback_template
+  actor: active_bound_internal_hr_or_root
+  permission: interviews.manage AND reports.view
+  contract_file: 101_INTERNAL_INTERVIEW_FEEDBACK.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-IF-01, AC-IF-02]
+  audit: REQUIRED
+  idempotency: REQUIRED
+  side_effects: [publish_new_immutable_version]
+  writes: [private.interview_feedback_templates]
+  guarantees: [post_wait_authorization, existing_versions_unchanged]
+- command: create_interview_feedback_collection
+  actor: active_bound_internal_hr_or_root
+  permission: interviews.manage AND reports.view
+  contract_file: 101_INTERNAL_INTERVIEW_FEEDBACK.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-IF-01, AC-IF-03, AC-IF-06]
+  audit: REQUIRED
+  idempotency: REQUIRED
+  side_effects: [persist_provider_paused_notification_intents]
+  writes: [private.interview_feedback_collections, private.interview_feedback_invitations, private.interview_feedback_notification_intents]
+  guarantees: [exact_current_round, exact_current_participants, post_wait_authorization, unique_interview_collection, no_outbound_delivery]
+- command: save_interview_feedback_response
+  actor: active_bound_internal_invitation_owner
+  permission: exact_participant_context
+  contract_file: 101_INTERNAL_INTERVIEW_FEEDBACK.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-IF-01, AC-IF-04, AC-IF-06]
+  audit: REQUIRED
+  idempotency: IDENTICAL_SUBMIT_REPLAY_WITHOUT_DUPLICATE_AUDIT
+  side_effects: []
+  writes: [private.interview_feedback_invitations]
+  guarantees: [optimistic_version, post_wait_authorization, required_questions_on_submit, immutable_submission, deadline_check]
+- command: revoke_interview_feedback_invitation
+  actor: active_bound_internal_hr_or_root
+  permission: interviews.manage AND reports.view
+  contract_file: 101_INTERNAL_INTERVIEW_FEEDBACK.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-IF-01, AC-IF-05, AC-IF-06]
+  audit: REQUIRED
+  idempotency: TERMINAL_STATE_AND_OPTIMISTIC_VERSION
+  side_effects: []
+  writes: [private.interview_feedback_invitations]
+  guarantees: [post_wait_authorization, original_denominator_retained]
+- command: save_interview_feedback_consolidation
+  actor: active_bound_internal_hr_or_root
+  permission: interviews.manage AND reports.view
+  contract_file: 101_INTERNAL_INTERVIEW_FEEDBACK.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-IF-01, AC-IF-05, AC-IF-06, AC-IF-07]
+  audit: REQUIRED
+  idempotency: UNIQUE_COLLECTION_AND_OPTIMISTIC_VERSION
+  side_effects: []
+  writes: [private.interview_feedback_consolidations]
+  guarantees: [post_wait_authorization, complete_original_evaluator_set, pinned_snapshot, immutable_approval, no_legacy_outcome_mutation]
 error_codes:
+- CONTEXT_NOT_WRITABLE
+- DEADLINE_PASSED
+- REQUIRED_ANSWER_MISSING
+- ALREADY_SUBMITTED
+- INVITATION_REVOKED
+- COMPLETENESS_REQUIRED
+- ALREADY_APPROVED
 - UNAUTHENTICATED
 - FORBIDDEN
 - NOT_FOUND

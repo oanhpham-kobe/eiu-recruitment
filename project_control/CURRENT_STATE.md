@@ -1,52 +1,33 @@
 # Current Implementation State — Derived Handoff Snapshot
 
-> DERIVED / NON-AUTHORITATIVE. Runtime: `AUTONOMY_RUN_STATE.yaml`; DAG: `TASK_REGISTRY.yaml` / `SLICE_REGISTRY.yaml`; exact code/history: Git. This file is navigation, not authorization.
+> DERIVED / NON-AUTHORITATIVE. Runtime: AUTONOMY_RUN_STATE.yaml; DAG: TASK_REGISTRY.yaml / SLICE_REGISTRY.yaml; exact code/history: Git.
 
-## Current local recovery checkpoint — 2026-11-05
+## Active local feature — 2026-11-05
 
-- Branch: `implementation/recovery-package-009-rec04-residual-deadlocks`.
-- Local product repair commit: `118c87cfb2d0385a8e2135bbedfb547bb699d186`.
-- Owner authorized GitHub synchronization on 2026-11-05. The publication includes product repair `118c87cfb2d0385a8e2135bbedfb547bb699d186` and its verification handoff; resolve the current remote reporting HEAD directly from Git.
-- Integration branch last observed at `690097d44771a607c05f0c4991c7cf93e121910a`.
-- Package009 is **NOT ACCEPTED / NOT INTEGRATED**. Historical packages001–008/checkpoints remain unchanged.
-- Owner resumed local repairs and existing workflow testing, plus planning for a new internal questionnaire/report feature. The old handoff interruption is superseded for this local work only. Mail/scanner configuration is deferred by Owner.
+- Branch: `codex/interview-feedback-consolidation-20261105`, based on `c5a0a4243186d92287493f68973d88939e314476`. Resolve current candidate/reporting HEAD directly from Git.
+- Owner authorized implementation and local preview; selected existing five qualitative questions, assigned bound internal reviewers, and deferred real providers.
+- Canonical additive source: `recruitment_webapp/review_pack/101_INTERNAL_INTERVIEW_FEEDBACK.md`. RPC reference: `project_control/research/INTERVIEW_FEEDBACK_RPC.md`.
+- Implemented immutable questionnaire versions, exact-round assignments, own draft/submit, HR tracking/individual inspection, revocation, pinned consolidation/approval and browser printing.
+- Repaired login hydration and unsafe return-path handling discovered on the invitation workflow. No scoring or legacy decision/status changes.
+- Preview: run `npm run preview:feedback` from `web`, then open `http://127.0.0.1:3417/interview-feedback`. Synthetic personas/data are separate from production authentication.
 
-## What changed
+## Local verification
 
-- Forward migration50 repairs sorted actor/target locking for seven User commands, with post-wait authorization; no historical migration edits.
-- Added deterministic authenticated regression and repaired stale R3 owner-rejection assertion.
-- Fixed duplicate Users/Master Data shells, safe document-preview failures, and misleading self-asserting tests.
-- Repaired REC05 canonical CV fixture; wired REC05/15 and real physical Storage into Integration CI, including impact selection.
-- Patched Next16.4.5/transitive dependencies. Corrected recovery reporting and Package006/007 SHA receipts; added reporting/selector regressions.
+- 400 web/browser tests PASS, zero failed/skipped; lint/typecheck/build/design PASS. Six pre-existing lint warnings remain.
+- 47/47 database workflow steps PASS: clean replay51, prior45 steps, new71 actual-role SQL assertions and7 synchronized races.
+- 10 governance regressions, source515/515 and design73/73 PASS. Final manifest/control checks and exact-candidate review are recorded in the feature evidence.
+- Real Next smoke: both entry paths preserve internal-login return paths with zero browser errors. Provider requests are intercepted tests, not a real Google login.
+- Evidence: `project_control/reviews/INTERNAL_INTERVIEW_FEEDBACK_LOCAL_2026-11-05.md`.
+- Independent exact-candidate review/publication pending until the evidence receipt records them. No accepted checkpoint or GitHub CI PASS is implied.
 
-## Fresh verification
+## Follow-up boundaries
 
-- 383 web/browser tests PASS; lint/typecheck/build/design checks PASS; npm audit0.
-- 45/45 local database-sequence steps PASS, including former deadlock, real-role privacy, upgrade/fencing, crossed suites and physical Storage deletion.
-- Independent clean replay50 PASS and49→50 sentinel upgrade smoke PASS.
-- 10 governance regressions and both validators PASS.
-- Independent read-only SQL and remaining-code reviews PASS.
-- Local results are not a GitHub CI run or a Phase-1/product-completeness assertion.
+Official report layout and candidate dossier need Owner samples. Export is browser print/save PDF only. Notifications are provider-paused intents, not delivered email. Submitted responses and approved reports are immutable. Revoked/unavailable original evaluators explicitly block consolidation; no reopen, waiver or partial-approval policy is introduced.
 
-Evidence: `project_control/reviews/LOCAL_WORKFLOW_REPAIR_2026-11-05.md`.
-Receipt: `EVIDENCE_INDEX.yaml:implementation_evidence.LOCAL-WORKFLOW-REPAIR-20261105`.
+Do not merge main, deploy, apply hosted migrations, use real candidate data, release S08/REC/source holds or auto-start another task from this feature.
 
-## New feature proposal
+## Recovery remains separate
 
-`project_control/research/INTERNAL_INTERVIEW_FEEDBACK_PLAN_2026-11-05.md`.
+Recovery branch `implementation/recovery-package-009-rec04-residual-deadlocks` retains its prior handoff; product repair `118c87cfb2d0385a8e2135bbedfb547bb699d186`. Package009 is **NOT ACCEPTED / NOT INTEGRATED**. Evidence: `project_control/reviews/LOCAL_WORKFLOW_REPAIR_2026-11-05.md`; previous snapshot: `c5a0a4243186d92287493f68973d88939e314476:project_control/CURRENT_STATE.md`.
 
-Owner confirmed internal `@eiu.edu.vn` reviewers. Proposed flow: HR sends a versioned questionnaire → reviewer logs in and submits attributed answers → HR consolidates pinned responses into the Owner's template and approves it. Candidate dossier scope and question/report samples will be provided later. This is planning only; it does not replace canonical report/decision rules or add scoring.
-
-## Resume safely
-
-1. Verify Git HEAD/status; read `AUTONOMY_RUN_STATE.yaml:active_recovery` and the evidence report.
-2. Package009 still needs authorized exact-final-SHA acceptance/Integration/Governance CI; use full domain verification where required, not governance-only skips.
-3. Do not auto-start REC20: REC12/source and abuse/provider gates remain unresolved. Preserve the post009 Package004 retrospective boundary; its discovered CV fixture issue is repaired locally, not globally re-certified.
-4. HR document editing, Interview materials, PDF and remaining Phase-1/UAT/operational obligations remain open; see the report's completion boundaries.
-5. Do not push/merge main, deploy, mutate hosted Supabase or use real data without the applicable authorization.
-
-## Historical navigation
-
-The prior Package009 failure/handoff is preserved in Git at `325d3a5e5357d94ec0db891231345bb4606abb93:project_control/CURRENT_STATE.md`. Its incomplete local-verification statements are superseded by the evidence above.
-
-Latest accepted application baseline remains TASK-S08-001 / `checkpoint/S08-001-accepted-001` → `0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb`; detailed Slice07/08 history remains in the task/slice registries, evidence index and Git. Local recovery verification does not move those checkpoints.
+Latest accepted application checkpoint remains `checkpoint/S08-001-accepted-001` → `0d8c5c2129ed4c78a58c8d37bd22e93c14a763eb`. Original failed Package009 handoff: `325d3a5e5357d94ec0db891231345bb4606abb93`. This feature moves neither checkpoint nor recovery acceptance.

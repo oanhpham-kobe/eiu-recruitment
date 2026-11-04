@@ -277,7 +277,7 @@ PASS | No forbidden email wording retry must not create duplicate messages
 PASS | Email at-least-once current
 PASS | Email outbox before commit
 PASS | Command registry version 1.18
-PASS | Command registry count 62 | commands=62
+PASS | Command registry count 62 plus CR feedback 5 | commands=67
 PASS | Command names unique
 PASS | Registry commands in contract | []
 PASS | Registry commands in coverage | []
@@ -288,7 +288,7 @@ PASS | Side effects reactivate_application | missing=[]
 PASS | Side effects readd_interview_participant | missing=[]
 PASS | Side effects delete_unused_candidate | missing=[]
 PASS | Side effects delete_unused_submission | missing=[]
-PASS | Permission matrix parses nonzero | rows=25
+PASS | Permission matrix parses nonzero | rows=28
 PASS | Permission SQL/seed nonzero | sql=25 seed=25
 PASS | Permission SQL/seed alignment | sql_only=[] seed_only=[]
 PASS | Permission candidates.delete_unused

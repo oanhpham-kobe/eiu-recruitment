@@ -75,3 +75,13 @@ Grouped pagination/search are read contracts rather than mutations: Candidate In
 | Bulk Interview delete/inactivate | `interviews.manage` | `bulk_delete_or_inactivate_interviews` | exact Interview IDs + delete/inactive rules + durable temp cleanup prerequisite | yes | ALL_OR_NOTHING; AC-BULK-INT-DEL-01 |
 | Bulk Interview schedule status | `interviews.status` + view | `bulk_change_interview_schedule_status` | exact Interview IDs + Active-current-Participant operational guard + Candidate/Room/Interviewer conflict recheck | yes | ALL_OR_NOTHING; one invalid/ineligible Interview aborts all |
 | Bulk HR Report status | `reports.manage_status` | `bulk_change_report_status` | Current Round exact Interview IDs + affected Submission recalculation | yes | ALL_OR_NOTHING; AC-BULK-REPORT-01 |
+
+## CR-INTERVIEW-FEEDBACK-20261105
+
+| Action | Permission/context | Command | Atomic state | Audit | Acceptance |
+|---|---|---|---|---|---|
+| Publish questionnaire | HR: `interviews.manage` AND `reports.view`, or Root | `publish_interview_feedback_template` | New immutable version and idempotency result | yes | AC-IF-01/02 |
+| Assign feedback | Same HR authority | `create_interview_feedback_collection` | Exact-round collection, original invitations and paused notification intents | yes | AC-IF-01/03/06 |
+| Draft/submit own feedback | Active bound exact participant/owner | `save_interview_feedback_response` | Versioned draft or immutable submitted response | yes | AC-IF-01/04/06 |
+| Revoke outstanding invitation | Same HR authority | `revoke_interview_feedback_invitation` | Terminal revocation; denominator retained | yes | AC-IF-01/05/06 |
+| Draft/approve consolidation | Same HR authority | `save_interview_feedback_consolidation` | Complete-set pinned snapshot; versioned draft/immutable approval | yes | AC-IF-01/05/06/07 |

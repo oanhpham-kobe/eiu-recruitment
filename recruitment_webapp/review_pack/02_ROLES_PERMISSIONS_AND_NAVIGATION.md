@@ -1,5 +1,15 @@
 # 02. Roles, Permissions & Navigation
 
+## Additive navigation — CR-INTERVIEW-FEEDBACK-20261105
+
+Internal navigation includes `/interview-feedback` (Nhận xét phỏng vấn / Interview
+feedback). It opens an own-invitation workspace for assigned internal users; HR
+management additionally requires `interviews.manage` AND `reports.view`, with
+existing Root semantics. The link itself grants no data access. The full new
+contract is `101_INTERNAL_INTERVIEW_FEEDBACK.md`; legacy navigation and rights
+below retain their meaning. Synthetic persona controls exist only in the
+separate localhost preview fixture, never production routes.
+
 ## 1. Root Admin
 
 - Hệ thống có **duy nhất 01 Root Admin**.

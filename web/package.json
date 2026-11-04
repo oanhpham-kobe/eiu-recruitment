@@ -15,7 +15,8 @@
     "test": "node --conditions react-server --test --import tsx src/__tests__/*.test.ts",
     "format": "biome format --write",
     "design:check": "node scripts/validate-design-contract.mjs",
-    "design:browser": "node --conditions react-server --test --import tsx src/__tests__/design-browser-acceptance.test.ts"
+    "design:browser": "node --conditions react-server --test --import tsx src/__tests__/design-browser-acceptance.test.ts",
+    "preview:feedback": "node scripts/preview-interview-feedback.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

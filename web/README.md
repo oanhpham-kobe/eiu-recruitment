@@ -18,7 +18,23 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## Learn More
+## Interview feedback local preview
+
+Run `npm run preview:feedback` from this `web` directory, then open
+`http://127.0.0.1:3417/interview-feedback`. This standalone preview uses the same
+UI components with synthetic browser-local data. Switch trial personas to assign
+forms, save/submit each evaluator's answers, then consolidate/approve/print as HR.
+It sends no email and has no database credentials. Restart the preview after code
+changes because it bundles at startup.
+
+The production routes are `/interview-feedback` and
+`/interview-feedback/[id]`, using the real internal session and authorized RPCs.
+Apply repository migrations through the normal approved local workflow; never
+use the preview persona controls as production authentication. The first template
+uses the existing five optional qualitative questions. Official report layouts,
+candidate dossiers and actual mail delivery remain separate follow-up work.
+
+## Framework references
 
 To learn more about Next.js, take a look at the following resources:
 

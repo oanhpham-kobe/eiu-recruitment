@@ -830,7 +830,7 @@ stop_gate:
   source_reopen_required: false
   resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
-next_action: "Local workflow repair is verified at 118c87c; keep Package009 unaccepted until authorized exact-final-SHA acceptance CI. New feedback remains planning-only until Owner templates/source decisions; no connected operations or next REC are released."
+next_action: "Finish local verification, independent review and authorized development-branch synchronization of CR-INTERVIEW-FEEDBACK-20261105. Keep Package009 unaccepted and preserve the S08/REC/source/provider holds; no main integration or production deployment is released."
 
 # Owner resumed local repairs and new-feature planning on 2026-11-05.
 # This does not release the historical S08/provider/source gates above.
@@ -843,8 +843,22 @@ active_recovery:
   status: LOCAL_VERIFIED_NOT_INTEGRATED
   product_repair_sha: 118c87cfb2d0385a8e2135bbedfb547bb699d186
   local_only: true
-  owner_scope: Repair audited defects, verify existing local workflows, and plan internal template-based interviewer feedback.
+  owner_scope: Repair audited defects and verify existing local workflows. The separate Owner-authorized feedback feature is tracked below; this recovery branch and acceptance state are unchanged.
   unresolved_dependencies:
     - REC-12 report precedence source decision
     - abuse-control source decision
     - hosted mail/scanner configuration deferred by Owner
+
+owner_feature_work:
+  change_request: CR-INTERVIEW-FEEDBACK-20261105
+  branch: codex/interview-feedback-consolidation-20261105
+  base_sha: c5a0a4243186d92287493f68973d88939e314476
+  candidate_resolution: DIRECT_GIT_RUNTIME
+  source: recruitment_webapp/review_pack/101_INTERNAL_INTERVIEW_FEEDBACK.md
+  status: LOCAL_VERIFIED_PENDING_INDEPENDENT_REVIEW
+  accepted: false
+  local_only: true
+  owner_scope: Implement questionnaire and consolidated report using the existing five qualitative questions for trial; show a synthetic local preview. Real mail/scanner services and official report/dossier templates remain deferred.
+  development_branch_sync_authorized: true
+  integration_authorized: false
+  production_deployment_authorized: false
