@@ -55,9 +55,6 @@ export async function GET(
     if (error instanceof SubmissionDetailNotFoundError) {
       return new NextResponse(error.message, { status: 404 });
     }
-    return new NextResponse(
-      error instanceof Error ? error.message : "Internal server error",
-      { status: 500 },
-    );
+    return new NextResponse("Internal server error", { status: 500 });
   }
 }

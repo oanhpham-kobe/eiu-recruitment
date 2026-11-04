@@ -34,6 +34,13 @@ new_uuid() {
 
 suffix="$(new_uuid | tr -d '-' | cut -c1-12)"
 
+# Canonical seeds are keyed by code; their UUIDs differ across clean replays.
+cv_document_type_id="$(psql_exec -qAt -c "select document_type_id from public.document_types where code='CV_RESUME' and scope_code='SUBMISSION' and is_active" | tr -d '\r\n')"
+if [[ ! "$cv_document_type_id" =~ ^[0-9a-f-]{36}$ ]]; then
+  echo 'REC-05 requires the canonical active CV_RESUME document type' >&2
+  exit 1
+fi
+
 unit_id="$(new_uuid)"
 group_id="$(new_uuid)"
 pos_id="$(new_uuid)"
@@ -234,7 +241,7 @@ insert into public.candidate_form_sessions(
 );
 -- Seed valid current CV document for sub_1a (required by update_candidate_submission)
 insert into public.submission_document_logicals(logical_document_id, submission_id, document_type_id, created_by_candidate_id)
-values ('$doc_log_1a'::uuid, '$sub_1a'::uuid, '360bfdb3-bacc-4909-b9df-3a59c7f4590a'::uuid, '$cand_1a'::uuid);
+values ('$doc_log_1a'::uuid, '$sub_1a'::uuid, '$cv_document_type_id'::uuid, '$cand_1a'::uuid);
 
 insert into public.submission_documents(
   logical_document_id, storage_bucket, storage_path, original_filename,
@@ -260,7 +267,7 @@ insert into public.candidate_form_sessions(
 );
 -- Seed valid current CV document for sub_1b (required by update_candidate_submission)
 insert into public.submission_document_logicals(logical_document_id, submission_id, document_type_id, created_by_candidate_id)
-values ('$doc_log_1b'::uuid, '$sub_1b'::uuid, '360bfdb3-bacc-4909-b9df-3a59c7f4590a'::uuid, '$cand_1b'::uuid);
+values ('$doc_log_1b'::uuid, '$sub_1b'::uuid, '$cv_document_type_id'::uuid, '$cand_1b'::uuid);
 
 insert into public.submission_documents(
   logical_document_id, storage_bucket, storage_path, original_filename,

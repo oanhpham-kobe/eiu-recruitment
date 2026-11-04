@@ -22,11 +22,7 @@ import {
   setInternalUserActiveAction,
   updateInternalUserDirectoryAction,
 } from "@/app/users/actions";
-import { AppShell } from "@/components/shell/AppShell";
-import {
-  type InternalNavigationIdentity,
-  resolveInternalNavItems,
-} from "@/components/shell/navigation";
+import type { InternalNavigationIdentity } from "@/components/shell/navigation";
 import { DELEGABLE_PERMISSIONS } from "@/lib/auth/permissions";
 
 export interface UsersManagementPageProps {
@@ -91,8 +87,6 @@ export function UsersManagementPage({
   const searchInputId = useId();
   const statusFilterId = useId();
   const roleFilterId = useId();
-
-  const navItems = useMemo(() => resolveInternalNavItems(identity), [identity]);
 
   const isRootAdmin = useMemo(() => {
     if (!identity) return false;
@@ -490,551 +484,294 @@ export function UsersManagementPage({
   }, []);
 
   return (
-    <AppShell currentPath="/users" navItems={navItems}>
-      <div className="users-page">
-        <header className="users-header">
-          <div>
-            <h1 className="users-header__title">
-              Quản lý Người dùng & Phân quyền / Users & Permissions
-            </h1>
-            <p
-              className="text-muted"
-              style={{ margin: "0.25rem 0 0", fontSize: "1rem" }}
-            >
-              Vận hành danh bạ nhân sự nội bộ và phân quyền an ninh theo hợp
-              đồng kiểm soát Root/RBAC.
-            </p>
-          </div>
-          {canManageDirectory && (
-            <div className="users-header__actions">
-              <button
-                ref={createTriggerRef}
-                type="button"
-                className="users-btn-primary"
-                onClick={openCreateModal}
-              >
-                + Thêm người dùng / Add User
-              </button>
-            </div>
-          )}
-        </header>
-
-        {/* Global Alerts */}
-        {errorMessage && (
-          <div className="ui-alert ui-alert--error" role="alert">
-            {errorMessage}
-          </div>
-        )}
-
-        {successMessage && (
-          <div
-            className="ui-alert ui-alert--success"
-            role="status"
-            aria-live="polite"
+    <div className="users-page">
+      <header className="users-header">
+        <div>
+          <h1 className="users-header__title">
+            Quản lý Người dùng & Phân quyền / Users & Permissions
+          </h1>
+          <p
+            className="text-muted"
+            style={{ margin: "0.25rem 0 0", fontSize: "1rem" }}
           >
-            {successMessage}
+            Vận hành danh bạ nhân sự nội bộ và phân quyền an ninh theo hợp đồng
+            kiểm soát Root/RBAC.
+          </p>
+        </div>
+        {canManageDirectory && (
+          <div className="users-header__actions">
+            <button
+              ref={createTriggerRef}
+              type="button"
+              className="users-btn-primary"
+              onClick={openCreateModal}
+            >
+              + Thêm người dùng / Add User
+            </button>
           </div>
         )}
+      </header>
 
-        {!canViewDirectory && (
-          <div className="ui-alert ui-alert--error" role="alert">
-            Bạn không có quyền xem danh bạ người dùng (cần quyền{" "}
-            <code>users.directory_read</code>,{" "}
-            <code>users.directory_manage</code>, hoặc <code>ROOT_ADMIN</code>).
-          </div>
-        )}
+      {/* Global Alerts */}
+      {errorMessage && (
+        <div className="ui-alert ui-alert--error" role="alert">
+          {errorMessage}
+        </div>
+      )}
 
-        {/* Controls Bar */}
-        <section
-          className="users-controls"
-          aria-label="Bộ lọc và tìm kiếm người dùng"
+      {successMessage && (
+        <div
+          className="ui-alert ui-alert--success"
+          role="status"
+          aria-live="polite"
         >
-          <div className="users-controls__group">
-            <label htmlFor={statusFilterId} className="users-controls__label">
-              Trạng thái:
-            </label>
-            <select
-              id={statusFilterId}
-              className="users-controls__select"
-              value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value as "ALL" | "ACTIVE" | "INACTIVE")
-              }
-            >
-              <option value="ALL">Tất cả / All</option>
-              <option value="ACTIVE">Đang hoạt động / Active</option>
-              <option value="INACTIVE">Đã khóa / Inactive</option>
-            </select>
+          {successMessage}
+        </div>
+      )}
 
-            <label htmlFor={roleFilterId} className="users-controls__label">
-              Vai trò:
-            </label>
-            <select
-              id={roleFilterId}
-              className="users-controls__select"
-              value={roleFilter}
-              onChange={(e) =>
-                setRoleFilter(e.target.value as "ALL" | "ROOT" | "HR" | "STAFF")
-              }
-            >
-              <option value="ALL">Tất cả vai trò / All Roles</option>
-              <option value="ROOT">Root Admin</option>
-              <option value="HR">Nhân sự (HR)</option>
-              <option value="STAFF">Hội đồng / Khác</option>
-            </select>
-          </div>
+      {!canViewDirectory && (
+        <div className="ui-alert ui-alert--error" role="alert">
+          Bạn không có quyền xem danh bạ người dùng (cần quyền{" "}
+          <code>users.directory_read</code>, <code>users.directory_manage</code>
+          , hoặc <code>ROOT_ADMIN</code>).
+        </div>
+      )}
 
-          <div className="users-controls__group">
-            <label htmlFor={searchInputId} className="sr-only">
-              Tìm theo tên hoặc email
-            </label>
-            <input
-              id={searchInputId}
-              type="search"
-              className="users-controls__search"
-              placeholder="Tìm theo họ tên hoặc email @eiu.edu.vn..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </section>
+      {/* Controls Bar */}
+      <section
+        className="users-controls"
+        aria-label="Bộ lọc và tìm kiếm người dùng"
+      >
+        <div className="users-controls__group">
+          <label htmlFor={statusFilterId} className="users-controls__label">
+            Trạng thái:
+          </label>
+          <select
+            id={statusFilterId}
+            className="users-controls__select"
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as "ALL" | "ACTIVE" | "INACTIVE")
+            }
+          >
+            <option value="ALL">Tất cả / All</option>
+            <option value="ACTIVE">Đang hoạt động / Active</option>
+            <option value="INACTIVE">Đã khóa / Inactive</option>
+          </select>
 
-        {/* Table */}
-        <div className="users-table-container">
-          <table className="users-table" aria-label="Danh sách nhân sự nội bộ">
-            <thead>
+          <label htmlFor={roleFilterId} className="users-controls__label">
+            Vai trò:
+          </label>
+          <select
+            id={roleFilterId}
+            className="users-controls__select"
+            value={roleFilter}
+            onChange={(e) =>
+              setRoleFilter(e.target.value as "ALL" | "ROOT" | "HR" | "STAFF")
+            }
+          >
+            <option value="ALL">Tất cả vai trò / All Roles</option>
+            <option value="ROOT">Root Admin</option>
+            <option value="HR">Nhân sự (HR)</option>
+            <option value="STAFF">Hội đồng / Khác</option>
+          </select>
+        </div>
+
+        <div className="users-controls__group">
+          <label htmlFor={searchInputId} className="sr-only">
+            Tìm theo tên hoặc email
+          </label>
+          <input
+            id={searchInputId}
+            type="search"
+            className="users-controls__search"
+            placeholder="Tìm theo họ tên hoặc email @eiu.edu.vn..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </section>
+
+      {/* Table */}
+      <div className="users-table-container">
+        <table className="users-table" aria-label="Danh sách nhân sự nội bộ">
+          <thead>
+            <tr>
+              <th scope="col">Họ và tên</th>
+              <th scope="col">Email & Danh tính</th>
+              <th scope="col">Chức danh / Đơn vị</th>
+              <th scope="col">Vai trò</th>
+              <th scope="col">Trạng thái</th>
+              <th scope="col">Phiên bản</th>
+              {canManageDirectory && <th scope="col">Thao tác</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
               <tr>
-                <th scope="col">Họ và tên</th>
-                <th scope="col">Email & Danh tính</th>
-                <th scope="col">Chức danh / Đơn vị</th>
-                <th scope="col">Vai trò</th>
-                <th scope="col">Trạng thái</th>
-                <th scope="col">Phiên bản</th>
-                {canManageDirectory && <th scope="col">Thao tác</th>}
+                <td
+                  colSpan={canManageDirectory ? 7 : 6}
+                  style={{ textAlign: "center", padding: "2rem" }}
+                >
+                  Đang tải dữ liệu...
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan={canManageDirectory ? 7 : 6}
-                    style={{ textAlign: "center", padding: "2rem" }}
-                  >
-                    Đang tải dữ liệu...
-                  </td>
-                </tr>
-              ) : filteredUsers.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={canManageDirectory ? 7 : 6}
-                    style={{ textAlign: "center", padding: "2rem" }}
-                  >
-                    Không tìm thấy nhân sự nào phù hợp.
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((user) => {
-                  const unitName =
-                    dependencies.units.find((u) => u.unit_id === user.unitId)
-                      ?.name_vi || "";
-                  return (
-                    <tr key={user.appUserId}>
-                      <td>
-                        <strong>{user.fullName}</strong>
-                      </td>
-                      <td>
-                        <div>
-                          <code>{user.email}</code>
-                        </div>
+            ) : filteredUsers.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={canManageDirectory ? 7 : 6}
+                  style={{ textAlign: "center", padding: "2rem" }}
+                >
+                  Không tìm thấy nhân sự nào phù hợp.
+                </td>
+              </tr>
+            ) : (
+              filteredUsers.map((user) => {
+                const unitName =
+                  dependencies.units.find((u) => u.unit_id === user.unitId)
+                    ?.name_vi || "";
+                return (
+                  <tr key={user.appUserId}>
+                    <td>
+                      <strong>{user.fullName}</strong>
+                    </td>
+                    <td>
+                      <div>
+                        <code>{user.email}</code>
+                      </div>
+                      <div
+                        className="text-muted"
+                        style={{ fontSize: "0.875rem" }}
+                      >
+                        {user.identityBound ? (
+                          <span style={{ color: "var(--status-success-text)" }}>
+                            ● Đã liên kết Auth
+                          </span>
+                        ) : (
+                          <span style={{ color: "var(--ink-600)" }}>
+                            ○ Chưa liên kết Auth
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div>{user.jobTitle || "—"}</div>
+                      {unitName && (
                         <div
                           className="text-muted"
                           style={{ fontSize: "0.875rem" }}
                         >
-                          {user.identityBound ? (
-                            <span
-                              style={{ color: "var(--status-success-text)" }}
-                            >
-                              ● Đã liên kết Auth
-                            </span>
-                          ) : (
-                            <span style={{ color: "var(--ink-600)" }}>
-                              ○ Chưa liên kết Auth
-                            </span>
-                          )}
+                          {unitName}
                         </div>
-                      </td>
-                      <td>
-                        <div>{user.jobTitle || "—"}</div>
-                        {unitName && (
-                          <div
-                            className="text-muted"
-                            style={{ fontSize: "0.875rem" }}
-                          >
-                            {unitName}
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {user.isRootAdmin ? (
-                          <span className="users-badge users-badge--root">
-                            Root Admin
-                          </span>
-                        ) : user.isHr ? (
-                          <span className="users-badge users-badge--hr">
-                            HR
-                          </span>
-                        ) : (
-                          <span className="users-badge users-badge--inactive">
-                            Staff
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        {user.isActive ? (
-                          <span className="users-badge users-badge--active">
-                            Hoạt động
-                          </span>
-                        ) : (
-                          <span className="users-badge users-badge--inactive">
-                            Đã khóa
-                          </span>
-                        )}
-                      </td>
-                      <td>v{user.versionNo}</td>
-                      {canManageDirectory && (
-                        <td className="actions-cell">
+                      )}
+                    </td>
+                    <td>
+                      {user.isRootAdmin ? (
+                        <span className="users-badge users-badge--root">
+                          Root Admin
+                        </span>
+                      ) : user.isHr ? (
+                        <span className="users-badge users-badge--hr">HR</span>
+                      ) : (
+                        <span className="users-badge users-badge--inactive">
+                          Staff
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {user.isActive ? (
+                        <span className="users-badge users-badge--active">
+                          Hoạt động
+                        </span>
+                      ) : (
+                        <span className="users-badge users-badge--inactive">
+                          Đã khóa
+                        </span>
+                      )}
+                    </td>
+                    <td>v{user.versionNo}</td>
+                    {canManageDirectory && (
+                      <td className="actions-cell">
+                        <button
+                          ref={(el) => {
+                            actionTriggerRefs.current[
+                              `edit-${user.appUserId}`
+                            ] = el;
+                          }}
+                          type="button"
+                          className="users-btn-secondary"
+                          onClick={() => openEditModal(user)}
+                        >
+                          Sửa
+                        </button>
+
+                        {isRootAdmin && !user.isRootAdmin && (
                           <button
                             ref={(el) => {
                               actionTriggerRefs.current[
-                                `edit-${user.appUserId}`
+                                `perm-${user.appUserId}`
                               ] = el;
                             }}
                             type="button"
                             className="users-btn-secondary"
-                            onClick={() => openEditModal(user)}
+                            onClick={() => openPermissionsModal(user)}
                           >
-                            Sửa
+                            Phân quyền
                           </button>
+                        )}
 
-                          {isRootAdmin && !user.isRootAdmin && (
-                            <button
-                              ref={(el) => {
-                                actionTriggerRefs.current[
-                                  `perm-${user.appUserId}`
-                                ] = el;
-                              }}
-                              type="button"
-                              className="users-btn-secondary"
-                              onClick={() => openPermissionsModal(user)}
-                            >
-                              Phân quyền
-                            </button>
-                          )}
+                        {!user.isRootAdmin && (isRootAdmin || !user.isHr) && (
+                          <button
+                            ref={(el) => {
+                              actionTriggerRefs.current[
+                                `status-${user.appUserId}`
+                              ] = el;
+                            }}
+                            type="button"
+                            className="users-btn-secondary"
+                            style={{
+                              color: user.isActive ? "#dc2626" : undefined,
+                            }}
+                            onClick={() => openStatusModal(user)}
+                          >
+                            {user.isActive ? "Khóa" : "Mở khóa"}
+                          </button>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
-                          {!user.isRootAdmin && (isRootAdmin || !user.isHr) && (
-                            <button
-                              ref={(el) => {
-                                actionTriggerRefs.current[
-                                  `status-${user.appUserId}`
-                                ] = el;
-                              }}
-                              type="button"
-                              className="users-btn-secondary"
-                              style={{
-                                color: user.isActive ? "#dc2626" : undefined,
-                              }}
-                              onClick={() => openStatusModal(user)}
-                            >
-                              {user.isActive ? "Khóa" : "Mở khóa"}
-                            </button>
-                          )}
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Modal: Create User */}
-        {isCreateOpen && (
-          <div className="modal-overlay" role="presentation">
-            <div
-              ref={activeModalRef}
-              className="modal-content"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="create-user-title"
-            >
-              <div className="modal-header">
-                <h2 id="create-user-title" className="modal-header__title">
-                  Thêm người dùng mới
-                </h2>
-                <button
-                  type="button"
-                  className="users-btn-secondary"
-                  onClick={() => closeModals(true)}
-                  aria-label="Đóng"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <form onSubmit={handleCreateSubmit}>
-                <div className="modal-body">
-                  {modalError && (
-                    <div
-                      className="ui-alert ui-alert--error"
-                      role="alert"
-                      style={{ marginBottom: "1rem" }}
-                    >
-                      {modalError}
-                    </div>
-                  )}
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="create-email">
-                      Email EIU (@eiu.edu.vn){" "}
-                      <span style={{ color: "#dc2626" }}>*</span>
-                    </label>
-                    <input
-                      id="create-email"
-                      type="email"
-                      className="form-input"
-                      value={formEmail}
-                      onChange={(e) => setFormEmail(e.target.value)}
-                      required
-                      placeholder="ten.ho@eiu.edu.vn"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="create-fullname">
-                      Họ và tên <span style={{ color: "#dc2626" }}>*</span>
-                    </label>
-                    <input
-                      id="create-fullname"
-                      type="text"
-                      className="form-input"
-                      value={formFullName}
-                      onChange={(e) => setFormFullName(e.target.value)}
-                      required
-                      placeholder="Nguyễn Văn A"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="create-jobtitle">
-                      Chức danh (Job Title)
-                    </label>
-                    <input
-                      id="create-jobtitle"
-                      type="text"
-                      className="form-input"
-                      value={formJobTitle}
-                      onChange={(e) => setFormJobTitle(e.target.value)}
-                      placeholder="VD: Chuyên viên nhân sự, Giảng viên..."
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="create-unit">
-                      Thuộc Khoa / Phòng
-                    </label>
-                    <select
-                      id="create-unit"
-                      className="form-select"
-                      value={formUnitId}
-                      onChange={(e) => setFormUnitId(e.target.value)}
-                    >
-                      <option value="">-- Chưa phân khoa/phòng --</option>
-                      {dependencies.units.map((u) => (
-                        <option key={u.unit_id} value={u.unit_id}>
-                          {u.name_vi} ({u.code})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="users-btn-secondary"
-                    onClick={() => closeModals(true)}
-                    disabled={formSubmitting}
-                  >
-                    Hủy bỏ
-                  </button>
-                  <button
-                    type="submit"
-                    className="users-btn-primary"
-                    disabled={formSubmitting}
-                  >
-                    {formSubmitting ? "Đang lưu..." : "Tạo người dùng"}
-                  </button>
-                </div>
-              </form>
+      {/* Modal: Create User */}
+      {isCreateOpen && (
+        <div className="modal-overlay" role="presentation">
+          <div
+            ref={activeModalRef}
+            className="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-user-title"
+          >
+            <div className="modal-header">
+              <h2 id="create-user-title" className="modal-header__title">
+                Thêm người dùng mới
+              </h2>
+              <button
+                type="button"
+                className="users-btn-secondary"
+                onClick={() => closeModals(true)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
             </div>
-          </div>
-        )}
 
-        {/* Modal: Edit User */}
-        {editingUser && (
-          <div className="modal-overlay" role="presentation">
-            <div
-              ref={activeModalRef}
-              className="modal-content"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="edit-user-title"
-            >
-              <div className="modal-header">
-                <h2 id="edit-user-title" className="modal-header__title">
-                  Chỉnh sửa thông tin người dùng
-                </h2>
-                <button
-                  type="button"
-                  className="users-btn-secondary"
-                  onClick={() => closeModals(true)}
-                  aria-label="Đóng"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <form onSubmit={handleEditSubmit}>
-                <div className="modal-body">
-                  {modalError && (
-                    <div
-                      className="ui-alert ui-alert--error"
-                      role="alert"
-                      style={{ marginBottom: "1rem" }}
-                    >
-                      {modalError}
-                    </div>
-                  )}
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="edit-email">
-                      Email EIU{" "}
-                      {editingUser.identityBound && (
-                        <span
-                          className="text-muted"
-                          style={{ fontWeight: 400 }}
-                        >
-                          (Đã liên kết Auth — email cố định; thay đổi danh tính
-                          yêu cầu quy trình bảo mật riêng)
-                        </span>
-                      )}
-                    </label>
-                    <input
-                      id="edit-email"
-                      type="email"
-                      className="form-input"
-                      value={formEmail}
-                      onChange={(e) => setFormEmail(e.target.value)}
-                      disabled={editingUser.identityBound}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="edit-fullname">
-                      Họ và tên <span style={{ color: "#dc2626" }}>*</span>
-                    </label>
-                    <input
-                      id="edit-fullname"
-                      type="text"
-                      className="form-input"
-                      value={formFullName}
-                      onChange={(e) => setFormFullName(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="edit-jobtitle">
-                      Chức danh (Job Title)
-                    </label>
-                    <input
-                      id="edit-jobtitle"
-                      type="text"
-                      className="form-input"
-                      value={formJobTitle}
-                      onChange={(e) => setFormJobTitle(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="edit-unit">
-                      Thuộc Khoa / Phòng
-                    </label>
-                    <select
-                      id="edit-unit"
-                      className="form-select"
-                      value={formUnitId}
-                      onChange={(e) => setFormUnitId(e.target.value)}
-                    >
-                      <option value="">-- Chưa phân khoa/phòng --</option>
-                      {dependencies.units.map((u) => (
-                        <option key={u.unit_id} value={u.unit_id}>
-                          {u.name_vi} ({u.code})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="users-btn-secondary"
-                    onClick={() => closeModals(true)}
-                    disabled={formSubmitting}
-                  >
-                    Hủy bỏ
-                  </button>
-                  <button
-                    type="submit"
-                    className="users-btn-primary"
-                    disabled={formSubmitting}
-                  >
-                    {formSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Modal: Manage Permissions (Root Admin only) */}
-        {permissionsUser && (
-          <div className="modal-overlay" role="presentation">
-            <div
-              ref={activeModalRef}
-              className="modal-content modal-content--large"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="perm-user-title"
-            >
-              <div className="modal-header">
-                <h2 id="perm-user-title" className="modal-header__title">
-                  Phân quyền nhân sự: {permissionsUser.fullName} (
-                  {permissionsUser.email})
-                </h2>
-                <button
-                  type="button"
-                  className="users-btn-secondary"
-                  onClick={() => closeModals(true)}
-                  aria-label="Đóng"
-                >
-                  ✕
-                </button>
-              </div>
-
+            <form onSubmit={handleCreateSubmit}>
               <div className="modal-body">
                 {modalError && (
                   <div
@@ -1046,195 +783,69 @@ export function UsersManagementPage({
                   </div>
                 )}
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "1rem",
-                    backgroundColor: "var(--canvas)",
-                    borderRadius: "var(--radius-control)",
-                    border: "1px solid var(--line)",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: "1.125rem" }}>
-                      Vai trò HR:{" "}
-                      {permissionsUser.isHr ? (
-                        <span style={{ color: "var(--status-info-text)" }}>
-                          ĐÃ GÁN
-                        </span>
-                      ) : (
-                        <span style={{ color: "var(--ink-600)" }}>
-                          CHƯA GÁN
-                        </span>
-                      )}
-                    </div>
-                    <div
-                      className="text-muted"
-                      style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
-                    >
-                      {permissionsUser.isHr
-                        ? "Người dùng có vai trò Nhân sự và các quyền nghiệp vụ được ủy quyền."
-                        : "Gán vai trò HR sẽ tự động cấp các quyền nghiệp vụ mặc định ban đầu."}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={
-                      permissionsUser.isHr
-                        ? "users-btn-danger"
-                        : "users-btn-primary"
-                    }
-                    onClick={handleToggleHrRole}
-                    disabled={formSubmitting}
-                  >
-                    {formSubmitting
-                      ? "Đang xử lý..."
-                      : permissionsUser.isHr
-                        ? "Thu hồi vai trò HR"
-                        : "Gán vai trò HR (mặc định)"}
-                  </button>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="create-email">
+                    Email EIU (@eiu.edu.vn){" "}
+                    <span style={{ color: "#dc2626" }}>*</span>
+                  </label>
+                  <input
+                    id="create-email"
+                    type="email"
+                    className="form-input"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    required
+                    placeholder="ten.ho@eiu.edu.vn"
+                  />
                 </div>
 
-                {loadingPermissions ? (
-                  <div style={{ textAlign: "center", padding: "1.5rem" }}>
-                    Đang tải quyền chi tiết...
-                  </div>
-                ) : (
-                  <div>
-                    <h3
-                      style={{
-                        fontSize: "1rem",
-                        fontWeight: 700,
-                        margin: "1rem 0 0.5rem",
-                      }}
-                    >
-                      Các quyền chi tiết (Granular Permissions):
-                    </h3>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "1rem",
-                      }}
-                    >
-                      {Object.entries(permissionCategories).map(
-                        ([cat, perms]) => (
-                          <div key={cat} className="permission-category">
-                            <h4 className="permission-category__title">
-                              {cat}
-                            </h4>
-                            {perms.map((p) => {
-                              const has = userPermissions.includes(p.code);
-                              return (
-                                <div key={p.code} className="permission-item">
-                                  <label
-                                    className="form-checkbox-label"
-                                    style={{ alignItems: "flex-start" }}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      className="form-checkbox"
-                                      checked={has}
-                                      onChange={() =>
-                                        handleTogglePermission(p.code, has)
-                                      }
-                                      disabled={formSubmitting}
-                                      style={{ marginTop: "0.25rem" }}
-                                    />
-                                    <div className="permission-item__text">
-                                      <span className="permission-item__label">
-                                        {p.labelVi}
-                                      </span>
-                                      <span className="permission-item__code">
-                                        {p.code}
-                                      </span>
-                                    </div>
-                                  </label>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="create-fullname">
+                    Họ và tên <span style={{ color: "#dc2626" }}>*</span>
+                  </label>
+                  <input
+                    id="create-fullname"
+                    type="text"
+                    className="form-input"
+                    value={formFullName}
+                    onChange={(e) => setFormFullName(e.target.value)}
+                    required
+                    placeholder="Nguyễn Văn A"
+                  />
+                </div>
 
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="users-btn-secondary"
-                  onClick={() => closeModals(true)}
-                  disabled={formSubmitting}
-                >
-                  Đóng
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+                <div className="form-group">
+                  <label className="form-label" htmlFor="create-jobtitle">
+                    Chức danh (Job Title)
+                  </label>
+                  <input
+                    id="create-jobtitle"
+                    type="text"
+                    className="form-input"
+                    value={formJobTitle}
+                    onChange={(e) => setFormJobTitle(e.target.value)}
+                    placeholder="VD: Chuyên viên nhân sự, Giảng viên..."
+                  />
+                </div>
 
-        {/* Modal: Status Confirmation (Lock / Unlock) */}
-        {statusUser && (
-          <div className="modal-overlay" role="presentation">
-            <div
-              ref={activeModalRef}
-              className="modal-content"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="status-user-title"
-            >
-              <div className="modal-header">
-                <h2 id="status-user-title" className="modal-header__title">
-                  {statusUser.isActive
-                    ? "Xác nhận khóa người dùng"
-                    : "Xác nhận mở khóa người dùng"}
-                </h2>
-                <button
-                  type="button"
-                  className="users-btn-secondary"
-                  onClick={() => closeModals(true)}
-                  aria-label="Đóng"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="modal-body">
-                {modalError && (
-                  <div
-                    className="ui-alert ui-alert--error"
-                    role="alert"
-                    style={{ marginBottom: "1rem" }}
+                <div className="form-group">
+                  <label className="form-label" htmlFor="create-unit">
+                    Thuộc Khoa / Phòng
+                  </label>
+                  <select
+                    id="create-unit"
+                    className="form-select"
+                    value={formUnitId}
+                    onChange={(e) => setFormUnitId(e.target.value)}
                   >
-                    {modalError}
-                  </div>
-                )}
-
-                <p>
-                  Bạn có chắc chắn muốn{" "}
-                  <strong>{statusUser.isActive ? "khóa" : "mở khóa"}</strong>{" "}
-                  tài khoản người dùng: <strong>{statusUser.fullName}</strong> (
-                  <code>{statusUser.email}</code>)?
-                </p>
-
-                {statusUser.isActive ? (
-                  <div className="ui-alert ui-alert--info">
-                    <strong>Lưu ý an ninh:</strong> Khi tài khoản bị khóa, người
-                    dùng sẽ bị từ chối đăng nhập và không thể được phân công làm
-                    người phụ trách hồ sơ (HR Owner) hoặc thành viên hội đồng
-                    phỏng vấn mới.
-                  </div>
-                ) : (
-                  <div className="ui-alert ui-alert--success">
-                    <strong>Thông báo:</strong> Khi mở khóa, người dùng có thể
-                    đăng nhập bình thường và tiếp tục các quyền nghiệp vụ đã
-                    được gán.
-                  </div>
-                )}
+                    <option value="">-- Chưa phân khoa/phòng --</option>
+                    {dependencies.units.map((u) => (
+                      <option key={u.unit_id} value={u.unit_id}>
+                        {u.name_vi} ({u.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="modal-footer">
@@ -1247,26 +858,394 @@ export function UsersManagementPage({
                   Hủy bỏ
                 </button>
                 <button
+                  type="submit"
+                  className="users-btn-primary"
+                  disabled={formSubmitting}
+                >
+                  {formSubmitting ? "Đang lưu..." : "Tạo người dùng"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit User */}
+      {editingUser && (
+        <div className="modal-overlay" role="presentation">
+          <div
+            ref={activeModalRef}
+            className="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-user-title"
+          >
+            <div className="modal-header">
+              <h2 id="edit-user-title" className="modal-header__title">
+                Chỉnh sửa thông tin người dùng
+              </h2>
+              <button
+                type="button"
+                className="users-btn-secondary"
+                onClick={() => closeModals(true)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit}>
+              <div className="modal-body">
+                {modalError && (
+                  <div
+                    className="ui-alert ui-alert--error"
+                    role="alert"
+                    style={{ marginBottom: "1rem" }}
+                  >
+                    {modalError}
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="edit-email">
+                    Email EIU{" "}
+                    {editingUser.identityBound && (
+                      <span className="text-muted" style={{ fontWeight: 400 }}>
+                        (Đã liên kết Auth — email cố định; thay đổi danh tính
+                        yêu cầu quy trình bảo mật riêng)
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    id="edit-email"
+                    type="email"
+                    className="form-input"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    disabled={editingUser.identityBound}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="edit-fullname">
+                    Họ và tên <span style={{ color: "#dc2626" }}>*</span>
+                  </label>
+                  <input
+                    id="edit-fullname"
+                    type="text"
+                    className="form-input"
+                    value={formFullName}
+                    onChange={(e) => setFormFullName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="edit-jobtitle">
+                    Chức danh (Job Title)
+                  </label>
+                  <input
+                    id="edit-jobtitle"
+                    type="text"
+                    className="form-input"
+                    value={formJobTitle}
+                    onChange={(e) => setFormJobTitle(e.target.value)}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="edit-unit">
+                    Thuộc Khoa / Phòng
+                  </label>
+                  <select
+                    id="edit-unit"
+                    className="form-select"
+                    value={formUnitId}
+                    onChange={(e) => setFormUnitId(e.target.value)}
+                  >
+                    <option value="">-- Chưa phân khoa/phòng --</option>
+                    {dependencies.units.map((u) => (
+                      <option key={u.unit_id} value={u.unit_id}>
+                        {u.name_vi} ({u.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="users-btn-secondary"
+                  onClick={() => closeModals(true)}
+                  disabled={formSubmitting}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="users-btn-primary"
+                  disabled={formSubmitting}
+                >
+                  {formSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Manage Permissions (Root Admin only) */}
+      {permissionsUser && (
+        <div className="modal-overlay" role="presentation">
+          <div
+            ref={activeModalRef}
+            className="modal-content modal-content--large"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="perm-user-title"
+          >
+            <div className="modal-header">
+              <h2 id="perm-user-title" className="modal-header__title">
+                Phân quyền nhân sự: {permissionsUser.fullName} (
+                {permissionsUser.email})
+              </h2>
+              <button
+                type="button"
+                className="users-btn-secondary"
+                onClick={() => closeModals(true)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {modalError && (
+                <div
+                  className="ui-alert ui-alert--error"
+                  role="alert"
+                  style={{ marginBottom: "1rem" }}
+                >
+                  {modalError}
+                </div>
+              )}
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "1rem",
+                  backgroundColor: "var(--canvas)",
+                  borderRadius: "var(--radius-control)",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: "1.125rem" }}>
+                    Vai trò HR:{" "}
+                    {permissionsUser.isHr ? (
+                      <span style={{ color: "var(--status-info-text)" }}>
+                        ĐÃ GÁN
+                      </span>
+                    ) : (
+                      <span style={{ color: "var(--ink-600)" }}>CHƯA GÁN</span>
+                    )}
+                  </div>
+                  <div
+                    className="text-muted"
+                    style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
+                  >
+                    {permissionsUser.isHr
+                      ? "Người dùng có vai trò Nhân sự và các quyền nghiệp vụ được ủy quyền."
+                      : "Gán vai trò HR sẽ tự động cấp các quyền nghiệp vụ mặc định ban đầu."}
+                  </div>
+                </div>
+                <button
                   type="button"
                   className={
-                    statusUser.isActive
+                    permissionsUser.isHr
                       ? "users-btn-danger"
                       : "users-btn-primary"
                   }
-                  onClick={handleStatusConfirm}
+                  onClick={handleToggleHrRole}
                   disabled={formSubmitting}
                 >
                   {formSubmitting
                     ? "Đang xử lý..."
-                    : statusUser.isActive
-                      ? "Xác nhận Khóa"
-                      : "Xác nhận Mở khóa"}
+                    : permissionsUser.isHr
+                      ? "Thu hồi vai trò HR"
+                      : "Gán vai trò HR (mặc định)"}
                 </button>
               </div>
+
+              {loadingPermissions ? (
+                <div style={{ textAlign: "center", padding: "1.5rem" }}>
+                  Đang tải quyền chi tiết...
+                </div>
+              ) : (
+                <div>
+                  <h3
+                    style={{
+                      fontSize: "1rem",
+                      fontWeight: 700,
+                      margin: "1rem 0 0.5rem",
+                    }}
+                  >
+                    Các quyền chi tiết (Granular Permissions):
+                  </h3>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1rem",
+                    }}
+                  >
+                    {Object.entries(permissionCategories).map(
+                      ([cat, perms]) => (
+                        <div key={cat} className="permission-category">
+                          <h4 className="permission-category__title">{cat}</h4>
+                          {perms.map((p) => {
+                            const has = userPermissions.includes(p.code);
+                            return (
+                              <div key={p.code} className="permission-item">
+                                <label
+                                  className="form-checkbox-label"
+                                  style={{ alignItems: "flex-start" }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="form-checkbox"
+                                    checked={has}
+                                    onChange={() =>
+                                      handleTogglePermission(p.code, has)
+                                    }
+                                    disabled={formSubmitting}
+                                    style={{ marginTop: "0.25rem" }}
+                                  />
+                                  <div className="permission-item__text">
+                                    <span className="permission-item__label">
+                                      {p.labelVi}
+                                    </span>
+                                    <span className="permission-item__code">
+                                      {p.code}
+                                    </span>
+                                  </div>
+                                </label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="users-btn-secondary"
+                onClick={() => closeModals(true)}
+                disabled={formSubmitting}
+              >
+                Đóng
+              </button>
             </div>
           </div>
-        )}
-      </div>
-    </AppShell>
+        </div>
+      )}
+
+      {/* Modal: Status Confirmation (Lock / Unlock) */}
+      {statusUser && (
+        <div className="modal-overlay" role="presentation">
+          <div
+            ref={activeModalRef}
+            className="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="status-user-title"
+          >
+            <div className="modal-header">
+              <h2 id="status-user-title" className="modal-header__title">
+                {statusUser.isActive
+                  ? "Xác nhận khóa người dùng"
+                  : "Xác nhận mở khóa người dùng"}
+              </h2>
+              <button
+                type="button"
+                className="users-btn-secondary"
+                onClick={() => closeModals(true)}
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {modalError && (
+                <div
+                  className="ui-alert ui-alert--error"
+                  role="alert"
+                  style={{ marginBottom: "1rem" }}
+                >
+                  {modalError}
+                </div>
+              )}
+
+              <p>
+                Bạn có chắc chắn muốn{" "}
+                <strong>{statusUser.isActive ? "khóa" : "mở khóa"}</strong> tài
+                khoản người dùng: <strong>{statusUser.fullName}</strong> (
+                <code>{statusUser.email}</code>)?
+              </p>
+
+              {statusUser.isActive ? (
+                <div className="ui-alert ui-alert--info">
+                  <strong>Lưu ý an ninh:</strong> Khi tài khoản bị khóa, người
+                  dùng sẽ bị từ chối đăng nhập và không thể được phân công làm
+                  người phụ trách hồ sơ (HR Owner) hoặc thành viên hội đồng
+                  phỏng vấn mới.
+                </div>
+              ) : (
+                <div className="ui-alert ui-alert--success">
+                  <strong>Thông báo:</strong> Khi mở khóa, người dùng có thể
+                  đăng nhập bình thường và tiếp tục các quyền nghiệp vụ đã được
+                  gán.
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="users-btn-secondary"
+                onClick={() => closeModals(true)}
+                disabled={formSubmitting}
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                className={
+                  statusUser.isActive ? "users-btn-danger" : "users-btn-primary"
+                }
+                onClick={handleStatusConfirm}
+                disabled={formSubmitting}
+              >
+                {formSubmitting
+                  ? "Đang xử lý..."
+                  : statusUser.isActive
+                    ? "Xác nhận Khóa"
+                    : "Xác nhận Mở khóa"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

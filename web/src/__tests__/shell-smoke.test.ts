@@ -109,6 +109,17 @@ test("production shell renders cleanly with semantic landmarks and zero CSP viol
     assert.match(html, /<main\b[^>]*id="main-content"/);
     assert.match(html, /tabindex="-1"/i);
 
+    // Exercise actual layout + management page composition, even without a session.
+    for (const route of ["/users", "/master-data"]) {
+      const routeResponse = await page.goto(`${baseUrl}${route}`, {
+        waitUntil: "networkidle",
+      });
+      assert.equal(routeResponse?.status(), 200, route);
+      assert.equal(await page.locator(".shell").count(), 1, route);
+      assert.equal(await page.locator("main#main-content").count(), 1, route);
+      assert.equal(await page.locator("main main").count(), 0, route);
+    }
+
     // Language switcher in header
     assert.match(html, /class="[^"]*language-switcher[^"]*"/);
   } finally {

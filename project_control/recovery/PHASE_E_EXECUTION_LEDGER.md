@@ -6,6 +6,8 @@ EXECUTION_MODE: `AUTONOMOUS`
 CURRENT_INTEGRATION_BRANCH: `autonomy/continuous-integration-20260905-01`
 CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (last accepted integration: `b61d24a544c2ae77f0a8c2053dd329e4697ff7ea` / reporting HEAD: `bb40a6bb4f72e1ce1488aaa97de1e75e53c98712`)
 
+> Derived reporting: active recovery authority is `AUTONOMY_RUN_STATE.yaml:active_recovery`; this ledger does not release a frontier.
+
 ## Accepted recovery packages
 
 | Package | REC scope | Accepted product SHA | Integration disposition | Checkpoint | Exact-SHA CI | Independent review |
@@ -15,24 +17,24 @@ CURRENT_INTEGRATION_SHA: `DIRECT_GIT_RUNTIME` (last accepted integration: `b61d2
 | Recovery Package 003 | REC-04 (F04, F05, F06, F07) | `565a36746816e10f3c5b5976b91cbbda610c1f10` | Merged as `cd10f89d5351a02796e6264d8ebc1c7ae9fa165f`; exact CI SHA `72369fe94852fabd1f99f306c31d2e1ace2c64c0` | `checkpoint/recovery-package-003-accepted-001` | Integration `36332367274` PASS; Governance `36332367253` PASS | Independent database review PASS (deterministic 7-scenario concurrency proof, catalog audit, F04-F07 contract preservation, copy regression verified) |
 | Recovery Package 004 | REC-05 (F08) | `d3f67ecfd629cb8c5a452174366624921b212356` | Merged as `fc8264ee161a0b3a39f60cb05ca029705a61e38b`; exact CI SHA `2466ad4e23c761f15d43e993294a3dda4c9d8e50` | `checkpoint/recovery-package-004-accepted-001` | Integration `36335049384` PASS; Governance `36335049335` PASS | Independent product/security review PASS (explicit open intent, duplicate click protection, view-only nonmutating reads, Candidate save vs HR open clean serialization and draft preservation, 60 web tests pass) |
 | Recovery Package 005 | REC-15 (F09) | `6d40c34e83ec5043a60dbb6107386d4bdfbf6544` | Merged as `b7a4387ff06c37bffca1d1406cbba705f5edbf6f`; exact CI SHA `b802548e32ac7a8500e543cd62d5b464b7ac6ba0` | `checkpoint/recovery-package-005-accepted-001` | Integration `36339150628` PASS; Governance `36339150620` PASS | Independent domain/security review PASS (atomic aggregate save, pre-validated education replacement, immutable email, optimistic versioning, active master data validation, profile cache refresh, dirty discard confirmation, 67 web tests pass) |
-| Recovery Package 006 | REC-18 | `43eb920b1186b60e4292ca14efe1b1fe3968bd92` | Merged as `619d0e34e7c1a2f603e9d92c7a8e3679009c5bf1`; exact CI SHA `db1a47b1c3132e0c904fa15594b2da85586a111a` | `checkpoint/recovery-package-006-accepted-001` | Integration `36342175434` PASS; Governance `36342175464` PASS | Independent domain/security review PASS (all 11 business catalogs supported, module-private server action exports, full modal keyboard trap and post-refresh focus restoration, 16px typography, null on cleared optional fields, explicit STALE_VERSION handling, 21 web tests and 5 database concurrency scenarios pass) |
-| Recovery Package 007 | REC-19 | `8f7e481ff4151536602326f2c3e929983dcd2b19` | Merged as `9a6f138954889b8ca01699d534fb9a44b1192f1a`; exact CI SHA `cea80492cbaf5364177372cf93b0a2c0db923c56` | `checkpoint/recovery-package-007-accepted-001` | Integration `36361950308` PASS; Governance `36361950283` PASS | Independent domain/security review PASS (client-safe permissions catalog, async-only server action exports, bound email strictly protected for all actors, non-root HR lockout restricted, 22 web tests and 5 database RBAC/lifecycle scenarios pass) |
+| Recovery Package 006 | REC-18 | `43eb920b1186b60e4292ca14efe1b1fe3968bd92` | Merged as `619d0e34e7c1a2f603e9d92c7a8e3679009c5bf1`; exact CI SHA `db1a47bc61a63586fb38ebc5e5e3689740ec1587` | `checkpoint/recovery-package-006-accepted-001` | Integration `36342175434` PASS; Governance `36342175464` PASS | Independent domain/security review PASS (all 11 business catalogs supported, module-private server action exports, full modal keyboard trap and post-refresh focus restoration, 16px typography, null on cleared optional fields, explicit STALE_VERSION handling, 21 web tests and 5 database concurrency scenarios pass) |
+| Recovery Package 007 | REC-19 | `8f7e481ff4151536602326f2c3e929983dcd2b19` | Merged as `9a6f138954889b8ca01699d534fb9a44b1192f1a`; exact CI SHA `cea8049f9a2784214ede59649a31a9ee18e4c26e` | `checkpoint/recovery-package-007-accepted-001` | Integration `36361950308` PASS; Governance `36361950283` PASS | Independent domain/security review PASS (client-safe permissions catalog, async-only server action exports, bound email strictly protected for all actors, non-root HR lockout restricted, 22 web tests and 5 database RBAC/lifecycle scenarios pass) |
 | Recovery Package 008 | REC-04 forward repair | `0c579533739df023985a9744977ac5f570669fae` | Merged as `b61d24a544c2ae77f0a8c2053dd329e4697ff7ea`; exact CI SHA `0c579533739df023985a9744977ac5f570669fae` | `checkpoint/recovery-package-008-accepted-001` | Integration `36369685728` PASS | Independent domain/security review PASS (reproduced P1 concurrency regressions repaired, sorted user composition enforced across all crossed lifecycle commands, participant maintenance pre-locking established, update_submission_by_hr version requirement tightened, all 5 forward concurrency scenarios and existing correctness/opposing suites pass) |
 
 LAST_ACCEPTED_PACKAGE: `Recovery Package 008`
-ACCEPTED_REC_SET: `REC-01, REC-02, REC-03, REC-04 (forward repair complete), REC-05, REC-15, REC-18, REC-19`
-ACTIVE_PACKAGE: `NONE`
-ACTIVE_PACKAGE_BASE_SHA: `NONE`
-ACTIVE_BRANCH: `NONE`
-ACTIVE_WORKTREE: `NONE`
-DEPENDENCIES: `REC-01, REC-02, REC-03, REC-04, REC-05, REC-15, REC-18, and REC-19 accepted; REC-20 is dependency-ready.`
+ACCEPTED_REC_SET: `REC-01, REC-02, REC-03, REC-04 (historical forward repair accepted; residual recovery open), REC-05, REC-15, REC-18, REC-19`
+ACTIVE_PACKAGE: `Recovery Package 009`
+ACTIVE_PACKAGE_BASE_SHA: `690097d44771a607c05f0c4991c7cf93e121910a`
+ACTIVE_BRANCH: `implementation/recovery-package-009-rec04-residual-deadlocks`
+ACTIVE_WORKTREE: `DIRECT_GIT_RUNTIME`
+DEPENDENCIES: `Historical packages 001–008 remain accepted within scope. Package009 residual repair is open; REC-20 depends on unresolved REC-12 and is not dependency-ready.`
 OWNER_GATES: `O-EXEC and O-LOCAL apply to the next local package; O-AUTH/O-ENV remain closed for connected configuration.`
-CANDIDATE_SHA: `NONE`
-REVIEW_STATUS: `Package 008 accepted after independent domain/security review, exact-SHA CI, and checkpoint creation.`
+CANDIDATE_SHA: `DIRECT_GIT_RUNTIME — local repair remains unaccepted`
+REVIEW_STATUS: `Package008 historical acceptance retained. Package009 local actor/target repair independently reviewed; final workflow verification and exact-final-SHA acceptance CI remain required.`
 CI_RUNS: `Package 001: 36323009513, 36323083024; Package 002: 36326090416, 36326090418; Package 003: 36332367274, 36332367253; Package 004: 36335049384, 36335049335; Package 005: 36339150628, 36339150620; Package 006: 36342175434, 36342175464; Package 007: 36361950308, 36361950283; Package 008: 36369685728, 36371009734, 36371009701`
-CHECKPOINT_REF: `checkpoint/recovery-package-001-accepted-001 -> f6e22c123381fc047b3eb22abbe790f482984135; checkpoint/recovery-package-002-accepted-001 -> 87a2d1ed264d66a1b18468cc831d165dbd25f4e9; checkpoint/recovery-package-003-accepted-001 -> 72369fe94852fabd1f99f306c31d2e1ace2c64c0; checkpoint/recovery-package-004-accepted-001 -> 2466ad4e23c761f15d43e993294a3dda4c9d8e50; checkpoint/recovery-package-005-accepted-001 -> b802548e32ac7a8500e543cd62d5b464b7ac6ba0; checkpoint/recovery-package-006-accepted-001 -> db1a47b1c3132e0c904fa15594b2da85586a111a; checkpoint/recovery-package-007-accepted-001 -> cea80492cbaf5364177372cf93b0a2c0db923c56; checkpoint/recovery-package-008-accepted-001 -> 0c579533739df023985a9744977ac5f570669fae`
+CHECKPOINT_REF: `checkpoint/recovery-package-001-accepted-001 -> f6e22c123381fc047b3eb22abbe790f482984135; checkpoint/recovery-package-002-accepted-001 -> 87a2d1ed264d66a1b18468cc831d165dbd25f4e9; checkpoint/recovery-package-003-accepted-001 -> 72369fe94852fabd1f99f306c31d2e1ace2c64c0; checkpoint/recovery-package-004-accepted-001 -> 2466ad4e23c761f15d43e993294a3dda4c9d8e50; checkpoint/recovery-package-005-accepted-001 -> b802548e32ac7a8500e543cd62d5b464b7ac6ba0; checkpoint/recovery-package-006-accepted-001 -> db1a47bc61a63586fb38ebc5e5e3689740ec1587; checkpoint/recovery-package-007-accepted-001 -> cea8049f9a2784214ede59649a31a9ee18e4c26e; checkpoint/recovery-package-008-accepted-001 -> 0c579533739df023985a9744977ac5f570669fae`
 CLOUD_MUTATION_STATUS: `NONE`
 BLOCKED_REC: `REC-10/REC-11 blocked by O-ABUSE; REC-12 blocked by O-SOURCE; cloud-dependent REC-07 onward remain blocked by closed target/provider gates.`
-NEXT_READY_REC: `REC-20 — Content-correct generated PDF.`
-RESUME_POINT: `Initialize next package for REC-20 (Content-correct generated PDF) from the accepted integration head.`
-LAST_UPDATED_UTC: `2026-09-28T02:45:00Z`
+NEXT_READY_REC: `NONE`
+RESUME_POINT: `Finish Owner-authorized local workflow repair and verification; Package009 is not accepted or integrated. Preserve REC-12/abuse/provider gates and perform Package004 retrospective before any new REC implementation.`
+LAST_UPDATED_UTC: `2026-11-04T17:37:33Z`

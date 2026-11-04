@@ -515,39 +515,7 @@ test("18. DOCUMENT_PLAN_TARGET_NO_CURRENT replace/delete rejected if target has 
   }
 });
 
-test("19. CANDIDATE_PROFILE_CACHE_REFRESH refresh_candidate_current_profile updates candidate cache", async () => {
-  // Simulates SQL function:
-  // updates public.candidates set current_full_name=s_name, current_phone=s_phone, last_submission_at=s_at
-  const candidateCache = {
-    current_full_name: "Nguyen Van A",
-    current_phone: "0901234567",
-    last_submission_at: "2026-09-05T10:00:00Z",
-  };
-
-  assert.equal(candidateCache.current_full_name, "Nguyen Van A");
-  assert.equal(candidateCache.current_phone, "0901234567");
-});
-
-test("20. OUTBOX_NOTIFICATION_ENQUEUED submission confirmation and HR update notifications are recorded", async () => {
-  const outboxEntries = [
-    {
-      email_type: "CANDIDATE_SUBMISSION_CONFIRMATION",
-      status_code: "QUEUED",
-      environment_code: "PRODUCTION",
-    },
-    {
-      email_type: "SUBMISSION_UPDATE_HR_NOTIFICATION",
-      status_code: "QUEUED",
-      environment_code: "PRODUCTION",
-    },
-  ];
-
-  assert.equal(outboxEntries.length, 2);
-  assert.equal(outboxEntries[0].status_code, "QUEUED");
-  assert.equal(outboxEntries[1].status_code, "QUEUED");
-});
-
-test("21. TERMINAL_SESSION_GUARD submitted session cannot be re-submitted or re-edited", async () => {
+test("21. Adapter maps terminal-session RPC rejection for submit and update", async () => {
   const mockSupabase = createMockSupabase({
     rpcHandlers: {
       submit_candidate_submission: () => ({
@@ -576,28 +544,7 @@ test("21. TERMINAL_SESSION_GUARD submitted session cannot be re-submitted or re-
   assert.equal(update.success, false);
 });
 
-test("22. COMPETING_CONCURRENT_EDIT_SERIALIZATION deterministic lock sequence prevents deadlocks", async () => {
-  // Deterministic order: 1) candidates, 2) candidate_form_sessions, 3) submissions, 4) reservations
-  const lockSequence: string[] = [];
-
-  function acquireLock(resource: string) {
-    lockSequence.push(resource);
-  }
-
-  acquireLock("candidates:cand-001");
-  acquireLock("candidate_form_sessions:sess-001");
-  acquireLock("submissions:sub-001");
-  acquireLock("upload_reservations:res-001");
-
-  assert.deepEqual(lockSequence, [
-    "candidates:cand-001",
-    "candidate_form_sessions:sess-001",
-    "submissions:sub-001",
-    "upload_reservations:res-001",
-  ]);
-});
-
-test("23. IDEMPOTENT_SUBMISSION_REPLAY duplicate idempotency key handles submission retry safely", async () => {
+test("23. Adapter forwards repeated submissions to RPC without local deduplication", async () => {
   let callCount = 0;
   const mockSupabase = createMockSupabase({
     rpcHandlers: {

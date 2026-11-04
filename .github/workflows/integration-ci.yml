@@ -72,6 +72,10 @@ jobs:
             while IFS= read -r path; do
               [ -n "$path" ] || continue
               case "$path" in
+                web/src/lib/storage/*|web/src/lib/commands/storage-reservation.ts|web/src/__tests__/storage-cleanup-local.integration.ts|web/package.json|web/package-lock.json)
+                  web=true
+                  db=true
+                  ;;
                 web/*)
                   web=true
                   ;;
@@ -168,6 +172,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
+
+      - name: Setup Node.js for physical Storage integration
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 24.20.0
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Ensure npm 11.19.0 for Storage integration
+        run: |
+          if [ "$(npm --version)" != "11.19.0" ]; then npm install --global npm@11.19.0; fi
+          test "$(npm --version)" = "11.19.0"
+
+      - name: Install web dependencies for physical Storage integration
+        run: npm ci --prefix web
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1.6.0
@@ -280,6 +299,12 @@ jobs:
         run: |
           bash supabase/tests/recovery_rec04_residual_deadlock_test.sh
 
+      - name: Execute REC-05 Candidate save and HR open concurrency boundaries
+        run: bash supabase/tests/recovery_rec05_concurrency_test.sh
+
+      - name: Execute REC-15 HR aggregate edit concurrency boundaries
+        run: bash supabase/tests/recovery_rec15_concurrency_test.sh
+
       - name: Seed REC-03 F02 confidentiality fixture
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/recovery_confidentiality_fixture.sql
@@ -338,6 +363,18 @@ jobs:
       - name: Execute crossed bulk Application assignment regressions
         run: |
           docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/bulk_commands_replay.sql
+
+      - name: Reset local database for physical Storage integration
+        run: supabase db reset
+
+      - name: Execute cleanup worker capability binding assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/storage_cleanup_worker_binding_test.sql
+
+      - name: Execute real local physical Storage integration
+        env:
+          CONTAINER_NAME: supabase_db_eiu-recruitment-dev
+        run: bash supabase/tests/storage_cleanup_local_storage_test.sh
 
       - name: Lint local database at error level
         run: supabase db lint --local --level error

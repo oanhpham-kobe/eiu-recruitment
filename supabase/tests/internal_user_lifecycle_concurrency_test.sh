@@ -189,3 +189,6 @@ psql_exec -qAt -c "select count(*) from public.interview_participants where inte
 bash supabase/tests/internal_user_r2_command_concurrency_test.sh
 bash supabase/tests/internal_user_r3_review_concurrency_test.sh
 echo "TASK-S06-002 Internal User owner/participant concurrency assertions passed with fresh fixture $suffix"
+
+# Actor/target audit lock composition, deterministic UUID orders and auth recheck.
+bash supabase/tests/internal_user_actor_lock_concurrency_test.sh

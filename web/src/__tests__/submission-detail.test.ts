@@ -703,6 +703,37 @@ test("3. AC-12/AC-41 Document security: signed URL TTL strictly 60-300s, preview
     "Audit logging must be executed before streaming document bytes",
   );
 
+  // Storage failures must never fabricate PDF bytes or expose private URLs.
+  for (const host of ["storage.supabase.co", "storage.mock.local"]) {
+    const failingClient = createMockSupabase({});
+    failingClient.storage = {
+      from: () => ({
+        createSignedUrl: async () => ({
+          data: {
+            signedUrl: `https://${host}/private/cv.pdf?token=sensitive-token`,
+          },
+          error: null,
+        }),
+      }),
+    } as unknown as typeof failingClient.storage;
+    // Keep authorization, document lookup, and audit identical to the success case.
+    const failureResponse = await getDocumentPreviewRoute(
+      previewReq,
+      { params: Promise.resolve({ id: sampleDocId }) },
+      {
+        client: previewRouteClient,
+        adminClient: failingClient,
+        fetchFn: async (url) => {
+          throw new Error(`Fetch failed: ${url}`);
+        },
+      },
+    );
+    assert.equal(failureResponse.status, 500);
+    const failureBody = await failureResponse.text();
+    assert.equal(failureBody, "Internal server error");
+    assert.doesNotMatch(failureBody, /sensitive-token|https:|%PDF|private\/cv/);
+  }
+
   // Office format preview must return 415 on route (download-only)
   const officeReq = new NextRequest(
     `http://localhost/api/documents/preview/${officeDocId}?submissionId=${sampleSubmissionId}&logicalDocumentId=${sampleLogicalDocId}`,

@@ -307,15 +307,10 @@ export async function getDocumentPreviewStream(
   const fetchFn = deps.fetchFn ?? fetch;
   try {
     response = await fetchFn(signedUrl);
-  } catch (fetchErr) {
-    if (signedUrl.includes("storage.mock.local")) {
-      response = new Response(new Uint8Array([0x25, 0x50, 0x44, 0x46]), {
-        status: 200,
-        headers: { "Content-Type": mimeType },
-      });
-    } else {
-      throw fetchErr;
-    }
+  } catch {
+    throw new SubmissionDetailReadError(
+      "Không thể tải nội dung tài liệu từ lưu trữ.",
+    );
   }
 
   if (!response.ok || !response.body) {

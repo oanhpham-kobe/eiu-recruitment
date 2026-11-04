@@ -127,10 +127,18 @@ ver="$(psql_exec -qAt -c "select version_no from public.app_users where app_user
 remove="begin; set local statement_timeout='10s'; $root_prefix select public.remove_hr_role('$target_id'::uuid,$ver,'$k2'::uuid); commit;"
 bulk2="begin; set local statement_timeout='10s'; $root_prefix select public.bulk_create_or_update_applications(array['$submission_id'::uuid],'$unit1'::uuid,null::uuid,'$pos1'::uuid,'$target_id'::uuid,'$bk2'::uuid); commit;"
 run_sql "$block" /tmp/r3-r-block & p0=$!; sleep .25; run_sql "$remove" /tmp/r3-r-remove & p1=$!; sleep .25; run_sql "$bulk2" /tmp/r3-r-bulk & p2=$!; set +e; wait $p0; s0=$?; wait $p1; s1=$?; wait $p2; s2=$?; set -e
-[[ $s0 -eq 0 && $s1 -eq 0 && $s2 -ne 0 ]] || { cat /tmp/r3-r-* >&2; exit 1; }
+[[ $s0 -eq 0 && $s1 -eq 0 && $s2 -eq 0 ]] || { cat /tmp/r3-r-* >&2; exit 1; }
 ! grep -qi 'deadlock detected' /tmp/r3-r-remove /tmp/r3-r-bulk
 grep -q '"success": true' /tmp/r3-r-remove
-grep -q 'APPLICATION_OWNER_NOT_ELIGIBLE' /tmp/r3-r-bulk
+# The complete actor/target lock set makes the command's post-lock owner
+# eligibility recheck observe the removed HR role before any Application write.
+# Assert that exact public rejection, not a late trigger exception or any error.
+grep -q '"success": false' /tmp/r3-r-bulk
+grep -q '"error_code": "NOT_FOUND"' /tmp/r3-r-bulk
+grep -q 'Active HR owner not found' /tmp/r3-r-bulk
+psql_exec -qAt -c "select count(*) from public.app_user_roles where app_user_id='$target_id'::uuid and role_code='HR'" | grep -qx 0
+psql_exec -qAt -c "select (hr_owner_id='$root_id'::uuid)::text from public.applications where application_id='$application_id'::uuid" | grep -qx true
+psql_exec -qAt -c "select count(*) from public.security_audit_log where request_id='$bk2'::uuid" | grep -qx 0
 psql_exec -qAt -c "insert into public.app_user_roles(app_user_id,role_code) values('$target_id'::uuid,'HR') on conflict do nothing"
 psql_exec -qAt -c "insert into public.app_user_permissions(app_user_id,permission_code) select '$target_id'::uuid,p.permission_code from public.permissions p where p.permission_code in ('interviews.view','interviews.status','interviews.manage','interviews.participants') on conflict do nothing"
 

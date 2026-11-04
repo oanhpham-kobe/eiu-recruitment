@@ -831,3 +831,20 @@ stop_gate:
   resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
 next_action: "SAFE CHECKPOINT: TASK-S08-001 lifecycle is CLOSED_ACCEPTED at checkpoint/S08-001-accepted-001. Stop before TASK-S08-002 materialization; the next work, if separately authorized by governance, is source reconciliation only."
+
+# Owner resumed local repairs and new-feature planning on 2026-11-05.
+# This does not release the historical S08/provider/source gates above.
+active_recovery:
+  package: Recovery Package 009
+  branch: implementation/recovery-package-009-rec04-residual-deadlocks
+  base_sha: 690097d44771a607c05f0c4991c7cf93e121910a
+  candidate_resolution: DIRECT_GIT_RUNTIME
+  accepted: false
+  status: LOCAL_WORKFLOW_REPAIR_AND_VERIFICATION
+  local_only: true
+  owner_scope: Repair audited defects, verify existing local workflows, and plan internal template-based interviewer feedback.
+  unresolved_dependencies:
+    - REC-12 report precedence source decision
+    - abuse-control source decision
+    - hosted mail/scanner configuration deferred by Owner
+  next_action: Finish final local verification and independent review; no package acceptance, integration, next REC, or connected operations are implied.

@@ -17,6 +17,29 @@ TASK_REGISTRY_PATH = ROOT / "project_control" / "TASK_REGISTRY.yaml"
 SLICE_REGISTRY_PATH = ROOT / "project_control" / "SLICE_REGISTRY.yaml"
 CURRENT_STATE_PATH = ROOT / "project_control" / "CURRENT_STATE.md"
 TRACEABILITY_PATH = ROOT / "project_control" / "TRACEABILITY_STATUS.csv"
+RECOVERY_LEDGER_PATH = ROOT / "project_control" / "recovery" / "PHASE_E_EXECUTION_LEDGER.md"
+
+
+def validate_recovery_reporting(run_state: dict[str, Any], ledger: str) -> list[str]:
+    """A derived recovery handoff must agree with the live runtime authority."""
+    fields = dict(re.findall(r"^([A-Z_]+):\s*`([^`]+)`\s*$", ledger, re.MULTILINE))
+    active = run_state.get("active_recovery")
+    if active is None:
+        if fields.get("ACTIVE_PACKAGE", "NONE") != "NONE":
+            return ["recovery ledger advertises an active package absent from run state"]
+        return []
+    if not isinstance(active, dict):
+        return ["active_recovery must be a mapping"]
+    errors = []
+    for state_key, ledger_key in (("package", "ACTIVE_PACKAGE"), ("branch", "ACTIVE_BRANCH")):
+        value = active.get(state_key)
+        if not isinstance(value, str) or not value or fields.get(ledger_key) != value:
+            errors.append(f"recovery ledger {ledger_key} disagrees with active_recovery.{state_key}")
+    if active.get("accepted") is not False:
+        errors.append("active_recovery must describe an unaccepted package")
+    if fields.get("NEXT_READY_REC") != "NONE":
+        errors.append("unaccepted recovery must not advertise a next ready REC")
+    return errors
 
 ALLOWED_ACTIVATION = {
     "PENDING_OWNER_REVIEW",
@@ -1182,6 +1205,12 @@ def main() -> int:
         )
 
     # ---------------------------------------------------------
+    # Derived recovery reporting must not contradict the live recovery hold.
+    if RECOVERY_LEDGER_PATH.exists():
+        errors.extend(validate_recovery_reporting(
+            run_state, RECOVERY_LEDGER_PATH.read_text(encoding="utf-8")
+        ))
+
     # Result
     # ---------------------------------------------------------
 
