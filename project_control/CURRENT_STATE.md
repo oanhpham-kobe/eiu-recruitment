@@ -2,6 +2,23 @@
 
 > DERIVED / NON-AUTHORITATIVE. Runtime: `AUTONOMY_RUN_STATE.yaml`; DAG: `TASK_REGISTRY.yaml` and `SLICE_REGISTRY.yaml`; exact code/history: Git.
 
+## Active recovery handoff — Package 009 (not accepted)
+
+- Owner-requested interruption: publish the latest GitHub state and hand off; do not continue repair or release the next frontier from this checkpoint.
+- Branch: `implementation/recovery-package-009-rec04-residual-deadlocks`.
+- Published product candidate: `1f7767aab1c1c278a981177f0b4949320a65d872`; base: `690097d44771a607c05f0c4991c7cf93e121910a`.
+- Scope: REC-04 residual lock composition. New forward migration `supabase/migrations/20260928030000_rec04_residual_lock_composition_repair.sql` adds sorted assignment actor/owner row locks before user advisories/audit FKs, Candidate-before-Submission HR-note locking, and sequential Copy user-row locks. Residual regressions and existing concurrency harness changes are committed with CI wiring. Historical migrations were not edited.
+- Independent review initially rejected the residual test's serial Copy call and gate startup races. Targeted re-review `Package009Rereview` found no remaining blocker in those repairs: Copy now executes as `authenticated` inside the staged concurrent holder; gate readiness checks actual advisory ownership. Review does not override the subsequent runtime failure.
+- Exact-candidate Integration CI [36450330445](https://github.com/oanhpham-kobe/eiu-recruitment/actions/runs/36450330445): **FAILURE**. Web verification passed (audit, design contract, lint, typecheck, build, affected acceptance tests). Database clean replay passed, but `Execute TASK-S06-002 Internal User Lifecycle Concurrency Assertions` failed before the REC-04 CI steps ran.
+- Confirmed runtime blocker: PostgreSQL deadlock between assignment and `set_internal_user_active` in `supabase/tests/internal_user_lifecycle_concurrency_test.sh`. Failed Database job: `109023352647`. Assignment waited while executing `select u.* into v_hr_owner from public.app_users u where u.app_user_id = p_hr_owner_id for update`; PostgreSQL context reports assignment function line 189. The opposing deactivation completed after assignment was aborted. This is an unresolved lock-composition defect, not an infrastructure failure.
+- Local evidence: clean replay of all 49 migrations and final residual P1-A/P1-B harness passed. The legacy seven-scenario authenticated concurrency suite, five-scenario forward suite, and REC-04 SQL correctness assertions passed earlier in this implementation; they were not all rerun after the final assignment lock adjustment. A seeded upgrade preserved a sentinel row before that final adjustment; final-candidate seeded upgrade proof remains outstanding.
+- Acceptance remains open: no accepted Package 009 checkpoint/tag, no integration merge, no ledger acceptance correction, and no observed Governance CI result for this candidate. No production/cloud/connected Supabase operation, deployment, or `main` mutation was performed.
+- Resume: inspect the failed CI log and exact internal-user lifecycle scenario; trace both commands' row/advisory/implicit-FK ordering and repair the real cycle without weakening authorization or introducing retry-based suppression. Then prove failing-before/passing-after, rerun final clean replay/seeded upgrade and affected crossed suites, finish deterministic maintenance coverage, obtain independent review of the final diff, and run exact-final-SHA Integration and Governance CI before checkpoint/integration.
+- Recovery ledger remains unchanged and stale: it still advertises no active package and REC-20 readiness. Do not schedule from that claim: REC-12 is O-SOURCE blocked and REC-20 dependency readiness is not established. The prior authorized ledger corrections, including Package 008 integration-SHA correction, remain pending acceptance.
+- After Package 009 acceptance, the requested stop is the Package 004 / REC-05 retrospective audit; do not start a new REC implementation automatically.
+
+The Slice-07/Slice-08 sections below are retained historical acceptance context; their former frontier/stop wording is not the active Package 009 handoff.
+
 ## Slice-07 implementation state
 
 `TASK-S07-001 — Email Outbox and History Trusted Persistence Contracts` remains accepted at `checkpoint/S07-001-accepted-001` → `8397be35d64a65f4a693811e4fc6b9e43287a7cd`.
