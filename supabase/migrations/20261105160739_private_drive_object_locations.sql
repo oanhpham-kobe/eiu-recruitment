@@ -273,7 +273,9 @@ declare v_user public.app_users%rowtype; v_doc public.submission_documents%rowty
   v_location private.storage_object_locations%rowtype;
 begin
   if p_purpose is null or p_purpose not in ('preview','download') then raise exception 'VALIDATION_ERROR'; end if;
-  select * into v_user from public.app_users where auth_user_id=p_actor_auth_user_id;
+  -- Match User lifecycle writers: row before advisory. The access audit's
+  -- actor FK later needs KEY SHARE on this same row and must not invert them.
+  select * into v_user from public.app_users where auth_user_id=p_actor_auth_user_id for update;
   if not found then raise exception 'FORBIDDEN'; end if;
   perform private.lock_internal_user_ids(array[v_user.app_user_id]);
   select * into v_user from public.app_users where app_user_id=v_user.app_user_id
