@@ -491,12 +491,102 @@ test("Standalone project preview connects candidate, assignment, rounds and ques
         .locator(`${rowSelector} button[aria-expanded=false]`)
         .first();
       if (await expand.count()) await expand.click();
-      const lastRow = await page.locator(rowSelector).last().boundingBox();
+      const scroll = page.locator(
+        path === "/interviews"
+          ? ".interview-table-scroll"
+          : ".application-inbox__table-scroll",
+      );
+      const scrollBounds = await scroll.boundingBox();
       const pager = await page.locator(pagerSelector).boundingBox();
       assert.ok(
-        lastRow && pager && pager.y >= lastRow.y + lastRow.height - 1,
-        `${path}: phone pagination follows the full expanded card list`,
+        scrollBounds &&
+          pager &&
+          pager.y >= scrollBounds.y + scrollBounds.height - 1 &&
+          pager.y + pager.height <= 900,
+        `${path}: phone pager stays outside the bounded card list`,
       );
+      await scroll.evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+      });
+      const lastRow = await page.locator(rowSelector).last().boundingBox();
+      assert.ok(
+        lastRow && pager && lastRow.y + lastRow.height <= pager.y + 1,
+        `${path}: the final expanded card is reachable above the pager`,
+      );
+      await page.setViewportSize({ width: 360, height: 500 });
+      const shortLast = await page.locator(rowSelector).last().boundingBox();
+      const shortPager = await page.locator(pagerSelector).boundingBox();
+      assert.ok(
+        shortLast &&
+          shortPager &&
+          shortPager.y >= shortLast.y + shortLast.height - 1,
+        `${path}: short viewport returns to reachable document flow`,
+      );
+      await page.setViewportSize({ width: 360, height: 900 });
+    }
+    for (const viewport of [
+      { width: 320, height: 900 },
+      { width: 390, height: 360 },
+      { width: 768, height: 360 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await route(page, "/interviews");
+      await page
+        .getByRole("button", { name: "Mở", exact: true })
+        .first()
+        .click();
+      const drawer = page.getByRole("dialog");
+      const logistics = await drawer
+        .locator(".interview-form-grid > label")
+        .evaluateAll((fields) =>
+          fields.slice(0, 2).map((field) => {
+            const bounds = field.getBoundingClientRect();
+            return {
+              left: bounds.left,
+              right: bounds.right,
+              top: bounds.top,
+              bottom: bounds.bottom,
+            };
+          }),
+        );
+      assert.equal(logistics.length, 2);
+      assert.ok(
+        viewport.width <= 640
+          ? Math.abs(logistics[0].left - logistics[1].left) <= 1 &&
+              logistics[1].top >= logistics[0].bottom
+          : logistics[1].left >= logistics[0].right,
+        "Portalled logistics fields stack on phones and share a row on tablets",
+      );
+      for (const label of [
+        "Bắt đầu",
+        "Kết thúc",
+        "Tìm người tham dự",
+        "Thêm người đang hoạt động",
+      ]) {
+        const field = drawer.getByLabel(label).first();
+        await field.focus();
+        const geometry = await field.evaluate((el) => {
+          const body = el.closest(".ui-drawer__body");
+          if (!body) throw new Error("Drawer body missing");
+          const target = el.getBoundingClientRect();
+          const bounds = body.getBoundingClientRect();
+          return {
+            fits:
+              target.left >= bounds.left - 1 &&
+              target.right <= bounds.right + 1 &&
+              target.top >= bounds.top - 1 &&
+              target.bottom <= bounds.bottom + 1,
+            client: body.clientWidth,
+            scroll: body.scrollWidth,
+          };
+        });
+        assert.ok(
+          geometry.fits && geometry.scroll <= geometry.client + 1,
+          `${label}: focused portalled field stays inside its narrow/short scroll area`,
+        );
+      }
+      await page.keyboard.press("Escape");
+      await drawer.waitFor({ state: "detached" });
     }
     await route(page, "/guide");
     await page.locator(".preview-options > summary").click();

@@ -14,7 +14,16 @@ export const INTERVIEW_STATUS_LABEL: Record<InterviewScheduleStatus, string> = {
   CANCELLED: "Hủy",
 };
 
-export const INTERVIEW_COLUMNS = [48, 340, 250, 220, 170, 360, 92] as const;
+// Selection/status/actions stay usable while content shares the remaining workspace.
+export const INTERVIEW_COLUMNS = [
+  48,
+  "26%",
+  "18%",
+  "14%",
+  168,
+  undefined,
+  100,
+] as const;
 
 export interface InterviewParticipant {
   interviewParticipantId: string;

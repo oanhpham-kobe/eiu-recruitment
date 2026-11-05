@@ -488,7 +488,7 @@ export function UsersManagementPage({
   }, []);
 
   return (
-    <div className="users-page">
+    <div className="users-page workflow-list-page">
       <header className="users-header">
         <div>
           <h1 className="users-header__title">
@@ -602,12 +602,12 @@ export function UsersManagementPage({
       <div className="users-table-container">
         <table className="users-table" aria-label="Danh sách nhân sự nội bộ">
           <colgroup>
-            <col style={{ width: 210 }} />
-            <col style={{ width: 240 }} />
-            <col style={{ width: 200 }} />
+            <col style={{ width: "20%" }} />
+            <col style={{ width: "24%" }} />
+            <col style={{ width: "20%" }} />
             <col style={{ width: 130 }} />
             <col style={{ width: 140 }} />
-            {canManageDirectory && <col style={{ width: 200 }} />}
+            {canManageDirectory && <col style={{ width: 144 }} />}
           </colgroup>
           <thead>
             <tr>
@@ -713,7 +713,7 @@ export function UsersManagementPage({
                               ] = el;
                             }}
                             type="button"
-                            className="users-btn-secondary"
+                            className="users-btn-secondary workflow-edit-action"
                             onClick={() => openEditModal(user)}
                           >
                             Sửa

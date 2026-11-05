@@ -68,7 +68,7 @@ function InterviewBrowserHarness() {
             <table className="interview-table">
               <colgroup>
                 {INTERVIEW_COLUMNS.map((width) => (
-                  <col key={width} style={{ width }} />
+                  <col key={width ?? "note"} style={{ width }} />
                 ))}
               </colgroup>
               <thead>

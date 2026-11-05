@@ -22,9 +22,9 @@ tool_dependencies:
 
 project_skills:
   - name: workflow-app-ui
-    source: Owner-supplied workflow-app-ui-2026-11-04.zip
+    source: Owner-supplied workflow-app-ui-2026-11-05.zip
     installed_path: .agents/skills/workflow-app-ui/SKILL.md
-    archive_sha256: "7e65491d2e18b54f13e7d85729063d10a036df60f2cc1c1af123265a10de5116"
+    archive_sha256: "aafa6ba53c1d2526c934469c81107c3fb5f512a2b0baabcf6c2db34e33cbe4ae"
     installed_at: "2026-11-05"
   - name: documentation-lookup
     source: https://github.com/affaan-m/ECC

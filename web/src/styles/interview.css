@@ -91,8 +91,8 @@
 }
 
 .interview-table {
-  width: 1480px;
-  min-width: 1480px;
+  width: 100%;
+  min-width: 0;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
@@ -137,9 +137,7 @@
   position: sticky;
   left: 48px;
   z-index: 3;
-  width: 340px;
-  min-width: 340px;
-  max-width: 340px;
+
   box-shadow: 1px 0 0 var(--line);
 }
 
@@ -419,7 +417,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@container workflow-workspace (max-width: 1100px) {
   .interview-page {
     gap: var(--space-3);
   }
@@ -533,7 +531,10 @@
     flex: 0 0 44px;
     padding-inline: 4px;
   }
+}
 
+/* Portalled overlays respond to their viewport, outside the workspace container. */
+@media (max-width: 640px) {
   .interview-form-grid,
   .interview-detail-grid {
     grid-template-columns: 1fr;
@@ -562,6 +563,12 @@
   .interview-drawer-actions .ui-button,
   .interview-removed-row > div:last-child .ui-button {
     flex: 1 1 auto;
+  }
+  .interview-add-participant label,
+  .interview-search-row label {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
   }
 }
 

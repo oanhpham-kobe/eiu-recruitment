@@ -164,7 +164,7 @@ test("HR filter normalization is bounded and keeps PII search in component state
   );
 });
 
-test("HR Report production CSS and table source preserve exact v1.8 geometry", () => {
+test("HR Report source preserves fluid columns, status targets and structured reflow", () => {
   const css = readFileSync(
     new URL("../components/reports/HrReportView.module.css", import.meta.url),
     "utf8",
@@ -174,24 +174,31 @@ test("HR Report production CSS and table source preserve exact v1.8 geometry", (
     "utf8",
   );
 
-  assert.match(css, /width:\s*1610px/);
-  assert.match(css, /min-width:\s*1610px/);
+  assert.match(css, /\.table \{[\s\S]*?width:\s*100%/);
+  assert.match(css, /\.table \{[\s\S]*?min-width:\s*0/);
   assert.match(css, /table-layout:\s*fixed/);
   assert.match(css, /left:\s*48px/);
   assert.match(css, /--badge-width-interview-operational/);
   assert.match(css, /scroll-margin-inline-start:\s*300px/);
   assert.doesNotMatch(css, /overflow-wrap:\s*anywhere/);
-  const desktopCss = css.split("@media (max-width: 640px)")[0];
-  assert.doesNotMatch(desktopCss, /-webkit-line-clamp/);
+  assert.match(css, /@container \(max-width: 1100px\)/);
+  assert.match(view, /workflow-note-excerpt/);
   assert.doesNotMatch(css, /!important/);
 
   assert.match(view, /<colgroup>/);
-  for (const width of [48, 240, 300, 240, 200, 190, 300, 92]) {
-    assert.match(
-      view,
-      new RegExp(`<col style=\\{\\{ width: ${width} \\}\\} \\/>`),
-    );
-  }
+  const columns = view.match(/<col(?: style=\{\{[^}]+\}\})? \/>/g) ?? [];
+  assert.equal(
+    columns.length,
+    8,
+    "Header and rows share all eight semantic columns",
+  );
+  assert.match(view, /width: 48/, "Selection column reserves its touch target");
+  assert.match(
+    view,
+    /width: 168/,
+    "Status column reserves the144px badge plus padding",
+  );
+  assert.match(view, /width: 100/, "Action column reserves a usable button");
   assert.match(view, /<TableScrollContainer/);
   assert.match(view, /Đã chọn/);
   assert.match(view, /Delete \/ Inactivate/);

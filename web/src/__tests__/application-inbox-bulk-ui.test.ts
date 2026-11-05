@@ -112,7 +112,7 @@ test("Application Inbox bulk toolbar reflects reactive selection count, disables
     const selectionCount = page.locator(".application-inbox__selection-count");
     await assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "0 Candidate được chọn",
+      "0 ứng viên được chọn",
     );
 
     const markNewBtn = statusAction(page, "NEW");
@@ -140,7 +140,7 @@ test("Application Inbox bulk toolbar reflects reactive selection count, disables
     assert.equal(await cand1Checkbox.isChecked(), true);
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "1 Candidate được chọn",
+      "1 ứng viên được chọn",
     );
 
     // Buttons are now enabled
@@ -156,7 +156,7 @@ test("Application Inbox bulk toolbar reflects reactive selection count, disables
     await cand2Checkbox.click();
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "2 Candidate được chọn",
+      "2 ứng viên được chọn",
     );
 
     // Click Select All in the table header to select all 3
@@ -166,14 +166,14 @@ test("Application Inbox bulk toolbar reflects reactive selection count, disables
     await selectAllCheckbox.click();
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "3 Candidate được chọn",
+      "3 ứng viên được chọn",
     );
 
     // Click Select All again to deselect all
     await selectAllCheckbox.click();
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "0 Candidate được chọn",
+      "0 ứng viên được chọn",
     );
     assert.equal(await markNewBtn.isDisabled(), true);
 
@@ -281,7 +281,7 @@ test("Application Inbox bulk Mark NEW/READ forwards row-bound tokens and blocks 
     const selectionCount = page.locator(".application-inbox__selection-count");
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "0 Candidate được chọn",
+      "0 ứng viên được chọn",
     );
 
     // Finding 2: candidate with inactive historical application is NOT blocked from Mark NEW/READ
@@ -662,7 +662,7 @@ test("Application Inbox selection scope resets on filter change with accessible 
     await cand1Checkbox.click();
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "1 Candidate được chọn",
+      "1 ứng viên được chọn",
     );
 
     // 2. Change search filter
@@ -672,7 +672,7 @@ test("Application Inbox selection scope resets on filter change with accessible 
     // 3. Selection must be reset to 0 with accessible announcement
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "0 Candidate được chọn",
+      "0 ứng viên được chọn",
     );
     const notice = page.locator(".application-inbox__selection-notice");
     assert.match(
@@ -701,7 +701,7 @@ test("Application Inbox selection scope resets on filter change with accessible 
     await selectAllCheckbox.click();
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "3 Candidate được chọn",
+      "3 ứng viên được chọn",
     );
 
     // Deselect candidate 3 (has active application) so bulk mark READ succeeds
@@ -711,7 +711,7 @@ test("Application Inbox selection scope resets on filter change with accessible 
     await cand3Checkbox.click();
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "2 Candidate được chọn",
+      "2 ứng viên được chọn",
     );
 
     // 6. Bulk Mark READ submits exact announced selection (2 items)
@@ -1000,7 +1000,7 @@ test("Application Inbox bulk toolbar and table render and operate correctly at r
     const selectionCount = page.locator(".application-inbox__selection-count");
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "0 Candidate được chọn",
+      "0 ứng viên được chọn",
     );
 
     // Verify table scroll container is present and has horizontal overflow capability
@@ -1024,7 +1024,7 @@ test("Application Inbox bulk toolbar and table render and operate correctly at r
     assert.equal(await checkbox.isChecked(), true);
     assert.equal(
       (await selectionCount.textContent())?.trim(),
-      "1 Candidate được chọn",
+      "1 ứng viên được chọn",
     );
 
     // Verify touch targets >= 44x44px for bulk buttons at 768px

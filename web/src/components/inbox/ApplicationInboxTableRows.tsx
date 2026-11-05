@@ -122,7 +122,9 @@ export function ApplicationInboxTableRows({
                 </span>
               </button>
             ) : (
-              <strong>{latest.fullName}</strong>
+              <strong className="application-inbox__plain-name">
+                {latest.fullName}
+              </strong>
             )}
           </td>
           <td className="wrap-anywhere" data-label="Email">
@@ -141,7 +143,11 @@ export function ApplicationInboxTableRows({
               <span className="candidate-status-badge">Candidate inactive</span>
             )}
           </td>
-          <td data-label="HR Note">{latest.hrNote ?? "—"}</td>
+          <td data-label="HR Note">
+            <span className="workflow-note-excerpt">
+              {latest.hrNote ?? "—"}
+            </span>
+          </td>
           <td data-label="Thao tác">
             <button
               type="button"
@@ -181,7 +187,11 @@ export function ApplicationInboxTableRows({
                   {SUBMISSION_STATUS_LABEL[submission.status]}
                 </span>
               </td>
-              <td data-label="HR Note">{submission.hrNote ?? "—"}</td>
+              <td data-label="HR Note">
+                <span className="workflow-note-excerpt">
+                  {submission.hrNote ?? "—"}
+                </span>
+              </td>
               <td data-label="Thao tác">
                 <button
                   type="button"

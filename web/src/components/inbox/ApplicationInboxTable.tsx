@@ -660,7 +660,7 @@ export function ApplicationInboxTable({
     <section
       ref={tableContainerRef}
       tabIndex={-1}
-      className="application-inbox"
+      className="application-inbox workflow-list-page"
       aria-labelledby="inbox-heading"
     >
       <div className="application-inbox__header">
@@ -824,7 +824,7 @@ export function ApplicationInboxTable({
             className="application-inbox__selection-count"
             aria-live="polite"
           >
-            {selectedTokens.size} Candidate được chọn
+            {selectedTokens.size} ứng viên được chọn
           </span>
         </summary>
         <div
@@ -996,7 +996,7 @@ export function ApplicationInboxTable({
           aria-label="Phân trang Candidate"
         >
           <label>
-            Số Candidate mỗi trang
+            Ứng viên mỗi trang
             <select
               aria-label="Số Candidate mỗi trang"
               value={pageSize}
@@ -1014,9 +1014,10 @@ export function ApplicationInboxTable({
             type="button"
             className="btn-secondary"
             disabled={inbox.page === 1 || isPending}
+            aria-label="Trang trước"
             onClick={() => loadPage(inbox.page - 1, debouncedFilters, pageSize)}
           >
-            Trang trước
+            Trước
           </button>
           <span aria-live="polite">
             Trang {inbox.page} / {inbox.pageCount}
@@ -1025,9 +1026,10 @@ export function ApplicationInboxTable({
             type="button"
             className="btn-secondary"
             disabled={inbox.page === inbox.pageCount || isPending}
+            aria-label="Trang sau"
             onClick={() => loadPage(inbox.page + 1, debouncedFilters, pageSize)}
           >
-            Trang sau
+            Sau
           </button>
         </nav>
       )}

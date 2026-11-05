@@ -429,8 +429,10 @@ function HrCollection({
           <tbody>
             {detail.invitations.map((i) => (
               <tr key={i.invitation_id}>
-                <td>{i.evaluator_name}</td>
-                <td>
+                <td data-label={t("Người đánh giá", "Evaluator")}>
+                  {i.evaluator_name}
+                </td>
+                <td data-label={t("Trạng thái", "Status")}>
                   {!i.available
                     ? t("Không còn đủ điều kiện", "Unavailable")
                     : i.state === "SUBMITTED"
@@ -439,7 +441,7 @@ function HrCollection({
                         ? t("Đã thu hồi", "Revoked")
                         : t("Chưa nộp", "Not submitted")}
                 </td>
-                <td>
+                <td data-label={t("Thao tác", "Actions")}>
                   <a href={`/interview-feedback/${i.invitation_id}`}>
                     {t(
                       "Liên kết cho người nhận (cần đăng nhập)",

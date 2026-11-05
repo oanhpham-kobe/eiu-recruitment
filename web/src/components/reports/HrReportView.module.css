@@ -105,8 +105,8 @@
 }
 
 .table {
-  width: 1610px;
-  min-width: 1610px;
+  width: 100%;
+  min-width: 0;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
@@ -189,8 +189,7 @@
 }
 
 .actionCell {
-  display: flex;
-  justify-content: center;
+  text-align: left;
 }
 
 .empty {
@@ -396,7 +395,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@container (max-width: 1100px) {
   .heading h1 {
     font-size: 24px;
   }
@@ -405,7 +404,7 @@
   }
   .root .tableScroll {
     max-height: none;
-    overflow: visible;
+    overflow: auto;
     border: 0;
     background: transparent;
   }

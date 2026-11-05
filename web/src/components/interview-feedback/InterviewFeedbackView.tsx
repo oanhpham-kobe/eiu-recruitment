@@ -622,23 +622,25 @@ export function InterviewFeedbackView({
                   <tbody>
                     {data.collections.map((c) => (
                       <tr key={c.collection_id}>
-                        <td>
+                        <td
+                          data-label={t("Ứng viên / Vòng", "Candidate / Round")}
+                        >
                           {c.context.candidate_name} · {t("Vòng", "Round")}{" "}
                           {c.context.round_no}
                           <br />
                           {c.context.position_name}
                         </td>
-                        <td>
+                        <td data-label={t("Đã nộp", "Submitted")}>
                           {c.submitted_count}/{c.selected_count}
                         </td>
-                        <td>
+                        <td data-label={t("Báo cáo", "Report")}>
                           {c.consolidation_state === "APPROVED"
                             ? t("Đã duyệt", "Approved")
                             : c.consolidation_state === "DRAFT"
                               ? t("Bản nháp", "Draft")
                               : t("Chưa tạo", "Not created")}
                         </td>
-                        <td>
+                        <td data-label={t("Thao tác", "Actions")}>
                           <Button
                             disabled={busy}
                             onClick={() => void openCollection(c.collection_id)}

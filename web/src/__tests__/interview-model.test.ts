@@ -7,11 +7,13 @@ import {
   normalizeInterviewFilters,
 } from "@/lib/interview/model";
 
-test("Interview table contract remains exact 1480px seven-column grid", () => {
-  assert.deepEqual(INTERVIEW_COLUMNS, [48, 340, 250, 220, 170, 360, 92]);
-  assert.equal(
-    INTERVIEW_COLUMNS.reduce((sum, width) => sum + width, 0),
-    1480,
+test("Interview columns reserve accessible selection, status and action targets", () => {
+  assert.equal(INTERVIEW_COLUMNS.length, 7);
+  assert.equal(INTERVIEW_COLUMNS[0], 48);
+  assert.ok(INTERVIEW_COLUMNS[4] >= 144 + 24);
+  assert.ok(INTERVIEW_COLUMNS[6] >= 44 + 24);
+  assert.ok(
+    INTERVIEW_COLUMNS.slice(1, 4).every((width) => typeof width === "string"),
   );
 });
 

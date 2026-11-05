@@ -392,7 +392,10 @@ export function InterviewPage({
   };
 
   return (
-    <section className="interview-page" aria-labelledby="interview-page-title">
+    <section
+      className="interview-page workflow-list-page"
+      aria-labelledby="interview-page-title"
+    >
       <div className="interview-page-heading">
         <div>
           <h1 id="interview-page-title">{t("Lịch phỏng vấn", "Interviews")}</h1>
@@ -738,7 +741,7 @@ export function InterviewPage({
         <table className="interview-table">
           <colgroup>
             {INTERVIEW_COLUMNS.map((width) => (
-              <col key={width} style={{ width }} />
+              <col key={width ?? "note"} style={{ width }} />
             ))}
           </colgroup>
           <thead>
@@ -751,7 +754,7 @@ export function InterviewPage({
               <th scope="col">Địa điểm</th>
               <th scope="col">Trạng thái</th>
               <th scope="col">Ghi chú</th>
-              <th scope="col">Action</th>
+              <th scope="col">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -1180,7 +1183,11 @@ function ApplicationRows({
             ? renderStatus(latest, application.isActive && latest.isActive)
             : "—"}
         </td>
-        <td data-label="Ghi chú">{latest?.interviewNote ?? "—"}</td>
+        <td data-label="Ghi chú">
+          <span className="workflow-note-excerpt">
+            {latest?.interviewNote ?? "—"}
+          </span>
+        </td>
         <td data-label="Action">
           <div className="interview-row-actions">
             {latest ? (
@@ -1257,7 +1264,11 @@ function ApplicationRows({
               <td data-label="Trạng thái">
                 {renderStatus(round, application.isActive && round.isActive)}
               </td>
-              <td data-label="Ghi chú">{round.interviewNote ?? "—"}</td>
+              <td data-label="Ghi chú">
+                <span className="workflow-note-excerpt">
+                  {round.interviewNote ?? "—"}
+                </span>
+              </td>
               <td data-label="Action">
                 <div className="interview-row-actions">
                   <Button

@@ -97,6 +97,9 @@
   --space-12: 48px;
   --space-16: 64px;
 
+  /* Workspace gutter is applied once, after the sidebar. */
+  --page-gutter: 24px;
+
   /* 7. Radius */
   --radius-control: 10px;
   --radius-card: 15px;
@@ -108,4 +111,20 @@
   --height-compact: 40px;
   --height-cta: 52px;
   --header-height: 72px;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --page-gutter: 20px;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --page-gutter: 16px;
+  }
+}
+@media (max-width: 360px) {
+  :root {
+    --page-gutter: 12px;
+  }
 }

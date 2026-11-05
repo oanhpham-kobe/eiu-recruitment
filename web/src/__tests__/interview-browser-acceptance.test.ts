@@ -3,7 +3,7 @@ import test from "node:test";
 import { build } from "esbuild";
 import { type Browser, chromium, type Page } from "playwright";
 
-const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
+const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1393, 1440, 1920] as const;
 
 async function bundleHarness() {
   const bundle = await build({
@@ -113,7 +113,7 @@ async function assertDrawerContract(page: Page, width: number) {
   await drawer.waitFor({ state: "detached" });
 }
 
-test("Interview production UI passes the seven-width responsive browser contract", {
+test("Interview production UI passes responsive browser geometry and overlay contracts", {
   timeout: 180_000,
 }, async () => {
   const assets = await bundleHarness();
@@ -156,7 +156,12 @@ test("Interview production UI passes the seven-width responsive browser contract
         `interview@${width}: Interview badge must be 144px`,
       );
 
-      if (width > 640) {
+      if (
+        width -
+          (width > 1024 ? 244 : 0) -
+          (width >= 1024 ? 48 : width >= 768 ? 40 : width <= 360 ? 24 : 32) >
+        1100
+      ) {
         assert.equal(
           await table.evaluate((element) => getComputedStyle(element).display),
           "table",
@@ -165,9 +170,37 @@ test("Interview production UI passes the seven-width responsive browser contract
           (element) => element.getBoundingClientRect().width,
         );
         assert.ok(
-          Math.abs(tableWidth - 1480) <= 1,
-          `interview@${width}: semantic Interview table must stay 1480px`,
+          Math.abs(
+            tableWidth - (await tableScroll.evaluate((el) => el.clientWidth)),
+          ) <= 1,
+          `interview@${width}: semantic Interview table fills the current workspace`,
         );
+        const columns = await table
+          .locator("tbody tr")
+          .first()
+          .evaluate((row) =>
+            Array.from(row.children).map(
+              (cell) => cell.getBoundingClientRect().width,
+            ),
+          );
+        assert.ok(
+          columns[1] > columns[3] * 1.4,
+          `interview@${width}: identity is visibly wider than location instead of equal auto columns`,
+        );
+        assert.ok(
+          columns[5] >= 120,
+          `interview@${width}: notes retain a readable column near the reflow threshold`,
+        );
+        for (const [index, reserved] of [
+          [0, 48],
+          [4, 168],
+          [6, 100],
+        ]) {
+          assert.ok(
+            Math.abs(columns[index] - reserved) <= 1,
+            `interview@${width}: selection/status/action targets retain reserved width`,
+          );
+        }
         const roundCellHeights = await page
           .locator(".interview-round-row")
           .first()
@@ -185,8 +218,8 @@ test("Interview production UI passes the seven-width responsive browser contract
           scrollWidth: element.scrollWidth,
         }));
         assert.ok(
-          overflow.scrollWidth > overflow.clientWidth,
-          `interview@${width}: wide table must scroll only inside its container`,
+          overflow.scrollWidth <= overflow.clientWidth + 1,
+          `interview@${width}: fluid table shows notes/actions without horizontal scrolling`,
         );
         const firstCell = page
           .locator(".interview-table tbody tr")

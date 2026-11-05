@@ -482,7 +482,7 @@ export function MasterDataManagementPage({
   }, [isCreateOpen, editingItem, deletingItem, closeModals]);
 
   return (
-    <div className="master-data-page">
+    <div className="master-data-page workflow-list-page">
       <header className="master-data-header">
         <div>
           <h1 className="master-data-header__title">
@@ -602,12 +602,12 @@ export function MasterDataManagementPage({
       <div className="master-data-table-container">
         <table className="master-data-table" aria-label="Bảng dữ liệu danh mục">
           <colgroup>
-            <col style={{ width: 160 }} />
-            <col style={{ width: 260 }} />
-            <col style={{ width: 260 }} />
-            <col style={{ width: 160 }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "26%" }} />
+            <col style={{ width: "26%" }} />
+            <col style={{ width: "14%" }} />
 
-            {canManage && <col style={{ width: 220 }} />}
+            {canManage && <col style={{ width: 180 }} />}
           </colgroup>
           <thead>
             <tr>
@@ -707,7 +707,7 @@ export function MasterDataManagementPage({
                             actionTriggerRefs.current[`edit-${item.id}`] = el;
                           }}
                           type="button"
-                          className="master-data-btn-secondary"
+                          className="master-data-btn-secondary workflow-edit-action"
                           onClick={() => openEditModal(item)}
                         >
                           Sửa

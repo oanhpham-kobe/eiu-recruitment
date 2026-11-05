@@ -30,7 +30,7 @@ test("candidate and internal operational pages converge on responsive design con
   );
   assert.match(
     globals,
-    /DS-004: phone presentation[\s\S]*\.application-inbox__table tbody[\s\S]*display:\s*grid/,
+    /@container workflow-workspace \(max-width: 1100px\)[\s\S]*\.application-inbox__table tbody[\s\S]*display:\s*grid/,
   );
   assert.match(
     globals,

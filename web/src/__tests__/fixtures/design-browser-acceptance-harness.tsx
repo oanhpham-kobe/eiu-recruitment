@@ -10,9 +10,9 @@ import "@/styles/candidate-portal.css";
 
 const COLUMNS = [
   "select",
-  "candidate",
+  "name",
   "email",
-  "dob",
+  "dateOfBirth",
   "gender",
   "phone",
   "status",

@@ -30,6 +30,7 @@ Chỉnh sửa cam; Hủy trong popup Trình lãnh đạo/Yêu cầu bổ sung v�
 ## Quy ước sản phẩm khi sửa UniCouncil
 
 - PC 5 dòng/trang; mobile 4 thẻ/trang, chỉ danh sách cuộn. Phân trang ghim đáy. Sidebar có vị trí workspace thống nhất giữa các page.
+- Bảng co giãn cả trên PC; header và ô dữ liệu căn trái, cùng trục cột. Badge mã/trạng thái ở đầu dòng như đã chốt, nhưng chữ/chấm trong badge căn giữa ngang/dọc. Gutter và cách thu hẹp bố cục theo [layout-and-alignment.md](layout-and-alignment.md); các ảnh review cũ là tham chiếu, không thay các quy tắc bổ sung mới này.
 - Thành phần tham dự PC tối đa 3 dòng. Mobile 1–2 dòng phù hợp số dòng nội dung cuộc họp; vượt giới hạn thì ellipsis và xem đầy đủ trong chi tiết.
 - Mã dạng `20260910-001`: ngày tạo và STT trong ngày trên toàn bộ đơn vị. Mã ở popup trên một dòng riêng, nội dung yêu cầu bên dưới.
 - Nhãn “Ngày đề xuất”, “Lịch chờ duyệt”, “Lịch chính thức” căn trái trên mobile. Không hiển thị giá trị thiếu ở thẻ hoặc dấu phân cách thừa.

@@ -651,7 +651,7 @@ export function HrReportView({
 
   return (
     <section
-      className={styles.root}
+      className={`${styles.root} workflow-list-page`}
       aria-labelledby="hr-report-title"
       aria-busy={pending || undefined}
     >
@@ -826,17 +826,19 @@ export function HrReportView({
           </strong>
         </div>
       ) : (
-        <TableScrollContainer className={styles.tableScroll}>
+        <TableScrollContainer
+          className={`${styles.tableScroll} workflow-list-scroll`}
+        >
           <table className={styles.table}>
             <colgroup>
               <col style={{ width: 48 }} />
-              <col style={{ width: 240 }} />
-              <col style={{ width: 300 }} />
-              <col style={{ width: 240 }} />
-              <col style={{ width: 200 }} />
-              <col style={{ width: 190 }} />
-              <col style={{ width: 300 }} />
-              <col style={{ width: 92 }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: 168 }} />
+              <col />
+              <col style={{ width: 100 }} />
             </colgroup>
             <thead>
               <tr>
@@ -867,7 +869,7 @@ export function HrReportView({
                 <th scope="col">{t("Địa điểm", "Location")}</th>
                 <th scope="col">{t("Trạng thái", "Status")}</th>
                 <th scope="col">{t("Ghi chú", "Note")}</th>
-                <th scope="col">{t("Action", "Action")}</th>
+                <th scope="col">{t("Thao tác", "Actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -944,7 +946,9 @@ export function HrReportView({
                       )}
                     </td>
                     <td>
-                      <span className={styles.noteCell}>
+                      <span
+                        className={`${styles.noteCell} workflow-note-excerpt`}
+                      >
                         {displayText(row.hrReportNote)}
                       </span>
                     </td>
@@ -964,7 +968,7 @@ export function HrReportView({
       )}
 
       <nav
-        className={styles.pagination}
+        className={`${styles.pagination} workflow-pagination`}
         aria-label={t("Phân trang", "Pagination")}
       >
         <Button
@@ -1106,6 +1110,9 @@ export function HrReportView({
                           <div className={styles.participantActions}>
                             {data.permissions.editInterviewer ? (
                               <Button
+                                className={
+                                  editing ? undefined : "workflow-edit-action"
+                                }
                                 disabled={pending}
                                 onClick={() =>
                                   requestParticipantEdit(participant)

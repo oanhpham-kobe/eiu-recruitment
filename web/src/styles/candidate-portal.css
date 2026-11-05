@@ -10,7 +10,7 @@
   color: var(--ink-950);
   font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
-  padding: 16px;
+  padding: var(--page-gutter);
 }
 
 .portal-container {
@@ -25,7 +25,7 @@
 
 @media (max-width: 640px) {
   .portal-wrapper {
-    padding: 8px;
+    padding: var(--page-gutter);
   }
   .portal-container {
     padding: 16px;

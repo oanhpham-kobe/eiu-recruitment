@@ -3,7 +3,7 @@ import test from "node:test";
 import { build } from "esbuild";
 import { type Browser, chromium, type Page } from "playwright";
 
-const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
+const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1393, 1440, 1920] as const;
 type HarnessMode = "internal" | "candidate" | "login";
 
 async function bundleHarness() {
@@ -134,7 +134,12 @@ test("production Design System passes desktop, tablet, and phone browser accepta
         );
       }
 
-      if (width > 640) {
+      if (
+        width -
+          (width > 1024 ? 244 : 0) -
+          (width >= 1024 ? 48 : width >= 768 ? 40 : width <= 360 ? 24 : 32) >
+        1100
+      ) {
         assert.equal(
           await table.evaluate((element) => getComputedStyle(element).display),
           "table",
@@ -144,9 +149,38 @@ test("production Design System passes desktop, tablet, and phone browser accepta
           scrollWidth: element.scrollWidth,
         }));
         assert.ok(
-          overflow.scrollWidth > overflow.clientWidth,
-          `internal@${width}: wide operational table must scroll only inside its container`,
+          overflow.scrollWidth <= overflow.clientWidth + 1,
+          `internal@${width}: fluid operational table must expose every column without horizontal scrolling`,
         );
+        const columns = await table
+          .locator("tbody tr")
+          .first()
+          .evaluate((row) =>
+            Array.from(row.children).map(
+              (cell) => cell.getBoundingClientRect().width,
+            ),
+          );
+        assert.ok(
+          columns[2] > columns[1] + 5,
+          `internal@${width}: email receives more space than identity instead of equal auto columns`,
+        );
+        assert.ok(
+          columns[7] >= 120,
+          `internal@${width}: Inbox notes retain a readable column near structured reflow`,
+        );
+        for (const [index, reserved] of [
+          [0, 48],
+          [3, 112],
+          [4, 80],
+          [5, 130],
+          [6, 160],
+          [8, 100],
+        ]) {
+          assert.ok(
+            Math.abs(columns[index] - reserved) <= 1,
+            `internal@${width}: compact data/status/action columns retain usable width`,
+          );
+        }
         const firstCellPosition = await internal.page
           .locator(".application-inbox__table tbody td")
           .first()

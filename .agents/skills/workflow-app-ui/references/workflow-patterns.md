@@ -1,6 +1,6 @@
 # Các mẫu giao diện nghiệp vụ
 
-Đọc phần liên quan đến luồng đang làm. Đây là quy ước trình bày; số dòng, trạng thái và quyền cụ thể theo từng sản phẩm.
+Đọc phần liên quan đến luồng đang làm. Đây là quy ước trình bày; số dòng, trạng thái và quyền cụ thể theo từng sản phẩm. Căn chỉnh bảng/badge, gutter và co giãn PC/mobile theo [layout-and-alignment.md](layout-and-alignment.md).
 
 ## Danh sách PC và thẻ mobile
 
@@ -10,6 +10,8 @@
 - Nhãn lịch căn trái; khi thiếu chiều ngang, đặt nhãn trên, ngày/giờ/địa điểm dưới. Thiếu giờ hoặc địa điểm thì chỉ hiển thị giá trị thật. Ví dụ `21/10/2026 | 09:00 - B5.201`; chỉ có địa điểm thì `21/10/2026 | B5.201`; cả hai trống thì chỉ ngày. Không tạo chuỗi `Chưa xác định - Chưa xác định` ở thẻ danh sách.
 - Giới hạn dòng theo loại thông tin và sản phẩm. Ellipsis phải có đường mở chi tiết để đọc đầy đủ. Không thu nhỏ chữ để đạt số dòng mong muốn.
 - Phân trang: tổng 5 mục, 4 mục/trang → trang 1 hiển thị 1–4 / 5, trang 1/2; trang 2 hiển thị 5–5 / 5, trang 2/2. Khi 0 kết quả, ghi rõ trạng thái rỗng và tắt điều khiển không có tác dụng.
+- Search/filter hoặc đổi số mục mỗi trang thì tính lại trang phù hợp, thông thường về trang đầu. Xóa mục cuối một trang thì lùi về trang còn dữ liệu, không để khoảng hiển thị sai hoặc một trang rỗng giả.
+- Các điều khiển phân trang có vị trí và vùng bấm ổn định; nhãn tổng kết quả không xô lệch khi đổi một chữ số thành nhiều chữ số. Chuyển trang chỉ cuộn vùng danh sách về đầu theo luồng, giữ phần filter và trạng thái lọc.
 
 ## Form và combo tìm kiếm
 

@@ -155,7 +155,7 @@ export function SubmissionsList({
                       {canEdit && onEditSubmission ? (
                         <button
                           type="button"
-                          className="btn btn-secondary"
+                          className="btn btn-secondary workflow-edit-action"
                           style={{
                             minHeight: "44px",
                             padding: "8px 12px",

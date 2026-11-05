@@ -204,7 +204,7 @@ test("Application Inbox page-size selector exposes exactly 25/50/100 and reloads
       (
         await page.locator(".application-inbox__selection-count").textContent()
       )?.trim(),
-      "1 Candidate được chọn",
+      "1 ứng viên được chọn",
     );
 
     await page.evaluate(() => {
@@ -237,7 +237,7 @@ test("Application Inbox page-size selector exposes exactly 25/50/100 and reloads
       (
         await page.locator(".application-inbox__selection-count").textContent()
       )?.trim(),
-      "0 Candidate được chọn",
+      "0 ứng viên được chọn",
     );
     assert.deepEqual(pageErrors, []);
   } finally {

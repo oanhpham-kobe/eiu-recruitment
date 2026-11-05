@@ -972,7 +972,7 @@ export function SubmissionDetailDrawer({
               <button
                 ref={editButtonRef}
                 type="button"
-                className="btn-secondary submission-drawer__edit-btn"
+                className="btn-secondary submission-drawer__edit-btn workflow-edit-action"
                 onClick={handleEnterEditMode}
               >
                 Chỉnh sửa

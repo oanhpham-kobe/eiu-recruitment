@@ -151,7 +151,11 @@ export function InterviewerReportView({
         </Button>
       </div>
     ) : round.canEdit ? (
-      <Button variant="primary" onClick={() => selectRound(round, "edit")}>
+      <Button
+        variant="primary"
+        className={round.hasOwnReport ? "workflow-edit-action" : undefined}
+        onClick={() => selectRound(round, "edit")}
+      >
         {round.hasOwnReport ? t("Sửa", "Edit") : t("Báo cáo PV", "Report")}
       </Button>
     ) : undefined
@@ -159,7 +163,7 @@ export function InterviewerReportView({
 
   return (
     <section
-      className="interviewer-report"
+      className="interviewer-report workflow-list-page"
       aria-labelledby="interviewer-report-title"
       aria-busy={pending || undefined}
     >
@@ -247,6 +251,11 @@ export function InterviewerReportView({
                         {primary.canEdit ? (
                           <Button
                             variant="primary"
+                            className={
+                              primary.hasOwnReport
+                                ? "workflow-edit-action"
+                                : undefined
+                            }
                             onClick={() => selectRound(primary, "edit")}
                           >
                             {primary.hasOwnReport

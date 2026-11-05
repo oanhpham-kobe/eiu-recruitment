@@ -96,30 +96,54 @@ test("Interviewer report route passes responsive, modal, and historical-read bro
       );
 
       const table = page.locator(".interviewer-report__table");
-      if (width <= 640) {
-        assert.equal(
-          await table.evaluate((element) => getComputedStyle(element).display),
-          "block",
-          `report@${width}: phone presentation must use structured rows`,
-        );
-      } else {
-        assert.equal(
-          await table.evaluate((element) => getComputedStyle(element).display),
-          "table",
-          `report@${width}: tablet/desktop keeps semantic table`,
-        );
-        if (width <= 1024) {
-          const scroll = await page
-            .locator(".interviewer-report__table-scroll")
-            .evaluate((element) => ({
-              clientWidth: element.clientWidth,
-              scrollWidth: element.scrollWidth,
-            }));
-          assert.ok(
-            scroll.scrollWidth > scroll.clientWidth,
-            `report@${width}: dense table overflow must stay contained`,
+      const workspaceWidth = await page
+        .locator(".content")
+        .evaluate((element) => {
+          const style = getComputedStyle(element);
+          return (
+            element.clientWidth -
+            Number.parseFloat(style.paddingLeft) -
+            Number.parseFloat(style.paddingRight)
           );
-        }
+        });
+      const wideTable = workspaceWidth > 1100;
+      assert.equal(
+        await table.evaluate((element) => getComputedStyle(element).display),
+        wideTable ? "table" : "block",
+        `report@${width}: composition follows available workspace`,
+      );
+      const scroll = await page
+        .locator(".interviewer-report__table-scroll")
+        .evaluate((element) => ({
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+        }));
+      assert.ok(
+        scroll.scrollWidth <= scroll.clientWidth + 1,
+        `report@${width}: all report columns/cards fit without horizontal scrolling`,
+      );
+      const fields = await table
+        .locator("tbody tr")
+        .first()
+        .locator("td")
+        .count();
+      assert.equal(
+        fields,
+        6,
+        "Structured reflow retains all six report fields/actions",
+      );
+      if (!wideTable) {
+        const labels = await table
+          .locator("tbody tr")
+          .first()
+          .locator("td")
+          .evaluateAll((cells) =>
+            cells.map((cell) => cell.getAttribute("data-label")),
+          );
+        assert.ok(
+          labels.every(Boolean),
+          "Each stacked report field retains its accessible visible label",
+        );
       }
 
       if (width === 390 || width === 1280) {

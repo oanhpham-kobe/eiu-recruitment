@@ -1,6 +1,6 @@
 .feedback-page {
-  max-width: 1120px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   color: var(--ink-950);
   font-size: 1rem;
   line-height: 1.6;
@@ -129,9 +129,11 @@
   font-size: 1rem;
 }
 .feedback-page caption {
+  display: block;
+  width: 100%;
   text-align: left;
   font-weight: 600;
-  padding: 0.5rem 0;
+  padding: 12px 0;
 }
 .feedback-page th,
 .feedback-page td {
@@ -149,7 +151,7 @@
 }
 .feedback-page td .ui-button {
   margin: 0.5rem 0;
-  display: block;
+  display: inline-flex;
 }
 .feedback-page a {
   color: var(--eiu-blue);
@@ -315,4 +317,56 @@
 .feedback-setup > form,
 .feedback-setup > .feedback-actions {
   margin: 12px;
+}
+
+@container workflow-workspace (max-width: 640px) {
+  .feedback-table-scroll {
+    border: 0;
+    background: transparent;
+    max-height: none;
+  }
+  .feedback-page table {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .feedback-page thead {
+    display: none;
+  }
+  .feedback-page tbody {
+    display: grid;
+    gap: 12px;
+  }
+  .feedback-page tr {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    padding: 12px;
+  }
+  .feedback-page td {
+    display: grid;
+    grid-template-columns: minmax(80px, 32%) minmax(0, 1fr);
+    gap: 12px;
+    padding: 8px 0;
+    overflow-wrap: anywhere;
+  }
+  .feedback-page td::before {
+    content: attr(data-label);
+    color: var(--ink-600);
+    font-weight: 600;
+  }
+  .feedback-page td:first-child {
+    display: block;
+  }
+  .feedback-page td:first-child::before {
+    display: none;
+  }
+  .feedback-page td:last-child {
+    border-bottom: 0;
+  }
+  .feedback-page td .ui-button {
+    margin: 0;
+    min-width: 0;
+  }
 }

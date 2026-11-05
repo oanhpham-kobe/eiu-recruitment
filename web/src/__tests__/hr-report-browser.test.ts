@@ -3,7 +3,7 @@ import test from "node:test";
 import { build } from "esbuild";
 import { type Browser, chromium, type Page } from "playwright";
 
-const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
+const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1393, 1440, 1920] as const;
 
 async function bundleHarness() {
   const bundle = await build({
@@ -75,7 +75,7 @@ async function scrollRowStatusIntoReach(page: Page) {
   return trigger;
 }
 
-test("HR Report preserves exact table geometry and responsive scroll containment", {
+test("HR Report preserves fluid column alignment and contained responsive card scrolling", {
   timeout: 180_000,
 }, async () => {
   const assets = await bundleHarness();
@@ -88,12 +88,24 @@ test("HR Report preserves exact table geometry and responsive scroll containment
       assert.deepEqual(errors, [], `hr-report@${width} console/page errors`);
 
       const table = page.getByRole("table");
+      const workspaceWidth = await page
+        .locator(".content")
+        .evaluate((element) => {
+          const style = getComputedStyle(element);
+          return (
+            element.clientWidth -
+            Number.parseFloat(style.paddingLeft) -
+            Number.parseFloat(style.paddingRight)
+          );
+        });
+      const wideTable = workspaceWidth > 1100;
+      assert.equal(
+        await table.evaluate((element) => getComputedStyle(element).display),
+        wideTable ? "table" : "block",
+        `${width}: composition follows available workspace`,
+      );
       const tableWidth = await table.evaluate(
         (element) => element.getBoundingClientRect().width,
-      );
-      assert.ok(
-        width <= 640 ? tableWidth <= width : Math.abs(tableWidth - 1610) <= 1,
-        `hr-report@${width}: desktop table remains 1610px; phone summary fits viewport`,
       );
 
       const headers = await page
@@ -109,7 +121,7 @@ test("HR Report preserves exact table geometry and responsive scroll containment
           "Địa điểm",
           "Trạng thái",
           "Ghi chú",
-          "Action",
+          "Thao tác",
         ],
       );
 
@@ -119,10 +131,56 @@ test("HR Report preserves exact table geometry and responsive scroll containment
           clientWidth: element.clientWidth,
           scrollWidth: element.scrollWidth,
         }));
-      if (width > 640 && width < 1440) {
+      assert.ok(
+        scroll.scrollWidth <= scroll.clientWidth + 1,
+        `hr-report@${width}: all columns/cards fit without horizontal scrolling`,
+      );
+      assert.ok(
+        Math.abs(tableWidth - scroll.clientWidth) <= 1,
+        `hr-report@${width}: table fills its available list viewport`,
+      );
+      if (wideTable) {
+        const columns = await table
+          .locator("tbody tr")
+          .first()
+          .evaluate((row) =>
+            Array.from(row.children).map(
+              (cell) => cell.getBoundingClientRect().width,
+            ),
+          );
         assert.ok(
-          scroll.scrollWidth > scroll.clientWidth,
-          `hr-report@${width}: wide table overflow must stay inside TableScrollContainer`,
+          columns[1] > columns[4] * 1.35,
+          `hr-report@${width}: identity receives more width than location`,
+        );
+        assert.ok(
+          columns[6] >= 120,
+          `hr-report@${width}: notes remain readable immediately above structured reflow`,
+        );
+        for (const [index, reserved] of [
+          [0, 48],
+          [5, 168],
+          [7, 100],
+        ]) {
+          assert.ok(
+            Math.abs(columns[index] - reserved) <= 1,
+            `hr-report@${width}: selection/status/action targets retain reserved width`,
+          );
+        }
+        const axes = await table.evaluate((element) => {
+          const header = element.querySelector("thead tr");
+          const row = element.querySelector("tbody tr");
+          if (!header || !row) throw new Error("Populated report rows missing");
+          return Array.from(header.children).map((cell, index) => ({
+            head: cell.getBoundingClientRect().left,
+            body: row.children[index]?.getBoundingClientRect().left,
+          }));
+        });
+        assert.ok(
+          axes.every(
+            (axis) =>
+              axis.body !== undefined && Math.abs(axis.head - axis.body) <= 1,
+          ),
+          "Every report header shares its data column axis",
         );
       }
 
@@ -136,7 +194,7 @@ test("HR Report preserves exact table geometry and responsive scroll containment
             left: getComputedStyle(cell).left,
           })),
         );
-      if (width > 640) {
+      if (wideTable) {
         assert.equal(sticky[0]?.position, "sticky");
         assert.equal(sticky[0]?.left, "0px");
         assert.equal(sticky[1]?.position, "sticky");

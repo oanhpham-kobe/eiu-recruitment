@@ -157,6 +157,7 @@
   border-color: var(--status-success-text);
 }
 .ui-table-scroll {
+  position: relative;
   max-width: 100%;
   max-height: 70dvh;
   overflow: auto;
@@ -373,4 +374,12 @@
 .ui-row-actions .ui-button {
   justify-content: flex-start;
   width: 100%;
+}
+
+/* Editing has one semantic treatment across native and shared buttons. */
+button.workflow-edit-action,
+button.workflow-edit-action:hover:not(:disabled) {
+  color: var(--status-warning-text);
+  background: var(--status-warning-bg);
+  border: 1px solid var(--status-warning-text);
 }
