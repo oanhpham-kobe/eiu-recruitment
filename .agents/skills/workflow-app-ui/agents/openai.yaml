@@ -1,0 +1,4 @@
+interface:
+  display_name: "Workflow App UI"
+  short_description: "Giao diện nghiệp vụ PC/mobile đồng bộ, dễ đọc"
+  default_prompt: "Dùng $workflow-app-ui để thiết kế hoặc cải thiện giao diện app này theo các nguyên tắc đã thống nhất; giữ thương hiệu và quyền nghiệp vụ của dự án."

@@ -2,7 +2,16 @@
 
 > DERIVED / NON-AUTHORITATIVE. Runtime: AUTONOMY_RUN_STATE.yaml; DAG: TASK_REGISTRY.yaml / SLICE_REGISTRY.yaml; exact code/history: Git.
 
-## Active full-project HTML preview — 2026-11-05
+## Active workflow UI refinement — 2026-11-05
+
+- Branch: `codex/workflow-ui-refinement-20261105`, base `356648930ec22be692867235dfcff56c2de534d1`. Resolve candidate/reporting HEAD from Git; exact-candidate review pending.
+- Installed the Owner-supplied `workflow-app-ui` skill under `.agents/skills/`, with all eight archive files byte-identical. Project skill discovery validator recognizes 25 skills.
+- Applied compatible presentation guidance to actual shared application styles/components: readable controls and EIU semantic tokens, admin table columns/spacing, grouped filters and bounded table scrolling, long Dialog/Drawer body scrolling with reachable actions, and short-viewport fallbacks. Domain/authorization/backend behavior is unchanged.
+- Full web verification: 409 PASS, zero failed/skipped; lint/typecheck/build/design PASS, six existing warnings. Four focused browser cases cover responsive layouts, long overlays/keyboard, admin dialogs, all eleven catalogs and the complete offline workflow.
+- Refreshed preview: `http://127.0.0.1:3427/project-preview#/guide`. Standalone HTML SHA-256: `fd43afe8a1329ec0d6a6283d1bb9d8411ec7aac769d48f4c7b4d86d6f7d59db3`. Preview now supplies the same `app-root` background-lock boundary as the application.
+- Evidence: `project_control/reviews/WORKFLOW_UI_REFINEMENT_2026-11-05.md`. Development-branch synchronization remains Owner-authorized; no main integration, production deployment or accepted checkpoint.
+
+## Previous full-project HTML preview — 2026-11-05
 
 - Branch: `codex/full-project-interactive-preview-20261105`, base `dc10e3d9e3fb27121dbafc82620677582ab774d2`. Product candidate `0d6e60a0e6c8a0dd694133efea2afe7960e53474`: exact-SHA independent local review PASS. Resolve reporting HEAD/remote synchronization directly from Git.
 - Owner requested an interactive HTML for the whole current project and explicitly reiterated committing/pushing discovered fixes to GitHub.

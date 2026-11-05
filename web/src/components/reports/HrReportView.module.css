@@ -51,7 +51,7 @@
 .filterGroup {
   display: grid;
   gap: var(--space-1);
-  min-width: 180px;
+  min-width: min(180px, 100%);
 }
 
 .searchGroup {
@@ -73,10 +73,12 @@
 .noteEditor textarea,
 .reportEditor textarea {
   min-height: var(--height-control);
-  border: 1px solid var(--line);
+  border: 1px solid var(--ink-600);
   border-radius: var(--radius-control);
   background: var(--surface);
   color: var(--ink-950);
+  min-width: 0;
+  max-width: 100%;
   font: inherit;
 }
 
@@ -382,5 +384,11 @@
 @media (max-height: 600px) {
   .drawerSection {
     padding-block: 10px;
+  }
+}
+
+@media (max-height: 600px) {
+  .toolbar {
+    position: static;
   }
 }

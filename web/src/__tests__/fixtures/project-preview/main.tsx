@@ -323,7 +323,7 @@ function Guide() {
     ],
   ] as const;
   return (
-    <section className="preview-stack">
+    <section className="preview-stack preview-guide">
       <h1>{t("Phòng thử nghiệm toàn bộ dự án", "Project test workspace")}</h1>
       <p>
         {t(
@@ -331,8 +331,8 @@ function Guide() {
           "Follow the steps in order with sample data. Open step selects the appropriate role and screen. Changes stay in this browser; use Reset all to start again.",
         )}
       </p>
-      <ol>
-        {checkpoints.map(([key, label, done]) => (
+      <ol className="preview-steps">
+        {checkpoints.map(([key, label, done], index) => (
           <li key={key}>
             <span
               role="img"
@@ -342,7 +342,7 @@ function Guide() {
                   : t("Chưa thực hiện", "Not yet observed")
               }
             >
-              {done ? "✓" : "○"}
+              {done ? "✓" : index + 1}
             </span>{" "}
             {label.split(" / ")[locale === "vi" ? 0 : 1] ?? label}{" "}
             <button
@@ -606,9 +606,13 @@ function Surface({ path }: { path: string }) {
 }
 function Controls() {
   const s = read();
+  const { locale } = useAppLocale();
+  const t = (vi: string, en: string) => (locale === "vi" ? vi : en);
   return (
     <aside className="preview-controls" aria-label="Synthetic preview controls">
-      <strong>DỮ LIỆU MẪU / SYNTHETIC · v1</strong>
+      <strong>
+        {t("BẢN DÙNG THỬ · Dữ liệu mẫu", "TRIAL WORKSPACE · Synthetic data")}
+      </strong>
       {!persistenceAvailable() && (
         <p role="alert">
           Trình duyệt không cho lưu dữ liệu. Thay đổi chỉ còn trong phiên này. /
@@ -616,7 +620,7 @@ function Controls() {
         </p>
       )}
       <label>
-        Vai thử nghiệm / Trial role{" "}
+        {t("Vai thử nghiệm", "Trial role")}{" "}
         <select
           aria-label="Vai thử nghiệm / Trial role"
           value={s.persona}
@@ -636,6 +640,7 @@ function Controls() {
       </label>
       <button
         type="button"
+        aria-label="Bắt đầu lại / Reset all"
         onClick={() => {
           if (
             !confirm(
@@ -651,15 +656,21 @@ function Controls() {
           location.reload();
         }}
       >
-        Bắt đầu lại / Reset all
+        {t("Bắt đầu lại", "Reset all")}
       </button>
-      <a href="#/guide">Hướng dẫn / Guide</a>
+      <a href="#/guide">{t("Hướng dẫn", "Guide")}</a>
       <small>
-        Không email thật · No real email · Chỉ nhập dữ liệu giả / Synthetic
-        input only
+        {t(
+          "Chỉ nhập dữ liệu mẫu. Không gửi email thật.",
+          "Synthetic input only. No real emails are sent.",
+        )}
       </small>
     </aside>
   );
+}
+function PreviewTitle() {
+  const { locale } = useAppLocale();
+  return <>EIU · {locale === "vi" ? "Bản dùng thử" : "Trial workspace"}</>;
 }
 function App() {
   const [path, setPath] = useState(location.hash.slice(1) || "/guide");
@@ -699,14 +710,12 @@ function App() {
     )
     .map(([href, labelVi, labelEn]) => ({ href, labelVi, labelEn }));
   return (
-    <AppShell
-      title="EIU · Bản dùng thử / Trial workspace"
-      currentPath={path}
-      navItems={items}
-    >
-      <Controls />
-      <Surface key={`${role}:${path}`} path={path} />
-    </AppShell>
+    <div id="app-root">
+      <AppShell title={<PreviewTitle />} currentPath={path} navItems={items}>
+        <Controls />
+        <Surface key={`${role}:${path}`} path={path} />
+      </AppShell>
+    </div>
   );
 }
 try {

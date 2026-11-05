@@ -47,6 +47,12 @@ function Harness() {
         }
       >
         <p>Nội dung Drawer</p>
+        {Array.from({ length: 12 }, (_, i) => `Mục ${i + 1}`).map((label) => (
+          <label key={label} style={{ display: "grid", marginBottom: 16 }}>
+            {label} — Ghi chú phỏng vấn / Interview notes
+            <textarea rows={3} />
+          </label>
+        ))}
       </Drawer>
 
       <Dialog
@@ -60,6 +66,14 @@ function Harness() {
         }
       >
         <p>Dialog nằm trên Drawer.</p>
+        {Array.from({ length: 12 }, (_, i) => `Trường ${i + 1}`).map(
+          (label) => (
+            <label key={label} style={{ display: "grid", marginBottom: 16 }}>
+              {label} — Nội dung xác nhận / Confirmation details
+              <input type="text" />
+            </label>
+          ),
+        )}
       </Dialog>
     </div>
   );

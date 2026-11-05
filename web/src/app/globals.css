@@ -432,7 +432,7 @@ textarea {
 .application-inbox__toolbar input,
 .application-inbox__toolbar select {
   min-height: var(--height-control);
-  border: 1px solid var(--line);
+  border: 1px solid var(--ink-600);
   border-radius: var(--radius-control);
   background: var(--surface);
   color: var(--ink-950);
@@ -577,6 +577,7 @@ textarea {
 }
 
 .application-inbox__table-scroll {
+  max-height: 70dvh;
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
@@ -900,6 +901,8 @@ textarea {
 }
 
 .submission-drawer__header {
+  flex: 0 0 auto;
+  gap: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -945,6 +948,7 @@ textarea {
 }
 
 .submission-drawer__close-btn {
+  flex-shrink: 0;
   width: 44px;
   height: 44px;
   display: flex;
@@ -966,6 +970,9 @@ textarea {
 
 .submission-drawer__content {
   flex: 1;
+  min-height: 0;
+  overscroll-behavior: contain;
+  scroll-padding-block: 16px;
   overflow-y: auto;
   padding: 0;
 }
@@ -1300,6 +1307,8 @@ textarea {
 }
 
 .submission-drawer__footer {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   justify-content: flex-end;

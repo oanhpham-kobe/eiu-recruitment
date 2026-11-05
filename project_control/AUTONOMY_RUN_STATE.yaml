@@ -830,7 +830,7 @@ stop_gate:
   source_reopen_required: false
   resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
-next_action: "Verify authorized development-branch synchronization directly from Git, then collect Owner trial feedback on the full-project interactive HTML preview. Exact-candidate local review passed. Preserve all recovery/S08/source/provider holds; no main integration or production deployment is released."
+next_action: "Finish independent review and authorized development-branch synchronization of the verified workflow UI refinement, then collect Owner trial feedback. Preserve all recovery/S08/source/provider holds; no main integration or production deployment is released."
 
 # Owner resumed local repairs and new-feature planning on 2026-11-05.
 # This does not release the historical S08/provider/source gates above.
@@ -861,6 +861,18 @@ owner_feature_work:
   accepted: false
   local_only: true
   owner_scope: Implement questionnaire and consolidated report using the existing five qualitative questions for trial; show a synthetic local preview. Real mail/scanner services and official report/dossier templates remain deferred.
+  development_branch_sync_authorized: true
+  integration_authorized: false
+  production_deployment_authorized: false
+
+owner_ui_work:
+  id: WORKFLOW-UI-REFINEMENT-20261105
+  branch: codex/workflow-ui-refinement-20261105
+  base_sha: 356648930ec22be692867235dfcff56c2de534d1
+  status: LOCAL_VERIFIED_PENDING_INDEPENDENT_REVIEW
+  accepted: false
+  local_only: true
+  owner_scope: Install the Owner-supplied workflow-app-ui archive and apply its presentation guidance to the current application; preserve canonical EIU design, domain semantics and authorization.
   development_branch_sync_authorized: true
   integration_authorized: false
   production_deployment_authorized: false

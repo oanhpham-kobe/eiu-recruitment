@@ -5,16 +5,16 @@
   font-size: 1rem;
   line-height: 1.6;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .feedback-page h1 {
   font-size: 1.75rem;
-  color: var(--eiu-blue, #144069);
+  color: var(--eiu-blue);
 }
 .feedback-page h2 {
   font-size: 1.4rem;
   margin-top: 1.5rem;
-  color: #144069;
+  color: var(--eiu-blue);
 }
 .feedback-page h3 {
   font-size: 1.15rem;
@@ -29,8 +29,8 @@
 }
 .feedback-page fieldset {
   min-width: 0;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
   padding: 1rem;
   margin: 1rem 0;
 }
@@ -39,7 +39,7 @@
   padding: 0 0.4rem;
 }
 .feedback-page p {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 .feedback-field {
   display: flex;
@@ -47,28 +47,31 @@
   gap: 0.4rem;
   margin: 1rem 0;
   font-size: 1rem;
+  font-weight: 600;
 }
 .feedback-field input,
 .feedback-field select,
 .feedback-field textarea {
   font: inherit;
+  font-weight: 400;
+  min-width: 0;
   color: inherit;
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
   min-height: 44px;
   padding: 0.65rem;
-  border: 1px solid #64748b;
-  border-radius: 6px;
-  background: #fff;
+  border: 1px solid var(--ink-600);
+  border-radius: var(--radius-control);
+  background: var(--surface);
 }
 .feedback-field textarea {
   resize: vertical;
   min-height: 90px;
 }
 .feedback-field :disabled {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--canvas);
+  color: var(--ink-600);
 }
 .feedback-check {
   display: flex;
@@ -97,9 +100,9 @@
 .feedback-context,
 .feedback-notice {
   padding: 1rem;
-  background: #edf3f8;
-  border-left: 4px solid #144069;
-  border-radius: 6px;
+  background: var(--status-info-bg);
+  border-left: 4px solid var(--eiu-blue);
+  border-radius: var(--radius-control);
   margin: 1rem 0;
 }
 .feedback-context p {
@@ -107,13 +110,17 @@
 }
 .feedback-error {
   padding: 1rem;
-  background: #fff1f2;
-  border-left: 4px solid #b91c1c;
-  color: #991b1b;
+  background: var(--status-danger-bg);
+  border-left: 4px solid var(--status-danger-text);
+  color: var(--status-danger-text);
 }
 .feedback-table-scroll {
   max-width: 100%;
-  overflow-x: auto;
+  max-height: 70dvh;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
 }
 .feedback-page table {
   border-collapse: collapse;
@@ -129,37 +136,41 @@
 .feedback-page th,
 .feedback-page td {
   padding: 0.8rem;
-  border-bottom: 1px solid #cbd5e1;
+  border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: top;
 }
 .feedback-page th {
-  background: #edf3f8;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-weight: 600;
+  background: var(--status-info-bg);
 }
 .feedback-page td .ui-button {
   margin: 0.5rem 0;
   display: block;
 }
 .feedback-page a {
-  color: #144069;
+  color: var(--eiu-blue);
   text-decoration: underline;
   overflow-wrap: anywhere;
 }
 .feedback-page :focus-visible {
-  outline: 3px solid #a78656;
+  outline: 3px solid var(--eiu-blue);
   outline-offset: 3px;
 }
 .feedback-question {
   padding: 0.75rem;
-  border-bottom: 1px solid #cbd5e1;
+  border-bottom: 1px solid var(--line);
 }
 .feedback-invitations li {
   padding: 0.6rem 0;
 }
 .feedback-print-report {
   padding: 1.5rem;
-  background: white;
-  border: 1px solid #cbd5e1;
+  background: var(--surface);
+  border: 1px solid var(--line);
   margin-top: 1.5rem;
 }
 .feedback-plain-text {
@@ -167,8 +178,8 @@
   overflow-wrap: anywhere;
 }
 .feedback-preview-banner {
-  background: #fff3cd;
-  color: #513c06;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
   padding: 1rem;
   font-size: 1rem;
 }
@@ -241,7 +252,7 @@
     display: block;
     height: auto;
     overflow: visible;
-    background: white;
+    background: var(--surface);
   }
   .feedback-page {
     max-width: none;

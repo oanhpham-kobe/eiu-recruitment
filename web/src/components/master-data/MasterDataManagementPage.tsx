@@ -596,6 +596,14 @@ export function MasterDataManagementPage({
       {/* Table */}
       <div className="master-data-table-container">
         <table className="master-data-table" aria-label="Bảng dữ liệu danh mục">
+          <colgroup>
+            <col style={{ width: 180 }} />
+            <col style={{ width: 260 }} />
+            <col style={{ width: 260 }} />
+            <col style={{ width: 180 }} />
+            <col style={{ width: 100 }} />
+            {canManage && <col style={{ width: 220 }} />}
+          </colgroup>
           <thead>
             <tr>
               <th scope="col">Mã / Code</th>

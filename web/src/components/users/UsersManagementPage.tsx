@@ -595,6 +595,15 @@ export function UsersManagementPage({
       {/* Table */}
       <div className="users-table-container">
         <table className="users-table" aria-label="Danh sách nhân sự nội bộ">
+          <colgroup>
+            <col style={{ width: 200 }} />
+            <col style={{ width: 270 }} />
+            <col style={{ width: 240 }} />
+            <col style={{ width: 140 }} />
+            <col style={{ width: 160 }} />
+            <col style={{ width: 100 }} />
+            {canManageDirectory && <col style={{ width: 260 }} />}
+          </colgroup>
           <thead>
             <tr>
               <th scope="col">Họ và tên</th>

@@ -60,6 +60,7 @@ These are available directly from `.agents/skills/` and are suitable for task-sp
 
 | Skill | Use |
 |---|---|
+| `workflow-app-ui` | Owner-supplied responsive workflow UI conventions; apply with the canonical EIU design and business contracts |
 | `documentation-lookup` | Current framework/library documentation when repository sources are insufficient |
 | `react-patterns` | React/Next.js implementation patterns and server/client boundaries |
 | `security-review` | Auth/authz, secrets, PII, privileged APIs/functions, sensitive data |

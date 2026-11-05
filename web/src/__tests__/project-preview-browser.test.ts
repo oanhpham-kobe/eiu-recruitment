@@ -82,6 +82,65 @@ test("Project trial guide switches roles, opens every catalog and exports readab
       await dialog.getByRole("button", { name: "Đóng", exact: true }).click();
       assert.equal(await catalog.inputValue(), value);
     }
+    for (const width of [1440, 1024, 768, 430, 390, 360]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const path of [
+        "/users",
+        "/master-data",
+        "/interviews",
+        "/reports",
+        "/interview-feedback",
+      ]) {
+        await route(page, path);
+        assert.ok(
+          await page.evaluate(
+            () =>
+              document.documentElement.scrollWidth <=
+              document.documentElement.clientWidth + 1,
+          ),
+          `${path}@${width} must contain horizontal scrolling`,
+        );
+      }
+    }
+    await route(page, "/users");
+    const createUser = page.getByRole("button", {
+      name: "+ Thêm người dùng / Add User",
+      exact: true,
+    });
+    for (const viewport of [
+      { width: 1440, height: 600 },
+      { width: 768, height: 360 },
+      { width: 390, height: 360 },
+      { width: 360, height: 360 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await createUser.click();
+      const modal = page.getByRole("dialog");
+      const footer = await modal.locator(".modal-footer").boundingBox();
+      assert.ok(
+        footer && footer.y >= 0 && footer.y + footer.height <= viewport.height,
+        "Admin dialog actions stay within constrained viewport",
+      );
+      await modal.getByLabel("Thuộc Khoa / Phòng").focus();
+      const field = await modal.getByLabel("Thuộc Khoa / Phòng").boundingBox();
+      assert.ok(
+        field && field.y >= 0 && field.y + field.height <= footer.y,
+        "Final field scrolls above the footer on keyboard focus",
+      );
+      await page.keyboard.press("Escape");
+      await modal.waitFor({ state: "detached" });
+      await page.waitForFunction(
+        () =>
+          document.activeElement?.tagName === "BUTTON" &&
+          document.activeElement?.textContent?.includes("Add User"),
+      );
+      assert.equal(
+        await createUser.evaluate((el) => el === document.activeElement),
+        true,
+        "Admin dialog restores its opening button",
+      );
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
     await route(page, "/guide");
     await page
       .getByLabel("Ghi chú thử nghiệm / Test notes")
@@ -221,6 +280,11 @@ test("Standalone project preview connects candidate, assignment, rounds and ques
     await page.waitForTimeout(100);
     assert.equal((await state(page)).applications.length, 1);
     await route(page, "/interviews");
+    await page.getByRole("button", { name: "Mở", exact: true }).click();
+    assert.equal(await page.locator("#app-root").getAttribute("inert"), "");
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+    assert.equal(await page.locator("#app-root").getAttribute("inert"), null);
     await page.getByRole("button", { name: "Mở", exact: true }).click();
     const drawer = page.getByRole("dialog");
     await drawer

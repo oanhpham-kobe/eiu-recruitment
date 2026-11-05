@@ -174,11 +174,13 @@
   padding: 8px 12px;
   font-size: var(--font-size-body);
   font-family: inherit;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background-color: #ffffff;
+  border: 1px solid var(--ink-600);
+  border-radius: var(--radius-control);
+  background-color: var(--surface);
   color: var(--ink-950);
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   box-sizing: border-box;
 }
 

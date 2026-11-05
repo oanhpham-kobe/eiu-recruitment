@@ -53,6 +53,9 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
     await statusTrigger.press("ArrowDown");
     const menu = page.locator('[role="menu"]');
     await menu.waitFor({ state: "visible" });
+    await page.waitForFunction(
+      () => document.activeElement?.getAttribute("role") === "menuitemradio",
+    );
     assert.equal(
       await page.evaluate(() => document.activeElement?.textContent?.trim()),
       "Mới",
@@ -112,6 +115,49 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
     await dialog.waitFor({ state: "visible" });
     assert.equal(await page.locator("#app-root").getAttribute("inert"), "");
 
+    for (const viewport of [
+      { width: 1440, height: 900 },
+      { width: 768, height: 600 },
+      { width: 390, height: 360 },
+      { width: 360, height: 360 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const footer = dialog.locator("footer");
+      const bounds = await footer.boundingBox();
+      assert.ok(
+        bounds && bounds.y >= 0 && bounds.y + bounds.height <= viewport.height,
+        `Dialog actions must remain in viewport at ${viewport.width}x${viewport.height}`,
+      );
+      const body = dialog.locator(".ui-dialog__body");
+      assert.ok(
+        await body.evaluate((el) => el.scrollHeight > el.clientHeight),
+        "Long dialog must scroll within its body",
+      );
+      await dialog.getByLabel(/Trường 12/).focus();
+      const last = await dialog.getByLabel(/Trường 12/).boundingBox();
+      const bodyBounds = await body.boundingBox();
+      assert.ok(
+        last &&
+          bodyBounds &&
+          last.y >= bodyBounds.y &&
+          last.y + last.height <= bodyBounds.y + bodyBounds.height,
+        "Keyboard focus must scroll the final field above the fixed actions",
+      );
+      assert.equal(
+        await dialog
+          .getByRole("button", { name: "Đồng ý", exact: true })
+          .isVisible(),
+        true,
+      );
+      await dialog.getByRole("button", { name: "Đồng ý", exact: true }).focus();
+      await page.keyboard.press("Tab");
+      assert.equal(
+        await page.evaluate(() =>
+          document.activeElement?.getAttribute("aria-label"),
+        ),
+        "Đóng / Close",
+      );
+    }
     await page.keyboard.press("Escape");
     await dialog.waitFor({ state: "detached" });
     assert.equal(
@@ -129,6 +175,18 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
         document.activeElement?.getAttribute("data-testid") === "open-dialog",
     );
 
+    const drawerFooter = await drawer.locator("footer").boundingBox();
+    assert.ok(
+      drawerFooter && drawerFooter.y + drawerFooter.height <= 360,
+      "Drawer footer must remain reachable at constrained height",
+    );
+    await drawer.getByLabel(/Mục 12/).focus();
+    assert.ok(
+      await drawer
+        .locator(".ui-drawer__body")
+        .evaluate((el) => el.scrollTop > 0),
+      "Keyboard focus scrolls only drawer body",
+    );
     await page.keyboard.press("Escape");
     await drawer.waitFor({ state: "detached" });
     assert.equal(await page.locator("#app-root").getAttribute("inert"), null);
