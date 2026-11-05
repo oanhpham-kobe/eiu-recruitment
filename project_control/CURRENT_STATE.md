@@ -10,7 +10,7 @@
 - Refined table-cell structure and column proportions, removed technical version counters from primary lists, localized primary admin/Interview copy, grouped secondary row commands and filters, used one Inbox bulk Status menu, and compacted questionnaire setup. Normal desktop list frames and phone summaries preserve full detail access; pagination no longer overlaps mobile records.
 - Fresh verification: 409 web tests PASS, zero failed/skipped; lint/typecheck/build/design PASS, zero lint warnings. Independent browser audit:36 populated scenes across1440/1280/390/360px, actual bundled fonts, zero page-wide overflow/runtime errors. Expanded-round cell geometry regression reproduced RED then PASS; existing full workflow/permissions/email tests remain intact.
 - Source package515/515, design validator, manifest565 checks, control-plane and OMP-native validators PASS. No backend changes or database replay in this UI-only revision.
-- Updated local preview: `http://127.0.0.1:3427/project-preview#/guide`. Standalone SHA-256: `759a2625ad0607020181fb71535204e0ad3224e2f8a54f2409e743412a5ded36`; HTTP/file byte parity PASS.
+- Updated local preview: `http://127.0.0.1:3427/project-preview#/guide`. Standalone SHA-256: `34aa3828234d97867c7133b57973d26fce1e5ca24b44ba6bac4590da3e121ffb`; HTTP/file byte parity PASS.
 - Evidence: `project_control/reviews/WORKFLOW_UI_VISUAL_POLISH_2026-11-05.md`. Development-branch sync authorized; no main integration, production deployment or accepted checkpoint.
 
 ## Previous workflow UI refinement — 2026-11-05

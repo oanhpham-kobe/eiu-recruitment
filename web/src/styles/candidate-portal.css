@@ -488,6 +488,10 @@
     width: 100%;
   }
 
+  .action-buttons {
+    flex-direction: column;
+  }
+
   .action-buttons .btn,
   .portal-user-meta .btn {
     flex: 1 1 100%;

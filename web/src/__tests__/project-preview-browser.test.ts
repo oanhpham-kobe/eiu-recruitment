@@ -274,6 +274,32 @@ test("Standalone project preview connects candidate, assignment, rounds and ques
     await page
       .getByRole("button", { name: "Tạo phiếu mới / New submission" })
       .click();
+    for (const width of [360, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      const submit = page.getByRole("button", {
+        name: "Nộp hồ sơ / Submit Application",
+        exact: true,
+      });
+      await submit.scrollIntoViewIfNeeded();
+      const bounds = await submit.evaluate((button) => {
+        const range = document.createRange();
+        range.selectNodeContents(button);
+        const text = range.getBoundingClientRect();
+        const target = button.getBoundingClientRect();
+        return {
+          textTop: text.top,
+          textBottom: text.bottom,
+          targetTop: target.top,
+          targetBottom: target.bottom,
+        };
+      });
+      assert.ok(
+        bounds.textTop >= bounds.targetTop &&
+          bounds.textBottom <= bounds.targetBottom,
+        `candidate@${width}: submit label must remain inside its button`,
+      );
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
     await page.getByLabel("Họ và tên / Full name").fill("Ứng viên thử nghiệm");
     await page.locator("#phone").fill("0901234567");
     await page.locator("#dateOfBirth").fill("1995-03-10");

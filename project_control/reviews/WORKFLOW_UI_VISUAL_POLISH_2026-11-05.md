@@ -36,6 +36,15 @@ Owner visual acceptance is pending. Frozen desktop Interview/HR report columns,
 
 ## Fresh evidence
 
+Independent review of initial candidate `67b126c32f21ff5f700b77cc4d1be9c0c8744f0c`
+returned BLOCKING_REPAIR for phone Candidate submit text overflowing its fixed
+44px button. Primary buttons now use automatic height with a44px minimum, and
+phone Candidate footer actions stack at full width. A real text Range/target
+rectangle regression failed at360px before repair and passes at360/390px after
+repair. The full suite/build and36-scene audit were rerun successfully after this
+bounded repair; fresh footer screenshots were visually inspected. Font assets,
+delivery and CSP are unchanged from the actual Next font integration smoke.
+
 | Check | Result |
 |---|---|
 | Full web suite | 409 PASS; zero failed/cancelled/skipped |
@@ -59,7 +68,7 @@ while allowing the explicitly documented phone note excerpts. The selection
 refresh case now opens the More menu before exercising the same next-round
 command; it still verifies selection pruning and restored lifecycle authority.
 
-HTML SHA-256: `759a2625ad0607020181fb71535204e0ad3224e2f8a54f2409e743412a5ded36`.
+HTML SHA-256: `34aa3828234d97867c7133b57973d26fce1e5ca24b44ba6bac4590da3e121ffb`.
 Served HTTP/exported HTML byte parity PASS. The previous feedback preview still
 responds200. No new dependency, backend change, database replay, hosted operation,
 main merge, production release, formal OMP acceptance or Package009 acceptance.
