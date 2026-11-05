@@ -8,6 +8,26 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
+  DRIVE-FILES-HOSTED-20261105:
+    operation: OWNER_PRIVATE_DRIVE_AND_DEVELOPMENT_DEPLOYMENT
+    status: DATABASE_LOCALLY_REVIEWED_RUNTIME_PENDING
+    branch: codex/drive-files-hosted-deployment-20261105
+    database_candidate_sha: f2c8e03b266ea781723f449f6aeab0beb44668dc
+    independent_review_sha: f2c8e03b266ea781723f449f6aeab0beb44668dc
+    independent_review: PASS
+    review_kind: READ_ONLY_CODEX_COLLABORATION_NOT_FORMAL_OMP_ACCEPTANCE
+    initial_review_sha: 438eb8221387afd829ec6d18e34067bf86f76b95
+    initial_review: BLOCKING_REPAIR_USER_ROW_ADVISORY_AUDIT_FK_CYCLE
+    repair_evidence: Old RPC deadlock reproduced; fixed read and authenticated user lifecycle both commit in synchronized regression.
+    database_checks: Clean52 replay before one-line lock repair; repaired function applied and fresh parent actual-role SQL plus all6 races PASS. Existing scan/cleanup SQL PASS. Exact-SHA CI pending.
+    source_checks: Source515/515; manifest567 checks; generated source equality and CRLF-aware diff check PASS.
+    ui_candidate_sha: 4e52a50ed9ef03ef68ac930e85bc747f5a38c35a
+    ui_checks: Parent17 focused tests PASS; independent review PASS; design226files84tokens PASS.
+    hosted_migrations_applied: false
+    hosted_end_to_end: NOT_RUN_PROVIDERS_UNCONFIGURED
+    accepted: false
+    artifact: project_control/reviews/DRIVE_FILES_HOSTED_2026-11-05.md
+
   UNICOUNCIL-UI-ADAPTATION-20261105:
     operation: OWNER_REFERENCE_UI_IMPLEMENTATION_AND_EXISTING_SITE_REFRESH
     status: LOCALLY_REVIEWED_DEMO_PUBLISHED_NOT_ACCEPTED

@@ -2,6 +2,19 @@
 
 > DERIVED / NON-AUTHORITATIVE. Runtime: AUTONOMY_RUN_STATE.yaml; DAG: TASK_REGISTRY.yaml / SLICE_REGISTRY.yaml; exact code/history: Git.
 
+## Active private Drive and hosted development work — 2026-11-05
+
+- Branch `codex/drive-files-hosted-deployment-20261105`; database candidate `f2c8e03b266ea781723f449f6aeab0beb44668dc` has exact-SHA independent local review PASS. Runtime gateway/browser integration remains incomplete; Supabase remains the default storage provider.
+- Source102 defines private immutable Drive bindings, authenticated grant redemption, candidate-only new uploads, existing scan/cleanup fences and mandatory real CLEAN. Existing format/size/count policy is unchanged.
+- Fresh parent actual-role SQL and six synchronized races PASS. Independent review found and closed a read-audit/User-lifecycle lock cycle, with RED/PASS evidence. Clean52 replay preceded that one-line lock repair; final exact-SHA CI is still pending.
+- Plugin selection now explicitly uses Oanh's HR Recruitment connections. Supabase CLI login was completed privately by Owner and verified against `eiu-recruitment-dev`. Hosted project restored healthy; foundation metadata matches repository; dry-run lists50 pending historical migrations. No hosted migration was applied.
+- Verified Vercel staging login returns200: https://eiu-recruitment-54l62k9cy-kobe17.vercel.app/login . It contains reviewed UI4e52a50, not the unfinished Drive runtime. First deployment was automatically assigned production and failed for missing production environment; later staging target is explicit. Preserve protection; do not treat first build READY as functional acceptance.
+- Vercel default function-region update to `sin1` was accepted for future builds; existing staging deployment still reports `iad1`. Final deployment must set and verify Singapore. Supabase is already `ap-southeast-1`.
+- Cloudflare workers.dev account subdomain `eiu-recruitment-oanh` created on the correct account; no Worker code deployed yet. Owner's selected HR Recruitment Drive folder and its Webapp parent were verified through Drive metadata; runtime folder configuration stays server-only.
+- Owner clarified that no Google Cloud project exists and requested finishing code first, then setup guidance. Runtime OAuth, worker credentials and real scanner remain unconfigured; no real upload/scan/end-to-end PASS is claimed.
+- Next: finish gateway/server/browser transport, focused verification and independent review, synchronize branch, then deploy the reviewed development candidate and provide concrete Google Cloud setup. Preserve Package009/S08/source holds and no main integration.
+- Evidence: `project_control/reviews/DRIVE_FILES_HOSTED_2026-11-05.md`.
+
 ## Current UniCouncil-inspired UI and published Site — 2026-11-05
 
 - Owner explicitly requested applying the studied UniCouncil interface to the existing Site. Reference: `baonguyen-kobe/UniCouncil-Scheduler` at `1be71591bba158ae6d14014e9c7944070ff9d46b`; only presentation patterns and the unmodified EIU logo were reused.

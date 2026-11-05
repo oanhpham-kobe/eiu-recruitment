@@ -830,7 +830,7 @@ stop_gate:
   source_reopen_required: false
   resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
-next_action: "Collect Owner visual UAT feedback through the existing ChatGPT Site. Preserve its Site identity/audience for updates and verify development-branch synchronization from Git. All recovery/S08/source/provider holds remain; no main integration or recruitment-backend production release is authorized."
+next_action: "Complete the Owner-authorized private Drive gateway and browser transport on the development branch, then verify and deploy to the designated development resources. Finish code before Google Cloud setup guidance. Preserve historical recovery/S08/source holds and do not integrate main or declare production readiness."
 
 # Owner resumed local repairs and new-feature planning on 2026-11-05.
 # This does not release the historical S08/provider/source gates above.
@@ -848,6 +848,27 @@ active_recovery:
     - REC-12 report precedence source decision
     - abuse-control source decision
     - hosted mail/scanner configuration deferred by Owner
+
+owner_storage_work:
+  id: DRIVE-FILES-HOSTED-20261105
+  change_request: CR-DRIVE-FILES-HOSTED-20261105
+  branch: codex/drive-files-hosted-deployment-20261105
+  base_sha: d88deffd2d64749ebc3c0c26d48e25eb50bef9e2
+  status: DATABASE_LOCALLY_REVIEWED_RUNTIME_IN_PROGRESS
+  source: recruitment_webapp/review_pack/102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md
+  database_candidate_sha: f2c8e03b266ea781723f449f6aeab0beb44668dc
+  independent_database_review: PASS
+  accepted: false
+  owner_scope: Preview/download capabilities and private Drive storage through Cloudflare, Supabase authorization/data, Vercel web; use the Owner-designated account and development projects. Owner requested code completion before Google Cloud setup guidance.
+  development_branch_sync_authorized: true
+  development_deployment_authorized: true
+  hosted_non_destructive_migrations_authorized: true
+  integration_authorized: false
+  production_release_authorized: false
+  runtime_provider: SUPABASE
+  google_cloud_configuration: OWNER_DEFERRED_UNTIL_CODE_COMPLETE
+  hosted_migrations: FOUNDATION_ONLY_DRY_RUN_VERIFIED
+  desired_compute_region: SINGAPORE
 
 owner_feature_work:
   change_request: CR-INTERVIEW-FEEDBACK-20261105
