@@ -8,6 +8,25 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
+  OWNER-PRIVATE-STATIC-SITE-20261105:
+    operation: CHATGPT_SITES_STATIC_DEMO_PUBLICATION
+    status: SUCCEEDED
+    authorization: OWNER_CURRENT_REQUEST_CHATGPT_SITES_DEMO_ONLY
+    project_id: "appgprj_6aec0970319c8191969353963dc1823e"
+    url: "https://eiu-recruitment-trial-20261105.tidyburl1.chatgpt.site"
+    audience: OWNER_PRIVATE_ENFORCED_BY_NATIVE_PRIVATE_PUBLICATION
+    site_source_commit_sha: "827a419e31c5d8ca731bb4a8dbad0bf8c8fdf479"
+    version_id: "appgprj_6aec0970319c8191969353963dc1823e~appgver_bb7a29e9e8f08191bdd77f3c005aa513"
+    deployment_id: "appgdep_6aec0a3e8fe88191962c56ecd38b64e4"
+    application_candidate_sha: "b95a80e3ef5e04fc1f2f73962e91237dbc881c36"
+    static_html_sha256: "34aa3828234d97867c7133b57973d26fce1e5ca24b44ba6bac4590da3e121ffb"
+    source_and_archive: VERIFIED_MATCHING_PUSHED_SITE_SOURCE_BY_NATIVE_HELPER
+    content: SYNTHETIC_BROWSER_LOCAL_PREVIEW_WITH_BUNDLED_LICENSE_NOTICES
+    application_code_changed: false
+    backend_changes: false
+    recruitment_application_release: false
+    accepted: false
+
   WORKFLOW-UI-VISUAL-POLISH-20261105:
     operation: OWNER_VISUAL_UAT_PRESENTATION_REPAIR
     status: LOCALLY_REVIEWED_NOT_ACCEPTED

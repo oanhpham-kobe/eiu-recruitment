@@ -830,7 +830,7 @@ stop_gate:
   source_reopen_required: false
   resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
-next_action: "Verify authorized development-branch synchronization directly from Git, then collect Owner visual UAT feedback on the reviewed visual polish. Exact-candidate local review, populated render, font and web verification passed. Preserve all recovery/S08/source/provider holds; no main integration or production deployment is released."
+next_action: "Collect Owner visual UAT feedback through the published owner-private ChatGPT Site. Preserve its Site identity/audience for updates and verify development-branch synchronization from Git. All recovery/S08/source/provider holds remain; no main integration or recruitment-backend production release is authorized."
 
 # Owner resumed local repairs and new-feature planning on 2026-11-05.
 # This does not release the historical S08/provider/source gates above.
@@ -880,6 +880,19 @@ owner_ui_work:
   development_branch_sync_authorized: true
   integration_authorized: false
   production_deployment_authorized: false
+
+owner_site_preview_work:
+  id: OWNER-PRIVATE-STATIC-SITE-20261105
+  status: PUBLISHED_OWNER_PRIVATE_DEMO
+  project_id: appgprj_6aec0970319c8191969353963dc1823e
+  url: https://eiu-recruitment-trial-20261105.tidyburl1.chatgpt.site
+  site_source_commit_sha: 827a419e31c5d8ca731bb4a8dbad0bf8c8fdf479
+  application_candidate_sha: b95a80e3ef5e04fc1f2f73962e91237dbc881c36
+  owner_scope: Owner explicitly requested deployment on ChatGPT Sites. Publish only the verified static synthetic demo, keep owner-private access, browser-local storage and disconnected providers. Reuse this Site identity for future updates.
+  static_site_publication_authorized: true
+  recruitment_backend_release_authorized: false
+  main_integration_authorized: false
+  accepted: false
 
 owner_preview_work:
   id: FULL-PROJECT-INTERACTIVE-PREVIEW-20261105

@@ -216,3 +216,9 @@ This compact backfill records accepted checkpoints that were already present in 
 - Controlled source trial: `CR-WORKFLOW-UI-UAT-20261105`. Owner final visual UAT remains pending.
 - Product `b95a80e3ef5e04fc1f2f73962e91237dbc881c36`:409 web tests, clean lint/typecheck/design/build,36 populated browser scenes, actual font delivery/glyph verification, canonical/control checks and independent exact-SHA re-review PASS.
 - Evidence: `project_control/reviews/WORKFLOW_UI_VISUAL_POLISH_2026-11-05.md`. Development-branch sync only; no production release, formal OMP acceptance or recovery acceptance.
+
+## 2026-11-05 — Owner-private ChatGPT Site demo published
+
+- Owner explicitly requested ChatGPT Sites deployment. Published the unchanged verified static HTML in a separate owner-private Site, with bundled third-party notices and matching pushed source/archive.
+- Native deployment succeeded. Site source commit: `827a419e31c5d8ca731bb4a8dbad0bf8c8fdf479`; application candidate remains `b95a80e3ef5e04fc1f2f73962e91237dbc881c36`.
+- Publication receipt: `EVIDENCE_INDEX.yaml:implementation_evidence.OWNER-PRIVATE-STATIC-SITE-20261105`. Synthetic roles/browser-local storage only; no recruitment backend/provider/main/recovery release.
