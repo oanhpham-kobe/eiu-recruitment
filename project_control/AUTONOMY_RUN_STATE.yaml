@@ -866,30 +866,30 @@ owner_feature_work:
   production_deployment_authorized: false
 
 owner_ui_work:
-  id: WORKFLOW-UI-SKILL-V2-20261105
+  id: UNICOUNCIL-UI-ADAPTATION-20261105
   branch: codex/workflow-ui-visual-polish-20261105
-  base_sha: 686b1b19b7c5ce0e5745a0b08ba8cc2962b9c7a0
+  base_sha: 97bad546cc3fc35165cd78b6755c0b6ad70407a0
   status: LOCAL_REVIEWED_NOT_INTEGRATED
-  product_candidate_sha: 5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab
-  independent_review_sha: 5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab
+  product_candidate_sha: 29697ff98177fc51984c462c638b0ae5fb84c71e
+  independent_review_sha: 29697ff98177fc51984c462c638b0ae5fb84c71e
   independent_review: PASS
   owner_visual_uat: PENDING
   accepted: false
   local_only: true
-  owner_scope: Owner supplied the updated workflow-app-ui archive and requested synchronizing the current application interface. Apply shared fluid layout, aligned columns and badges, responsive list/pager and overlay behavior; preserve business/security boundaries. Static demo publication is separately authorized below; application release remains held.
+  owner_scope: Owner explicitly requested applying the studied UniCouncil reference to the current Site. Shared presentation and controlled compact typography trial only; preserve recruitment business/security and all synthetic roles/storage. Static demo publication is authorized below; application release remains held.
   development_branch_sync_authorized: true
   integration_authorized: false
   production_deployment_authorized: false
 
 owner_site_preview_work:
-  id: WORKFLOW-UI-SKILL-V2-20261105
+  id: UNICOUNCIL-UI-ADAPTATION-20261105
   status: PUBLISHED_STATIC_DEMO
   project_id: appgprj_6aec0970319c8191969353963dc1823e
   url: https://eiu-recruitment-trial-20261105.tidyburl1.chatgpt.site
   audience: PUBLIC_EXISTING_OWNER_CONFIGURATION
-  site_source_commit_sha: 7cd4c181ed6a3c8d7d98d6c2856c21399cc59eba
-  application_candidate_sha: 5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab
-  owner_scope: Update the existing ChatGPT Site with the verified static synthetic demo; preserve its current audience, browser-local storage and disconnected providers. Reuse the Site identity. No access policy change was made.
+  site_source_commit_sha: e374d98c986731173cc3b0f368a2d82372a614b3
+  application_candidate_sha: 29697ff98177fc51984c462c638b0ae5fb84c71e
+  owner_scope: Apply the UniCouncil-inspired verified static demo to the existing ChatGPT Site, preserving its identity/current audience and browser-local data. No access policy change or backend connection was made.
   static_site_publication_authorized: true
   recruitment_backend_release_authorized: false
   main_integration_authorized: false

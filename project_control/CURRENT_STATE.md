@@ -2,7 +2,21 @@
 
 > DERIVED / NON-AUTHORITATIVE. Runtime: AUTONOMY_RUN_STATE.yaml; DAG: TASK_REGISTRY.yaml / SLICE_REGISTRY.yaml; exact code/history: Git.
 
-## Current workflow UI skill v2 and published demo — 2026-11-05
+## Current UniCouncil-inspired UI and published Site — 2026-11-05
+
+- Owner explicitly requested applying the studied UniCouncil interface to the existing Site. Reference: `baonguyen-kobe/UniCouncil-Scheduler` at `1be71591bba158ae6d14014e9c7944070ff9d46b`; only presentation patterns and the unmodified EIU logo were reused.
+- Product candidate `29697ff98177fc51984c462c638b0ae5fb84c71e` on `codex/workflow-ui-visual-polish-20261105`: exact-SHA independent Codex local review PASS; pushed to GitHub. Resolve reporting HEAD directly from Git.
+- Controlled visual trial `CR-UNICOUNCIL-UI-ADAPTATION-20261105`: real EIU branding/outline icons, compact header, one visible header workspace dialog for trial roles/reset, grouped controls, page context disclosure and clearer list hierarchy. Scoped operational UI14px/21px; identity names, forms, dialogs, full detail/narrative and mobile inputs16px; touch targets44px. Owner visual UAT remains pending.
+- Mobile Inbox list area at390x844 increased164px to368px. All six personas and browser-local data/key are preserved. Birth date/gender remain fully available in the existing explicit detail drawer.
+- All409 unique web tests verified:400 passed in the full run;9 localhost HTTP tests were blocked by execution-environment EACCES, then all9 passed with the required local-network execution permission. No application change was made for that environmental rerun. Lint/typecheck/design/build PASS.
+- Parent final72 populated VI/EN scenes PASS; worker108 populated scenes PASS. Independent reviewer20 focused tests and48 bilingual explanation-panel bounds/Escape/focus cases PASS. Inline form/detail16px, full unclipped HR note, unique role picker and44px language targets verified.
+- Source515/515, design73/73,565 manifest checks, control-plane and OMP-native25skills PASS. Generated All-in-One source and manifests refreshed. No backend/database or business/security changes.
+- Existing Site version3 publication SUCCEEDED: https://eiu-recruitment-trial-20261105.tidyburl1.chatgpt.site . The current public Owner-configured audience (revision2) was preserved.
+- Site source commit `e374d98c986731173cc3b0f368a2d82372a614b3`; HTML SHA-256 `6518c1548e3c9464203e0a7da3b8bc0d649a8b8bac2453c588c14282c25cda00`. Reuse Site identity `appgprj_6aec0970319c8191969353963dc1823e`.
+- Evidence: `EVIDENCE_INDEX.yaml:implementation_evidence.UNICOUNCIL-UI-ADAPTATION-20261105`; narrative `project_control/reviews/UNICOUNCIL_UI_ADAPTATION_2026-11-05.md`. No credentials are persisted.
+- This remains a synthetic browser-local demo. No real EIU login, recruitment database, mail or private-file processing is connected; no main integration, production application release, accepted checkpoint or Package009 acceptance.
+
+## Previous workflow UI skill v2 and published demo — 2026-11-05
 
 - Owner supplied `workflow-app-ui-2026-11-05.zip` and requested synchronizing the application's interface. All nine installed files match the archive; provenance is recorded in `SKILLS_LOCK.yaml`.
 - Product candidate `5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab` on `codex/workflow-ui-visual-polish-20261105`: independent exact-SHA Codex local review PASS; pushed to GitHub. Resolve current reporting HEAD directly from Git.

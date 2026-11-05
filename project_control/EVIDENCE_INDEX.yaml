@@ -8,6 +8,46 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
+  UNICOUNCIL-UI-ADAPTATION-20261105:
+    operation: OWNER_REFERENCE_UI_IMPLEMENTATION_AND_EXISTING_SITE_REFRESH
+    status: LOCALLY_REVIEWED_DEMO_PUBLISHED_NOT_ACCEPTED
+    branch: codex/workflow-ui-visual-polish-20261105
+    base_sha: "97bad546cc3fc35165cd78b6755c0b6ad70407a0"
+    product_candidate_sha: "29697ff98177fc51984c462c638b0ae5fb84c71e"
+    independent_review_sha: "29697ff98177fc51984c462c638b0ae5fb84c71e"
+    independent_review: PASS
+    review_kind: READ_ONLY_CODEX_COLLABORATION_NOT_FORMAL_OMP_ACCEPTANCE
+    web_tests: "409 unique verified PASS;400 full-run +9 failed-domain permission retries;0 unresolved;0 skipped"
+    environment_rerun: "9 localhost HTTP cases hit OS connect EACCES; exact5files rerun with local-network execution permission9/9PASS; no app changes"
+    web_checks: "lint232files/typecheck/design224files84tokens/build PASS; zero lint warnings; fake CI public environment for intercepted auth smoke"
+    parent_populated_browser: "72 final VI/EN scenes PASS;1440/1366x768/390x844/320x844; zero global/local-table overflow or runtime errors"
+    worker_populated_browser: "108 VI/EN scenes PASS at six widths; separate evidence, not added as unique parent cases"
+    independent_focused_review: "20 tests PASS;48 bilingual page-context bounds/Escape/focus cases PASS; workspace6roles,44px language targets and inline16px full detail verified"
+    mobile_inbox_viewport: "390x844:164px before,368px after"
+    source_checks: "515/515 source;73/73 design;565 manifest checks; control/OMP25skills PASS"
+    reference_repository: baonguyen-kobe/UniCouncil-Scheduler
+    reference_sha: "1be71591bba158ae6d14014e9c7944070ff9d46b"
+    brand_asset_sha256: "91a1c139feb2e02b185628ae587aa4d8224ca68b58bfcda72657c134fee8e9ca"
+    artifact_sha256: "6518c1548e3c9464203e0a7da3b8bc0d649a8b8bac2453c588c14282c25cda00"
+    owner_visual_uat: PENDING
+    backend_changes: false
+    github_ci: NOT_USED_FOR_LOCAL_VERIFICATION
+    accepted: false
+    artifact: project_control/reviews/UNICOUNCIL_UI_ADAPTATION_2026-11-05.md
+    site:
+      project_id: "appgprj_6aec0970319c8191969353963dc1823e"
+      url: "https://eiu-recruitment-trial-20261105.tidyburl1.chatgpt.site"
+      status: SUCCEEDED
+      audience: PUBLIC_EXISTING_OWNER_CONFIGURATION_PRESERVED
+      access_revision_observed: 2
+      site_source_commit_sha: "e374d98c986731173cc3b0f368a2d82372a614b3"
+      version_id: "appgprj_6aec0970319c8191969353963dc1823e~appgver_0b2cccba6f5c8191a07564b8af9fff7c"
+      version_number: 3
+      deployment_id: "appgdep_6aec4360bfa08191a8a04a108c971a53"
+      archive_content_hash: "sha256:852d1d0e58b8400c66ef2ef2d706c41e6cdee52bbc8f22e7715e0395b5444ab9"
+      source_and_archive: VERIFIED_MATCHING_PUSHED_SITE_SOURCE_BY_NATIVE_HELPER
+      application_release: false
+
   WORKFLOW-UI-SKILL-V2-20261105:
     operation: OWNER_UPDATED_SKILL_UI_ALIGNMENT_AND_EXISTING_SITE_REFRESH
     status: LOCALLY_REVIEWED_DEMO_PUBLISHED_NOT_ACCEPTED
