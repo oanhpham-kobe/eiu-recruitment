@@ -383,6 +383,15 @@ jobs:
       - name: Execute internal interview feedback lifecycle and concurrency assertions
         run: python3 supabase/tests/internal_interview_feedback_concurrency_test.py --container supabase_db_eiu-recruitment-dev
 
+      - name: Execute private Drive binding and worker authorization assertions
+        run: |
+          docker exec -i supabase_db_eiu-recruitment-dev psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres < supabase/tests/drive_object_locations_test.sql
+
+      - name: Execute private Drive provider and lifecycle races
+        env:
+          CONTAINER_NAME: supabase_db_eiu-recruitment-dev
+        run: bash supabase/tests/drive_object_locations_concurrency_test.sh
+
       - name: Lint local database at error level
         run: supabase db lint --local --level error
 

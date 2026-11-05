@@ -1,8 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 : "${CONTAINER_NAME:?Explicit disposable container required}"
-[[ "$CONTAINER_NAME" == supabase_db_eiu-workflow-check-20261105 ]] || {
-  echo 'Refusing a database other than the designated disposable harness' >&2; exit 1;
+if [[ "${GITHUB_ACTIONS:-false}" == true ]]; then
+  expected_project='eiu-recruitment-dev'
+else
+  : "${DISPOSABLE_PROJECT_ID:?Explicit disposable test project required}"
+  [[ "$DISPOSABLE_PROJECT_ID" =~ ^eiu-workflow-check-[A-Za-z0-9_-]+$ ]] || {
+    echo 'Refusing a project outside the disposable test namespace' >&2; exit 1;
+  }
+  expected_project="$DISPOSABLE_PROJECT_ID"
+fi
+[[ "$CONTAINER_NAME" == "supabase_db_$expected_project" ]] || {
+  echo 'Disposable project and container identities differ' >&2; exit 1;
+}
+actual_project="$(docker inspect --format '{{index .Config.Labels "com.supabase.cli.project"}}' "$CONTAINER_NAME" | tr -d '\r')"
+[[ "$actual_project" == "$expected_project" ]] || {
+  echo 'Container is not the designated Supabase test project' >&2; exit 1;
 }
 sql() { docker exec -i "$CONTAINER_NAME" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres "$@" | tr -d '\r'; }
 suffix="$(sql -c "select left(replace(gen_random_uuid()::text,'-',''),12)")"
