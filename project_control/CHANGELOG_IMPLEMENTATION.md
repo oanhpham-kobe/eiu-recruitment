@@ -208,3 +208,11 @@ This compact backfill records accepted checkpoints that were already present in 
 - Refreshed the standalone preview with compact localized controls, numbered guide and real overlay background inertness.
 - Candidate `5e346d61cef8e725b3ce25e99ad1d38eab99480b`:409 web tests, four focused browser cases, lint/typecheck/build/design, control validators and independent exact-SHA local review PASS. Six pre-existing warnings remain.
 - Evidence: `project_control/reviews/WORKFLOW_UI_REFINEMENT_2026-11-05.md`. Owner-authorized development-branch synchronization only; no main merge, production release, formal OMP acceptance or Package009 acceptance.
+
+## 2026-11-05 — Visual polish after Owner UAT feedback
+
+- Responded to the Owner's rejection of the previous visual result with actual bundled Be Vietnam Pro, deliberate table/layout proportions, grouped filters/actions, questionnaire setup disclosures and phone summaries with full-detail access.
+- Corrected admin/expanded-round table-cell structure, mobile paginator overlap and independently discovered Candidate submit-label overflow. Retained authorization, optimistic tokens, frozen desktop columns and all command semantics.
+- Controlled source trial: `CR-WORKFLOW-UI-UAT-20261105`. Owner final visual UAT remains pending.
+- Product `b95a80e3ef5e04fc1f2f73962e91237dbc881c36`:409 web tests, clean lint/typecheck/design/build,36 populated browser scenes, actual font delivery/glyph verification, canonical/control checks and independent exact-SHA re-review PASS.
+- Evidence: `project_control/reviews/WORKFLOW_UI_VISUAL_POLISH_2026-11-05.md`. Development-branch sync only; no production release, formal OMP acceptance or recovery acceptance.

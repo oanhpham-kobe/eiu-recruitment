@@ -2,7 +2,13 @@
 
 Date: 2026-11-05. Branch: `codex/workflow-ui-visual-polish-20261105`.
 Base: `2c0b3decc426582763cdf33a8245d1e9efb5a563`.
-State: locally verified; exact-candidate independent review pending.
+Product candidate: `b95a80e3ef5e04fc1f2f73962e91237dbc881c36`.
+State: locally verified; exact-candidate independent re-review PASS.
+
+The read-only Codex reviewer inspected the repaired360/390px footer images and
+independently passed the complete offline workflow with text-bounds assertions.
+No remaining blocking findings were identified in this scope. This review is
+not final Owner aesthetic approval or formal OMP acceptance.
 
 ## Owner scope and design authority
 

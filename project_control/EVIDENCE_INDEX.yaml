@@ -8,6 +8,31 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
+  WORKFLOW-UI-VISUAL-POLISH-20261105:
+    operation: OWNER_VISUAL_UAT_PRESENTATION_REPAIR
+    status: LOCALLY_REVIEWED_NOT_ACCEPTED
+    branch: codex/workflow-ui-visual-polish-20261105
+    base_sha: "2c0b3decc426582763cdf33a8245d1e9efb5a563"
+    product_candidate_sha: "b95a80e3ef5e04fc1f2f73962e91237dbc881c36"
+    independent_review_sha: "b95a80e3ef5e04fc1f2f73962e91237dbc881c36"
+    independent_review: PASS
+    review_kind: READ_ONLY_CODEX_COLLABORATION_NOT_FORMAL_OMP_ACCEPTANCE
+    controlled_design_change: CR-WORKFLOW-UI-UAT-20261105
+    web_tests: "409 PASS; 0 failed; 0 skipped"
+    web_checks: "lint/typecheck/build/design PASS; zero lint warnings"
+    populated_visual_audit: "36 scenes at1440/1280/390/360px PASS; zero runtime errors/page-wide overflow"
+    font_verification: "4 bundled weights loaded; actual custom-font glyphs; Next self-hosted font assets4/4 HTTP200 under existing CSP"
+    repaired_regressions: "expanded round cell alignment; mobile pager flow; Candidate submit text containment360/390px; More interaction/focus"
+    canonical_checks: "package515/515; design PASS;565 manifest checks PASS"
+    control_checks: "control plane and OMP native PASS;25 skills"
+    artifact_sha256: "34aa3828234d97867c7133b57973d26fce1e5ca24b44ba6bac4590da3e121ffb"
+    production_application_changes: PRESENTATION_ONLY
+    backend_changes: false
+    owner_visual_uat: PENDING
+    github_ci: NOT_USED_FOR_LOCAL_VERIFICATION
+    accepted: false
+    artifact: project_control/reviews/WORKFLOW_UI_VISUAL_POLISH_2026-11-05.md
+
   WORKFLOW-UI-REFINEMENT-20261105:
     operation: OWNER_SKILL_INSTALL_AND_APPLICATION_PRESENTATION_REFINEMENT
     status: LOCALLY_REVIEWED_NOT_ACCEPTED
