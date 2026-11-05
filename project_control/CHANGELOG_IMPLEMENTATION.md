@@ -192,3 +192,11 @@ This compact backfill records accepted checkpoints that were already present in 
 - Fixed discovered login hydration, safe internal return URLs, unequal pagination and keyboard access to long submitted answers; synchronized canonical source indexes and stale manifest metadata.
 - Product candidate `2361c4a084bb00242bc03bfa1eb1464c45787a44`:400 web tests,47 database steps/51-migration replay,71 new SQL assertions,7 new synchronized races,10 governance tests and independent read-only exact-SHA review PASS.
 - Evidence: `project_control/reviews/INTERNAL_INTERVIEW_FEEDBACK_LOCAL_2026-11-05.md`. Development branch publication is authorized; no main integration, hosted operation, production readiness or Package009 acceptance is inferred.
+
+## 2026-11-05 — Full-project offline interactive preview
+
+- Added one self-contained HTML and localhost preview using current screens with isolated shared synthetic state, six roles, guide, reset and readable test notes.
+- Covers Candidate submission through HR assignment/scheduling, original reports, questionnaires and consolidation; also users/permissions, eleven catalogs and simulated service metadata.
+- Corrected preview adapter state/permission/history behavior and replaced an existing load-sensitive debounce test with deterministic browser-clock assertions. Production application/database implementation is unchanged.
+- Candidate `0d6e60a0e6c8a0dd694133efea2afe7960e53474`:409 web tests,9 focused cases, lint/typecheck/build/design, control validators and exact-SHA independent local review PASS. Six pre-existing lint warnings remain.
+- Evidence: `project_control/reviews/FULL_PROJECT_INTERACTIVE_PREVIEW_2026-11-05.md`. Owner explicitly authorized GitHub synchronization; no main integration, production/provider acceptance or Package009 acceptance is inferred.

@@ -830,7 +830,7 @@ stop_gate:
   source_reopen_required: false
   resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
-next_action: "Finish independent review and authorized GitHub synchronization of the full-project interactive HTML preview, then collect Owner trial feedback. Preserve all recovery/S08/source/provider holds; no main integration or production deployment is released."
+next_action: "Verify authorized development-branch synchronization directly from Git, then collect Owner trial feedback on the full-project interactive HTML preview. Exact-candidate local review passed. Preserve all recovery/S08/source/provider holds; no main integration or production deployment is released."
 
 # Owner resumed local repairs and new-feature planning on 2026-11-05.
 # This does not release the historical S08/provider/source gates above.
@@ -870,7 +870,10 @@ owner_preview_work:
   branch: codex/full-project-interactive-preview-20261105
   base_sha: dc10e3d9e3fb27121dbafc82620677582ab774d2
   candidate_resolution: DIRECT_GIT_RUNTIME
-  status: LOCAL_VERIFIED_PENDING_INDEPENDENT_REVIEW
+  status: LOCAL_REVIEWED_NOT_INTEGRATED
+  product_candidate_sha: 0d6e60a0e6c8a0dd694133efea2afe7960e53474
+  independent_review_sha: 0d6e60a0e6c8a0dd694133efea2afe7960e53474
+  independent_review: PASS
   accepted: false
   local_only: true
   entry: web/src/__tests__/fixtures/project-preview/main.tsx

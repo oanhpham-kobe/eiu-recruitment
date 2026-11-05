@@ -8,6 +8,27 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
+  FULL-PROJECT-INTERACTIVE-PREVIEW-20261105:
+    operation: LOCAL_FULL_PROJECT_OFFLINE_INTERACTIVE_PREVIEW
+    status: LOCALLY_REVIEWED_NOT_ACCEPTED
+    branch: codex/full-project-interactive-preview-20261105
+    base_sha: "dc10e3d9e3fb27121dbafc82620677582ab774d2"
+    product_candidate_sha: "0d6e60a0e6c8a0dd694133efea2afe7960e53474"
+    independent_review_sha: "0d6e60a0e6c8a0dd694133efea2afe7960e53474"
+    independent_review: PASS
+    review_kind: READ_ONLY_CODEX_COLLABORATION_NOT_FORMAL_OMP_ACCEPTANCE
+    web_tests: "409 PASS; 0 failed; 0 skipped"
+    focused_cases: "7 model + 2 offline browser PASS; included in full suite"
+    web_checks: "lint/typecheck/build/design PASS; six existing warnings"
+    control_checks: "control plane and OMP native validators PASS"
+    offline_boundary: "file://, zero HTTP(S) requests or browser errors; embedded assets"
+    artifact_sha256: "daed5fc10649de9f5d87e405e8160bb49efb3e73e94049dbeaa2255d7ed54d9e"
+    production_application_changes: false
+    backend_changes: false
+    github_ci: NOT_USED_FOR_LOCAL_VERIFICATION
+    accepted: false
+    artifact: project_control/reviews/FULL_PROJECT_INTERACTIVE_PREVIEW_2026-11-05.md
+
   INTERNAL-INTERVIEW-FEEDBACK-20261105:
     operation: LOCAL_INTERNAL_INTERVIEW_FEEDBACK_AND_CONSOLIDATION
     status: LOCALLY_REVIEWED_NOT_ACCEPTED

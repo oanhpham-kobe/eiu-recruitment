@@ -4,12 +4,12 @@
 
 ## Active full-project HTML preview — 2026-11-05
 
-- Branch: `codex/full-project-interactive-preview-20261105`, base `dc10e3d9e3fb27121dbafc82620677582ab774d2`. Resolve candidate/reporting HEAD from Git.
+- Branch: `codex/full-project-interactive-preview-20261105`, base `dc10e3d9e3fb27121dbafc82620677582ab774d2`. Product candidate `0d6e60a0e6c8a0dd694133efea2afe7960e53474`: exact-SHA independent local review PASS. Resolve reporting HEAD/remote synchronization directly from Git.
 - Owner requested an interactive HTML for the whole current project and explicitly reiterated committing/pushing discovered fixes to GitHub.
 - Run `npm run preview:project` from `web`; open `http://127.0.0.1:3427/project-preview`. Standalone output: `web/.preview/eiu-project-preview.html`; `preview:project:build` exports without a server.
 - Existing production screens use isolated synthetic adapters and shared persisted state. Six trial roles cover Candidate → Inbox/assignment → interviews/participants/rounds → original reports → questionnaire/consolidation, plus users/permissions, eleven catalogs, simulated email/document metadata, guide/reset and readable notes.
 - 409 web tests PASS, zero failed/skipped; lint/typecheck/build/design PASS (six pre-existing warnings). Nine focused cases include two real offline-browser workflows and seven shared-model regressions. All eleven catalog create forms, language switch, note export/reload, print and 360/1440 containment were exercised.
-- Artifact SHA-256: `daed5fc10649de9f5d87e405e8160bb49efb3e73e94049dbeaa2255d7ed54d9e`. Exact-candidate review/sync is pending until recorded in the preview evidence receipt.
+- Artifact SHA-256: `daed5fc10649de9f5d87e405e8160bb49efb3e73e94049dbeaa2255d7ed54d9e`. Review receipt is indexed under `FULL-PROJECT-INTERACTIVE-PREVIEW-20261105`; local review does not grant formal OMP acceptance.
 - Evidence: `project_control/reviews/FULL_PROJECT_INTERACTIVE_PREVIEW_2026-11-05.md`. Preview/auth/provider simulation is separate from production and database acceptance; no backend or production application source change.
 
 ## Previous local feature — 2026-11-05

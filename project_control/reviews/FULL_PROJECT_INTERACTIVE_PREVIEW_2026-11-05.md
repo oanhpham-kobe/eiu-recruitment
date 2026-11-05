@@ -2,7 +2,14 @@
 
 Date: 2026-11-05. Branch: `codex/full-project-interactive-preview-20261105`.
 Base: `dc10e3d9e3fb27121dbafc82620677582ab774d2`.
-Status: locally verified; exact-candidate independent review/publication pending.
+Candidate: `0d6e60a0e6c8a0dd694133efea2afe7960e53474`.
+Status: locally verified and independently reviewed PASS on the exact candidate;
+development-branch publication is Owner-authorized and checked directly from Git.
+
+Read-only Codex collaboration review found no blocking findings. It confirmed
+read guards, inactive-format historical handling, fixture-only aliases, offline
+packaging and deterministic 299/300 ms debounce assertions. Reviewer independently
+ran the seven model regressions. This is not formal OMP acceptance.
 
 ## Delivered scope
 
