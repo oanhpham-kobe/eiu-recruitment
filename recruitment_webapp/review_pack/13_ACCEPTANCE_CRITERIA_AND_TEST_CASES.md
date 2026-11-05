@@ -375,3 +375,10 @@ Production go-live additionally requires the checklist in `45_PRODUCTION_UAT_GAT
 - **AC-IF-06:** Real synchronized database sessions prove create retry, same-user draft conflict, revoke/submit, remove/approve, post-wait permission revocation, next-round/submit and existing email-lock composition without deadlocks or unauthorized commits.
 - **AC-IF-07:** Browser proves assignment, draft reload, separate evaluator submission, HR individual inspection, full attributed consolidation/approval/print; keyboard required-field feedback, responsive containment, pagination selection consistency and explicit fresh-version reload preserve user intent. Production auth and legacy decision/status remain unchanged.
 
+
+## CR-DRIVE-FILES-HOSTED-20261105
+
+AC-DRIVE-01, AC-DRIVE-02, AC-DRIVE-03, AC-DRIVE-04 and AC-DRIVE-05 are defined in
+`102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md`: actual-role isolation, immutable binding,
+legacy-write exclusion, fenced upload/inspection, retained-version cleanup and
+configured gateway/scanner end-to-end evidence. AC-DRIVE-05 remains a runtime gate.

@@ -4,6 +4,9 @@ design_system: '1.8'
 current_review_resolution: 99_INDEPENDENT_REVIEW_IMPLEMENTATION_ALIGNMENT_V1_18.md
 current_precode_gate: 100_TECHNICAL_PRECODE_GATE_V1_18.md
 documents:
+- file: 102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md
+  status: CURRENT
+  normative: true
 - file: 101_INTERNAL_INTERVIEW_FEEDBACK.md
   status: CURRENT
   normative: true
@@ -276,6 +279,7 @@ documents:
   status: CURRENT
   normative: false
 current_entrypoints:
+- 102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md
 - 101_INTERNAL_INTERVIEW_FEEDBACK.md
 - 00_README.md
 - FINAL_REVIEW_GUIDE.md

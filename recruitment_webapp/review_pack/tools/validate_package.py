@@ -167,7 +167,8 @@ c('Email outbox before commit','inside the same candidate submit/update transact
 cmds=[x.get('command') for x in reg.get('commands',[]) if x.get('command')]
 c('Command registry version 1.18',str(reg.get('version'))=='1.18')
 feedback_commands={'publish_interview_feedback_template','create_interview_feedback_collection','save_interview_feedback_response','revoke_interview_feedback_invitation','save_interview_feedback_consolidation'}
-c('Command registry count 62 plus CR feedback 5',len(cmds)==67 and feedback_commands.issubset(cmds),f'commands={len(cmds)}')
+drive_commands={'bind_candidate_drive_object','claim_drive_upload_attempt','seal_drive_upload_attempt','resolve_drive_scan_attempt','authorize_drive_document_read'}
+c('Command registry count 62 plus CR feedback 5 plus Drive 5',len(cmds)==72 and feedback_commands.issubset(cmds) and drive_commands.issubset(cmds),f'commands={len(cmds)}')
 c('Command names unique',len(cmds)==len(set(cmds)))
 coverage=txt('55_COMMAND_COVERAGE_MATRIX.md')
 missing_contract=[x for x in cmds if x not in contract]

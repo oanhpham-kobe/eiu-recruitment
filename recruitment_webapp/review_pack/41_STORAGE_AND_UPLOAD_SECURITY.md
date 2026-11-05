@@ -12,6 +12,11 @@
 Reject HTML, SVG, executable, script, archive and unapproved formats. Extension alone is insufficient: validate claimed MIME and content signature/magic bytes where feasible.
 
 ## Buckets
+CR-DRIVE-FILES-HOSTED-20261105: `102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md` extends
+bucket/path into immutable logical identities backed by a private provider
+binding. Existing Supabase storage remains the default until Drive is configured.
+This does not change upload limits, mandatory CLEAN, locks, retention or audit.
+
 Private buckets only. No public CV/degree/report/demo URL. Browser gets short-lived authorized signed URL; initial target TTL 1–5 minutes for sensitive documents.
 
 ## Two-phase protocol

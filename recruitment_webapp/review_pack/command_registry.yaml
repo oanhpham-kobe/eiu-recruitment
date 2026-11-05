@@ -1088,6 +1088,61 @@ commands:
   side_effects: []
   writes: [private.interview_feedback_consolidations]
   guarantees: [post_wait_authorization, complete_original_evaluator_set, pinned_snapshot, immutable_approval, no_legacy_outcome_mutation]
+- command: bind_candidate_drive_object
+  actor: drive_storage_worker
+  permission: verified_candidate_session_context
+  contract_file: 102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-DRIVE-01, AC-DRIVE-02, AC-DRIVE-04]
+  audit: REQUIRED
+  idempotency: IMMUTABLE_ALIAS_AND_DRIVE_ID
+  side_effects: []
+  writes: [private.storage_object_locations, public.upload_reservations]
+  guarantees: [ordered_parent_locks, no_mixed_provider_writes]
+- command: claim_drive_upload_attempt
+  actor: drive_storage_worker
+  permission: verified_candidate_session_context
+  contract_file: 102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-DRIVE-01, AC-DRIVE-03, AC-DRIVE-04]
+  audit: REQUIRED
+  idempotency: LEASE_AND_FENCING_TOKEN
+  side_effects: []
+  writes: [private.storage_object_locations]
+  guarantees: [bounded_write_window, create_only_provider]
+- command: seal_drive_upload_attempt
+  actor: drive_storage_worker
+  permission: current_lease_and_verified_candidate_session_context
+  contract_file: 102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-DRIVE-01, AC-DRIVE-03]
+  audit: REQUIRED
+  idempotency: FENCED_IMMUTABLE_EVIDENCE
+  side_effects: []
+  writes: [private.storage_object_locations, public.upload_reservations]
+  guarantees: [no_clean_verdict, no_content_overwrite]
+- command: resolve_drive_scan_attempt
+  actor: document_scan_worker
+  permission: current_scan_attempt_worker_and_fence
+  contract_file: 102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-DRIVE-01, AC-DRIVE-03]
+  audit: EXISTING_SCAN_CLAIM
+  idempotency: READ_ONLY
+  side_effects: []
+  writes: []
+  guarantees: [sealed_fingerprint, live_context]
+- command: authorize_drive_document_read
+  actor: drive_storage_worker
+  permission: verified_internal_actor_root_or_submissions_view
+  contract_file: 102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md
+  coverage_file: 55_COMMAND_COVERAGE_MATRIX.md
+  acceptance: [AC-DRIVE-01, AC-DRIVE-05]
+  audit: REQUIRED
+  idempotency: EACH_ACCESS_AUDITED
+  side_effects: []
+  writes: [public.security_audit_log]
+  guarantees: [exact_document_context, sealed_clean_evidence, current_actor_permission]
 error_codes:
 - CONTEXT_NOT_WRITABLE
 - DEADLINE_PASSED

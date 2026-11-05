@@ -61,6 +61,11 @@ Recipients are configuration/master data, not hard-coded source code.
 
 ## 5. Candidate documents
 
+CR-DRIVE-FILES-HOSTED-20261105: the additive provider/hosted-development contract
+is `102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md`. Private Drive may back immutable
+bucket/path aliases; contextual authorization, audit, versions and CLEAN remain
+mandatory. Plugin access does not configure application OAuth or malware scanning.
+
 Candidate document groups:
 - CV — required by business form;
 - Degree;

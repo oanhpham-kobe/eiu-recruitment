@@ -85,3 +85,15 @@ Grouped pagination/search are read contracts rather than mutations: Candidate In
 | Draft/submit own feedback | Active bound exact participant/owner | `save_interview_feedback_response` | Versioned draft or immutable submitted response | yes | AC-IF-01/04/06 |
 | Revoke outstanding invitation | Same HR authority | `revoke_interview_feedback_invitation` | Terminal revocation; denominator retained | yes | AC-IF-01/05/06 |
 | Draft/approve consolidation | Same HR authority | `save_interview_feedback_consolidation` | Complete-set pinned snapshot; versioned draft/immutable approval | yes | AC-IF-01/05/06/07 |
+
+## CR-DRIVE-FILES-HOSTED-20261105
+
+| Action | Permission/context | Command | Atomic state | Audit | Acceptance |
+|---|---|---|---|---|---|
+| Bind candidate Drive object | drive_storage_worker; verified candidate/session | bind_candidate_drive_object | immutable alias/file ID + write horizon | yes | AC-DRIVE-01/02/04 |
+| Claim upload | same worker + candidate context | claim_drive_upload_attempt | bounded fenced lease | yes | AC-DRIVE-01/03/04 |
+| Seal inspected upload | same worker + candidate context + current fence | seal_drive_upload_attempt | immutable evidence + UPLOADED/PENDING | yes | AC-DRIVE-01/03 |
+| Resolve location | drive_storage_worker; separate read authorization required | resolve_drive_object_location | read only | access audit precedes user exposure | AC-DRIVE-01/05 |
+| Resolve cleanup | storage_cleanup_worker + authorized exact attempt | resolve_drive_cleanup_location | existing tombstone/fence | existing cleanup audit | AC-DRIVE-04/05 |
+| Resolve scan bytes | document_scan_worker + live exact claim/worker/fence | resolve_drive_scan_attempt | read only; sealed fingerprint | existing scan claim | AC-DRIVE-01/03 |
+| Authorize document bytes | drive_storage_worker; verified active internal Root or submissions.view | authorize_drive_document_read | exact version + sealed CLEAN evidence | attributed DOCUMENT_ACCESS/purpose | AC-DRIVE-01/05 |

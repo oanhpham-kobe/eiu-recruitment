@@ -483,3 +483,12 @@ Additional stable errors: `CONTEXT_NOT_WRITABLE`, `DEADLINE_PASSED`,
 `REQUIRED_ANSWER_MISSING`, `ALREADY_SUBMITTED`, `INVITATION_REVOKED`,
 `COMPLETENESS_REQUIRED`, `ALREADY_APPROVED`; existing auth/validation/version
 errors remain applicable. No private backend exception text is shown in the UI.
+
+## CR-DRIVE-FILES-HOSTED-20261105
+
+`102_PRIVATE_DRIVE_DOCUMENT_STORAGE.md` governs `bind_candidate_drive_object`,
+`claim_drive_upload_attempt`, `seal_drive_upload_attempt`,
+`resolve_drive_object_location`, `resolve_drive_cleanup_location`,
+`resolve_drive_scan_attempt` and `authorize_drive_document_read`.
+Only narrow worker roles execute these operations; they do not replace user
+context authorization, real malware scanning or the existing cleanup fence.
