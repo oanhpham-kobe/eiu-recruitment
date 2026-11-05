@@ -12,6 +12,7 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
   }
 
   const browserBundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/master-data-management-harness.tsx"],
@@ -133,7 +134,7 @@ test("B1.1: Master Data Management page renders header, catalog selector with al
   const page = await setupPage();
   try {
     const title = await page.textContent(".master-data-header__title");
-    assert.ok(title?.includes("Quản lý danh mục"));
+    assert.ok(title?.includes("Danh mục"));
 
     const optionsCount = await page
       .locator(".master-data-controls__select-group select option")

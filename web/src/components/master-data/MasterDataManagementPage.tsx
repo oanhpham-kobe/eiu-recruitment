@@ -17,6 +17,7 @@ import {
   type MasterDataItemRecord,
   updateMasterItemAction,
 } from "@/app/master-data/actions";
+import { useAppLocale } from "@/components/shell/LocaleProvider";
 import type { InternalNavigationIdentity } from "@/components/shell/navigation";
 import type { MasterDataType } from "@/lib/commands/master-data";
 
@@ -106,6 +107,8 @@ export function MasterDataManagementPage({
   initialItems = [],
   initialDependencies = { units: [], teams: [], positionGroups: [] },
 }: MasterDataManagementPageProps) {
+  const { locale } = useAppLocale();
+  const t = (vi: string, en: string) => (locale === "vi" ? vi : en);
   const [selectedCatalog, setSelectedCatalog] =
     useState<MasterDataType>(initialCatalog);
   const [items, setItems] = useState<MasterDataItemRecord[]>(initialItems);
@@ -483,14 +486,16 @@ export function MasterDataManagementPage({
       <header className="master-data-header">
         <div>
           <h1 className="master-data-header__title">
-            Quản lý danh mục / Master Data Management
+            {t("Danh mục", "Master data")}
           </h1>
           <p
             className="text-muted"
             style={{ margin: "0.25rem 0 0", fontSize: "1rem" }}
           >
-            Vận hành các danh mục nghiệp vụ hệ thống theo đúng hợp đồng phiên
-            bản và an toàn tham chiếu.
+            {t(
+              "Dữ liệu dùng chung trong quy trình tuyển dụng.",
+              "Shared information for the recruitment workflow.",
+            )}
           </p>
         </div>
         {canManage && (
@@ -501,7 +506,7 @@ export function MasterDataManagementPage({
               className="master-data-btn-primary"
               onClick={openCreateModal}
             >
-              + Thêm mới / Create New
+              {t("+ Thêm mới", "+ Create new")}
             </button>
           </div>
         )}
@@ -552,7 +557,7 @@ export function MasterDataManagementPage({
           >
             {MASTER_CATALOG_OPTIONS.map((cat) => (
               <option key={cat.type} value={cat.type}>
-                {cat.labelVi} ({cat.labelEn})
+                {locale === "vi" ? cat.labelVi : cat.labelEn}
               </option>
             ))}
           </select>
@@ -574,8 +579,8 @@ export function MasterDataManagementPage({
               setStatusFilter(e.target.value as "ALL" | "ACTIVE" | "INACTIVE")
             }
           >
-            <option value="ALL">Tất cả / All</option>
-            <option value="ACTIVE">Đang hoạt động / Active</option>
+            <option value="ALL">{t("Tất cả", "All")}</option>
+            <option value="ACTIVE">{t("Hoạt động", "Active")}</option>
             <option value="INACTIVE">Ngừng hoạt động / Inactive</option>
           </select>
 
@@ -597,28 +602,30 @@ export function MasterDataManagementPage({
       <div className="master-data-table-container">
         <table className="master-data-table" aria-label="Bảng dữ liệu danh mục">
           <colgroup>
-            <col style={{ width: 180 }} />
+            <col style={{ width: 160 }} />
             <col style={{ width: 260 }} />
             <col style={{ width: 260 }} />
-            <col style={{ width: 180 }} />
-            <col style={{ width: 100 }} />
+            <col style={{ width: 160 }} />
+
             {canManage && <col style={{ width: 220 }} />}
           </colgroup>
           <thead>
             <tr>
-              <th scope="col">Mã / Code</th>
-              <th scope="col">Tên tiếng Việt / Display Name</th>
-              <th scope="col">Tên tiếng Anh / Thuộc tính</th>
-              <th scope="col">Trạng thái</th>
-              <th scope="col">Phiên bản</th>
-              {canManage && <th scope="col">Thao tác</th>}
+              <th scope="col">{t("Mã", "Code")}</th>
+              <th scope="col">{t("Tên tiếng Việt", "Vietnamese name")}</th>
+              <th scope="col">
+                {t("Tên tiếng Anh / Thuộc tính", "English name / Properties")}
+              </th>
+              <th scope="col">{t("Trạng thái", "Status")}</th>
+
+              {canManage && <th scope="col">{t("Thao tác", "Actions")}</th>}
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
                 <td
-                  colSpan={canManage ? 6 : 5}
+                  colSpan={canManage ? 5 : 4}
                   style={{ textAlign: "center", padding: "2rem" }}
                 >
                   Đang tải dữ liệu...
@@ -627,7 +634,7 @@ export function MasterDataManagementPage({
             ) : filteredItems.length === 0 ? (
               <tr>
                 <td
-                  colSpan={canManage ? 6 : 5}
+                  colSpan={canManage ? 5 : 4}
                   style={{ textAlign: "center", padding: "2rem" }}
                 >
                   Không có mục danh mục nào phù hợp.
@@ -636,19 +643,19 @@ export function MasterDataManagementPage({
             ) : (
               filteredItems.map((item) => (
                 <tr key={item.id}>
-                  <td>
+                  <td data-label="Mã">
                     <code>{item.code}</code>
                   </td>
-                  <td>
+                  <td data-label="Tên tiếng Việt">
                     <strong>{item.nameVi}</strong>
                   </td>
-                  <td>
+                  <td data-label="Tên tiếng Anh / Thuộc tính">
                     {item.nameEn && <div>{item.nameEn}</div>}
                     {selectedCatalog === "rooms" &&
                       Boolean(item.metadata?.building) && (
                         <div
                           className="text-muted"
-                          style={{ fontSize: "0.875rem" }}
+                          style={{ fontSize: "1rem" }}
                         >
                           Tòa nhà: {String(item.metadata?.building)}
                         </div>
@@ -657,7 +664,7 @@ export function MasterDataManagementPage({
                       Boolean(item.metadata?.scope_code) && (
                         <div
                           className="text-muted"
-                          style={{ fontSize: "0.875rem" }}
+                          style={{ fontSize: "1rem" }}
                         >
                           Phạm vi: {String(item.metadata?.scope_code)}
                         </div>
@@ -666,16 +673,13 @@ export function MasterDataManagementPage({
                       Boolean(item.metadata?.requires_demo_topic) && (
                         <div
                           className="text-muted"
-                          style={{ fontSize: "0.875rem" }}
+                          style={{ fontSize: "1rem" }}
                         >
                           (Yêu cầu đề tài demo)
                         </div>
                       )}
                     {selectedCatalog === "interview_formats" && (
-                      <div
-                        className="text-muted"
-                        style={{ fontSize: "0.875rem" }}
-                      >
+                      <div className="text-muted" style={{ fontSize: "1rem" }}>
                         {item.metadata?.requires_room ? "Cần phòng | " : ""}
                         {item.metadata?.requires_meeting_link
                           ? "Cần link họp"
@@ -683,7 +687,7 @@ export function MasterDataManagementPage({
                       </div>
                     )}
                   </td>
-                  <td>
+                  <td data-label="Trạng thái">
                     {item.isActive ? (
                       <span className="master-data-badge master-data-badge--active">
                         Đang hoạt động
@@ -694,38 +698,42 @@ export function MasterDataManagementPage({
                       </span>
                     )}
                   </td>
-                  <td>v{item.versionNo}</td>
+
                   {canManage && (
                     <td className="actions-cell">
-                      <button
-                        ref={(el) => {
-                          actionTriggerRefs.current[`edit-${item.id}`] = el;
-                        }}
-                        type="button"
-                        className="master-data-btn-secondary"
-                        onClick={() => openEditModal(item)}
-                      >
-                        Sửa
-                      </button>
-                      {item.isActive && (
+                      <div className="table-row-actions">
                         <button
                           ref={(el) => {
-                            actionTriggerRefs.current[`delete-${item.id}`] = el;
+                            actionTriggerRefs.current[`edit-${item.id}`] = el;
                           }}
                           type="button"
                           className="master-data-btn-secondary"
-                          style={{ color: "#dc2626" }}
-                          onClick={() => {
-                            lastActiveTriggerRef.current =
-                              actionTriggerRefs.current[`delete-${item.id}`] ??
-                              null;
-                            setDeletingItem(item);
-                            setModalError(null);
-                          }}
+                          onClick={() => openEditModal(item)}
                         >
-                          Xóa / Ngừng HĐ
+                          Sửa
                         </button>
-                      )}
+                        {item.isActive && (
+                          <button
+                            ref={(el) => {
+                              actionTriggerRefs.current[`delete-${item.id}`] =
+                                el;
+                            }}
+                            type="button"
+                            className="master-data-btn-secondary"
+                            style={{ color: "#dc2626" }}
+                            onClick={() => {
+                              lastActiveTriggerRef.current =
+                                actionTriggerRefs.current[
+                                  `delete-${item.id}`
+                                ] ?? null;
+                              setDeletingItem(item);
+                              setModalError(null);
+                            }}
+                          >
+                            Xóa / Ngừng HĐ
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>

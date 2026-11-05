@@ -10,6 +10,7 @@ async function bundlePageHarness() {
     "src/__tests__/fixtures/interview-actions-browser-mock.ts",
   );
   const bundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/interview-email-ui-harness.tsx"],
@@ -87,6 +88,11 @@ test("InterviewPage restores single-row lifecycle authority after refresh prunes
       state.pageData = { ...state.pageData, groups: [firstGroup] };
     });
 
+    await page
+      .locator(".interview-application-row")
+      .first()
+      .getByRole("button", { name: "Thao tác khác", exact: true })
+      .click();
     await page.getByRole("button", { name: "+ Vòng" }).first().click();
     const confirmation = page.getByRole("dialog", {
       name: "Tạo vòng phỏng vấn tiếp theo",

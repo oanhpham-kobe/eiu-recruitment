@@ -22,7 +22,9 @@ import {
   setInternalUserActiveAction,
   updateInternalUserDirectoryAction,
 } from "@/app/users/actions";
+import { useAppLocale } from "@/components/shell/LocaleProvider";
 import type { InternalNavigationIdentity } from "@/components/shell/navigation";
+import { RowActions } from "@/components/ui/RowActions";
 import { DELEGABLE_PERMISSIONS } from "@/lib/auth/permissions";
 
 export interface UsersManagementPageProps {
@@ -38,6 +40,8 @@ export function UsersManagementPage({
   initialUsers = [],
   initialDependencies = { units: [] },
 }: UsersManagementPageProps) {
+  const { locale } = useAppLocale();
+  const t = (vi: string, en: string) => (locale === "vi" ? vi : en);
   const [users, setUsers] =
     useState<InternalUserDirectoryRecord[]>(initialUsers);
   const [loading, setLoading] = useState(false);
@@ -488,14 +492,16 @@ export function UsersManagementPage({
       <header className="users-header">
         <div>
           <h1 className="users-header__title">
-            Quản lý Người dùng & Phân quyền / Users & Permissions
+            {t("Người dùng & phân quyền", "Users & permissions")}
           </h1>
           <p
             className="text-muted"
             style={{ margin: "0.25rem 0 0", fontSize: "1rem" }}
           >
-            Vận hành danh bạ nhân sự nội bộ và phân quyền an ninh theo hợp đồng
-            kiểm soát Root/RBAC.
+            {t(
+              "Quản lý nhân sự, tài khoản và quyền truy cập.",
+              "Manage staff, accounts and access permissions.",
+            )}
           </p>
         </div>
         {canManageDirectory && (
@@ -506,7 +512,7 @@ export function UsersManagementPage({
               className="users-btn-primary"
               onClick={openCreateModal}
             >
-              + Thêm người dùng / Add User
+              {t("+ Thêm người dùng", "+ Add user")}
             </button>
           </div>
         )}
@@ -554,9 +560,9 @@ export function UsersManagementPage({
               setStatusFilter(e.target.value as "ALL" | "ACTIVE" | "INACTIVE")
             }
           >
-            <option value="ALL">Tất cả / All</option>
-            <option value="ACTIVE">Đang hoạt động / Active</option>
-            <option value="INACTIVE">Đã khóa / Inactive</option>
+            <option value="ALL">{t("Tất cả", "All")}</option>
+            <option value="ACTIVE">{t("Hoạt động", "Active")}</option>
+            <option value="INACTIVE">{t("Đã khóa", "Inactive")}</option>
           </select>
 
           <label htmlFor={roleFilterId} className="users-controls__label">
@@ -570,7 +576,7 @@ export function UsersManagementPage({
               setRoleFilter(e.target.value as "ALL" | "ROOT" | "HR" | "STAFF")
             }
           >
-            <option value="ALL">Tất cả vai trò / All Roles</option>
+            <option value="ALL">{t("Tất cả vai trò", "All roles")}</option>
             <option value="ROOT">Root Admin</option>
             <option value="HR">Nhân sự (HR)</option>
             <option value="STAFF">Hội đồng / Khác</option>
@@ -596,30 +602,31 @@ export function UsersManagementPage({
       <div className="users-table-container">
         <table className="users-table" aria-label="Danh sách nhân sự nội bộ">
           <colgroup>
-            <col style={{ width: 200 }} />
-            <col style={{ width: 270 }} />
+            <col style={{ width: 210 }} />
             <col style={{ width: 240 }} />
+            <col style={{ width: 200 }} />
+            <col style={{ width: 130 }} />
             <col style={{ width: 140 }} />
-            <col style={{ width: 160 }} />
-            <col style={{ width: 100 }} />
-            {canManageDirectory && <col style={{ width: 260 }} />}
+            {canManageDirectory && <col style={{ width: 200 }} />}
           </colgroup>
           <thead>
             <tr>
-              <th scope="col">Họ và tên</th>
-              <th scope="col">Email & Danh tính</th>
-              <th scope="col">Chức danh / Đơn vị</th>
-              <th scope="col">Vai trò</th>
-              <th scope="col">Trạng thái</th>
-              <th scope="col">Phiên bản</th>
-              {canManageDirectory && <th scope="col">Thao tác</th>}
+              <th scope="col">{t("Họ và tên", "Full name")}</th>
+              <th scope="col">{t("Email & danh tính", "Email & identity")}</th>
+              <th scope="col">{t("Chức danh / Đơn vị", "Job title / Unit")}</th>
+              <th scope="col">{t("Vai trò", "Role")}</th>
+              <th scope="col">{t("Trạng thái", "Status")}</th>
+
+              {canManageDirectory && (
+                <th scope="col">{t("Thao tác", "Actions")}</th>
+              )}
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
                 <td
-                  colSpan={canManageDirectory ? 7 : 6}
+                  colSpan={canManageDirectory ? 6 : 5}
                   style={{ textAlign: "center", padding: "2rem" }}
                 >
                   Đang tải dữ liệu...
@@ -628,7 +635,7 @@ export function UsersManagementPage({
             ) : filteredUsers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={canManageDirectory ? 7 : 6}
+                  colSpan={canManageDirectory ? 6 : 5}
                   style={{ textAlign: "center", padding: "2rem" }}
                 >
                   Không tìm thấy nhân sự nào phù hợp.
@@ -641,17 +648,14 @@ export function UsersManagementPage({
                     ?.name_vi || "";
                 return (
                   <tr key={user.appUserId}>
-                    <td>
+                    <td data-label="Họ và tên">
                       <strong>{user.fullName}</strong>
                     </td>
-                    <td>
+                    <td data-label="Email & Danh tính">
                       <div>
-                        <code>{user.email}</code>
+                        <span>{user.email}</span>
                       </div>
-                      <div
-                        className="text-muted"
-                        style={{ fontSize: "0.875rem" }}
-                      >
+                      <div className="text-muted" style={{ fontSize: "1rem" }}>
                         {user.identityBound ? (
                           <span style={{ color: "var(--status-success-text)" }}>
                             ● Đã liên kết Auth
@@ -663,18 +667,18 @@ export function UsersManagementPage({
                         )}
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Chức danh / Đơn vị">
                       <div>{user.jobTitle || "—"}</div>
                       {unitName && (
                         <div
                           className="text-muted"
-                          style={{ fontSize: "0.875rem" }}
+                          style={{ fontSize: "1rem" }}
                         >
                           {unitName}
                         </div>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Vai trò">
                       {user.isRootAdmin ? (
                         <span className="users-badge users-badge--root">
                           Root Admin
@@ -687,7 +691,7 @@ export function UsersManagementPage({
                         </span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Trạng thái">
                       {user.isActive ? (
                         <span className="users-badge users-badge--active">
                           Hoạt động
@@ -698,54 +702,65 @@ export function UsersManagementPage({
                         </span>
                       )}
                     </td>
-                    <td>v{user.versionNo}</td>
+
                     {canManageDirectory && (
                       <td className="actions-cell">
-                        <button
-                          ref={(el) => {
-                            actionTriggerRefs.current[
-                              `edit-${user.appUserId}`
-                            ] = el;
-                          }}
-                          type="button"
-                          className="users-btn-secondary"
-                          onClick={() => openEditModal(user)}
-                        >
-                          Sửa
-                        </button>
-
-                        {isRootAdmin && !user.isRootAdmin && (
+                        <div className="table-row-actions">
                           <button
                             ref={(el) => {
                               actionTriggerRefs.current[
-                                `perm-${user.appUserId}`
+                                `edit-${user.appUserId}`
                               ] = el;
                             }}
                             type="button"
                             className="users-btn-secondary"
-                            onClick={() => openPermissionsModal(user)}
+                            onClick={() => openEditModal(user)}
                           >
-                            Phân quyền
+                            Sửa
                           </button>
-                        )}
 
-                        {!user.isRootAdmin && (isRootAdmin || !user.isHr) && (
-                          <button
-                            ref={(el) => {
-                              actionTriggerRefs.current[
-                                `status-${user.appUserId}`
-                              ] = el;
-                            }}
-                            type="button"
-                            className="users-btn-secondary"
-                            style={{
-                              color: user.isActive ? "#dc2626" : undefined,
-                            }}
-                            onClick={() => openStatusModal(user)}
-                          >
-                            {user.isActive ? "Khóa" : "Mở khóa"}
-                          </button>
-                        )}
+                          {!user.isRootAdmin && (
+                            <RowActions
+                              label={t("Thao tác khác", "More actions")}
+                            >
+                              {isRootAdmin && !user.isRootAdmin && (
+                                <button
+                                  ref={(el) => {
+                                    actionTriggerRefs.current[
+                                      `perm-${user.appUserId}`
+                                    ] = el;
+                                  }}
+                                  type="button"
+                                  className="users-btn-secondary"
+                                  onClick={() => openPermissionsModal(user)}
+                                >
+                                  Phân quyền
+                                </button>
+                              )}
+
+                              {!user.isRootAdmin &&
+                                (isRootAdmin || !user.isHr) && (
+                                  <button
+                                    ref={(el) => {
+                                      actionTriggerRefs.current[
+                                        `status-${user.appUserId}`
+                                      ] = el;
+                                    }}
+                                    type="button"
+                                    className="users-btn-secondary"
+                                    style={{
+                                      color: user.isActive
+                                        ? "#dc2626"
+                                        : undefined,
+                                    }}
+                                    onClick={() => openStatusModal(user)}
+                                  >
+                                    {user.isActive ? "Khóa" : "Mở khóa"}
+                                  </button>
+                                )}
+                            </RowActions>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -1065,7 +1080,7 @@ export function UsersManagementPage({
                   </div>
                   <div
                     className="text-muted"
-                    style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}
+                    style={{ fontSize: "1rem", marginTop: "0.25rem" }}
                   >
                     {permissionsUser.isHr
                       ? "Người dùng có vai trò Nhân sự và các quyền nghiệp vụ được ủy quyền."

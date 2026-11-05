@@ -118,6 +118,10 @@
   background: var(--eiu-cream);
 }
 
+.interview-round-row th:nth-child(2) {
+  padding-left: 32px;
+}
+
 .interview-table th:first-child,
 .interview-table td:first-child {
   position: sticky;
@@ -161,10 +165,6 @@
   background: var(--canvas);
 }
 
-.interview-round-row th:nth-child(2) {
-  padding-left: 32px;
-}
-
 .interview-expand-button {
   display: flex;
   gap: var(--space-2);
@@ -180,11 +180,10 @@
   cursor: pointer;
 }
 
-.interview-expand-button > span:last-child,
-.interview-round-row th,
 .interview-row-actions,
-.interview-participant-list li > div:first-child,
-.interview-removed-row > div:first-child {
+.interview-expand-button > span:last-child,
+.interview-removed-row > div:first-child,
+.interview-participant-list li > div:first-child {
   display: grid;
   gap: 4px;
 }
@@ -194,9 +193,19 @@
 .interview-participant-list span,
 .interview-removed-row span,
 .interview-field-hint {
+  font-weight: 400;
   color: var(--ink-600);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.45;
+}
+
+.interview-round-row th > strong,
+.interview-round-row th > small {
+  display: block;
+}
+
+.interview-round-row th > small {
+  margin-top: 4px;
 }
 
 .interview-expand-button em {
@@ -454,6 +463,9 @@
     background: var(--surface);
   }
 
+  .interview-table tr {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
   .interview-table th,
   .interview-table td,
   .interview-table th:first-child,
@@ -461,26 +473,41 @@
   .interview-table th:nth-child(2),
   .interview-table td:nth-child(2) {
     position: static;
-    display: grid;
-    grid-template-columns: minmax(116px, 38%) 1fr;
-    gap: 10px;
-    width: 100%;
+    display: block;
+    grid-column: 1 / -1;
+    width: auto;
     min-width: 0;
     max-width: none;
-    padding: 10px 12px;
+    padding: 8px 12px;
     box-shadow: none;
-    border-bottom: 1px solid var(--line);
+    border: 0;
   }
-
-  .interview-table th::before,
-  .interview-table td::before {
-    content: attr(data-label);
-    color: var(--ink-600);
-    font-weight: 700;
+  .interview-table td:first-child {
+    grid-column: 1;
+    padding: 8px 0;
   }
-
   .interview-table th:nth-child(2) {
-    padding-left: 12px;
+    grid-column: 2;
+    padding: 12px 12px 8px 0;
+  }
+  .interview-table td:last-child {
+    border-top: 1px solid var(--line);
+  }
+  .interview-table td[data-label="Ghi chú"] {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 8px 0;
+  }
+  .interview-table-scroll {
+    max-height: none;
+  }
+  .interview-row-actions {
+    display: flex;
+    flex-wrap: wrap;
   }
 
   .interview-expand-button {
@@ -495,7 +522,16 @@
   }
 
   .interview-row-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    gap: 8px;
+  }
+  .interview-row-actions .ui-button {
+    width: auto;
+    flex: 1;
+  }
+  .interview-row-actions button[popovertarget] {
+    flex: 0 0 44px;
+    padding-inline: 4px;
   }
 
   .interview-form-grid,
@@ -523,8 +559,8 @@
   }
 
   .interview-participant-actions .ui-button,
-  .interview-removed-row > div:last-child .ui-button,
-  .interview-drawer-actions .ui-button {
+  .interview-drawer-actions .ui-button,
+  .interview-removed-row > div:last-child .ui-button {
     flex: 1 1 auto;
   }
 }

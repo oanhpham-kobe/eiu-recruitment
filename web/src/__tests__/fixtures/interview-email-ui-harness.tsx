@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { EmailHistoryDrawer } from "@/components/interview/EmailHistoryDrawer";
 import { EmailPreviewDialog } from "@/components/interview/EmailPreviewDialog";
 import { InterviewPage } from "@/components/interview/InterviewPage";
+import { LocaleProvider } from "@/components/shell/LocaleProvider";
 import type { EmailHistoryEntry } from "@/lib/commands/email-commands";
 import type { InterviewPageData } from "@/lib/interview/model";
 import "@/app/globals.css";
@@ -204,7 +205,9 @@ const HISTORY_ROWS: EmailHistoryEntry[] = [
 function PageHarness() {
   return (
     <div data-harness-ready="page">
-      <InterviewPage initialData={PAGE_DATA} />
+      <LocaleProvider>
+        <InterviewPage initialData={PAGE_DATA} />
+      </LocaleProvider>
     </div>
   );
 }

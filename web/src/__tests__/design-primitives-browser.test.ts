@@ -7,6 +7,7 @@ test("StatusMenu keyboard semantics and stacked overlay locking remain operation
   timeout: 60_000,
 }, async () => {
   const bundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: [

@@ -7,6 +7,7 @@ const port = Number(process.env.FEEDBACK_PREVIEW_PORT ?? 3417);
 if (!Number.isSafeInteger(port) || port < 1024 || port > 65535)
   throw new Error("Invalid preview port");
 const result = await build({
+  loader: { ".ttf": "dataurl" },
   absWorkingDir: process.cwd(),
   entryPoints: ["src/__tests__/fixtures/interview-feedback-preview.tsx"],
   bundle: true,

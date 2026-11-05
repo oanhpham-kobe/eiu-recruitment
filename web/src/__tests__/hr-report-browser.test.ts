@@ -7,6 +7,7 @@ const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
 
 async function bundleHarness() {
   const bundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/hr-report-browser-harness.tsx"],
@@ -65,17 +66,11 @@ async function scrollRowStatusIntoReach(page: Page) {
   const trigger = page.getByRole("button", {
     name: "Đổi trạng thái của Nguyễn Minh Anh",
   });
-  const statusCell = trigger.locator("xpath=ancestor::td[1]");
-  const target = await statusCell.evaluate((cell) =>
-    Math.max(0, (cell as HTMLElement).offsetLeft - 300),
-  );
-  await page.locator(".ui-table-scroll").evaluate((element, left) => {
-    element.scrollLeft = Number(left);
-  }, target);
+  await trigger.scrollIntoViewIfNeeded();
   const box = await trigger.boundingBox();
   assert.ok(
-    box && box.x < 390 && box.x + box.width > 288,
-    "status trigger must be exposed beside sticky columns",
+    box && box.x >= 0 && box.x + box.width <= 390,
+    "Phone card status stays fully reachable",
   );
   return trigger;
 }
@@ -97,11 +92,13 @@ test("HR Report preserves exact table geometry and responsive scroll containment
         (element) => element.getBoundingClientRect().width,
       );
       assert.ok(
-        Math.abs(tableWidth - 1610) <= 1,
-        `hr-report@${width}: table must remain 1610px`,
+        width <= 640 ? tableWidth <= width : Math.abs(tableWidth - 1610) <= 1,
+        `hr-report@${width}: desktop table remains 1610px; phone summary fits viewport`,
       );
 
-      const headers = await page.getByRole("columnheader").allTextContents();
+      const headers = await page
+        .getByRole("columnheader", { includeHidden: true })
+        .allTextContents();
       assert.deepEqual(
         headers.map((value) => value.trim()),
         [
@@ -122,7 +119,7 @@ test("HR Report preserves exact table geometry and responsive scroll containment
           clientWidth: element.clientWidth,
           scrollWidth: element.scrollWidth,
         }));
-      if (width < 1440) {
+      if (width > 640 && width < 1440) {
         assert.ok(
           scroll.scrollWidth > scroll.clientWidth,
           `hr-report@${width}: wide table overflow must stay inside TableScrollContainer`,
@@ -139,10 +136,20 @@ test("HR Report preserves exact table geometry and responsive scroll containment
             left: getComputedStyle(cell).left,
           })),
         );
-      assert.equal(sticky[0]?.position, "sticky");
-      assert.equal(sticky[0]?.left, "0px");
-      assert.equal(sticky[1]?.position, "sticky");
-      assert.equal(sticky[1]?.left, "48px");
+      if (width > 640) {
+        assert.equal(sticky[0]?.position, "sticky");
+        assert.equal(sticky[0]?.left, "0px");
+        assert.equal(sticky[1]?.position, "sticky");
+        assert.equal(sticky[1]?.left, "48px");
+      } else {
+        assert.equal(sticky[0]?.position, "static");
+        assert.equal(
+          await page
+            .locator(".ui-table-scroll")
+            .evaluate((el) => getComputedStyle(el).maxHeight),
+          "none",
+        );
+      }
 
       const badgeWidth = await page
         .locator(".ui-status-badge")
@@ -196,6 +203,12 @@ test("HR Report narrow status and filtered drawer preserve drafts and conflict b
       .getByText("Đã cập nhật trạng thái cho các báo cáo đã chọn.")
       .waitFor({ state: "visible" });
 
+    if (
+      !(await page
+        .locator(".workflow-filters")
+        .evaluate((el) => (el as HTMLDetailsElement).open))
+    )
+      await page.locator(".workflow-filters > summary").click();
     await page.getByLabel("Hiển thị").selectOption("VISIBLE");
     await page.locator(".ui-table-scroll").evaluate((element) => {
       element.scrollLeft = element.scrollWidth;
@@ -239,6 +252,12 @@ test("HR Report narrow status and filtered drawer preserve drafts and conflict b
       edit("Remote participant edit");
     });
 
+    if (
+      !(await page
+        .locator(".workflow-filters")
+        .evaluate((el) => (el as HTMLDetailsElement).open))
+    )
+      await page.locator(".workflow-filters > summary").click();
     await page.getByLabel("Hiển thị").selectOption("ALL");
     assert.equal(
       await reportDraft.inputValue(),

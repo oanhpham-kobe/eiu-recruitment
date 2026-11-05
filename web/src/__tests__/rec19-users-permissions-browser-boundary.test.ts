@@ -12,6 +12,7 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
   }
 
   const browserBundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/users-management-harness.tsx"],
@@ -254,7 +255,7 @@ test("B1.1: Users Management page renders header, controls, and table rows", asy
   const page = await setupPage();
   try {
     const title = await page.textContent(".users-header__title");
-    assert.ok(title?.includes("Quản lý Người dùng & Phân quyền"));
+    assert.ok(title?.includes("Người dùng & phân quyền"));
 
     const rowsCount = await page.locator(".users-table tbody tr").count();
     assert.equal(rowsCount, 3);
@@ -371,9 +372,12 @@ test("B1.6: Permissions modal allows Root Admin to view and toggle permissions",
   });
   try {
     // Click Phân quyền on HR Lead row
-    await page.click(
-      '.users-table tbody tr:nth-child(2) button:has-text("Phân quyền")',
-    );
+    await page
+      .locator(".users-table tbody tr:nth-child(2) button[popovertarget]")
+      .click();
+    await page
+      .locator('.ui-row-actions:popover-open button:has-text("Phân quyền")')
+      .click();
     await page.waitForSelector('div[role="dialog"]');
 
     const dialogTitle = await page.textContent("#perm-user-title");
@@ -403,8 +407,11 @@ test("B1.7: Root Admin row has no lock button, regular user can be locked", asyn
     assert.equal(rootRowLockCount, 0);
 
     // HR Lead row (row 2) has a Khóa button
+    await page
+      .locator(".users-table tbody tr:nth-child(2) button[popovertarget]")
+      .click();
     const hrRowLockCount = await page
-      .locator('.users-table tbody tr:nth-child(2) button:has-text("Khóa")')
+      .locator('.ui-row-actions:popover-open button:has-text("Khóa")')
       .count();
     assert.equal(hrRowLockCount, 1);
   } finally {
@@ -524,14 +531,21 @@ test("B1.12: Non-root directory manager cannot lock HR user", async () => {
   });
   try {
     // Row 2 is HR Lead. Non-root directory manager should NOT see Khóa on row 2
+    await page
+      .locator(".users-table tbody tr:nth-child(2) button[popovertarget]")
+      .click();
     const hrRowLockCount = await page
-      .locator('.users-table tbody tr:nth-child(2) button:has-text("Khóa")')
+      .locator('.ui-row-actions:popover-open button:has-text("Khóa")')
       .count();
     assert.equal(hrRowLockCount, 0);
 
     // Row 3 is regular Staff (not HR, not Root). Non-root directory manager CAN see Mở khóa on row 3
+    await page.keyboard.press("Escape");
+    await page
+      .locator(".users-table tbody tr:nth-child(3) button[popovertarget]")
+      .click();
     const staffRowLockCount = await page
-      .locator('.users-table tbody tr:nth-child(3) button:has-text("Mở khóa")')
+      .locator('.ui-row-actions:popover-open button:has-text("Mở khóa")')
       .count();
     assert.equal(staffRowLockCount, 1);
   } finally {

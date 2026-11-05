@@ -3,7 +3,7 @@
 .users-page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: 0;
   width: 100%;
   min-width: 0;
@@ -43,7 +43,7 @@
   background-color: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
 }
 
 .users-controls__group {
@@ -178,7 +178,7 @@
 
 .users-table {
   width: 100%;
-  min-width: 1370px;
+  min-width: 1120px;
   table-layout: fixed;
   border-collapse: collapse;
   text-align: left;
@@ -211,8 +211,12 @@
 }
 
 .users-table td.actions-cell {
-  white-space: nowrap;
+  white-space: normal;
+}
+
+.users-table .table-row-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
@@ -526,5 +530,64 @@
   .modal-body {
     flex: 0 0 auto;
     overflow: visible;
+  }
+}
+
+.users-badge {
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .users-controls__group {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+  }
+  .users-controls__group:last-child {
+    display: block;
+  }
+  .users-table {
+    min-width: 0;
+  }
+  .users-table colgroup,
+  .users-table thead {
+    display: none;
+  }
+  .users-table tbody {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+  }
+  .users-table tr {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-control);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .users-table td {
+    display: block;
+    grid-column: 1 / -1;
+    padding: 8px 12px;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .users-table td:first-child {
+    padding-top: 16px;
+    padding-bottom: 0;
+  }
+  .users-table td:nth-child(2) {
+    padding-top: 4px;
+  }
+  .users-table td:nth-child(4) {
+    grid-column: 1;
+  }
+  .users-table td:nth-child(5) {
+    grid-column: 2;
+    padding-left: 0;
+  }
+  .users-table td.actions-cell {
+    border-top: 1px solid var(--line);
+    padding: 12px;
   }
 }

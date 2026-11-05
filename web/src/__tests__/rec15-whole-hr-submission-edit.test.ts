@@ -15,6 +15,7 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
   }
 
   const browserBundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: [

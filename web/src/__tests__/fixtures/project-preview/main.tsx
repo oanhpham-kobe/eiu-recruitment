@@ -609,63 +609,72 @@ function Controls() {
   const { locale } = useAppLocale();
   const t = (vi: string, en: string) => (locale === "vi" ? vi : en);
   return (
-    <aside className="preview-controls" aria-label="Synthetic preview controls">
-      <strong>
-        {t("BẢN DÙNG THỬ · Dữ liệu mẫu", "TRIAL WORKSPACE · Synthetic data")}
-      </strong>
-      {!persistenceAvailable() && (
-        <p role="alert">
-          Trình duyệt không cho lưu dữ liệu. Thay đổi chỉ còn trong phiên này. /
-          Storage unavailable; changes last only for this page session.
-        </p>
-      )}
-      <label>
-        {t("Vai thử nghiệm", "Trial role")}{" "}
-        <select
-          aria-label="Vai thử nghiệm / Trial role"
-          value={s.persona}
-          onChange={(e) => {
-            const n = read();
-            n.persona = e.target.value as Persona;
-            save(n);
+    <details className="preview-options">
+      <summary>
+        {t("Dữ liệu mẫu", "Synthetic data")} · {PEOPLE[s.persona].name} ·{" "}
+        {t("Tùy chọn", "Options")}
+      </summary>
+      <aside
+        className="preview-controls"
+        aria-label="Synthetic preview controls"
+      >
+        <span className="preview-trial-label">
+          {t("Dữ liệu mẫu", "Synthetic data")}
+        </span>
+        {!persistenceAvailable() && (
+          <p role="alert">
+            Trình duyệt không cho lưu dữ liệu. Thay đổi chỉ còn trong phiên này.
+            / Storage unavailable; changes last only for this page session.
+          </p>
+        )}
+        <label>
+          {t("Vai thử nghiệm", "Trial role")}{" "}
+          <select
+            aria-label="Vai thử nghiệm / Trial role"
+            value={s.persona}
+            onChange={(e) => {
+              const n = read();
+              n.persona = e.target.value as Persona;
+              save(n);
+              location.reload();
+            }}
+          >
+            {Object.entries(PEOPLE).map(([key, p]) => (
+              <option key={key} value={key}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          aria-label="Bắt đầu lại / Reset all"
+          onClick={() => {
+            if (
+              !confirm(
+                "Xóa dữ liệu thử nghiệm và bắt đầu lại? / Reset synthetic workspace?",
+              )
+            )
+              return;
+            for (const key of Object.keys(sessionStorage))
+              if (key.startsWith("eiu_candidate_form_draft_project-preview-"))
+                sessionStorage.removeItem(key);
+            reset();
+            location.hash = "/guide";
             location.reload();
           }}
         >
-          {Object.entries(PEOPLE).map(([key, p]) => (
-            <option key={key} value={key}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <button
-        type="button"
-        aria-label="Bắt đầu lại / Reset all"
-        onClick={() => {
-          if (
-            !confirm(
-              "Xóa dữ liệu thử nghiệm và bắt đầu lại? / Reset synthetic workspace?",
-            )
-          )
-            return;
-          for (const key of Object.keys(sessionStorage))
-            if (key.startsWith("eiu_candidate_form_draft_project-preview-"))
-              sessionStorage.removeItem(key);
-          reset();
-          location.hash = "/guide";
-          location.reload();
-        }}
-      >
-        {t("Bắt đầu lại", "Reset all")}
-      </button>
-      <a href="#/guide">{t("Hướng dẫn", "Guide")}</a>
-      <small>
-        {t(
-          "Chỉ nhập dữ liệu mẫu. Không gửi email thật.",
-          "Synthetic input only. No real emails are sent.",
-        )}
-      </small>
-    </aside>
+          {t("Bắt đầu lại", "Reset all")}
+        </button>
+        <a href="#/guide">{t("Hướng dẫn", "Guide")}</a>
+        <small className="preview-simulation-note">
+          {t(
+            "Chỉ nhập dữ liệu mẫu. Không gửi email thật.",
+            "Synthetic input only. No real emails are sent.",
+          )}
+        </small>
+      </aside>
+    </details>
   );
 }
 function PreviewTitle() {

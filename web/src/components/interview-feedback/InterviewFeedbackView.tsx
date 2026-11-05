@@ -301,301 +301,312 @@ export function InterviewFeedbackView({
         <>
           {data.can_manage && (
             <section>
-              <h2>{t("Giao phiếu nhận xét", "Assign feedback forms")}</h2>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void create();
-                }}
-              >
-                <fieldset disabled={busy}>
-                  <legend>
-                    {t(
-                      "Vòng phỏng vấn và người đánh giá",
-                      "Interview round and evaluators",
-                    )}
-                  </legend>
-                  <label className="feedback-field">
-                    {t(
-                      "Ứng viên và vòng phỏng vấn",
-                      "Candidate and interview round",
-                    )}
-                    <select
-                      required
-                      value={interviewId}
-                      onChange={(e) => {
-                        setInterviewId(e.target.value);
-                        setSelected([]);
-                        createKey.current = null;
-                      }}
-                    >
-                      <option value="">
-                        {t("Chọn phỏng vấn", "Select an interview")}
-                      </option>
-                      {data.interviews.map((i) => (
-                        <option
-                          key={i.interview_id}
-                          value={i.interview_id}
-                          disabled={Boolean(i.collection_id)}
-                        >
-                          {i.candidate_name} · {i.position_name} ·{" "}
-                          {t("Vòng", "Round")} {i.round_no}
-                          {i.collection_id
-                            ? t(" — Đã có bộ thu thập", " — Collection exists")
-                            : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {selectedInterview && (
-                    <div className="feedback-context">
-                      <strong>{selectedInterview.candidate_name}</strong>
-                      <p>
-                        {selectedInterview.position_name} ·{" "}
-                        {selectedInterview.unit_name} · {t("Vòng", "Round")}{" "}
-                        {selectedInterview.round_no}
-                      </p>
-                      <p>
-                        {selectedInterview.start_at
-                          ? new Date(selectedInterview.start_at).toLocaleString(
-                              t("vi-VN", "en-GB"),
-                            )
-                          : t("Chưa xếp lịch", "Not scheduled")}
-                      </p>
-                      <fieldset>
-                        <legend>
-                          {t(
-                            "Chọn ít nhất một người đang được phân công",
-                            "Select at least one currently assigned evaluator",
-                          )}
-                        </legend>
-                        {selectedInterview.participants.map((p) => (
-                          <label
-                            className="feedback-check"
-                            key={p.participant_id}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selected.includes(p.participant_id)}
-                              onChange={(e) => {
-                                createKey.current = null;
-                                setSelected(
-                                  e.target.checked
-                                    ? [...selected, p.participant_id]
-                                    : selected.filter(
-                                        (id) => id !== p.participant_id,
-                                      ),
-                                );
-                              }}
-                            />
-                            {p.evaluator_name}
-                          </label>
-                        ))}
-                      </fieldset>
-                    </div>
-                  )}
-                  <label className="feedback-field">
-                    {t("Mẫu câu hỏi đã xuất bản", "Published questionnaire")}
-                    <select
-                      required
-                      value={templateId}
-                      onChange={(e) => {
-                        setTemplateId(e.target.value);
-                        createKey.current = null;
-                      }}
-                    >
-                      <option value="">
-                        {t("Chọn mẫu", "Select a template")}
-                      </option>
-                      {templates.map((v) => (
-                        <option key={v.template_id} value={v.template_id}>
-                          {v.name} · v{v.version_no}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="feedback-field">
-                    {t(
-                      "Hạn phản hồi (không bắt buộc, giờ địa phương)",
-                      "Deadline (optional, local time)",
-                    )}
-                    <input
-                      type="datetime-local"
-                      value={deadline}
-                      onChange={(e) => {
-                        setDeadline(e.target.value);
-                        createKey.current = null;
-                      }}
-                    />
-                  </label>
-                  <p>
-                    {t(
-                      "Kiểm tra đúng ứng viên và vòng trước khi tạo. Thông báo chỉ được lưu chờ; chưa gửi email.",
-                      "Confirm the candidate and round before creating. Notifications are queued only; no email is sent.",
-                    )}
-                  </p>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    disabled={!validSelection}
-                    pending={busy}
-                  >
-                    {t(
-                      "Giao phiếu cho người chấm",
-                      "Assign forms to evaluators",
-                    )}
-                  </Button>
-                </fieldset>
-              </form>
-              <h2>{t("Phiên bản câu hỏi", "Questionnaire versions")}</h2>
-              <div className="feedback-actions">
-                <Button
-                  disabled={busy}
-                  onClick={() => {
-                    setPrevious(null);
-                    setQuestions(TRIAL_QUESTIONS.map((q) => ({ ...q })));
-                    setTemplateName(
-                      "Phiếu nhận xét phỏng vấn / Interview feedback",
-                    );
-                    publishKey.current = null;
-                    setEditor(true);
+              <details className="workflow-filters feedback-setup">
+                <summary>
+                  {t("Giao phiếu nhận xét", "Assign feedback forms")}
+                </summary>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void create();
                   }}
                 >
-                  {t("Tạo mẫu mới", "New template")}
-                </Button>
-                {templates.map((v) => (
+                  <fieldset disabled={busy} className="feedback-assignment">
+                    <legend>
+                      {t(
+                        "Vòng phỏng vấn và người đánh giá",
+                        "Interview round and evaluators",
+                      )}
+                    </legend>
+                    <label className="feedback-field">
+                      {t(
+                        "Ứng viên và vòng phỏng vấn",
+                        "Candidate and interview round",
+                      )}
+                      <select
+                        required
+                        value={interviewId}
+                        onChange={(e) => {
+                          setInterviewId(e.target.value);
+                          setSelected([]);
+                          createKey.current = null;
+                        }}
+                      >
+                        <option value="">
+                          {t("Chọn phỏng vấn", "Select an interview")}
+                        </option>
+                        {data.interviews.map((i) => (
+                          <option
+                            key={i.interview_id}
+                            value={i.interview_id}
+                            disabled={Boolean(i.collection_id)}
+                          >
+                            {i.candidate_name} · {i.position_name} ·{" "}
+                            {t("Vòng", "Round")} {i.round_no}
+                            {i.collection_id
+                              ? t(
+                                  " — Đã có bộ thu thập",
+                                  " — Collection exists",
+                                )
+                              : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {selectedInterview && (
+                      <div className="feedback-context">
+                        <strong>{selectedInterview.candidate_name}</strong>
+                        <p>
+                          {selectedInterview.position_name} ·{" "}
+                          {selectedInterview.unit_name} · {t("Vòng", "Round")}{" "}
+                          {selectedInterview.round_no}
+                        </p>
+                        <p>
+                          {selectedInterview.start_at
+                            ? new Date(
+                                selectedInterview.start_at,
+                              ).toLocaleString(t("vi-VN", "en-GB"))
+                            : t("Chưa xếp lịch", "Not scheduled")}
+                        </p>
+                        <fieldset>
+                          <legend>
+                            {t(
+                              "Chọn ít nhất một người đang được phân công",
+                              "Select at least one currently assigned evaluator",
+                            )}
+                          </legend>
+                          {selectedInterview.participants.map((p) => (
+                            <label
+                              className="feedback-check"
+                              key={p.participant_id}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selected.includes(p.participant_id)}
+                                onChange={(e) => {
+                                  createKey.current = null;
+                                  setSelected(
+                                    e.target.checked
+                                      ? [...selected, p.participant_id]
+                                      : selected.filter(
+                                          (id) => id !== p.participant_id,
+                                        ),
+                                  );
+                                }}
+                              />
+                              {p.evaluator_name}
+                            </label>
+                          ))}
+                        </fieldset>
+                      </div>
+                    )}
+                    <label className="feedback-field">
+                      {t("Mẫu câu hỏi đã xuất bản", "Published questionnaire")}
+                      <select
+                        required
+                        value={templateId}
+                        onChange={(e) => {
+                          setTemplateId(e.target.value);
+                          createKey.current = null;
+                        }}
+                      >
+                        <option value="">
+                          {t("Chọn mẫu", "Select a template")}
+                        </option>
+                        {templates.map((v) => (
+                          <option key={v.template_id} value={v.template_id}>
+                            {v.name} · v{v.version_no}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="feedback-field">
+                      {t(
+                        "Hạn phản hồi (không bắt buộc, giờ địa phương)",
+                        "Deadline (optional, local time)",
+                      )}
+                      <input
+                        type="datetime-local"
+                        value={deadline}
+                        onChange={(e) => {
+                          setDeadline(e.target.value);
+                          createKey.current = null;
+                        }}
+                      />
+                    </label>
+                    <p>
+                      {t(
+                        "Kiểm tra đúng ứng viên và vòng trước khi tạo. Thông báo chỉ được lưu chờ; chưa gửi email.",
+                        "Confirm the candidate and round before creating. Notifications are queued only; no email is sent.",
+                      )}
+                    </p>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={!validSelection}
+                      pending={busy}
+                    >
+                      {t(
+                        "Giao phiếu cho người chấm",
+                        "Assign forms to evaluators",
+                      )}
+                    </Button>
+                  </fieldset>
+                </form>
+              </details>
+              <details className="workflow-filters feedback-setup">
+                <summary>
+                  {t("Phiên bản câu hỏi", "Questionnaire versions")}
+                </summary>
+                <div className="feedback-actions">
                   <Button
-                    key={v.template_id}
                     disabled={busy}
                     onClick={() => {
-                      setPrevious(v.template_id);
-                      setTemplateName(v.name);
-                      setQuestions(v.questions.map((q) => ({ ...q })));
+                      setPrevious(null);
+                      setQuestions(TRIAL_QUESTIONS.map((q) => ({ ...q })));
+                      setTemplateName(
+                        "Phiếu nhận xét phỏng vấn / Interview feedback",
+                      );
                       publishKey.current = null;
                       setEditor(true);
                     }}
                   >
-                    {t("Phiên bản mới từ", "New version from")} {v.name} · v
-                    {v.version_no}
+                    {t("Tạo mẫu mới", "New template")}
                   </Button>
-                ))}
-              </div>
-              {editor && (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void publish();
-                  }}
-                  className="feedback-panel"
-                >
-                  <fieldset disabled={busy}>
-                    <legend>
-                      {t(
-                        "Xuất bản phiên bản bất biến",
-                        "Publish immutable version",
-                      )}
-                    </legend>
-                    <label className="feedback-field">
-                      {t("Tên mẫu", "Template name")}
-                      <input
-                        required
-                        maxLength={200}
-                        value={templateName}
-                        onChange={(e) => {
-                          setTemplateName(e.target.value);
-                          publishKey.current = null;
-                        }}
-                      />
-                    </label>
-                    {questions.map((q, index) => (
-                      <div key={q.key} className="feedback-question">
-                        <label
-                          className="feedback-field"
-                          htmlFor={`question-${q.key}`}
-                        >
-                          {t("Câu hỏi", "Question")} {index + 1}
-                          <textarea
-                            id={`question-${q.key}`}
-                            required
-                            maxLength={1000}
-                            value={q.label}
-                            onChange={(e) =>
-                              changeQuestion(index, { label: e.target.value })
-                            }
-                          />
-                        </label>
-                        <label className="feedback-check">
-                          <input
-                            type="checkbox"
-                            checked={q.required}
-                            onChange={(e) =>
-                              changeQuestion(index, {
-                                required: e.target.checked,
-                              })
-                            }
-                          />
-                          {t("Bắt buộc", "Required")}
-                        </label>
-                        <div className="feedback-actions">
-                          <Button
-                            type="button"
-                            disabled={index === 0}
-                            onClick={() => moveQuestion(index, -1)}
-                            aria-label={`${t("Lên", "Move up")} ${index + 1}`}
+                  {templates.map((v) => (
+                    <Button
+                      key={v.template_id}
+                      disabled={busy}
+                      onClick={() => {
+                        setPrevious(v.template_id);
+                        setTemplateName(v.name);
+                        setQuestions(v.questions.map((q) => ({ ...q })));
+                        publishKey.current = null;
+                        setEditor(true);
+                      }}
+                    >
+                      {t("Phiên bản mới từ", "New version from")} {v.name} · v
+                      {v.version_no}
+                    </Button>
+                  ))}
+                </div>
+                {editor && (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void publish();
+                    }}
+                    className="feedback-panel"
+                  >
+                    <fieldset disabled={busy}>
+                      <legend>
+                        {t(
+                          "Xuất bản phiên bản bất biến",
+                          "Publish immutable version",
+                        )}
+                      </legend>
+                      <label className="feedback-field">
+                        {t("Tên mẫu", "Template name")}
+                        <input
+                          required
+                          maxLength={200}
+                          value={templateName}
+                          onChange={(e) => {
+                            setTemplateName(e.target.value);
+                            publishKey.current = null;
+                          }}
+                        />
+                      </label>
+                      {questions.map((q, index) => (
+                        <div key={q.key} className="feedback-question">
+                          <label
+                            className="feedback-field"
+                            htmlFor={`question-${q.key}`}
                           >
-                            ↑
-                          </Button>
-                          <Button
-                            type="button"
-                            disabled={index === questions.length - 1}
-                            onClick={() => moveQuestion(index, 1)}
-                            aria-label={`${t("Xuống", "Move down")} ${index + 1}`}
-                          >
-                            ↓
-                          </Button>
-                          <Button
-                            type="button"
-                            disabled={questions.length === 1}
-                            onClick={() => {
-                              setQuestions(
-                                questions.filter((_, i) => i !== index),
-                              );
-                              publishKey.current = null;
-                            }}
-                          >
-                            {t("Xóa câu hỏi", "Remove question")} {index + 1}
-                          </Button>
+                            {t("Câu hỏi", "Question")} {index + 1}
+                            <textarea
+                              id={`question-${q.key}`}
+                              required
+                              maxLength={1000}
+                              value={q.label}
+                              onChange={(e) =>
+                                changeQuestion(index, { label: e.target.value })
+                              }
+                            />
+                          </label>
+                          <label className="feedback-check">
+                            <input
+                              type="checkbox"
+                              checked={q.required}
+                              onChange={(e) =>
+                                changeQuestion(index, {
+                                  required: e.target.checked,
+                                })
+                              }
+                            />
+                            {t("Bắt buộc", "Required")}
+                          </label>
+                          <div className="feedback-actions">
+                            <Button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => moveQuestion(index, -1)}
+                              aria-label={`${t("Lên", "Move up")} ${index + 1}`}
+                            >
+                              ↑
+                            </Button>
+                            <Button
+                              type="button"
+                              disabled={index === questions.length - 1}
+                              onClick={() => moveQuestion(index, 1)}
+                              aria-label={`${t("Xuống", "Move down")} ${index + 1}`}
+                            >
+                              ↓
+                            </Button>
+                            <Button
+                              type="button"
+                              disabled={questions.length === 1}
+                              onClick={() => {
+                                setQuestions(
+                                  questions.filter((_, i) => i !== index),
+                                );
+                                publishKey.current = null;
+                              }}
+                            >
+                              {t("Xóa câu hỏi", "Remove question")} {index + 1}
+                            </Button>
+                          </div>
                         </div>
+                      ))}
+                      <div className="feedback-actions">
+                        <Button
+                          type="button"
+                          disabled={questions.length >= 30}
+                          onClick={() => {
+                            setQuestions([
+                              ...questions,
+                              {
+                                key: `question_${crypto.randomUUID().replaceAll("-", "")}`,
+                                label: "",
+                                required: false,
+                              },
+                            ]);
+                            publishKey.current = null;
+                          }}
+                        >
+                          {t("Thêm câu hỏi", "Add question")}
+                        </Button>
+                        <Button type="submit" variant="primary" pending={busy}>
+                          {t("Xuất bản phiên bản", "Publish version")}
+                        </Button>
+                        <Button type="button" onClick={() => setEditor(false)}>
+                          {t("Hủy", "Cancel")}
+                        </Button>
                       </div>
-                    ))}
-                    <div className="feedback-actions">
-                      <Button
-                        type="button"
-                        disabled={questions.length >= 30}
-                        onClick={() => {
-                          setQuestions([
-                            ...questions,
-                            {
-                              key: `question_${crypto.randomUUID().replaceAll("-", "")}`,
-                              label: "",
-                              required: false,
-                            },
-                          ]);
-                          publishKey.current = null;
-                        }}
-                      >
-                        {t("Thêm câu hỏi", "Add question")}
-                      </Button>
-                      <Button type="submit" variant="primary" pending={busy}>
-                        {t("Xuất bản phiên bản", "Publish version")}
-                      </Button>
-                      <Button type="button" onClick={() => setEditor(false)}>
-                        {t("Hủy", "Cancel")}
-                      </Button>
-                    </div>
-                  </fieldset>
-                </form>
-              )}
+                    </fieldset>
+                  </form>
+                )}
+              </details>
               <h2>{t("Theo dõi phiếu nhận xét", "Feedback tracking")}</h2>
               <div className="feedback-table-scroll">
                 <table>

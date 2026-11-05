@@ -181,7 +181,8 @@ test("HR Report production CSS and table source preserve exact v1.8 geometry", (
   assert.match(css, /--badge-width-interview-operational/);
   assert.match(css, /scroll-margin-inline-start:\s*300px/);
   assert.doesNotMatch(css, /overflow-wrap:\s*anywhere/);
-  assert.doesNotMatch(css, /-webkit-line-clamp/);
+  const desktopCss = css.split("@media (max-width: 640px)")[0];
+  assert.doesNotMatch(desktopCss, /-webkit-line-clamp/);
   assert.doesNotMatch(css, /!important/);
 
   assert.match(view, /<colgroup>/);

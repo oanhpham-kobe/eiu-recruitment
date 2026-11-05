@@ -707,77 +707,91 @@ export function HrReportView({
           </Button>
         </div>
 
-        <div className={styles.filterGroup}>
-          <label htmlFor="hr-report-status-filter">
-            {t("Trạng thái", "Status")}
-          </label>
-          <select
-            id="hr-report-status-filter"
-            value={filters.status ?? ""}
-            disabled={pending}
-            onChange={(event) =>
-              void applyFilters({
-                ...filters,
-                page: 1,
-                status: event.target.value
-                  ? (event.target.value as HrReportFilters["status"])
-                  : null,
-              })
-            }
-          >
-            <option value="">{t("Tất cả", "All")}</option>
-            {HR_REPORT_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {HR_REPORT_STATUS_LABELS[status][locale]}
-              </option>
-            ))}
-          </select>
-        </div>
+        <details className="workflow-filters">
+          <summary>
+            {t("Bộ lọc báo cáo", "Report filters")}
+            {filters.status || filters.visibility !== "ALL"
+              ? t(" · Đang áp dụng", " · Active")
+              : ""}
+          </summary>
+          <div className="workflow-filters__body">
+            <div className={styles.filterGroup}>
+              <label htmlFor="hr-report-status-filter">
+                {t("Trạng thái", "Status")}
+              </label>
+              <select
+                id="hr-report-status-filter"
+                value={filters.status ?? ""}
+                disabled={pending}
+                onChange={(event) =>
+                  void applyFilters({
+                    ...filters,
+                    page: 1,
+                    status: event.target.value
+                      ? (event.target.value as HrReportFilters["status"])
+                      : null,
+                  })
+                }
+              >
+                <option value="">{t("Tất cả", "All")}</option>
+                {HR_REPORT_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {HR_REPORT_STATUS_LABELS[status][locale]}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className={styles.filterGroup}>
-          <label htmlFor="hr-report-visibility-filter">
-            {t("Hiển thị", "Visibility")}
-          </label>
-          <select
-            id="hr-report-visibility-filter"
-            value={filters.visibility}
-            disabled={pending}
-            onChange={(event) =>
-              void applyFilters({
-                ...filters,
-                page: 1,
-                visibility: event.target.value as HrReportFilters["visibility"],
-              })
-            }
-          >
-            <option value="ALL">{t("Tất cả", "All")}</option>
-            <option value="VISIBLE">{t("Đang hiển thị", "Visible")}</option>
-            <option value="HIDDEN">{t("Đang ẩn", "Hidden")}</option>
-          </select>
-        </div>
+            <div className={styles.filterGroup}>
+              <label htmlFor="hr-report-visibility-filter">
+                {t("Hiển thị", "Visibility")}
+              </label>
+              <select
+                id="hr-report-visibility-filter"
+                value={filters.visibility}
+                disabled={pending}
+                onChange={(event) =>
+                  void applyFilters({
+                    ...filters,
+                    page: 1,
+                    visibility: event.target
+                      .value as HrReportFilters["visibility"],
+                  })
+                }
+              >
+                <option value="ALL">{t("Tất cả", "All")}</option>
+                <option value="VISIBLE">{t("Đang hiển thị", "Visible")}</option>
+                <option value="HIDDEN">{t("Đang ẩn", "Hidden")}</option>
+              </select>
+            </div>
 
-        <div className={styles.filterGroup}>
-          <label htmlFor="hr-report-sort">{t("Sắp xếp", "Sort")}</label>
-          <select
-            id="hr-report-sort"
-            value={filters.sort}
-            disabled={pending}
-            onChange={(event) =>
-              void applyFilters({
-                ...filters,
-                page: 1,
-                sort: event.target.value as HrReportFilters["sort"],
-              })
-            }
-          >
-            <option value="CANDIDATE_ASC">{t("Tên A–Z", "Name A–Z")}</option>
-            <option value="CANDIDATE_DESC">{t("Tên Z–A", "Name Z–A")}</option>
-            <option value="UPDATED_DESC">
-              {t("Mới cập nhật", "Recently updated")}
-            </option>
-          </select>
-        </div>
-
+            <div className={styles.filterGroup}>
+              <label htmlFor="hr-report-sort">{t("Sắp xếp", "Sort")}</label>
+              <select
+                id="hr-report-sort"
+                value={filters.sort}
+                disabled={pending}
+                onChange={(event) =>
+                  void applyFilters({
+                    ...filters,
+                    page: 1,
+                    sort: event.target.value as HrReportFilters["sort"],
+                  })
+                }
+              >
+                <option value="CANDIDATE_ASC">
+                  {t("Tên A–Z", "Name A–Z")}
+                </option>
+                <option value="CANDIDATE_DESC">
+                  {t("Tên Z–A", "Name Z–A")}
+                </option>
+                <option value="UPDATED_DESC">
+                  {t("Mới cập nhật", "Recently updated")}
+                </option>
+              </select>
+            </div>
+          </div>
+        </details>
         <div
           className={styles.selectionSummary}
           role="status"

@@ -276,3 +276,43 @@
     display: none;
   }
 }
+
+.feedback-page h1 {
+  margin: 0;
+}
+.feedback-assignment {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px 20px;
+}
+.feedback-assignment > .feedback-field {
+  margin: 0;
+}
+.feedback-assignment > div,
+.feedback-assignment > p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.feedback-page > header p {
+  margin: 8px 0 20px;
+  color: var(--ink-600);
+}
+.feedback-assignment > button {
+  justify-self: start;
+}
+.feedback-assignment input[type="datetime-local"] {
+  max-width: 320px;
+}
+@media (max-width: 640px) {
+  .feedback-assignment {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.feedback-setup {
+  margin-bottom: 12px;
+}
+.feedback-setup > form,
+.feedback-setup > .feedback-actions {
+  margin: 12px;
+}

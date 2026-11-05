@@ -23,6 +23,7 @@ import {
   SubmissionDetailDrawer,
   type SubmissionDetailDrawerProps,
 } from "@/components/inbox/SubmissionDetailDrawer";
+import { StatusMenu } from "@/components/ui/StatusMenu";
 import {
   APPLICATION_INBOX_COLUMNS,
   APPLICATION_INBOX_PAGE_SIZES,
@@ -706,72 +707,81 @@ export function ApplicationInboxTable({
             ))}
           </select>
         </label>
-        <label>
-          Từ ngày ứng tuyển
-          <input
-            type="date"
-            value={filters.dateFrom}
-            onChange={(event) =>
-              updateFilters({ dateFrom: event.target.value })
-            }
-          />
-        </label>
-        <label>
-          Đến ngày ứng tuyển
-          <input
-            type="date"
-            value={filters.dateTo}
-            onChange={(event) => updateFilters({ dateTo: event.target.value })}
-          />
-        </label>
-        <label>
-          Tài khoản Candidate
-          <select
-            value={filters.candidateActivity}
-            onChange={(event) =>
-              updateFilters({
-                candidateActivity: event.target
-                  .value as ApplicationInboxFilters["candidateActivity"],
-              })
-            }
-          >
-            <option value="ALL">Tất cả tài khoản</option>
-            <option value="ACTIVE">Đang hoạt động</option>
-            <option value="INACTIVE">Đã ngừng hoạt động</option>
-          </select>
-        </label>
-        <label>
-          Mới / đã đọc
-          <select
-            value={filters.newRead}
-            onChange={(event) =>
-              updateFilters({
-                newRead: event.target
-                  .value as ApplicationInboxFilters["newRead"],
-              })
-            }
-          >
-            <option value="ALL">Tất cả</option>
-            <option value="NEW">Mới</option>
-            <option value="READ">Đã đọc</option>
-          </select>
-        </label>
-        <label>
-          Application
-          <select
-            value={filters.application}
-            onChange={(event) =>
-              updateFilters({
-                application: event.target
-                  .value as ApplicationInboxFilters["application"],
-              })
-            }
-          >
-            <option value="ALL">Tất cả</option>
-            <option value="HAS_APPLICATION">Đã có Application</option>
-            <option value="NO_APPLICATION">Chưa có Application</option>
-          </select>
-        </label>
+        <details className="workflow-filters">
+          <summary>
+            Bộ lọc khác{hasActiveFilters(filters) ? " · Đang áp dụng" : ""}
+          </summary>
+          <div className="workflow-filters__body">
+            <label>
+              Từ ngày ứng tuyển
+              <input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(event) =>
+                  updateFilters({ dateFrom: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Đến ngày ứng tuyển
+              <input
+                type="date"
+                value={filters.dateTo}
+                onChange={(event) =>
+                  updateFilters({ dateTo: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Tài khoản Candidate
+              <select
+                value={filters.candidateActivity}
+                onChange={(event) =>
+                  updateFilters({
+                    candidateActivity: event.target
+                      .value as ApplicationInboxFilters["candidateActivity"],
+                  })
+                }
+              >
+                <option value="ALL">Tất cả tài khoản</option>
+                <option value="ACTIVE">Đang hoạt động</option>
+                <option value="INACTIVE">Đã ngừng hoạt động</option>
+              </select>
+            </label>
+            <label>
+              Mới / đã đọc
+              <select
+                value={filters.newRead}
+                onChange={(event) =>
+                  updateFilters({
+                    newRead: event.target
+                      .value as ApplicationInboxFilters["newRead"],
+                  })
+                }
+              >
+                <option value="ALL">Tất cả</option>
+                <option value="NEW">Mới</option>
+                <option value="READ">Đã đọc</option>
+              </select>
+            </label>
+            <label>
+              Application
+              <select
+                value={filters.application}
+                onChange={(event) =>
+                  updateFilters({
+                    application: event.target
+                      .value as ApplicationInboxFilters["application"],
+                  })
+                }
+              >
+                <option value="ALL">Tất cả</option>
+                <option value="HAS_APPLICATION">Đã có Application</option>
+                <option value="NO_APPLICATION">Chưa có Application</option>
+              </select>
+            </label>
+          </div>
+        </details>
         {hasActiveFilters(filters) && (
           <button
             type="button"
@@ -801,18 +811,22 @@ export function ApplicationInboxTable({
         </div>
       )}
 
-      <section
+      <details
+        open={selectedTokens.size > 0}
         className="application-inbox__bulk-toolbar"
         aria-label="Thao tác hàng loạt"
       >
-        <span
-          ref={selectionStatusRef}
-          tabIndex={-1}
-          className="application-inbox__selection-count"
-          aria-live="polite"
-        >
-          {selectedTokens.size} Candidate được chọn
-        </span>
+        <summary>
+          Thao tác ·
+          <span
+            ref={selectionStatusRef}
+            tabIndex={-1}
+            className="application-inbox__selection-count"
+            aria-live="polite"
+          >
+            {selectedTokens.size} Candidate được chọn
+          </span>
+        </summary>
         <div
           role="status"
           aria-live="polite"
@@ -821,26 +835,19 @@ export function ApplicationInboxTable({
           {selectionNotice}
         </div>
         <div className="application-inbox__bulk-actions">
-          <button
-            type="button"
-            className="btn-secondary application-inbox__bulk-btn"
+          <StatusMenu
+            label="Trạng thái đã chọn"
+            options={[
+              { value: "NEW", label: "Đánh dấu Mới" },
+              { value: "READ", label: "Đánh dấu Đã đọc" },
+            ]}
             disabled={
               selectedTokens.size === 0 || isPending || isBulkActionPending
             }
-            onClick={() => handleBulkSetStatus("NEW")}
-          >
-            Đánh dấu Mới
-          </button>
-          <button
-            type="button"
-            className="btn-secondary application-inbox__bulk-btn"
-            disabled={
-              selectedTokens.size === 0 || isPending || isBulkActionPending
+            onSelect={(value) =>
+              void handleBulkSetStatus(value as "NEW" | "READ")
             }
-            onClick={() => handleBulkSetStatus("READ")}
-          >
-            Đánh dấu Đã đọc
-          </button>
+          />
           <button
             ref={inactiveTriggerRef}
             type="button"
@@ -863,7 +870,7 @@ export function ApplicationInboxTable({
             Kích hoạt lại
           </button>
         </div>
-      </section>
+      </details>
 
       <div className="application-inbox__table-scroll">
         <table className="application-inbox__table">

@@ -21,9 +21,11 @@ import {
   searchApplicationOptionsAction,
   searchSubmissionOptionsAction,
 } from "@/app/interviews/actions";
+import { useAppLocale } from "@/components/shell/LocaleProvider";
 import { AsyncStatus } from "@/components/ui/AsyncStatus";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
+import { RowActions } from "@/components/ui/RowActions";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { StatusMenu } from "@/components/ui/StatusMenu";
 import { TableScrollContainer } from "@/components/ui/TableScrollContainer";
@@ -97,11 +99,20 @@ export function InterviewPage({
   initialData: InterviewPageData;
   initialActivity?: InterviewPageFilters["activity"];
 }) {
+  const { locale } = useAppLocale();
+  const t = (vi: string, en: string) => (locale === "vi" ? vi : en);
   const [data, setData] = useState(initialData);
   const [filters, setFilters] = useState<InterviewPageFilters>({
     ...INITIAL_INTERVIEW_FILTERS,
     activity: initialActivity,
   });
+  const [appliedFilters, setAppliedFilters] = useState<InterviewPageFilters>({
+    ...INITIAL_INTERVIEW_FILTERS,
+    activity: initialActivity,
+  });
+  const hasAppliedFilters =
+    JSON.stringify(appliedFilters) !==
+    JSON.stringify({ ...INITIAL_INTERVIEW_FILTERS, activity: initialActivity });
   const [expandedApplicationId, setExpandedApplicationId] = useState<
     string | null
   >(null);
@@ -248,6 +259,7 @@ export function InterviewPage({
         page: 1,
       });
       setData(nextData);
+      setAppliedFilters(next);
       setExpandedApplicationId(null);
       setEmailSelectedInterviewIds(new Set());
     } catch {
@@ -383,9 +395,12 @@ export function InterviewPage({
     <section className="interview-page" aria-labelledby="interview-page-title">
       <div className="interview-page-heading">
         <div>
-          <h1 id="interview-page-title">Lịch phỏng vấn / Interviews</h1>
+          <h1 id="interview-page-title">{t("Lịch phỏng vấn", "Interviews")}</h1>
           <p>
-            Quản lý Application, vòng phỏng vấn, logistics và người tham dự.
+            {t(
+              "Lịch hẹn, vòng phỏng vấn và người tham dự.",
+              "Appointments, interview rounds and participants.",
+            )}
           </p>
         </div>
       </div>
@@ -417,8 +432,7 @@ export function InterviewPage({
           </Button>
         ) : null}
         {data.permissions.canManage &&
-        selected &&
-        selected.application.isActive &&
+        selected?.application.isActive &&
         selected.round.isActive &&
         isLatestRound(selected.application, selected.round) ? (
           <Button
@@ -430,8 +444,7 @@ export function InterviewPage({
           </Button>
         ) : null}
         {data.permissions.canChangeStatus &&
-        selected &&
-        selected.application.isActive &&
+        selected?.application.isActive &&
         selected.round.isActive ? (
           <StatusMenu
             label={`Đổi status: ${INTERVIEW_STATUS_LABEL[selected.round.scheduleStatus]}`}
@@ -447,255 +460,273 @@ export function InterviewPage({
         ) : null}
       </fieldset>
 
-      <fieldset className="interview-filters">
-        <legend className="sr-only">Bộ lọc Interview</legend>
-        <label>
-          Tìm Tên / Email / SĐT
-          <input
-            value={filters.query}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                query: event.target.value,
-              }))
-            }
-            onKeyDown={(event) => {
-              if (event.key === "Enter") void applyFilters(filters);
+      <details className="workflow-filters">
+        <summary>
+          Bộ lọc phỏng vấn{hasAppliedFilters ? " · Đang áp dụng" : ""}
+        </summary>
+        <fieldset className="interview-filters">
+          <legend className="sr-only">Bộ lọc Interview</legend>
+          <label>
+            Tìm Tên / Email / SĐT
+            <input
+              value={filters.query}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  query: event.target.value,
+                }))
+              }
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void applyFilters(filters);
+              }}
+              autoComplete="off"
+            />
+          </label>
+          <label>
+            Hiển thị
+            <select
+              value={filters.activity}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  activity: event.target
+                    .value as InterviewPageFilters["activity"],
+                }))
+              }
+            >
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="ALL">All</option>
+            </select>
+          </label>
+          <label>
+            Khoa / Phòng
+            <select
+              value={filters.unitId}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  unitId: event.target.value,
+                  departmentTeamId: "",
+                  positionId: "",
+                }))
+              }
+            >
+              <option value="">Tất cả</option>
+              {data.filterUnits.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Ngành / Tổ
+            <select
+              value={filters.departmentTeamId}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  departmentTeamId: event.target.value,
+                  positionId: "",
+                }))
+              }
+            >
+              <option value="">Tất cả</option>
+              {data.filterTeams
+                .filter(
+                  (option) =>
+                    !filters.unitId || option.unitId === filters.unitId,
+                )
+                .map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Vị trí
+            <select
+              value={filters.positionId}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  positionId: event.target.value,
+                }))
+              }
+            >
+              <option value="">Tất cả</option>
+              {data.filterPositions
+                .filter(
+                  (option) =>
+                    (!filters.unitId || option.unitId === filters.unitId) &&
+                    (!filters.departmentTeamId ||
+                      option.departmentTeamId === filters.departmentTeamId),
+                )
+                .map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Schedule Status
+            <select
+              value={filters.scheduleStatus}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  scheduleStatus: event.target
+                    .value as InterviewPageFilters["scheduleStatus"],
+                }))
+              }
+            >
+              <option value="">Tất cả</option>
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Từ ngày
+            <input
+              type="date"
+              value={filters.dateFrom}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  dateFrom: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label>
+            Đến ngày
+            <input
+              type="date"
+              min={filters.dateFrom || undefined}
+              value={filters.dateTo}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  dateTo: event.target.value,
+                }))
+              }
+            />
+          </label>
+          <label>
+            Địa điểm
+            <select
+              value={filters.location}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  location: event.target.value,
+                }))
+              }
+            >
+              <option value="">Tất cả</option>
+              <option value="ONLINE">Online / Meeting Link</option>
+              {data.rooms.map((room) => (
+                <option key={room.id} value={`ROOM:${room.id}`}>
+                  {room.name}
+                  {room.building ? ` — ${room.building}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Hình thức
+            <select
+              value={filters.interviewFormatId}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  interviewFormatId: event.target.value,
+                }))
+              }
+            >
+              <option value="">Tất cả</option>
+              {data.formats.map((format) => (
+                <option key={format.id} value={format.id}>
+                  {format.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Participant
+            <select
+              value={filters.participantAppUserId}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  participantAppUserId: event.target.value,
+                }))
+              }
+            >
+              <option value="">Tất cả</option>
+              {data.participantUsers.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} — {user.email}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            HR phụ trách
+            <select
+              value={filters.hrOwnerId}
+              onChange={(event) =>
+                setFilters((current) => ({
+                  ...current,
+                  hrOwnerId: event.target.value,
+                }))
+              }
+            >
+              <option value="">Tất cả</option>
+              {data.filterHrOwners.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} — {user.email}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button pending={busy} onClick={() => void applyFilters(filters)}>
+            Áp dụng
+          </Button>
+          <Button
+            variant="ghost"
+            disabled={busy}
+            onClick={() => {
+              const reset = {
+                ...INITIAL_INTERVIEW_FILTERS,
+                activity: initialActivity,
+              };
+              setFilters(reset);
+              void applyFilters(reset);
             }}
-            autoComplete="off"
-          />
-        </label>
-        <label>
-          Hiển thị
-          <select
-            value={filters.activity}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                activity: event.target
-                  .value as InterviewPageFilters["activity"],
-              }))
-            }
           >
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="ALL">All</option>
-          </select>
-        </label>
-        <label>
-          Khoa / Phòng
-          <select
-            value={filters.unitId}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                unitId: event.target.value,
-                departmentTeamId: "",
-                positionId: "",
-              }))
-            }
-          >
-            <option value="">Tất cả</option>
-            {data.filterUnits.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Ngành / Tổ
-          <select
-            value={filters.departmentTeamId}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                departmentTeamId: event.target.value,
-                positionId: "",
-              }))
-            }
-          >
-            <option value="">Tất cả</option>
-            {data.filterTeams
-              .filter(
-                (option) => !filters.unitId || option.unitId === filters.unitId,
-              )
-              .map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-          </select>
-        </label>
-        <label>
-          Vị trí
-          <select
-            value={filters.positionId}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                positionId: event.target.value,
-              }))
-            }
-          >
-            <option value="">Tất cả</option>
-            {data.filterPositions
-              .filter(
-                (option) =>
-                  (!filters.unitId || option.unitId === filters.unitId) &&
-                  (!filters.departmentTeamId ||
-                    option.departmentTeamId === filters.departmentTeamId),
-              )
-              .map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-          </select>
-        </label>
-        <label>
-          Schedule Status
-          <select
-            value={filters.scheduleStatus}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                scheduleStatus: event.target
-                  .value as InterviewPageFilters["scheduleStatus"],
-              }))
-            }
-          >
-            <option value="">Tất cả</option>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Từ ngày
-          <input
-            type="date"
-            value={filters.dateFrom}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                dateFrom: event.target.value,
-              }))
-            }
-          />
-        </label>
-        <label>
-          Đến ngày
-          <input
-            type="date"
-            min={filters.dateFrom || undefined}
-            value={filters.dateTo}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                dateTo: event.target.value,
-              }))
-            }
-          />
-        </label>
-        <label>
-          Địa điểm
-          <select
-            value={filters.location}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                location: event.target.value,
-              }))
-            }
-          >
-            <option value="">Tất cả</option>
-            <option value="ONLINE">Online / Meeting Link</option>
-            {data.rooms.map((room) => (
-              <option key={room.id} value={`ROOM:${room.id}`}>
-                {room.name}
-                {room.building ? ` — ${room.building}` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Hình thức
-          <select
-            value={filters.interviewFormatId}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                interviewFormatId: event.target.value,
-              }))
-            }
-          >
-            <option value="">Tất cả</option>
-            {data.formats.map((format) => (
-              <option key={format.id} value={format.id}>
-                {format.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Participant
-          <select
-            value={filters.participantAppUserId}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                participantAppUserId: event.target.value,
-              }))
-            }
-          >
-            <option value="">Tất cả</option>
-            {data.participantUsers.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name} — {user.email}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          HR phụ trách
-          <select
-            value={filters.hrOwnerId}
-            onChange={(event) =>
-              setFilters((current) => ({
-                ...current,
-                hrOwnerId: event.target.value,
-              }))
-            }
-          >
-            <option value="">Tất cả</option>
-            {data.filterHrOwners.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name} — {user.email}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button pending={busy} onClick={() => void applyFilters(filters)}>
-          Áp dụng
-        </Button>
+            Xóa lọc
+          </Button>
+        </fieldset>
+      </details>
+      {hasAppliedFilters && (
         <Button
-          variant="ghost"
-          disabled={busy}
-          onClick={() => {
-            const reset = {
+          onClick={() =>
+            void applyFilters({
               ...INITIAL_INTERVIEW_FILTERS,
               activity: initialActivity,
-            };
-            setFilters(reset);
-            void applyFilters(reset);
-          }}
+            })
+          }
         >
-          Xóa lọc
+          Xóa bộ lọc đang áp dụng
         </Button>
-      </fieldset>
+      )}
 
       {feedback ? (
         <AsyncStatus kind={feedback.kind}>{feedback.message}</AsyncStatus>
@@ -712,7 +743,9 @@ export function InterviewPage({
           </colgroup>
           <thead>
             <tr>
-              <th scope="col">Chọn</th>
+              <th scope="col">
+                <span className="sr-only">Chọn</span>
+              </th>
               <th scope="col">Ứng viên / Application</th>
               <th scope="col">Thời gian</th>
               <th scope="col">Địa điểm</th>
@@ -1151,43 +1184,45 @@ function ApplicationRows({
         <td data-label="Action">
           <div className="interview-row-actions">
             {latest ? (
-              <>
-                <Button
-                  variant="ghost"
-                  onClick={() => onOpen(latest.interviewId)}
-                >
-                  Mở
-                </Button>
+              <Button
+                variant="ghost"
+                onClick={() => onOpen(latest.interviewId)}
+              >
+                Mở
+              </Button>
+            ) : null}
+            <RowActions>
+              {latest && (
                 <InterviewRowEmailActions
                   application={application}
                   round={latest}
                   disabled={busy}
                 />
-              </>
-            ) : null}
-            {canManage && canCreateNextRound(application) ? (
-              <Button variant="ghost" disabled={busy} onClick={onCreateNext}>
-                + Vòng
-              </Button>
-            ) : null}
-            {!application.isActive && canReactivateApplication ? (
-              <Button
-                variant="ghost"
-                disabled={busy}
-                onClick={onReactivateApplication}
-              >
-                Reactivate App
-              </Button>
-            ) : null}
-            {canDeleteApplication ? (
-              <Button
-                variant="ghost"
-                disabled={busy}
-                onClick={onDeleteApplication}
-              >
-                Xóa App
-              </Button>
-            ) : null}
+              )}
+              {canManage && canCreateNextRound(application) ? (
+                <Button variant="ghost" disabled={busy} onClick={onCreateNext}>
+                  + Vòng
+                </Button>
+              ) : null}
+              {!application.isActive && canReactivateApplication ? (
+                <Button
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={onReactivateApplication}
+                >
+                  Reactivate App
+                </Button>
+              ) : null}
+              {canDeleteApplication ? (
+                <Button
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={onDeleteApplication}
+                >
+                  Xóa App
+                </Button>
+              ) : null}
+            </RowActions>
           </div>
         </td>
       </tr>
@@ -1231,19 +1266,21 @@ function ApplicationRows({
                   >
                     Chi tiết
                   </Button>
-                  <InterviewRowEmailActions
-                    application={application}
-                    round={round}
-                    disabled={busy}
-                  />
-                  {canManage && application.isActive && round.isActive ? (
-                    <Button
-                      variant="ghost"
-                      onClick={() => onCopy(round.interviewId)}
-                    >
-                      Copy
-                    </Button>
-                  ) : null}
+                  <RowActions>
+                    <InterviewRowEmailActions
+                      application={application}
+                      round={round}
+                      disabled={busy}
+                    />
+                    {canManage && application.isActive && round.isActive ? (
+                      <Button
+                        variant="ghost"
+                        onClick={() => onCopy(round.interviewId)}
+                      >
+                        Copy
+                      </Button>
+                    ) : null}
+                  </RowActions>
                 </div>
               </td>
             </tr>

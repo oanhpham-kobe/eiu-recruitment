@@ -12,6 +12,7 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
   }
 
   const browserBundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/application-inbox-bulk-harness.tsx"],
@@ -114,10 +115,16 @@ test("Application Inbox bulk toolbar reflects reactive selection count, disables
       "0 Candidate được chọn",
     );
 
-    const markNewBtn = page.getByRole("button", { name: "Đánh dấu Mới" });
-    const markReadBtn = page.getByRole("button", { name: "Đánh dấu Đã đọc" });
-    const inactiveBtn = page.getByRole("button", { name: "Ngừng hoạt động" });
-    const reactivateBtn = page.getByRole("button", { name: "Kích hoạt lại" });
+    const markNewBtn = statusAction(page, "NEW");
+    const markReadBtn = statusAction(page, "READ");
+    const inactiveBtn = page.getByRole("button", {
+      name: "Ngừng hoạt động",
+      includeHidden: true,
+    });
+    const reactivateBtn = page.getByRole("button", {
+      name: "Kích hoạt lại",
+      includeHidden: true,
+    });
 
     // All 4 bulk buttons must be disabled when 0 candidates are selected
     assert.equal(await markNewBtn.isDisabled(), true);
@@ -199,7 +206,7 @@ test("Application Inbox bulk Mark NEW/READ forwards row-bound tokens and blocks 
     });
     await cand3Checkbox.click();
 
-    const markNewBtn = page.getByRole("button", { name: "Đánh dấu Mới" });
+    const markNewBtn = statusAction(page, "NEW");
     await markNewBtn.click();
 
     // Client guard blocks submission and shows accessible alert
@@ -222,7 +229,7 @@ test("Application Inbox bulk Mark NEW/READ forwards row-bound tokens and blocks 
       .getByRole("checkbox", { name: "Chọn Candidate Trần Minh Bình" })
       .click();
 
-    const markReadBtn = page.getByRole("button", { name: "Đánh dấu Đã đọc" });
+    const markReadBtn = statusAction(page, "READ");
     await markReadBtn.click();
 
     // Verify success banner and action payload with exact row-bound tokens
@@ -337,7 +344,7 @@ test("Application Inbox bulk Mark NEW/READ forwards row-bound tokens and blocks 
     await dungCheckbox.click();
 
     // Mark READ on candidate with historical inactive application succeeds (not blocked)
-    const markReadBtn2 = page2.getByRole("button", { name: "Đánh dấu Đã đọc" });
+    const markReadBtn2 = statusAction(page2, "READ");
     await markReadBtn2.click();
 
     const successBanner = page2.locator(
@@ -379,7 +386,10 @@ test("Application Inbox bulk Inactive opens accessible confirmation dialog, trap
       .getByRole("checkbox", { name: "Chọn Candidate Nguyễn Thị An" })
       .click();
 
-    const inactiveBtn = page.getByRole("button", { name: "Ngừng hoạt động" });
+    const inactiveBtn = page.getByRole("button", {
+      name: "Ngừng hoạt động",
+      includeHidden: true,
+    });
     await inactiveBtn.focus();
     await inactiveBtn.click();
 
@@ -560,7 +570,10 @@ test("Application Inbox bulk Reactivate executes action and error banner renders
       .getByRole("checkbox", { name: "Chọn Candidate Lê Văn Cường" })
       .click();
 
-    const reactivateBtn = page.getByRole("button", { name: "Kích hoạt lại" });
+    const reactivateBtn = page.getByRole("button", {
+      name: "Kích hoạt lại",
+      includeHidden: true,
+    });
     await reactivateBtn.click();
 
     // Success status
@@ -668,7 +681,7 @@ test("Application Inbox selection scope resets on filter change with accessible 
     );
 
     // Bulk buttons are disabled
-    const markNewBtn = page.getByRole("button", { name: "Đánh dấu Mới" });
+    const markNewBtn = statusAction(page, "NEW");
     assert.equal(await markNewBtn.isDisabled(), true);
 
     // 4. Reset filter
@@ -702,7 +715,7 @@ test("Application Inbox selection scope resets on filter change with accessible 
     );
 
     // 6. Bulk Mark READ submits exact announced selection (2 items)
-    const markReadBtn = page.getByRole("button", { name: "Đánh dấu Đã đọc" });
+    const markReadBtn = statusAction(page, "READ");
     await markReadBtn.click();
 
     const statusBanner = page.locator(
@@ -810,7 +823,7 @@ test("Application Inbox drawer observed server updates (NEW->READ on open and HR
     assert.equal(await checkbox.isChecked(), true);
 
     // 7. Execute bulk Mark READ
-    const markReadBtn = page.getByRole("button", { name: "Đánh dấu Đã đọc" });
+    const markReadBtn = statusAction(page, "READ");
     await markReadBtn.click();
 
     const statusBanner = page.locator(
@@ -906,7 +919,7 @@ test("Opening a submission that fails detail load does NOT increment version in 
     assert.equal(await checkbox.isChecked(), true);
 
     // Execute bulk Mark READ
-    const markReadBtn = page.getByRole("button", { name: "Đánh dấu Đã đọc" });
+    const markReadBtn = statusAction(page, "READ");
     await markReadBtn.click();
 
     const statusBanner = page.locator(
@@ -1015,10 +1028,16 @@ test("Application Inbox bulk toolbar and table render and operate correctly at r
     );
 
     // Verify touch targets >= 44x44px for bulk buttons at 768px
-    const markReadBtn = page.getByRole("button", { name: "Đánh dấu Đã đọc" });
-    const markNewBtn = page.getByRole("button", { name: "Đánh dấu Mới" });
-    const inactiveBtn = page.getByRole("button", { name: "Ngừng hoạt động" });
-    const reactivateBtn = page.getByRole("button", { name: "Kích hoạt lại" });
+    const markReadBtn = statusAction(page, "READ");
+    const markNewBtn = statusAction(page, "NEW");
+    const inactiveBtn = page.getByRole("button", {
+      name: "Ngừng hoạt động",
+      includeHidden: true,
+    });
+    const reactivateBtn = page.getByRole("button", {
+      name: "Kích hoạt lại",
+      includeHidden: true,
+    });
 
     for (const btn of [markReadBtn, markNewBtn, inactiveBtn, reactivateBtn]) {
       const box = await btn.boundingBox();
@@ -1055,3 +1074,25 @@ test("Application Inbox bulk toolbar and table render and operate correctly at r
     await browser?.close();
   }
 });
+
+function statusAction(page: Page, value: "NEW" | "READ") {
+  const trigger = page.getByRole("button", {
+    name: "Trạng thái đã chọn",
+    exact: true,
+    includeHidden: true,
+  });
+  return {
+    boundingBox: () => trigger.boundingBox(),
+    isDisabled: () => trigger.isDisabled(),
+    isEnabled: () => trigger.isEnabled(),
+    click: async () => {
+      await trigger.click();
+      await page
+        .getByRole("menuitemradio", {
+          name: value === "NEW" ? "Đánh dấu Mới" : "Đánh dấu Đã đọc",
+          exact: true,
+        })
+        .click();
+    },
+  };
+}

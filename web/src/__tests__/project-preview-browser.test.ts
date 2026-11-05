@@ -73,7 +73,7 @@ test("Project trial guide switches roles, opens every catalog and exports readab
     for (const value of values) {
       await catalog.selectOption(value);
       await page
-        .getByRole("button", { name: "+ Thêm mới / Create New", exact: true })
+        .getByRole("button", { name: "+ Thêm mới", exact: true })
         .click();
       const dialog = page.getByRole("dialog");
       await dialog
@@ -104,7 +104,7 @@ test("Project trial guide switches roles, opens every catalog and exports readab
     }
     await route(page, "/users");
     const createUser = page.getByRole("button", {
-      name: "+ Thêm người dùng / Add User",
+      name: "+ Thêm người dùng",
       exact: true,
     });
     for (const viewport of [
@@ -132,7 +132,7 @@ test("Project trial guide switches roles, opens every catalog and exports readab
       await page.waitForFunction(
         () =>
           document.activeElement?.tagName === "BUTTON" &&
-          document.activeElement?.textContent?.includes("Add User"),
+          document.activeElement?.textContent?.includes("Thêm người dùng"),
       );
       assert.equal(
         await createUser.evaluate((el) => el === document.activeElement),
@@ -141,6 +141,40 @@ test("Project trial guide switches roles, opens every catalog and exports readab
       );
     }
     await page.setViewportSize({ width: 1440, height: 900 });
+    const more = page.locator(".users-table button[popovertarget]").first();
+    await more.focus();
+    await page.keyboard.press("Enter");
+    const actions = page.locator(".ui-row-actions:popover-open");
+    await actions.waitFor();
+    const bounds = await actions.boundingBox();
+    assert.ok(
+      bounds &&
+        bounds.x >= 0 &&
+        bounds.y >= 0 &&
+        bounds.x + bounds.width <= 1440 &&
+        bounds.y + bounds.height <= 900,
+      "Row actions stay within the viewport",
+    );
+    await page.keyboard.press("Escape");
+    assert.equal(
+      await more.evaluate((el) => el === document.activeElement),
+      true,
+      "Native popover restores its trigger",
+    );
+    await more.click();
+    await page.setViewportSize({ width: 390, height: 900 });
+    await actions.waitFor({ state: "hidden" });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const faces = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return (await document.fonts.load('400 16px "Be Vietnam Pro"')).map(
+        (face) => ({ family: face.family, status: face.status }),
+      );
+    });
+    assert.ok(
+      faces.length > 0 && faces.every((face) => face.status === "loaded"),
+      "Offline HTML loads the actual local font",
+    );
     await route(page, "/guide");
     await page
       .getByLabel("Ghi chú thử nghiệm / Test notes")
@@ -181,11 +215,17 @@ test("Project trial guide switches roles, opens every catalog and exports readab
   }
 });
 async function role(p: Page, value: string) {
+  const options = p.locator(".preview-options");
+  if (!(await options.evaluate((el) => (el as HTMLDetailsElement).open)))
+    await options.locator("summary").click();
+
   await Promise.all([
     p.waitForEvent("load"),
     p.getByLabel("Vai thử nghiệm / Trial role").selectOption(value),
   ]);
-  await p.getByLabel("Vai thử nghiệm / Trial role").waitFor();
+  await p
+    .getByLabel("Vai thử nghiệm / Trial role")
+    .waitFor({ state: "attached" });
 }
 async function route(p: Page, path: string) {
   await p.evaluate((path) => {
@@ -331,6 +371,7 @@ test("Standalone project preview connects candidate, assignment, rounds and ques
     assert.equal((await state(page)).reports.length, 1);
     await route(page, "/interview-feedback");
     await role(page, "hr");
+    await revealFeedbackSetup(page);
     await page
       .getByLabel("Candidate and interview round")
       .selectOption({ index: 1 });
@@ -410,7 +451,29 @@ test("Standalone project preview connects candidate, assignment, rounds and ques
         ),
       );
     }
+    await page.setViewportSize({ width: 360, height: 900 });
+    for (const [path, rowSelector, pagerSelector] of [
+      ["/interviews", ".interview-table tbody tr", ".interview-pagination"],
+      [
+        "/inbox",
+        ".application-inbox__table tbody tr",
+        ".application-inbox__pagination",
+      ],
+    ]) {
+      await route(page, path);
+      const expand = page
+        .locator(`${rowSelector} button[aria-expanded=false]`)
+        .first();
+      if (await expand.count()) await expand.click();
+      const lastRow = await page.locator(rowSelector).last().boundingBox();
+      const pager = await page.locator(pagerSelector).boundingBox();
+      assert.ok(
+        lastRow && pager && pager.y >= lastRow.y + lastRow.height - 1,
+        `${path}: phone pagination follows the full expanded card list`,
+      );
+    }
     await route(page, "/guide");
+    await page.locator(".preview-options > summary").click();
     await page
       .getByRole("button", { name: "Bắt đầu lại / Reset all", exact: true })
       .click();
@@ -433,3 +496,17 @@ test("Standalone project preview connects candidate, assignment, rounds and ques
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+async function revealFeedbackSetup(
+  page: Page,
+  label = "Assign feedback forms",
+) {
+  const summary = page.locator("summary").filter({ hasText: label });
+  await summary.waitFor();
+  if (
+    !(await summary.evaluate(
+      (el) => (el.parentElement as HTMLDetailsElement).open,
+    ))
+  )
+    await summary.click();
+}

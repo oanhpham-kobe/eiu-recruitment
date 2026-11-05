@@ -7,6 +7,7 @@ const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1440] as const;
 
 async function bundleHarness() {
   const bundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: [
@@ -166,6 +167,18 @@ test("Interview production UI passes the seven-width responsive browser contract
         assert.ok(
           Math.abs(tableWidth - 1480) <= 1,
           `interview@${width}: semantic Interview table must stay 1480px`,
+        );
+        const roundCellHeights = await page
+          .locator(".interview-round-row")
+          .first()
+          .evaluate((row) =>
+            Array.from(row.children).map(
+              (cell) => cell.getBoundingClientRect().height,
+            ),
+          );
+        assert.ok(
+          Math.max(...roundCellHeights) - Math.min(...roundCellHeights) <= 1,
+          `interview@${width}: expanded round cells must share one aligned row`,
         );
         const overflow = await tableScroll.evaluate((element) => ({
           clientWidth: element.clientWidth,

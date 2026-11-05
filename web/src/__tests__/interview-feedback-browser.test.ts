@@ -28,6 +28,7 @@ async function setup(page: Page) {
     localStorage.setItem("eiu-recruitment-locale", "en"),
   );
   await page.goto(`${base}/interview-feedback`);
+  await revealFeedbackSetup(page);
   await page
     .getByLabel("Candidate and interview round")
     .selectOption({ index: 1 });
@@ -326,6 +327,7 @@ test("Feedback template publishing keeps required fields and revocation keeps th
       localStorage.setItem("eiu-recruitment-locale", "en"),
     );
     await page.goto(`${base}/interview-feedback`);
+    await revealFeedbackSetup(page, "Questionnaire versions");
     await page
       .getByRole("button", { name: "New template", exact: true })
       .click();
@@ -353,6 +355,7 @@ test("Feedback template publishing keeps required fields and revocation keeps th
         exact: true,
       })
       .waitFor();
+    await revealFeedbackSetup(page);
     await page
       .getByLabel("Candidate and interview round")
       .selectOption({ index: 1 });
@@ -438,6 +441,7 @@ test("Feedback pagination cannot submit a template or participant hidden on anot
       localStorage.setItem("eiu-recruitment-locale", "en"),
     );
     await page.goto(`${base}/interview-feedback`);
+    await revealFeedbackSetup(page);
     await page.getByLabel("Candidate and interview round").waitFor();
     await page.evaluate(() => {
       const key = "eiu-synthetic-interview-feedback-v1";
@@ -457,7 +461,9 @@ test("Feedback pagination cannot submit a template or participant hidden on anot
       localStorage.setItem(key, JSON.stringify(value));
     });
     await page.reload();
+    await revealFeedbackSetup(page);
     await page.getByLabel("Published questionnaire").selectOption({ index: 2 });
+    await revealFeedbackSetup(page);
     await page
       .getByLabel("Candidate and interview round")
       .selectOption({ index: 1 });
@@ -468,6 +474,7 @@ test("Feedback pagination cannot submit a template or participant hidden on anot
       await page.getByLabel("Candidate and interview round").inputValue(),
       "",
     );
+    await revealFeedbackSetup(page);
     await page
       .getByLabel("Candidate and interview round")
       .selectOption({ index: 1 });
@@ -488,6 +495,7 @@ test("Feedback pagination cannot submit a template or participant hidden on anot
         .textContent(),
       "Template 2 · v1",
     );
+    await revealFeedbackSetup(page);
     await page
       .getByLabel("Published questionnaire")
       .selectOption("10100000-0000-4000-8000-000000000150");
@@ -536,6 +544,7 @@ test("Feedback second interview page retains a visible authorized template and s
       localStorage.setItem("eiu-recruitment-locale", "en"),
     );
     await page.goto(`${base}/interview-feedback`);
+    await revealFeedbackSetup(page);
     await page.getByLabel("Candidate and interview round").waitFor();
     await page.evaluate(() => {
       const key = "eiu-synthetic-interview-feedback-v1";
@@ -565,6 +574,7 @@ test("Feedback second interview page retains a visible authorized template and s
         .textContent(),
       "Phiếu nhận xét phỏng vấn / Interview feedback · v1",
     );
+    await revealFeedbackSetup(page);
     await page
       .getByLabel("Candidate and interview round")
       .selectOption({ index: 1 });
@@ -595,6 +605,7 @@ test("Feedback second interview page retains a visible authorized template and s
     await page
       .getByRole("button", { name: "Back to workspace", exact: true })
       .click();
+    await revealFeedbackSetup(page, "Questionnaire versions");
     await page
       .getByRole("button", { name: "New template", exact: true })
       .click();
@@ -630,3 +641,17 @@ test("Feedback second interview page retains a visible authorized template and s
     }
   }
 });
+
+async function revealFeedbackSetup(
+  page: Page,
+  label = "Assign feedback forms",
+) {
+  const summary = page.locator("summary").filter({ hasText: label });
+  await summary.waitFor();
+  if (
+    !(await summary.evaluate(
+      (el) => (el.parentElement as HTMLDetailsElement).open,
+    ))
+  )
+    await summary.click();
+}

@@ -830,7 +830,7 @@ stop_gate:
   source_reopen_required: false
   resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
-next_action: "Verify authorized development-branch synchronization directly from Git, then collect Owner trial feedback on the workflow UI refinement. Exact-candidate local review passed. Preserve all recovery/S08/source/provider holds; no main integration or production deployment is released."
+next_action: "Finish exact-candidate local review and authorized development-branch synchronization of the visual polish, then collect Owner visual UAT feedback. Populated render, font and web verification passed. Preserve all recovery/S08/source/provider holds; no main integration or production deployment is released."
 
 # Owner resumed local repairs and new-feature planning on 2026-11-05.
 # This does not release the historical S08/provider/source gates above.
@@ -866,16 +866,13 @@ owner_feature_work:
   production_deployment_authorized: false
 
 owner_ui_work:
-  id: WORKFLOW-UI-REFINEMENT-20261105
-  branch: codex/workflow-ui-refinement-20261105
-  base_sha: 356648930ec22be692867235dfcff56c2de534d1
-  status: LOCAL_REVIEWED_NOT_INTEGRATED
-  product_candidate_sha: 5e346d61cef8e725b3ce25e99ad1d38eab99480b
-  independent_review_sha: 5e346d61cef8e725b3ce25e99ad1d38eab99480b
-  independent_review: PASS
+  id: WORKFLOW-UI-VISUAL-POLISH-20261105
+  branch: codex/workflow-ui-visual-polish-20261105
+  base_sha: 2c0b3decc426582763cdf33a8245d1e9efb5a563
+  status: LOCAL_VERIFIED_PENDING_INDEPENDENT_REVIEW
   accepted: false
   local_only: true
-  owner_scope: Install the Owner-supplied workflow-app-ui archive and apply its presentation guidance to the current application; preserve canonical EIU design, domain semantics and authorization.
+  owner_scope: Owner rejected the prior visual result and requested substantially closer skill application for page proportions, consistent tables/layout and attractive typography. Bundle the actual approved font, refine actual screens and responsive composition, inspect populated renders, preserve business/authorization boundaries and update controlled design sources where necessary. Visual acceptance remains subject to Owner trial.
   development_branch_sync_authorized: true
   integration_authorized: false
   production_deployment_authorized: false

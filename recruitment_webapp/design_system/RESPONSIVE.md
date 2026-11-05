@@ -80,3 +80,18 @@ The executable reference is Responsive Prototype **v1.10** bundled with Full Han
 - Mobile label `Thời gian phỏng vấn` must have enough label-column width to avoid unnecessary wrapping.
 - Mobile navigation/drawers must use accessible focus management, Escape dismissal, focus restoration, background inertness/scroll lock, and must not leave visually hidden duplicate navigation available to assistive technology.
 - Responsive presentation must not create a separate business workflow or duplicate server mutation semantics for mobile.
+
+
+## Owner-authorized visual trial — 2026-11-05
+
+Change reference: `CR-WORKFLOW-UI-UAT-20261105`, implementing the Owner's request to apply the supplied workflow UI skill more closely after rejecting the earlier visual result. Local trial only; final Owner visual UAT remains pending.
+
+This presentation trial responds to the Owner's request for clearer workflow proportions. It is not final visual acceptance. Business rules, authorization, pagination and minimum 16px functional type remain unchanged.
+
+Users and catalogs retain semantic comparison tables above 640px; below that width the same cells become labelled summary cards with all identity, role, status, property and action information reachable. Technical optimistic-version counters remain internal command tokens and are omitted from the primary list rather than consuming a desktop column. No timestamp is invented. Users trial widths are 210/240/200/130/140/200px (name, identity, job/unit, role, status, actions); catalogs use 160/260/260/160/220px. Existing exact Interview and HR report column contracts are unchanged.
+
+Secondary Inbox and Interview filters may be disclosed to prioritize populated lists in the first viewport. Applied filters remain indicated and resettable. The questionnaire assignment form uses two columns on desktop and one on mobile. All controls retain keyboard access and 16px text.
+
+Phone workflow summaries in this trial use full-width identity and position/contact content, compact selection/status and a short note excerpt (two visual lines). The existing explicit detail action opens the complete note and record; no source content is discarded. Interview/Inbox/HR-report desktop tables keep their frozen columns and full content. At phone widths these lists use document scrolling with pagination after the complete card list; table max-height must not constrain an overflow-visible list. HR report filters may use the same disclosed secondary-filter pattern.
+
+Secondary row commands may be grouped under an accessible More control, with the same authorization and confirmations. The menu stays within the viewport and dismisses on Escape, outside interaction or anchor movement; opening it does not toggle the underlying row. Expanded desktop round headers remain actual table cells, with only their inner text stacked.

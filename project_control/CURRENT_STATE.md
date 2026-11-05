@@ -2,7 +2,18 @@
 
 > DERIVED / NON-AUTHORITATIVE. Runtime: AUTONOMY_RUN_STATE.yaml; DAG: TASK_REGISTRY.yaml / SLICE_REGISTRY.yaml; exact code/history: Git.
 
-## Active workflow UI refinement — 2026-11-05
+## Active visual polish after Owner feedback — 2026-11-05
+
+- Branch: `codex/workflow-ui-visual-polish-20261105`, base `2c0b3decc426582763cdf33a8245d1e9efb5a563`. Resolve candidate/reporting HEAD from Git; independent exact-candidate review pending.
+- Owner found the previous visual result insufficient. Applied `workflow-app-ui` more closely to populated pages, not just shared control styling. Controlled local-trial design amendment: `CR-WORKFLOW-UI-UAT-20261105` in `design_system/RESPONSIVE.md`; final Owner visual UAT remains pending.
+- Be Vietnam Pro is now actually bundled at 400/500/600/700 with original license and pinned provenance. Offline and actual Next login smoke verify loaded faces and rendered custom-font glyphs; all four self-hosted Next font requests return200 under `font-src 'self'`.
+- Refined table-cell structure and column proportions, removed technical version counters from primary lists, localized primary admin/Interview copy, grouped secondary row commands and filters, used one Inbox bulk Status menu, and compacted questionnaire setup. Normal desktop list frames and phone summaries preserve full detail access; pagination no longer overlaps mobile records.
+- Fresh verification: 409 web tests PASS, zero failed/skipped; lint/typecheck/build/design PASS, zero lint warnings. Independent browser audit:36 populated scenes across1440/1280/390/360px, actual bundled fonts, zero page-wide overflow/runtime errors. Expanded-round cell geometry regression reproduced RED then PASS; existing full workflow/permissions/email tests remain intact.
+- Source package515/515, design validator, manifest565 checks, control-plane and OMP-native validators PASS. No backend changes or database replay in this UI-only revision.
+- Updated local preview: `http://127.0.0.1:3427/project-preview#/guide`. Standalone SHA-256: `759a2625ad0607020181fb71535204e0ad3224e2f8a54f2409e743412a5ded36`; HTTP/file byte parity PASS.
+- Evidence: `project_control/reviews/WORKFLOW_UI_VISUAL_POLISH_2026-11-05.md`. Development-branch sync authorized; no main integration, production deployment or accepted checkpoint.
+
+## Previous workflow UI refinement — 2026-11-05
 
 - Branch: `codex/workflow-ui-refinement-20261105`, base `356648930ec22be692867235dfcff56c2de534d1`. Product candidate `5e346d61cef8e725b3ce25e99ad1d38eab99480b`: exact-SHA independent local review PASS. Resolve reporting HEAD/remote synchronization directly from Git.
 - Installed the Owner-supplied `workflow-app-ui` skill under `.agents/skills/`, with all eight archive files byte-identical. Project skill discovery validator recognizes 25 skills.

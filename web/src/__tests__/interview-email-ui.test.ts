@@ -31,6 +31,7 @@ async function bundleHarness() {
     "src/__tests__/fixtures/interview-actions-browser-mock.ts",
   );
   const bundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/interview-email-ui-harness.tsx"],
@@ -267,6 +268,13 @@ test("InterviewPage supports multi-row preview-fenced bulk email without partici
       ["INTERVIEW_PARTICIPANT_INVITATION", "INTERVIEW_PARTICIPANT_INVITATION"],
     );
 
+    await participantDialog
+      .getByRole("button", { name: "Đóng", exact: true })
+      .click();
+    await page
+      .locator(".interview-row-actions button[popovertarget]")
+      .first()
+      .click();
     await page
       .getByRole("button", { name: "Gửi thư ứng viên Nguyễn Thị An" })
       .waitFor({ state: "visible" });

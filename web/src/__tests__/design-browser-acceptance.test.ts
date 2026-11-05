@@ -8,6 +8,7 @@ type HarnessMode = "internal" | "candidate" | "login";
 
 async function bundleHarness() {
   const bundle = await build({
+    loader: { ".ttf": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: [
