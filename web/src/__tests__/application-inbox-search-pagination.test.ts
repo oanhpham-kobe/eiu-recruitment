@@ -266,8 +266,10 @@ test("Application Inbox search waits 300 ms, sends PII only in request state, an
     const initialHistoryLength = await page.evaluate(() => history.length);
     const query = "Nguyễn An nhaycam@example.test";
 
+    await page.clock.install({ time: new Date("2026-11-05T00:00:00Z") });
+    await page.clock.pauseAt(new Date("2026-11-05T02:00:00Z"));
     await page.getByLabel("Tìm kiếm tên, email hoặc SĐT").fill(query);
-    await page.waitForTimeout(270);
+    await page.clock.runFor(299);
     const earlyQueryCount = await page.evaluate(
       () =>
         window.__BULK_HARNESS_LOGS__?.filter(
@@ -276,6 +278,7 @@ test("Application Inbox search waits 300 ms, sends PII only in request state, an
     );
     assert.equal(earlyQueryCount, 0, "search must not dispatch before 300 ms");
 
+    await page.clock.runFor(1);
     await page.waitForFunction(
       () =>
         window.__BULK_HARNESS_LOGS__?.some(

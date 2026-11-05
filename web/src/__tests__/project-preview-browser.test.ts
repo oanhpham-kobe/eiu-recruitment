@@ -1,0 +1,371 @@
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { basename, isAbsolute, join, relative, resolve } from "node:path";
+import test from "node:test";
+import { pathToFileURL } from "node:url";
+import { chromium, type Page } from "playwright";
+
+const key = "eiu-project-synthetic-uat-v1";
+
+test("Project trial guide switches roles, opens every catalog and exports readable notes offline", {
+  timeout: 90000,
+}, async () => {
+  const dir = await mkdtemp(join(tmpdir(), "eiu-project-preview-"));
+  const out = join(dir, "guide.html");
+  execFileSync(process.execPath, [
+    "scripts/preview-project.mjs",
+    "--build-only",
+    "--output",
+    out,
+  ]);
+  const browser = await chromium.launch();
+  try {
+    const context = await browser.newContext({
+      offline: true,
+      acceptDownloads: true,
+    });
+    const page = await context.newPage();
+    const errors: string[] = [];
+    const outbound: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("request", (request) => {
+      if (/^https?:/.test(request.url())) outbound.push(request.url());
+    });
+    await page.goto(`${pathToFileURL(out).href}#/guide`);
+    await page
+      .getByRole("button", {
+        name: "Mở bước: Gửi một phiếu ứng tuyển",
+        exact: true,
+      })
+      .click();
+    await page
+      .getByRole("heading", {
+        name: "Cổng ứng viên / Candidate portal",
+        exact: true,
+      })
+      .waitFor();
+    assert.equal(
+      await page.getByLabel("Vai thử nghiệm / Trial role").inputValue(),
+      "candidate",
+    );
+    await route(page, "/guide");
+    await page
+      .getByRole("button", { name: "Mở bước: HR mở NEW → READ", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Quản lý Phiếu Ứng tuyển", exact: true })
+      .waitFor();
+    assert.equal(
+      await page.getByLabel("Vai thử nghiệm / Trial role").inputValue(),
+      "hr",
+    );
+    await role(page, "root");
+    await route(page, "/master-data");
+    const catalog = page.getByLabel("Danh mục:", { exact: true });
+    const values = await catalog
+      .locator("option")
+      .evaluateAll((options) =>
+        options.map((option) => (option as HTMLOptionElement).value),
+      );
+    assert.equal(values.length, 11);
+    for (const value of values) {
+      await catalog.selectOption(value);
+      await page
+        .getByRole("button", { name: "+ Thêm mới / Create New", exact: true })
+        .click();
+      const dialog = page.getByRole("dialog");
+      await dialog
+        .getByRole("heading", { name: "Thêm mới mục danh mục", exact: true })
+        .waitFor();
+      await dialog.getByRole("button", { name: "Đóng", exact: true }).click();
+      assert.equal(await catalog.inputValue(), value);
+    }
+    await route(page, "/guide");
+    await page
+      .getByLabel("Ghi chú thử nghiệm / Test notes")
+      .fill("Ghi chú thử: kiểm tra lại nhãn trường và lịch phỏng vấn.");
+    const downloadReady = page.waitForEvent("download");
+    await page
+      .getByRole("button", {
+        name: "Xuất ghi chú / Export readable notes",
+        exact: true,
+      })
+      .click();
+    const download = await downloadReady;
+    assert.ok(download.suggestedFilename().endsWith(".txt"));
+    const notePath = join(dir, "notes.txt");
+    await download.saveAs(notePath);
+    assert.match(await readFile(notePath, "utf8"), /kiểm tra lại nhãn trường/);
+    await page.reload();
+    assert.match(
+      await page.getByLabel("Ghi chú thử nghiệm / Test notes").inputValue(),
+      /kiểm tra lại nhãn trường/,
+    );
+    await page.getByRole("button", { name: "Tiếng Anh", exact: true }).click();
+    await page
+      .getByRole("heading", { name: "Project test workspace", exact: true })
+      .waitFor();
+    assert.deepEqual(outbound, []);
+    assert.deepEqual(errors, []);
+  } finally {
+    await browser.close();
+    const inside = relative(resolve(tmpdir()), resolve(dir));
+    assert.ok(
+      inside &&
+        !inside.startsWith("..") &&
+        !isAbsolute(inside) &&
+        basename(dir).startsWith("eiu-project-preview-"),
+    );
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+async function role(p: Page, value: string) {
+  await Promise.all([
+    p.waitForEvent("load"),
+    p.getByLabel("Vai thử nghiệm / Trial role").selectOption(value),
+  ]);
+  await p.getByLabel("Vai thử nghiệm / Trial role").waitFor();
+}
+async function route(p: Page, path: string) {
+  await p.evaluate((path) => {
+    location.hash = path;
+  }, path);
+  await p.waitForTimeout(80);
+}
+async function state(p: Page) {
+  return p.evaluate((k) => {
+    const raw = localStorage.getItem(k);
+    if (!raw) throw new Error("Synthetic state is not initialized.");
+    return JSON.parse(raw);
+  }, key);
+}
+test("Standalone project preview connects candidate, assignment, rounds and questionnaire personas without network", {
+  timeout: 120000,
+}, async () => {
+  const dir = await mkdtemp(join(tmpdir(), "eiu-project-preview-"));
+  const out = join(dir, "preview.html");
+  execFileSync(process.execPath, [
+    "scripts/preview-project.mjs",
+    "--build-only",
+    "--output",
+    out,
+  ]);
+  const browser = await chromium.launch();
+  try {
+    const context = await browser.newContext({
+      offline: true,
+      viewport: { width: 1440, height: 1000 },
+    });
+    const page = await context.newPage();
+    const errors: string[] = [];
+    const network: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    page.on("request", (r) => {
+      if (/^https?:/.test(r.url())) network.push(r.url());
+    });
+    page.on("dialog", (d) => void d.accept());
+    await page.goto(`${pathToFileURL(out).href}#/guide`);
+    await page
+      .getByRole("heading", { name: /Phòng thử nghiệm|Project test workspace/ })
+      .waitFor();
+    await role(page, "candidate");
+    await route(page, "/candidate");
+    await page
+      .getByRole("button", { name: "Tạo phiếu mới / New submission" })
+      .click();
+    await page.getByLabel("Họ và tên / Full name").fill("Ứng viên thử nghiệm");
+    await page.locator("#phone").fill("0901234567");
+    await page.locator("#dateOfBirth").fill("1995-03-10");
+    await page.locator("#address").fill("Dữ liệu mẫu Bình Dương");
+    await page.locator("#doc-type-select").selectOption({ index: 0 });
+    await page.locator("#file-input").setInputFiles({
+      name: "trial-cv.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4 synthetic metadata fixture"),
+    });
+    await page.getByText("trial-cv.pdf", { exact: false }).first().waitFor();
+    await page.locator("#privacyAcknowledged").focus();
+    await page.keyboard.press("Space");
+    await page
+      .getByRole("button", { name: "Nộp hồ sơ / Submit Application" })
+      .click();
+    await page
+      .getByRole("heading", { name: "Cổng ứng viên / Candidate portal" })
+      .waitFor();
+    assert.equal(
+      (await state(page)).submissions.at(-1).full_name,
+      "Ứng viên thử nghiệm",
+    );
+    await role(page, "hr");
+    await route(page, "/");
+    await page.getByRole("button", { name: /Xem chi tiết phiếu của/ }).click();
+    await page.getByText(/Trạng thái: READ/).waitFor();
+    await page
+      .getByRole("button", { name: "+ Gán vị trí tuyển dụng mới", exact: true })
+      .click();
+    await page
+      .getByLabel("Khoa / Phòng *", { exact: true })
+      .selectOption({ index: 1 });
+    await page.locator("#assign-team").selectOption({ index: 1 });
+    await page
+      .getByLabel("Vị trí tuyển dụng *", { exact: true })
+      .selectOption({ index: 1 });
+    await page
+      .getByLabel("Người phụ trách HR *", { exact: true })
+      .selectOption({ index: 1 });
+    await page
+      .getByRole("button", { name: "Tạo Application", exact: true })
+      .click();
+    await page.waitForTimeout(100);
+    assert.equal((await state(page)).applications.length, 1);
+    await route(page, "/interviews");
+    await page.getByRole("button", { name: "Mở", exact: true }).click();
+    const drawer = page.getByRole("dialog");
+    await drawer
+      .getByLabel("Bắt đầu", { exact: true })
+      .fill("2027-01-10T09:00");
+    await drawer
+      .getByLabel("Kết thúc", { exact: true })
+      .fill("2027-01-10T10:00");
+    await drawer
+      .getByLabel("Hình thức", { exact: false })
+      .selectOption({ index: 1 });
+    await drawer
+      .getByLabel("Phòng", { exact: false })
+      .selectOption({ index: 1 });
+    await drawer.getByRole("button", { name: "Lưu lịch", exact: true }).click();
+    for (const label of ["Nguyễn Minh Tâm", "Trần Thu Hà"]) {
+      await drawer.getByLabel("Thêm người đang hoạt động").selectOption({
+        label:
+          label +
+          " — " +
+          (label === "Nguyễn Minh Tâm" ? "interviewerA" : "interviewerB") +
+          "@eiu.edu.vn",
+      });
+      await drawer.getByRole("button", { name: "Thêm", exact: true }).click();
+    }
+    assert.equal(
+      (await state(page)).applications[0].rounds[0].participants.length,
+      2,
+    );
+    await route(page, "/reports");
+    await role(page, "interviewerA");
+    await page.getByRole("button", { name: "Tiếng Anh", exact: true }).click();
+    await page.getByRole("button", { name: "Report", exact: true }).click();
+    await page
+      .getByLabel("Professional Knowledge", { exact: true })
+      .fill("Knowledge from actual own form");
+    await page
+      .getByLabel("Conclusion", { exact: true })
+      .fill("Proceed to discussion");
+    await page
+      .getByRole("button", { name: "Save report", exact: true })
+      .click();
+    await page.waitForTimeout(80);
+    assert.equal((await state(page)).reports.length, 1);
+    await route(page, "/interview-feedback");
+    await role(page, "hr");
+    await page
+      .getByLabel("Candidate and interview round")
+      .selectOption({ index: 1 });
+    await page.getByLabel("Nguyễn Minh Tâm", { exact: true }).check();
+    await page.getByLabel("Trần Thu Hà", { exact: true }).check();
+    await page
+      .getByRole("button", { name: "Assign forms to evaluators", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: "Tracking and consolidation", exact: true })
+      .waitFor();
+    assert.equal(
+      (await state(page)).feedback.collections[0].interview_id,
+      (await state(page)).applications[0].rounds[0].interviewId,
+    );
+    for (const who of ["interviewerA", "interviewerB"]) {
+      await route(page, "/interview-feedback");
+      await role(page, who);
+      await page.getByRole("link", { name: /Open feedback form/ }).click();
+      await page
+        .locator("#answer-professional_knowledge")
+        .fill(`${who} qualitative answer`);
+      await page
+        .getByRole("button", { name: "Save draft", exact: true })
+        .click();
+      await page.getByText("Saved successfully.", { exact: true }).waitFor();
+      await page.reload();
+      assert.equal(
+        await page.locator("#answer-professional_knowledge").inputValue(),
+        `${who} qualitative answer`,
+      );
+      await page
+        .getByRole("button", { name: "Submit response", exact: true })
+        .click();
+      await page.getByText("Submitted — immutable", { exact: false }).waitFor();
+    }
+    await route(page, "/interview-feedback");
+    await role(page, "hr");
+    await page
+      .getByRole("button", { name: "Open feedback round", exact: true })
+      .click();
+    await page
+      .getByLabel("Report title", { exact: true })
+      .fill("Trial panel report");
+    await page
+      .getByLabel("Overall summary", { exact: true })
+      .fill("Two completed opinions");
+    await page
+      .getByRole("button", { name: "Create consolidated draft", exact: true })
+      .click();
+    await page.locator(".feedback-print-report").waitFor();
+    await page
+      .getByRole("button", { name: "Approve report", exact: true })
+      .click();
+    await page
+      .locator(".feedback-print-report")
+      .getByText(/Approved/)
+      .waitFor();
+    assert.equal((await state(page)).feedback.reports[0].state, "APPROVED");
+    assert.equal(
+      (await state(page)).applications[0].rounds[0].reportStatus,
+      "INTERVIEW_SCHEDULING",
+    );
+    await page.emulateMedia({ media: "print" });
+    assert.equal(
+      await page.locator(".feedback-print-report").isVisible(),
+      true,
+    );
+    await page.emulateMedia({ media: "screen" });
+    for (const width of [360, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.ok(
+        await page.evaluate(
+          () =>
+            document.documentElement.scrollWidth <=
+            document.documentElement.clientWidth + 1,
+        ),
+      );
+    }
+    await route(page, "/guide");
+    await page
+      .getByRole("button", { name: "Bắt đầu lại / Reset all", exact: true })
+      .click();
+    await page
+      .getByRole("heading", { name: /Phòng thử nghiệm|Project test workspace/ })
+      .waitFor();
+    assert.equal((await state(page)).applications.length, 0);
+    assert.equal((await state(page)).feedback.collections.length, 0);
+    assert.deepEqual(errors, []);
+    assert.deepEqual(network, []);
+  } finally {
+    await browser.close();
+    const inside = relative(resolve(tmpdir()), resolve(dir));
+    assert.ok(
+      inside &&
+        !inside.startsWith("..") &&
+        !isAbsolute(inside) &&
+        basename(dir).startsWith("eiu-project-preview-"),
+    );
+    await rm(dir, { recursive: true, force: true });
+  }
+});

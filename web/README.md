@@ -34,6 +34,29 @@ use the preview persona controls as production authentication. The first templat
 uses the existing five optional qualitative questions. Official report layouts,
 candidate dossiers and actual mail delivery remain separate follow-up work.
 
+## Full project interactive HTML
+
+Run `npm run preview:project`, then open `http://127.0.0.1:3427/project-preview`.
+The same command creates `.preview/eiu-project-preview.html`, a self-contained
+offline file with bundled JavaScript, CSS and fonts. Use
+`npm run preview:project:build` to create only the file, or pass
+`-- --output ABSOLUTE_PATH` for another output location. Rebuild/restart after changes.
+
+The guide opens each workflow step with the appropriate trial role. Six personas
+share browser-local synthetic state: Candidate, full HR, read-only HR, two
+interviewers and Root. Existing production components cover Candidate forms,
+Inbox/details/assignment, interview rounds/schedules/participants, original reports,
+questionnaires/consolidation, users/permissions and all eleven master catalogs.
+The service page explains the simulated email queue and document metadata.
+
+Changes persist locally, **Reset all** resets this preview's data and Candidate
+drafts, and **Export readable notes** downloads the tester's checklist/log/notes.
+Use synthetic information only. Role changes simulate authentication; OAuth/OTP,
+email delivery, malware scanning, private file contents and official document
+exports are not connected. This tests UI interactions and local workflow examples;
+database/RLS/concurrency acceptance still requires the real application test stack.
+The browser fixture aliases are isolated from production routes and credentials.
+
 ## Framework references
 
 To learn more about Next.js, take a look at the following resources:
