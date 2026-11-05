@@ -4,7 +4,7 @@
 
 ## Active workflow UI refinement — 2026-11-05
 
-- Branch: `codex/workflow-ui-refinement-20261105`, base `356648930ec22be692867235dfcff56c2de534d1`. Resolve candidate/reporting HEAD from Git; exact-candidate review pending.
+- Branch: `codex/workflow-ui-refinement-20261105`, base `356648930ec22be692867235dfcff56c2de534d1`. Product candidate `5e346d61cef8e725b3ce25e99ad1d38eab99480b`: exact-SHA independent local review PASS. Resolve reporting HEAD/remote synchronization directly from Git.
 - Installed the Owner-supplied `workflow-app-ui` skill under `.agents/skills/`, with all eight archive files byte-identical. Project skill discovery validator recognizes 25 skills.
 - Applied compatible presentation guidance to actual shared application styles/components: readable controls and EIU semantic tokens, admin table columns/spacing, grouped filters and bounded table scrolling, long Dialog/Drawer body scrolling with reachable actions, and short-viewport fallbacks. Domain/authorization/backend behavior is unchanged.
 - Full web verification: 409 PASS, zero failed/skipped; lint/typecheck/build/design PASS, six existing warnings. Four focused browser cases cover responsive layouts, long overlays/keyboard, admin dialogs, all eleven catalogs and the complete offline workflow.

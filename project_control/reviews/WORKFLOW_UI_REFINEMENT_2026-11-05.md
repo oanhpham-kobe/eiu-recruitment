@@ -2,7 +2,13 @@
 
 Date: 2026-11-05. Branch: `codex/workflow-ui-refinement-20261105`.
 Base: `356648930ec22be692867235dfcff56c2de534d1`.
-State: locally verified; independent exact-candidate review pending.
+Candidate: `5e346d61cef8e725b3ce25e99ad1d38eab99480b`.
+State: locally verified; independent exact-candidate review PASS.
+
+Read-only Codex collaboration review found no blocking presentation regressions.
+It checked overlay scrolling/focus, constrained-height actions, table columns,
+feedback print rules and skill registration, and independently passed the focused
+browser test. This review is not formal OMP acceptance or a production release.
 
 ## Owner scope and source
 
@@ -16,6 +22,11 @@ the skill; `SKILLS_LOCK.yaml` records provenance only. Native discovery recogniz
 25 skills. Archive examples are presentation guidance, not EIU Recruitment domain
 authority; UniCouncil roles, statuses, page sizes and scheduling rules were not
 imported. Canonical EIU design contracts and 16px primary typography remain intact.
+
+The eight committed skill blobs were also compared against the original archive:
+8/8 byte-identical PASS. The refreshed HTTP response was compared byte-for-byte
+with the exported HTML; parity, all eight guide steps, locale switching and zero
+browser errors PASS.
 
 ## Actual application changes
 

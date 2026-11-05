@@ -200,3 +200,11 @@ This compact backfill records accepted checkpoints that were already present in 
 - Corrected preview adapter state/permission/history behavior and replaced an existing load-sensitive debounce test with deterministic browser-clock assertions. Production application/database implementation is unchanged.
 - Candidate `0d6e60a0e6c8a0dd694133efea2afe7960e53474`:409 web tests,9 focused cases, lint/typecheck/build/design, control validators and exact-SHA independent local review PASS. Six pre-existing lint warnings remain.
 - Evidence: `project_control/reviews/FULL_PROJECT_INTERACTIVE_PREVIEW_2026-11-05.md`. Owner explicitly authorized GitHub synchronization; no main integration, production/provider acceptance or Package009 acceptance is inferred.
+
+## 2026-11-05 — Owner workflow UI skill and application refinement
+
+- Installed all eight `workflow-app-ui` archive files unchanged, registered project discovery/provenance, and verified committed file parity. Project discovery recognizes25 skills.
+- Applied compatible guidance to actual shared EIU styles/components: accessible long Dialog/Drawer body scrolling, reachable actions, admin colgroups/spacing, stronger controls, consistent questionnaire tokens and bounded table scrolling. Preserved domain, authorization, pagination and database behavior.
+- Refreshed the standalone preview with compact localized controls, numbered guide and real overlay background inertness.
+- Candidate `5e346d61cef8e725b3ce25e99ad1d38eab99480b`:409 web tests, four focused browser cases, lint/typecheck/build/design, control validators and independent exact-SHA local review PASS. Six pre-existing warnings remain.
+- Evidence: `project_control/reviews/WORKFLOW_UI_REFINEMENT_2026-11-05.md`. Owner-authorized development-branch synchronization only; no main merge, production release, formal OMP acceptance or Package009 acceptance.

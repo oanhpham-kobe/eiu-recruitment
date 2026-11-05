@@ -8,6 +8,29 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
+  WORKFLOW-UI-REFINEMENT-20261105:
+    operation: OWNER_SKILL_INSTALL_AND_APPLICATION_PRESENTATION_REFINEMENT
+    status: LOCALLY_REVIEWED_NOT_ACCEPTED
+    branch: codex/workflow-ui-refinement-20261105
+    base_sha: "356648930ec22be692867235dfcff56c2de534d1"
+    product_candidate_sha: "5e346d61cef8e725b3ce25e99ad1d38eab99480b"
+    independent_review_sha: "5e346d61cef8e725b3ce25e99ad1d38eab99480b"
+    independent_review: PASS
+    review_kind: READ_ONLY_CODEX_COLLABORATION_NOT_FORMAL_OMP_ACCEPTANCE
+    web_tests: "409 PASS; 0 failed; 0 skipped"
+    focused_browser_cases: "4 PASS; included in full suite; overlay case independently rerun PASS"
+    web_checks: "lint/typecheck/build/design PASS; six existing warnings"
+    control_checks: "control plane and OMP native validators PASS; 25 skills recognized"
+    skill_archive_sha256: "7e65491d2e18b54f13e7d85729063d10a036df60f2cc1c1af123265a10de5116"
+    committed_skill_parity: "8/8 files byte-identical with Owner archive"
+    artifact_sha256: "fd43afe8a1329ec0d6a6283d1bb9d8411ec7aac769d48f4c7b4d86d6f7d59db3"
+    served_file_parity: PASS
+    production_application_changes: PRESENTATION_ONLY
+    backend_changes: false
+    github_ci: NOT_USED_FOR_LOCAL_VERIFICATION
+    accepted: false
+    artifact: project_control/reviews/WORKFLOW_UI_REFINEMENT_2026-11-05.md
+
   FULL-PROJECT-INTERACTIVE-PREVIEW-20261105:
     operation: LOCAL_FULL_PROJECT_OFFLINE_INTERACTIVE_PREVIEW
     status: LOCALLY_REVIEWED_NOT_ACCEPTED
