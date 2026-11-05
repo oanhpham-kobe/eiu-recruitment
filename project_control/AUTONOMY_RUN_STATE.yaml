@@ -830,7 +830,7 @@ stop_gate:
   source_reopen_required: false
   resume_on: "A separately materialized canonical TASK-S08-002 source reconciliation and governed prompt/source lifecycle; TASK-S08-001 acceptance alone does not authorize it."
 
-next_action: "Collect Owner visual UAT feedback through the published owner-private ChatGPT Site. Preserve its Site identity/audience for updates and verify development-branch synchronization from Git. All recovery/S08/source/provider holds remain; no main integration or recruitment-backend production release is authorized."
+next_action: "Collect Owner visual UAT feedback through the existing ChatGPT Site. Preserve its Site identity/audience for updates and verify development-branch synchronization from Git. All recovery/S08/source/provider holds remain; no main integration or recruitment-backend production release is authorized."
 
 # Owner resumed local repairs and new-feature planning on 2026-11-05.
 # This does not release the historical S08/provider/source gates above.
