@@ -14,6 +14,9 @@ export interface AppShellProps {
   title?: React.ReactNode;
   currentPath?: string;
   navItems?: readonly NavItem[];
+  /** Optional demo workspace UI. This slot supplies no application authority. */
+  workspaceControl?: React.ReactNode;
+  accountLabel?: string;
 }
 
 function AppShellContent({
@@ -21,22 +24,30 @@ function AppShellContent({
   title,
   currentPath = "/",
   navItems = [],
+  workspaceControl,
+  accountLabel,
 }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <div className="shell">
       <SkipLink />
-      <Sidebar currentPath={currentPath} navItems={navItems} />
+      <Sidebar
+        currentPath={currentPath}
+        navItems={navItems}
+        accountLabel={accountLabel}
+      />
       <MobileNavigation
         open={mobileNavOpen}
         currentPath={currentPath}
         navItems={navItems}
         onClose={() => setMobileNavOpen(false)}
+        accountLabel={accountLabel}
       />
       <div className="shell-main">
         <Header
           title={title}
+          workspaceControl={workspaceControl}
           mobileNavOpen={mobileNavOpen}
           onOpenNavigation={() => setMobileNavOpen(true)}
         />

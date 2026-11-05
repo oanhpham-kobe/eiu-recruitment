@@ -295,10 +295,6 @@
   grid-column: 1 / -1;
   margin: 0;
 }
-.feedback-page > header p {
-  margin: 8px 0 20px;
-  color: var(--ink-600);
-}
 .feedback-assignment > button {
   justify-self: start;
 }

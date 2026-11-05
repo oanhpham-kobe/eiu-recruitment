@@ -57,7 +57,9 @@ for (const file of files) {
 
   if (file.endsWith(".css")) {
     const allowedPrimitiveFile =
-      rel === "src/app/globals.css" || rel === "src/styles/ui.css";
+      rel === "src/app/globals.css" ||
+      rel === "src/styles/ui.css" ||
+      rel === "src/styles/workflow.css";
     if (!allowedPrimitiveFile) {
       for (const selector of ["btn-primary", "btn-secondary", "status-badge"]) {
         const rx = new RegExp(`(^|[}\\n])\\s*\\.${selector}(?=\\s*[:,{])`, "m");
@@ -80,9 +82,18 @@ for (const file of files) {
       for (const size of body.matchAll(
         /font-size:\s*([0-9]+(?:\.[0-9]+)?)px/g,
       )) {
-        if (Number(size[1]) < 16)
+        // CR-UNICOUNCIL-UI-ADAPTATION-20261105: explicit scoped UI floor.
+        // Generic forms, messages and portalled detail bodies keep16px.
+        const compactScope =
+          (rel === "src/styles/workflow.css" &&
+            selector.includes(".workflow-list-page")) ||
+          (rel === "src/app/globals.css" && selector === ".lang-btn") ||
+          (rel.endsWith("project-preview/preview.css") &&
+            selector === ".preview-workspace-trigger");
+        const minimum = compactScope ? 14 : 16;
+        if (Number(size[1]) < minimum)
           failures.push(
-            `${rel}: ${selector} uses ${size[1]}px primary/control text`,
+            `${rel}: ${selector} uses ${size[1]}px primary/control text (minimum ${minimum}px)`,
           );
       }
       for (const height of body.matchAll(
@@ -97,6 +108,18 @@ for (const file of files) {
   }
 }
 
+const compactCss = fs.readFileSync(
+  path.join(src, "styles/workflow.css"),
+  "utf8",
+);
+if (
+  !/\.workflow-list-page input[\s\S]*?font-size:\s*16px/.test(compactCss) ||
+  !/@media \(min-width: 768px\) [\s\S]*?font-size:\s*14px/.test(compactCss)
+) {
+  failures.push(
+    "src/styles/workflow.css: mobile input16px / desktop compact14px scope missing",
+  );
+}
 if (!tokenText.includes("--badge-width-interview-operational: 144px")) {
   failures.push(
     "src/styles/tokens.css: missing 144px operational Interview badge token",

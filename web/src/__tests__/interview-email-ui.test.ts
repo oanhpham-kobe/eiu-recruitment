@@ -31,7 +31,7 @@ async function bundleHarness() {
     "src/__tests__/fixtures/interview-actions-browser-mock.ts",
   );
   const bundle = await build({
-    loader: { ".ttf": "dataurl" },
+    loader: { ".ttf": "dataurl", ".jpg": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/interview-email-ui-harness.tsx"],

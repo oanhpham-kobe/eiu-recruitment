@@ -46,10 +46,7 @@ test("Project trial guide switches roles, opens every catalog and exports readab
         exact: true,
       })
       .waitFor();
-    assert.equal(
-      await page.getByLabel("Vai thử nghiệm / Trial role").inputValue(),
-      "candidate",
-    );
+    assert.equal(await selectedRole(page), "candidate");
     await route(page, "/guide");
     await page
       .getByRole("button", { name: "Mở bước: HR mở NEW → READ", exact: true })
@@ -57,10 +54,7 @@ test("Project trial guide switches roles, opens every catalog and exports readab
     await page
       .getByRole("heading", { name: "Quản lý Phiếu Ứng tuyển", exact: true })
       .waitFor();
-    assert.equal(
-      await page.getByLabel("Vai thử nghiệm / Trial role").inputValue(),
-      "hr",
-    );
+    assert.equal(await selectedRole(page), "hr");
     await role(page, "root");
     await route(page, "/master-data");
     const catalog = page.getByLabel("Danh mục:", { exact: true });
@@ -82,9 +76,13 @@ test("Project trial guide switches roles, opens every catalog and exports readab
       await dialog.getByRole("button", { name: "Đóng", exact: true }).click();
       assert.equal(await catalog.inputValue(), value);
     }
-    for (const width of [1440, 1024, 768, 430, 390, 360]) {
-      await page.setViewportSize({ width, height: 900 });
+    for (const width of [1440, 1366, 768, 390, 360, 320]) {
+      await page.setViewportSize({
+        width,
+        height: width === 1366 ? 768 : width <= 430 ? 844 : 900,
+      });
       for (const path of [
+        "/",
         "/users",
         "/master-data",
         "/interviews",
@@ -92,6 +90,102 @@ test("Project trial guide switches roles, opens every catalog and exports readab
         "/interview-feedback",
       ]) {
         await route(page, path);
+        if (path === "/" && width <= 767) {
+          const inputSizes = await page
+            .locator(
+              ".application-inbox__toolbar input, .application-inbox__toolbar select",
+            )
+            .evaluateAll((elements) =>
+              elements.map((el) =>
+                Number.parseFloat(getComputedStyle(el).fontSize),
+              ),
+            );
+          assert.ok(
+            inputSizes.length > 0 && inputSizes.every((size) => size >= 16),
+            "Phone filter inputs retain16px",
+          );
+        }
+        if (path === "/" && [320, 390, 1440].includes(width)) {
+          const about = page.getByRole("button", {
+            name: "Thông tin về trang / About this page",
+            exact: true,
+          });
+          await about.click();
+          const context = page.locator(
+            ".workflow-page-context__panel:popover-open",
+          );
+          await context.waitFor();
+          const contextBounds = await context.boundingBox();
+          assert.ok(
+            contextBounds &&
+              contextBounds.x >= 12 &&
+              contextBounds.x + contextBounds.width <= width - 12,
+            `Page explanation stays inside${width}px viewport`,
+          );
+          await page.keyboard.press("Escape");
+          await context.waitFor({ state: "hidden" });
+          assert.equal(
+            await about.evaluate((el) => el === document.activeElement),
+            true,
+          );
+        }
+        if (path === "/" && width === 390) {
+          const list = await page
+            .locator(".application-inbox__table-scroll")
+            .boundingBox();
+          assert.ok(
+            list && list.height >= 300,
+            "Collapsed Inbox controls leave a useful phone list viewport",
+          );
+          assert.equal(
+            await page.locator("main .preview-controls").count(),
+            0,
+            "Demo setup stays outside content",
+          );
+          const trigger = page.getByRole("button", {
+            name: "Mở vai thử nghiệm / Open trial workspace",
+            exact: true,
+          });
+          const workspace = await openWorkspace(page);
+          assert.equal(
+            await workspace.locator("select").count(),
+            1,
+            "Exactly one role selector",
+          );
+          assert.equal(
+            await workspace
+              .getByLabel("Vai thử nghiệm / Trial role", { exact: true })
+              .locator("option")
+              .count(),
+            6,
+          );
+          assert.equal(
+            await page.locator("#app-root").getAttribute("inert"),
+            "",
+          );
+          await page.keyboard.press("Escape");
+          await workspace.waitFor({ state: "detached" });
+          assert.equal(
+            await trigger.evaluate((el) => el === document.activeElement),
+            true,
+          );
+          const menu = page.getByRole("button", {
+            name: "Mở menu",
+            exact: true,
+          });
+          await menu.click();
+          const navigation = page.getByRole("dialog", {
+            name: "Điều hướng nội bộ",
+            exact: true,
+          });
+          await navigation.waitFor();
+          await page.keyboard.press("Escape");
+          await navigation.waitFor({ state: "detached" });
+          assert.equal(
+            await menu.evaluate((el) => el === document.activeElement),
+            true,
+          );
+        }
         assert.ok(
           await page.evaluate(
             () =>
@@ -214,18 +308,39 @@ test("Project trial guide switches roles, opens every catalog and exports readab
     await rm(dir, { recursive: true, force: true });
   }
 });
+async function openWorkspace(p: Page) {
+  await p
+    .getByRole("button", {
+      name: "Mở vai thử nghiệm / Open trial workspace",
+      exact: true,
+    })
+    .click();
+  return p.getByRole("dialog", {
+    name: /Không gian thử nghiệm|Trial workspace/,
+  });
+}
+async function selectedRole(p: Page) {
+  const dialog = await openWorkspace(p);
+  const value = await dialog
+    .getByLabel("Vai thử nghiệm / Trial role", { exact: true })
+    .inputValue();
+  await p.keyboard.press("Escape");
+  return value;
+}
 async function role(p: Page, value: string) {
-  const options = p.locator(".preview-options");
-  if (!(await options.evaluate((el) => (el as HTMLDetailsElement).open)))
-    await options.locator("summary").click();
-
+  const dialog = await openWorkspace(p);
   await Promise.all([
     p.waitForEvent("load"),
-    p.getByLabel("Vai thử nghiệm / Trial role").selectOption(value),
+    dialog
+      .getByLabel("Vai thử nghiệm / Trial role", { exact: true })
+      .selectOption(value),
   ]);
   await p
-    .getByLabel("Vai thử nghiệm / Trial role")
-    .waitFor({ state: "attached" });
+    .getByRole("button", {
+      name: "Mở vai thử nghiệm / Open trial workspace",
+      exact: true,
+    })
+    .waitFor();
 }
 async function route(p: Page, path: string) {
   await p.evaluate((path) => {
@@ -589,7 +704,7 @@ test("Standalone project preview connects candidate, assignment, rounds and ques
       await drawer.waitFor({ state: "detached" });
     }
     await route(page, "/guide");
-    await page.locator(".preview-options > summary").click();
+    await openWorkspace(page);
     await page
       .getByRole("button", { name: "Bắt đầu lại / Reset all", exact: true })
       .click();

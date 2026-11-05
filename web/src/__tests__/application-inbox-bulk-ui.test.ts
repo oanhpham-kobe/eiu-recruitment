@@ -12,7 +12,7 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
   }
 
   const browserBundle = await build({
-    loader: { ".ttf": "dataurl" },
+    loader: { ".ttf": "dataurl", ".jpg": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/application-inbox-bulk-harness.tsx"],
@@ -88,7 +88,7 @@ async function setupPage(page: Page, style: string, script: string) {
   await page.addScriptTag({ content: script });
 }
 
-test("Application Inbox bulk toolbar reflects reactive selection count, disables on 0, and handles Select All", {
+test("Application Inbox bulk toolbar appears for selection, disables on 0, and handles Select All", {
   timeout: 60_000,
 }, async () => {
   const { script, style } = await getHarnessBundle();
@@ -106,8 +106,12 @@ test("Application Inbox bulk toolbar reflects reactive selection count, disables
 
     await page
       .locator(".application-inbox__bulk-toolbar")
-      .waitFor({ state: "visible", timeout: 5_000 });
+      .waitFor({ state: "attached", timeout: 5_000 });
     assert.deepEqual(pageErrors, []);
+    assert.equal(
+      await page.locator(".application-inbox__bulk-toolbar").isVisible(),
+      false,
+    );
 
     const selectionCount = page.locator(".application-inbox__selection-count");
     await assert.equal(
@@ -137,6 +141,10 @@ test("Application Inbox bulk toolbar reflects reactive selection count, disables
       name: "Chọn Candidate Nguyễn Thị An",
     });
     await cand1Checkbox.click();
+    assert.equal(
+      await page.locator(".application-inbox__bulk-toolbar").isVisible(),
+      true,
+    );
     assert.equal(await cand1Checkbox.isChecked(), true);
     assert.equal(
       (await selectionCount.textContent())?.trim(),
@@ -198,7 +206,7 @@ test("Application Inbox bulk Mark NEW/READ forwards row-bound tokens and blocks 
 
     await page
       .locator(".application-inbox__bulk-toolbar")
-      .waitFor({ state: "visible", timeout: 5_000 });
+      .waitFor({ state: "attached", timeout: 5_000 });
 
     // Candidate 3 has hasApplication: true
     const cand3Checkbox = page.getByRole("checkbox", {
@@ -336,7 +344,7 @@ test("Application Inbox bulk Mark NEW/READ forwards row-bound tokens and blocks 
     await setupPage(page2, style, script);
     await page2
       .locator(".application-inbox__bulk-toolbar")
-      .waitFor({ state: "visible", timeout: 5_000 });
+      .waitFor({ state: "attached", timeout: 5_000 });
 
     const dungCheckbox = page2.getByRole("checkbox", {
       name: "Chọn Candidate Hoàng Văn Dũng",
@@ -379,7 +387,7 @@ test("Application Inbox bulk Inactive opens accessible confirmation dialog, trap
 
     await page
       .locator(".application-inbox__bulk-toolbar")
-      .waitFor({ state: "visible", timeout: 5_000 });
+      .waitFor({ state: "attached", timeout: 5_000 });
 
     // Select candidate 1
     await page
@@ -563,7 +571,7 @@ test("Application Inbox bulk Reactivate executes action and error banner renders
 
     await page
       .locator(".application-inbox__bulk-toolbar")
-      .waitFor({ state: "visible", timeout: 5_000 });
+      .waitFor({ state: "attached", timeout: 5_000 });
 
     // Select candidate 3 (currently inactive)
     await page
@@ -628,7 +636,7 @@ test("Application Inbox bulk Reactivate executes action and error banner renders
     const fontSize = await reactivateBtn.evaluate(
       (element) => window.getComputedStyle(element).fontSize,
     );
-    assert.ok(Number.parseFloat(fontSize) >= 16);
+    assert.ok(Number.parseFloat(fontSize) >= 14);
 
     assert.deepEqual(pageErrors, []);
   } finally {
@@ -651,7 +659,7 @@ test("Application Inbox selection scope resets on filter change with accessible 
 
     await page
       .locator(".application-inbox__bulk-toolbar")
-      .waitFor({ state: "visible", timeout: 5_000 });
+      .waitFor({ state: "attached", timeout: 5_000 });
 
     const selectionCount = page.locator(".application-inbox__selection-count");
 
@@ -783,6 +791,18 @@ test("Application Inbox drawer observed server updates (NEW->READ on open and HR
     await page
       .locator(".submission-drawer__header")
       .waitFor({ state: "visible", timeout: 5_000 });
+
+    const detailSizes = await drawer
+      .locator(
+        "th, td, label, input, select, textarea, button, .wrap-anywhere, .meta, small, .drawer-doc-item__meta",
+      )
+      .evaluateAll((elements) =>
+        elements.map((el) => Number.parseFloat(getComputedStyle(el).fontSize)),
+      );
+    assert.ok(
+      detailSizes.length > 0 && detailSizes.every((size) => size >= 16),
+      "Inline submission detail retains16px values, metadata and commands",
+    );
 
     // Verify drawer subtitle shows status READ
     const subtitle = page.locator(".submission-drawer__subtitle");
@@ -974,7 +994,7 @@ test("Application Inbox bulk toolbar and table render and operate correctly at r
     await setupPage(page, style, script);
 
     const toolbar = page.locator(".application-inbox__bulk-toolbar");
-    await toolbar.waitFor({ state: "visible", timeout: 5_000 });
+    await toolbar.waitFor({ state: "attached", timeout: 5_000 });
 
     // Verify explicit observable flex-wrap behavior on toolbar and action group
     const toolbarFlexWrap = await toolbar.evaluate(

@@ -6,6 +6,7 @@ import { AsyncStatus } from "@/components/ui/AsyncStatus";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Drawer } from "@/components/ui/Drawer";
+import { PageContext } from "@/components/ui/PageContext";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { StatusMenu } from "@/components/ui/StatusMenu";
 import { TableScrollContainer } from "@/components/ui/TableScrollContainer";
@@ -656,16 +657,16 @@ export function HrReportView({
       aria-busy={pending || undefined}
     >
       <div className={styles.heading}>
-        <div>
+        <div className="workflow-page-heading">
           <h1 id="hr-report-title">
             {t("Báo cáo phỏng vấn", "Interview Reports")}
           </h1>
-          <p>
+          <PageContext>
             {t(
               "Mỗi dòng là một Application tại vòng phỏng vấn hiện hành.",
               "Each row is one Application at its current interview round.",
             )}
-          </p>
+          </PageContext>
         </div>
       </div>
 

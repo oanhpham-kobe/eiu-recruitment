@@ -17,7 +17,7 @@ test("AppShell composes the required semantic landmark-bearing shell", () => {
   assert.match(source, /<SkipLink\s*\/>/);
   assert.match(
     source,
-    /<Sidebar\s+currentPath=\{currentPath\}\s+navItems=\{navItems\}\s*\/>/,
+    /<Sidebar\s+currentPath=\{currentPath\}\s+navItems=\{navItems\}[\s\S]*?accountLabel=\{accountLabel\}\s*\/>/,
   );
   assert.match(source, /<MobileNavigation[\s\S]*?navItems=\{navItems\}/);
   assert.match(source, /<Header[\s\S]*?mobileNavOpen=\{mobileNavOpen\}/);
@@ -40,7 +40,11 @@ test("Sidebar source keeps semantic navigation, active state, and user identity 
   assert.match(source, /const \{ locale \} = useAppLocale\(\)/);
   assert.match(source, /<aside[\s\S]*?className="sidebar"/);
   assert.match(source, /"Thanh điều hướng chính" : "Main sidebar"/);
-  assert.match(source, /className="brand-logo"/);
+  assert.match(source, /<Brand\s*\/>/);
+  assert.match(
+    readSource("src/components/shell/Brand.tsx"),
+    /className="brand-logo"/,
+  );
   assert.match(source, /<nav[\s\S]*?className="sidebar-nav"/);
   assert.match(source, /"Menu chức năng" : "Navigation menu"/);
   assert.match(source, /aria-current=\{isCurrent \? "page" : undefined\}/);

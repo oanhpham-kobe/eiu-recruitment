@@ -12,6 +12,8 @@ import { HrReportView } from "@/components/reports/HrReportView";
 import { InterviewerReportView } from "@/components/reports/InterviewerReportView";
 import { AppShell } from "@/components/shell/AppShell";
 import { useAppLocale } from "@/components/shell/LocaleProvider";
+import { NavigationIcon } from "@/components/shell/NavigationIcon";
+import { Dialog } from "@/components/ui/Dialog";
 import { UsersManagementPage } from "@/components/users/UsersManagementPage";
 import type { Detail, Workspace } from "@/lib/interview-feedback/model";
 import { previewApi } from "./feedback";
@@ -173,59 +175,66 @@ function CandidatePortal({ path }: { path: string }) {
       return result;
     };
     return (
-      <CandidateForm
-        sessionId={sessionId}
-        mode={sub ? "EDIT_SUBMISSION" : "NEW_SUBMISSION"}
-        verifiedEmail="candidate@example.test"
-        pinnedPrivacyVersion="synthetic-v1"
-        expiresAt="2099-01-01T00:00:00Z"
-        privacyNotice={{
-          version: "synthetic-v1",
-          contentVi:
-            "Môi trường thử nghiệm cục bộ. Chỉ nhập dữ liệu giả. Thông tin lưu trên trình duyệt này; không gửi đến EIU.",
-          contentEn:
-            "Local trial. Use synthetic information only. Data stays in this browser and is not sent to EIU.",
-        }}
-        privacyAlreadyAcknowledged={Boolean(sub)}
-        initialData={
-          sub
-            ? {
-                fullName: sub.full_name,
-                phone: sub.phone ?? "",
-                dateOfBirth: sub.date_of_birth ?? "",
-                gender: sub.gender_code === "MALE" ? "MALE" : "FEMALE",
-                address: sub.current_address ?? "",
-                education: sub.education.map((e) => ({
-                  periodText: e.period_text,
-                  qualificationId: e.qualification_id,
-                  major: e.major,
-                  institution: e.institution,
-                  sortOrder: e.sort_order,
-                })),
-                attachedDocs: sub.documents.map((d) => ({
-                  reservationId: d.document_id,
-                  documentTypeCode: d.document_type_code ?? "OTHER",
-                  documentTypeName: d.document_type_name ?? "Document",
-                  filename: d.original_filename,
-                  fileSizeBytes: d.file_size_bytes,
-                  logicalDocumentId: d.logical_document_id,
-                  documentTypeId: d.document_type_id,
-                  persisted: true,
-                  isCv: d.document_type_code === "CV_RESUME",
-                })),
-              }
-            : undefined
-        }
-        documentTypes={s.catalogs.document_types
-          .filter((v) => v.isActive)
-          .map((v) => ({ id: v.id, code: v.code, name: v.nameVi }))}
-        qualificationLevels={s.catalogs.qualification_levels.map((v) => ({
-          id: v.id,
-          name: v.nameVi,
-        }))}
-        onSubmit={submit}
-        onCancel={async () => go("/candidate")}
-      />
+      <section className="preview-form-page">
+        <h1>
+          {sub
+            ? "Cập nhật phiếu / Edit submission"
+            : "Phiếu ứng tuyển mới / New submission"}
+        </h1>
+        <CandidateForm
+          sessionId={sessionId}
+          mode={sub ? "EDIT_SUBMISSION" : "NEW_SUBMISSION"}
+          verifiedEmail="candidate@example.test"
+          pinnedPrivacyVersion="synthetic-v1"
+          expiresAt="2099-01-01T00:00:00Z"
+          privacyNotice={{
+            version: "synthetic-v1",
+            contentVi:
+              "Môi trường thử nghiệm cục bộ. Chỉ nhập dữ liệu giả. Thông tin lưu trên trình duyệt này; không gửi đến EIU.",
+            contentEn:
+              "Local trial. Use synthetic information only. Data stays in this browser and is not sent to EIU.",
+          }}
+          privacyAlreadyAcknowledged={Boolean(sub)}
+          initialData={
+            sub
+              ? {
+                  fullName: sub.full_name,
+                  phone: sub.phone ?? "",
+                  dateOfBirth: sub.date_of_birth ?? "",
+                  gender: sub.gender_code === "MALE" ? "MALE" : "FEMALE",
+                  address: sub.current_address ?? "",
+                  education: sub.education.map((e) => ({
+                    periodText: e.period_text,
+                    qualificationId: e.qualification_id,
+                    major: e.major,
+                    institution: e.institution,
+                    sortOrder: e.sort_order,
+                  })),
+                  attachedDocs: sub.documents.map((d) => ({
+                    reservationId: d.document_id,
+                    documentTypeCode: d.document_type_code ?? "OTHER",
+                    documentTypeName: d.document_type_name ?? "Document",
+                    filename: d.original_filename,
+                    fileSizeBytes: d.file_size_bytes,
+                    logicalDocumentId: d.logical_document_id,
+                    documentTypeId: d.document_type_id,
+                    persisted: true,
+                    isCv: d.document_type_code === "CV_RESUME",
+                  })),
+                }
+              : undefined
+          }
+          documentTypes={s.catalogs.document_types
+            .filter((v) => v.isActive)
+            .map((v) => ({ id: v.id, code: v.code, name: v.nameVi }))}
+          qualificationLevels={s.catalogs.qualification_levels.map((v) => ({
+            id: v.id,
+            name: v.nameVi,
+          }))}
+          onSubmit={submit}
+          onCancel={async () => go("/candidate")}
+        />
+      </section>
     );
   }
   return (
@@ -605,81 +614,116 @@ function Surface({ path }: { path: string }) {
   );
 }
 function Controls() {
+  const [open, setOpen] = useState(false);
   const s = read();
   const { locale } = useAppLocale();
   const t = (vi: string, en: string) => (locale === "vi" ? vi : en);
   return (
-    <details className="preview-options">
-      <summary>
-        {t("Dữ liệu mẫu", "Synthetic data")} · {PEOPLE[s.persona].name} ·{" "}
-        {t("Tùy chọn", "Options")}
-      </summary>
-      <aside
-        className="preview-controls"
-        aria-label="Synthetic preview controls"
+    <>
+      <button
+        type="button"
+        className="preview-workspace-trigger"
+        aria-label="Mở vai thử nghiệm / Open trial workspace"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
       >
-        <span className="preview-trial-label">
-          {t("Dữ liệu mẫu", "Synthetic data")}
-        </span>
-        {!persistenceAvailable() && (
-          <p role="alert">
-            Trình duyệt không cho lưu dữ liệu. Thay đổi chỉ còn trong phiên này.
-            / Storage unavailable; changes last only for this page session.
-          </p>
-        )}
-        <label>
-          {t("Vai thử nghiệm", "Trial role")}{" "}
-          <select
-            aria-label="Vai thử nghiệm / Trial role"
-            value={s.persona}
-            onChange={(e) => {
-              const n = read();
-              n.persona = e.target.value as Persona;
-              save(n);
+        <NavigationIcon path="workspace" />
+        <span>{t("Vai thử nghiệm", "Trial role")}</span>
+      </button>
+      <Dialog
+        open={open}
+        title={t("Không gian thử nghiệm", "Trial workspace")}
+        onClose={() => setOpen(false)}
+      >
+        <aside
+          className="preview-controls"
+          aria-label="Synthetic preview controls"
+        >
+          <span className="preview-trial-label">
+            {t("Dữ liệu mẫu", "Synthetic data")}
+          </span>
+          {!persistenceAvailable() && (
+            <p role="alert">
+              Trình duyệt không cho lưu dữ liệu. Thay đổi chỉ còn trong phiên
+              này. / Storage unavailable; changes last only for this page
+              session.
+            </p>
+          )}
+          <label>
+            {t("Vai thử nghiệm", "Trial role")}{" "}
+            <select
+              aria-label="Vai thử nghiệm / Trial role"
+              value={s.persona}
+              onChange={(e) => {
+                const n = read();
+                n.persona = e.target.value as Persona;
+                save(n);
+                location.reload();
+              }}
+            >
+              {Object.entries(PEOPLE).map(([key, p]) => (
+                <option key={key} value={key}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            aria-label="Bắt đầu lại / Reset all"
+            onClick={() => {
+              if (
+                !confirm(
+                  "Xóa dữ liệu thử nghiệm và bắt đầu lại? / Reset synthetic workspace?",
+                )
+              )
+                return;
+              for (const key of Object.keys(sessionStorage))
+                if (key.startsWith("eiu_candidate_form_draft_project-preview-"))
+                  sessionStorage.removeItem(key);
+              reset();
+              location.hash = "/guide";
               location.reload();
             }}
           >
-            {Object.entries(PEOPLE).map(([key, p]) => (
-              <option key={key} value={key}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          aria-label="Bắt đầu lại / Reset all"
-          onClick={() => {
-            if (
-              !confirm(
-                "Xóa dữ liệu thử nghiệm và bắt đầu lại? / Reset synthetic workspace?",
-              )
-            )
-              return;
-            for (const key of Object.keys(sessionStorage))
-              if (key.startsWith("eiu_candidate_form_draft_project-preview-"))
-                sessionStorage.removeItem(key);
-            reset();
-            location.hash = "/guide";
-            location.reload();
-          }}
-        >
-          {t("Bắt đầu lại", "Reset all")}
-        </button>
-        <a href="#/guide">{t("Hướng dẫn", "Guide")}</a>
-        <small className="preview-simulation-note">
-          {t(
-            "Chỉ nhập dữ liệu mẫu. Không gửi email thật.",
-            "Synthetic input only. No real emails are sent.",
-          )}
-        </small>
-      </aside>
-    </details>
+            {t("Bắt đầu lại", "Reset all")}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              go("/guide");
+            }}
+          >
+            {t("Hướng dẫn", "Guide")}
+          </button>
+          <small className="preview-simulation-note">
+            {t(
+              "Chỉ nhập dữ liệu mẫu. Không gửi email thật.",
+              "Synthetic input only. No real emails are sent.",
+            )}
+          </small>
+        </aside>
+      </Dialog>
+    </>
   );
 }
-function PreviewTitle() {
+function PreviewTitle({ path }: { path: string }) {
   const { locale } = useAppLocale();
-  return <>EIU · {locale === "vi" ? "Bản dùng thử" : "Trial workspace"}</>;
+  const route =
+    routes.find(([href]) => href === path) ??
+    routes.find(([href]) => path.startsWith(href) && href !== "/");
+  return (
+    <div className="workspace-context">
+      <span>{locale === "vi" ? "Tuyển dụng" : "Recruitment"}</span>
+      <span aria-hidden="true">/</span>
+      <span>
+        {route?.[locale === "vi" ? 1 : 2] ??
+          (locale === "vi" ? "Phiếu ứng tuyển" : "Applications")}
+      </span>
+    </div>
+  );
 }
 function App() {
   const [path, setPath] = useState(location.hash.slice(1) || "/guide");
@@ -720,8 +764,13 @@ function App() {
     .map(([href, labelVi, labelEn]) => ({ href, labelVi, labelEn }));
   return (
     <div id="app-root">
-      <AppShell title={<PreviewTitle />} currentPath={path} navItems={items}>
-        <Controls />
+      <AppShell
+        title={<PreviewTitle path={path} />}
+        currentPath={path}
+        navItems={items}
+        workspaceControl={<Controls />}
+        accountLabel={PEOPLE[role].name}
+      >
         <Surface key={`${role}:${path}`} path={path} />
       </AppShell>
     </div>

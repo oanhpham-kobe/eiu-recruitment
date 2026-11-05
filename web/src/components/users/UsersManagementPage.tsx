@@ -24,6 +24,7 @@ import {
 } from "@/app/users/actions";
 import { useAppLocale } from "@/components/shell/LocaleProvider";
 import type { InternalNavigationIdentity } from "@/components/shell/navigation";
+import { PageContext } from "@/components/ui/PageContext";
 import { RowActions } from "@/components/ui/RowActions";
 import { DELEGABLE_PERMISSIONS } from "@/lib/auth/permissions";
 
@@ -490,19 +491,16 @@ export function UsersManagementPage({
   return (
     <div className="users-page workflow-list-page">
       <header className="users-header">
-        <div>
+        <div className="workflow-page-heading">
           <h1 className="users-header__title">
             {t("Người dùng & phân quyền", "Users & permissions")}
           </h1>
-          <p
-            className="text-muted"
-            style={{ margin: "0.25rem 0 0", fontSize: "1rem" }}
-          >
+          <PageContext>
             {t(
               "Quản lý nhân sự, tài khoản và quyền truy cập.",
               "Manage staff, accounts and access permissions.",
             )}
-          </p>
+          </PageContext>
         </div>
         {canManageDirectory && (
           <div className="users-header__actions">

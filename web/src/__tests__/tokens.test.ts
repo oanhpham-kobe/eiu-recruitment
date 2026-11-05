@@ -71,13 +71,13 @@ test("design system v1.8 tokens define WCAG 2.2 AA compliant semantic status col
   assert.match(tokensCss, /--status-followup-bg:\s*#ecebfa/i);
 });
 
-test("typography rules enforce minimum 16px font size for content and controls", () => {
+test("base typography retains16px with an explicit approved compact workflow scope", () => {
   const { tokensCss, globalsCss } = loadStyles();
 
   // Font family includes Be Vietnam Pro
   assert.match(tokensCss, /"Be Vietnam Pro"/);
 
-  // Token definitions >= 16px
+  // Base token definitions remain16px; the documented scoped trial uses14px.
   assert.match(tokensCss, /--font-size-base:\s*16px/);
   assert.match(tokensCss, /--font-size-body:\s*16px/);
   assert.match(tokensCss, /--font-size-table-header:\s*16px/);
@@ -87,7 +87,22 @@ test("typography rules enforce minimum 16px font size for content and controls",
   assert.match(tokensCss, /--font-size-badge:\s*16px/);
   assert.match(tokensCss, /--font-size-meta:\s*14px/);
 
-  // globals.css enforces 16px on html/body, table, forms, buttons
+  const compactCss = fs.readFileSync(
+    path.resolve("src/styles/workflow.css"),
+    "utf8",
+  );
+  assert.match(compactCss, /CR-UNICOUNCIL-UI-ADAPTATION-20261105/);
+  assert.match(
+    compactCss,
+    /\.workflow-list-page table[\s\S]*?font-size:\s*14px/,
+  );
+  assert.match(
+    compactCss,
+    /@media \(min-width: 768px\)[\s\S]*?font-size:\s*14px/,
+  );
+  assert.match(compactCss, /\[role="dialog"\][\s\S]*?font-size:\s*16px/);
+
+  // globals.css supplies the16px base for body, table, forms and controls.
   assert.match(globalsCss, /font-size:\s*16px/);
   assert.match(globalsCss, /body,\s*\n?table/);
 });

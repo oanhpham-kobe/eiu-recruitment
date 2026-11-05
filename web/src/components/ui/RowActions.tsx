@@ -46,7 +46,7 @@ export function RowActions({
       <button
         ref={trigger}
         type="button"
-        className="ui-button ui-button--ghost"
+        className="ui-button ui-button--ghost ui-row-actions-trigger"
         popoverTarget={id}
         aria-label={label}
         onClick={(event) => event.stopPropagation()}

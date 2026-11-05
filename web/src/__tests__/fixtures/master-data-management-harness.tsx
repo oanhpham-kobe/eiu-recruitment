@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import "@/app/globals.css";
 import type { MasterDataItemRecord } from "@/app/master-data/actions";
 import { MasterDataManagementPage } from "@/components/master-data/MasterDataManagementPage";
 import { AppShell } from "@/components/shell/AppShell";

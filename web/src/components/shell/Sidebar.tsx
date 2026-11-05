@@ -1,14 +1,21 @@
 "use client";
 
+import { Brand } from "./Brand";
 import { useAppLocale } from "./LocaleProvider";
+import { NavigationIcon } from "./NavigationIcon";
 import type { NavItem } from "./navigation";
 
 export interface SidebarProps {
   currentPath?: string;
   navItems: readonly NavItem[];
+  accountLabel?: string;
 }
 
-export function Sidebar({ currentPath = "/", navItems }: SidebarProps) {
+export function Sidebar({
+  currentPath = "/",
+  navItems,
+  accountLabel,
+}: SidebarProps) {
   const { locale } = useAppLocale();
 
   return (
@@ -17,14 +24,7 @@ export function Sidebar({ currentPath = "/", navItems }: SidebarProps) {
       aria-label={locale === "vi" ? "Thanh điều hướng chính" : "Main sidebar"}
     >
       <div className="sidebar-brand">
-        <div className="brand-logo">
-          <span className="brand-text">EIU</span>
-          <span className="brand-mark" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
-        </div>
+        <Brand />
         <div className="brand-sub">
           {locale === "vi" ? "Tuyển dụng" : "Recruitment"}
         </div>
@@ -34,6 +34,9 @@ export function Sidebar({ currentPath = "/", navItems }: SidebarProps) {
         className="sidebar-nav"
         aria-label={locale === "vi" ? "Menu chức năng" : "Navigation menu"}
       >
+        <p className="sidebar-section-label">
+          {locale === "vi" ? "Không gian làm việc" : "Workspace"}
+        </p>
         <ul className="nav-list">
           {navItems.map((item) => {
             const isCurrent = currentPath === item.href;
@@ -43,7 +46,8 @@ export function Sidebar({ currentPath = "/", navItems }: SidebarProps) {
                   href={item.href}
                   aria-current={isCurrent ? "page" : undefined}
                 >
-                  {locale === "vi" ? item.labelVi : item.labelEn}
+                  <NavigationIcon path={item.href} />
+                  <span>{locale === "vi" ? item.labelVi : item.labelEn}</span>
                 </a>
               </li>
             );
@@ -63,7 +67,8 @@ export function Sidebar({ currentPath = "/", navItems }: SidebarProps) {
         </div>
         <div className="user-info">
           <span className="user-name">
-            {locale === "vi" ? "Người dùng nội bộ" : "Internal User"}
+            {accountLabel ??
+              (locale === "vi" ? "Người dùng nội bộ" : "Internal User")}
           </span>
           <span className="user-role">EIU Recruitment</span>
         </div>

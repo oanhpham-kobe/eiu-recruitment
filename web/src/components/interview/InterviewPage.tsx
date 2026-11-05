@@ -25,6 +25,7 @@ import { useAppLocale } from "@/components/shell/LocaleProvider";
 import { AsyncStatus } from "@/components/ui/AsyncStatus";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
+import { PageContext } from "@/components/ui/PageContext";
 import { RowActions } from "@/components/ui/RowActions";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { StatusMenu } from "@/components/ui/StatusMenu";
@@ -397,14 +398,14 @@ export function InterviewPage({
       aria-labelledby="interview-page-title"
     >
       <div className="interview-page-heading">
-        <div>
+        <div className="workflow-page-heading">
           <h1 id="interview-page-title">{t("Lịch phỏng vấn", "Interviews")}</h1>
-          <p>
+          <PageContext>
             {t(
               "Lịch hẹn, vòng phỏng vấn và người tham dự.",
               "Appointments, interview rounds and participants.",
             )}
-          </p>
+          </PageContext>
         </div>
       </div>
 

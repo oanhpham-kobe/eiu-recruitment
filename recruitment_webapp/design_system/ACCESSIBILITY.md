@@ -90,3 +90,7 @@ All 14–16px normal text, including status badges, must reach 4.5:1 contrast ag
 - Escape closes the open status menu and restores focus to its trigger.
 - Mobile navigation and full-screen drawers must not leave inactive background controls focusable; use inertness/semantic hiding plus focus restoration.
 - Long localized status labels may wrap within the approved badge width; meaning must never rely on color alone.
+
+## UniCouncil visual trial — 2026-11-05
+
+`CR-UNICOUNCIL-UI-ADAPTATION-20261105` in MASTER.md permits scoped operational list/navigation/filter/pager/badge UI at14px/21px. No functional UI may be smaller than14px. Identity names and all generic body, Candidate forms, drawer/dialog content and report narrative remain16px; mobile inputs/selects remain16px. Inline dialogs must explicitly restore16px so ancestor list styles cannot reduce their field labels, values, actions or full-detail metadata. Controls retain44px touch targets,4.5:1 text contrast, visible focus and zoom/reflow access. The single workspace dialog and mobile navigation dismiss on Escape, contain focus and restore the trigger.

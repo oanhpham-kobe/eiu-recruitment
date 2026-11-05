@@ -112,3 +112,7 @@ Với font 16px:
 
 ## Current brand accessibility restriction — v1.8
 `--eiu-gold: #A78656` remains the institutional accent. On white/cream light surfaces it is **not** approved for normal 14–16px body text. Use it for decorative accents, icons/borders where contrast is not the sole information carrier, or sufficiently large text after contrast verification. Sidebar gold-on-dark usage must be contrast-tested separately.
+
+## UniCouncil visual trial — 2026-11-05
+
+`CR-UNICOUNCIL-UI-ADAPTATION-20261105`, defined in MASTER.md, permits scoped list/table/card, navigation, filter, pager and badge UI at14px/21px. Identity names remain16px/24px semibold; generic body, Candidate forms, dialog/drawer fields and report narratives remain16px. Mobile inputs/selects remain16px. Base tokens retain16px; scoped styles declare the14px exception explicitly. Header height is64px; controls retain44px targets and the existing semantic contrast/badge widths. This is an Owner-authorized trial pending visual UAT.

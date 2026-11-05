@@ -1,6 +1,8 @@
 "use client";
+
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { PageContext } from "@/components/ui/PageContext";
 import {
   type Detail,
   type FeedbackApi,
@@ -246,14 +248,14 @@ export function InterviewFeedbackView({
   }
   return (
     <div className="feedback-page">
-      <header className="feedback-no-print">
+      <header className="feedback-no-print workflow-page-heading">
         <h1>{t("Nhận xét phỏng vấn", "Interview feedback")}</h1>
-        <p>
+        <PageContext>
           {t(
             "Thu thập nhận xét và tổng hợp theo đúng vòng phỏng vấn.",
             "Collect and consolidate feedback for the exact interview round.",
           )}
-        </p>
+        </PageContext>
       </header>
       {error && (
         <p role="alert" className="feedback-error feedback-no-print">

@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { Brand } from "./Brand";
 import { useAppLocale } from "./LocaleProvider";
+import { NavigationIcon } from "./NavigationIcon";
 import type { NavItem } from "./navigation";
 
 interface MobileNavigationProps {
@@ -10,6 +12,7 @@ interface MobileNavigationProps {
   currentPath: string;
   navItems: readonly NavItem[];
   onClose: () => void;
+  accountLabel?: string;
 }
 
 const FOCUSABLE =
@@ -20,6 +23,7 @@ export function MobileNavigation({
   currentPath,
   navItems,
   onClose,
+  accountLabel,
 }: MobileNavigationProps) {
   const { locale } = useAppLocale();
   const panelRef = useRef<HTMLElement>(null);
@@ -86,7 +90,7 @@ export function MobileNavigation({
         }
       >
         <div className="mobile-nav-header">
-          <strong>EIU Recruitment</strong>
+          <Brand />
           <button
             ref={closeRef}
             type="button"
@@ -110,7 +114,8 @@ export function MobileNavigation({
                   aria-current={currentPath === item.href ? "page" : undefined}
                   onClick={onClose}
                 >
-                  {locale === "vi" ? item.labelVi : item.labelEn}
+                  <NavigationIcon path={item.href} />
+                  <span>{locale === "vi" ? item.labelVi : item.labelEn}</span>
                 </a>
               </li>
             ))}
@@ -118,7 +123,8 @@ export function MobileNavigation({
         </nav>
         <div className="mobile-nav-user">
           <strong>
-            {locale === "vi" ? "Người dùng nội bộ" : "Internal User"}
+            {accountLabel ??
+              (locale === "vi" ? "Người dùng nội bộ" : "Internal User")}
           </strong>
           <span>EIU Recruitment</span>
         </div>

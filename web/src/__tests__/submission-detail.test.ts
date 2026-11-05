@@ -1561,7 +1561,7 @@ let cachedDrawerBundle: { script: string; style: string } | null = null;
 async function getDrawerBrowserBundle() {
   if (cachedDrawerBundle) return cachedDrawerBundle;
   const bundle = await build({
-    loader: { ".ttf": "dataurl" },
+    loader: { ".ttf": "dataurl", ".jpg": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: [

@@ -2,17 +2,20 @@
 
 import type React from "react";
 import { useAppLocale } from "./LocaleProvider";
+import { NavigationIcon } from "./NavigationIcon";
 
 export interface HeaderProps {
   title?: React.ReactNode;
   mobileNavOpen?: boolean;
   onOpenNavigation?: () => void;
+  workspaceControl?: React.ReactNode;
 }
 
 export function Header({
   title,
   mobileNavOpen = false,
   onOpenNavigation,
+  workspaceControl,
 }: HeaderProps) {
   const { locale, setLocale } = useAppLocale();
   const defaultTitle =
@@ -29,7 +32,7 @@ export function Header({
         aria-controls="mobile-internal-navigation"
         onClick={onOpenNavigation}
       >
-        <span aria-hidden="true">☰</span>
+        <NavigationIcon path="menu" />
       </button>
       <div className="topbar-title">
         {typeof title === "string" ? (
@@ -37,10 +40,11 @@ export function Header({
         ) : title ? (
           title
         ) : (
-          <h1>{defaultTitle}</h1>
+          <span className="workspace-product">{defaultTitle}</span>
         )}
       </div>
       <div className="topbar-utility">
+        {workspaceControl}
         <fieldset className="language-switcher">
           <legend className="sr-only">
             {locale === "vi" ? "Chọn ngôn ngữ" : "Choose language"}

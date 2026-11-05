@@ -405,7 +405,7 @@ test("Application Inbox keyboard expansion and checkbox hit area use real client
   timeout: 60_000,
 }, async () => {
   const browserBundle = await build({
-    loader: { ".ttf": "dataurl" },
+    loader: { ".ttf": "dataurl", ".jpg": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: [

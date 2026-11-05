@@ -7,7 +7,7 @@ const WIDTHS = [360, 390, 430, 768, 1024, 1280, 1393, 1440, 1920] as const;
 
 async function bundleHarness() {
   const bundle = await build({
-    loader: { ".ttf": "dataurl" },
+    loader: { ".ttf": "dataurl", ".jpg": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/hr-report-browser-harness.tsx"],

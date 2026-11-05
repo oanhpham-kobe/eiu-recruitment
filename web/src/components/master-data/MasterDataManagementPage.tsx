@@ -19,6 +19,7 @@ import {
 } from "@/app/master-data/actions";
 import { useAppLocale } from "@/components/shell/LocaleProvider";
 import type { InternalNavigationIdentity } from "@/components/shell/navigation";
+import { PageContext } from "@/components/ui/PageContext";
 import type { MasterDataType } from "@/lib/commands/master-data";
 
 export interface MasterCatalogOption {
@@ -484,19 +485,16 @@ export function MasterDataManagementPage({
   return (
     <div className="master-data-page workflow-list-page">
       <header className="master-data-header">
-        <div>
+        <div className="workflow-page-heading">
           <h1 className="master-data-header__title">
             {t("Danh mục", "Master data")}
           </h1>
-          <p
-            className="text-muted"
-            style={{ margin: "0.25rem 0 0", fontSize: "1rem" }}
-          >
+          <PageContext>
             {t(
               "Dữ liệu dùng chung trong quy trình tuyển dụng.",
               "Shared information for the recruitment workflow.",
             )}
-          </p>
+          </PageContext>
         </div>
         {canManage && (
           <div className="master-data-header__actions">

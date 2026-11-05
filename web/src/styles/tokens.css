@@ -53,7 +53,7 @@
   --color-followup: #4b479d;
   --color-followup-bg: #ecebfa;
 
-  /* 4. Typography Hard Rule: font >= 16px for body/table/badges/labels */
+  /* 4. CR-UNICOUNCIL-UI-ADAPTATION-20261105: body/form 16px; scoped workflow UI 14px/21px. */
   --font-sans: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
   --font-size-base: 16px;
   --font-size-body: 16px;
@@ -110,7 +110,7 @@
   --height-control: 44px;
   --height-compact: 40px;
   --height-cta: 52px;
-  --header-height: 72px;
+  --header-height: 64px;
 }
 
 @media (max-width: 1023px) {

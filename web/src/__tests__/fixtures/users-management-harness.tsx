@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import "@/app/globals.css";
 import type { InternalUserDirectoryRecord } from "@/app/users/actions";
 import { AppShell } from "@/components/shell/AppShell";
 import { resolveInternalNavItems } from "@/components/shell/navigation";

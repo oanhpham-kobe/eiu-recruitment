@@ -23,6 +23,7 @@ import {
   SubmissionDetailDrawer,
   type SubmissionDetailDrawerProps,
 } from "@/components/inbox/SubmissionDetailDrawer";
+import { PageContext } from "@/components/ui/PageContext";
 import { StatusMenu } from "@/components/ui/StatusMenu";
 import {
   APPLICATION_INBOX_COLUMNS,
@@ -419,7 +420,7 @@ export function ApplicationInboxTable({
         );
         setFeedbackType("success");
         setSelectedTokens(new Map());
-        restoreFocus();
+        tableContainerRef.current?.focus();
         loadPage(inboxState.inbox.page, debouncedFilters, pageSize);
       } catch {
         setFeedbackMessage("Không thể cập nhật trạng thái phiếu hàng loạt.");
@@ -431,7 +432,6 @@ export function ApplicationInboxTable({
     [
       selectedTokens,
       bulkSetStatus,
-      restoreFocus,
       loadPage,
       inboxState.inbox.page,
       debouncedFilters,
@@ -467,7 +467,7 @@ export function ApplicationInboxTable({
       );
       setFeedbackType("success");
       setSelectedTokens(new Map());
-      restoreFocus();
+      tableContainerRef.current?.focus();
       loadPage(inboxState.inbox.page, debouncedFilters, pageSize);
     } catch {
       setFeedbackMessage("Không thể kích hoạt lại tài khoản Candidate.");
@@ -478,7 +478,6 @@ export function ApplicationInboxTable({
   }, [
     selectedTokens,
     bulkSetCandidateActive,
-    restoreFocus,
     loadPage,
     inboxState.inbox.page,
     debouncedFilters,
@@ -526,7 +525,7 @@ export function ApplicationInboxTable({
       setFeedbackType("success");
       setIsInactiveModalOpen(false);
       setSelectedTokens(new Map());
-      restoreFocus();
+      tableContainerRef.current?.focus();
       loadPage(inboxState.inbox.page, debouncedFilters, pageSize);
     } catch {
       setFeedbackMessage("Không thể ngừng hoạt động tài khoản Candidate.");
@@ -664,11 +663,11 @@ export function ApplicationInboxTable({
       aria-labelledby="inbox-heading"
     >
       <div className="application-inbox__header">
-        <div>
-          <h2 id="inbox-heading">Quản lý Phiếu Ứng tuyển</h2>
-          <p>
+        <div className="workflow-page-heading">
+          <h1 id="inbox-heading">Quản lý Phiếu Ứng tuyển</h1>
+          <PageContext>
             Mỗi dòng là một Ứng viên; thông tin tóm tắt lấy từ phiếu mới nhất.
-          </p>
+          </PageContext>
         </div>
       </div>
 
@@ -699,7 +698,7 @@ export function ApplicationInboxTable({
               })
             }
           >
-            <option value="ALL">Tất cả trạng thái</option>
+            <option value="ALL">Tất cả</option>
             {Object.entries(SUBMISSION_STATUS_LABEL).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -812,6 +811,7 @@ export function ApplicationInboxTable({
       )}
 
       <details
+        hidden={selectedTokens.size === 0}
         open={selectedTokens.size > 0}
         className="application-inbox__bulk-toolbar"
         aria-label="Thao tác hàng loạt"
@@ -822,18 +822,10 @@ export function ApplicationInboxTable({
             ref={selectionStatusRef}
             tabIndex={-1}
             className="application-inbox__selection-count"
-            aria-live="polite"
           >
             {selectedTokens.size} ứng viên được chọn
           </span>
         </summary>
-        <div
-          role="status"
-          aria-live="polite"
-          className="sr-only application-inbox__selection-notice"
-        >
-          {selectionNotice}
-        </div>
         <div className="application-inbox__bulk-actions">
           <StatusMenu
             label="Trạng thái đã chọn"
@@ -871,6 +863,13 @@ export function ApplicationInboxTable({
           </button>
         </div>
       </details>
+      <div
+        role="status"
+        aria-live="polite"
+        className="sr-only application-inbox__selection-notice"
+      >
+        {selectedTokens.size} ứng viên được chọn. {selectionNotice}
+      </div>
 
       <div className="application-inbox__table-scroll">
         <table className="application-inbox__table">

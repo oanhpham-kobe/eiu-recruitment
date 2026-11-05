@@ -2,6 +2,7 @@
 @import "../styles/fonts.css";
 @import "../styles/login.css";
 @import "../styles/ui.css";
+@import "../styles/workflow.css";
 
 button,
 input,
@@ -31,7 +32,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Typography Hard Rule: font-size >= 16px for body, tables, forms, buttons, badges */
+/*16px base; scoped compact workflow UI is defined in workflow.css and canonical trial. */
 body,
 table,
 th,
@@ -111,52 +112,25 @@ textarea {
 }
 
 .sidebar-brand {
-  padding: var(--space-6) var(--space-5) var(--space-4);
+  padding: var(--space-5) var(--space-4);
   border-bottom: 1px solid var(--sidebar-border);
 }
 
 .brand-logo {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.brand-text {
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #ffffff;
-  font-family: Georgia, serif;
-}
-
-.brand-mark {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.brand-mark i {
-  display: block;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--eiu-gold);
-}
-
-.brand-mark i:nth-child(1) {
-  width: 31px;
-}
-
-.brand-mark i:nth-child(2) {
-  width: 25px;
-}
-
-.brand-mark i:nth-child(3) {
-  width: 35px;
+  width: 100%;
+  aspect-ratio: 2982 / 846;
+  background:
+    white url("../assets/branding/eiu-full-logo.jpg") center / contain no-repeat;
+  border: 8px solid white;
+  border-radius: 8px;
+  box-sizing: content-box;
+  max-width: calc(100% - 16px);
 }
 
 .brand-sub {
-  margin-top: var(--space-1);
-  font-size: var(--font-size-meta);
+  margin-top: var(--space-3);
+  font-size: var(--font-size-section-title);
+  font-weight: 600;
   color: var(--sidebar-muted);
 }
 
@@ -178,11 +152,13 @@ textarea {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  min-height: 44px;
+  padding: 10px 12px;
   color: var(--sidebar-muted);
   text-decoration: none;
   border-radius: var(--radius-control);
-  font-size: var(--font-size-button);
+  font-size: 14px;
+  line-height: 21px;
   font-weight: 500;
   transition:
     background-color 0.15s ease,
@@ -213,8 +189,8 @@ textarea {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: var(--eiu-gold);
-  color: #ffffff;
+  background: var(--eiu-cream);
+  color: var(--eiu-blue);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,7 +206,7 @@ textarea {
 }
 
 .user-name {
-  font-size: var(--font-size-body);
+  font-size: 14px;
   font-weight: 600;
   color: var(--sidebar-text);
   white-space: nowrap;
@@ -269,8 +245,8 @@ textarea {
 }
 
 .topbar-title h1 {
-  font-size: var(--font-size-page-title);
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 600;
   color: var(--eiu-blue);
   margin: 0;
 }
@@ -278,24 +254,28 @@ textarea {
 .topbar-utility {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .language-switcher {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 0;
+  margin: 0;
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
-  padding: 2px 4px;
+  padding: 0 2px;
   background: var(--surface);
 }
 
 .lang-btn {
   border: none;
   background: transparent;
-  padding: var(--space-1) var(--space-2);
-  font-size: var(--font-size-base);
+  min-height: 44px;
+  min-width: 44px;
+  padding: 4px 8px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--ink-600);
   border-radius: 6px;
@@ -409,16 +389,11 @@ textarea {
   gap: var(--space-4);
 }
 
-.application-inbox__header h2 {
+.application-inbox__header h1 {
   margin: 0;
   color: var(--eiu-blue);
   font-size: var(--font-size-page-title);
   line-height: 1.2;
-}
-
-.application-inbox__header p {
-  margin: var(--space-2) 0 0;
-  color: var(--ink-600);
 }
 
 .application-inbox__toolbar {
@@ -1517,6 +1492,7 @@ textarea {
     var(--sidebar-bg-bottom)
   );
   color: var(--sidebar-text);
+  overflow-y: auto;
   box-shadow: 8px 0 24px rgba(48, 48, 51, 0.22);
   outline: none;
 }
@@ -1553,7 +1529,9 @@ textarea {
   border-radius: var(--radius-control);
   color: var(--sidebar-text);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 14px;
+  line-height: 21px;
+  gap: 12px;
   font-weight: 500;
 }
 .mobile-nav-list a[aria-current="page"] {
@@ -1612,9 +1590,9 @@ textarea {
 }
 @media (max-width: 430px) {
   .topbar {
-    min-height: 72px;
+    min-height: var(--header-height);
     height: auto;
-    padding-block: 10px;
+    padding-block: 8px;
   }
   .topbar-title h1 {
     font-size: 20px;
@@ -1678,7 +1656,7 @@ textarea {
     grid-column: 1 / -1;
     min-width: 0;
     width: auto;
-    padding: 8px 12px;
+    padding: 6px 12px;
     box-shadow: none;
     border: 0;
     background: var(--surface);
@@ -1695,13 +1673,9 @@ textarea {
     grid-column: 1 / -1;
     padding: 12px;
   }
-  .application-inbox__table td[data-label="Ngày sinh"]::before {
-    content: "Ngày sinh: ";
-    color: var(--ink-600);
-  }
-  .application-inbox__table td[data-label="Giới tính"]::before {
-    content: "Giới tính: ";
-    color: var(--ink-600);
+  .application-inbox__table td[data-label="Ngày sinh"],
+  .application-inbox__table td[data-label="Giới tính"] {
+    display: none;
   }
   .application-inbox__table td[data-label="HR Note"] {
     display: -webkit-box;
@@ -1929,4 +1903,8 @@ textarea {
   .workflow-note-excerpt {
     -webkit-line-clamp: 2;
   }
+}
+
+.application-inbox__bulk-toolbar[hidden] {
+  display: none;
 }

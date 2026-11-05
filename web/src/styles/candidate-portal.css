@@ -114,6 +114,8 @@
 
 /* Form Styles */
 .candidate-form {
+  width: min(100%, 960px);
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -121,10 +123,10 @@
 
 .form-fieldset {
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: var(--radius-card);
+  padding: 24px;
   margin: 0;
-  background-color: #ffffff;
+  background-color: var(--surface);
 }
 
 .form-legend {

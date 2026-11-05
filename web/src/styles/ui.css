@@ -220,7 +220,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 20px;
+  padding: 12px 24px;
   border-bottom: 1px solid var(--line);
   background: var(--surface);
 }
@@ -249,7 +249,7 @@
   flex: 0 0 auto;
   position: sticky;
   bottom: 0;
-  padding: 12px 20px;
+  padding: 12px 24px;
   border-top: 1px solid var(--line);
   background: var(--surface);
 }
@@ -366,6 +366,12 @@
   background: var(--surface);
   color: var(--ink-950);
   box-shadow: 0 8px 24px #0002;
+}
+.ui-button.ui-row-actions-trigger {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  flex: 0 0 44px;
 }
 .ui-row-actions:popover-open {
   display: grid;

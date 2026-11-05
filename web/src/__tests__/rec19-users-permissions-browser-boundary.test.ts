@@ -12,7 +12,7 @@ async function getHarnessBundle(): Promise<{ script: string; style: string }> {
   }
 
   const browserBundle = await build({
-    loader: { ".ttf": "dataurl" },
+    loader: { ".ttf": "dataurl", ".jpg": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: ["src/__tests__/fixtures/users-management-harness.tsx"],
@@ -473,20 +473,32 @@ test("B1.9: STALE_VERSION conflict error renders inside edit modal and keeps dia
   }
 });
 
-test("B1.10: Typography of action buttons and badges satisfies minimum 16px", async () => {
+test("B1.10: Scoped list action buttons and badges use the approved14px trial hierarchy", async () => {
   const page = await setupPage();
   try {
     const btnFontSize = await page.evaluate(() => {
       const btn = document.querySelector(".users-btn-secondary");
       return btn ? window.getComputedStyle(btn).fontSize : null;
     });
-    assert.equal(btnFontSize, "16px");
+    assert.equal(btnFontSize, "14px");
 
     const badgeFontSize = await page.evaluate(() => {
       const badge = document.querySelector(".users-badge");
       return badge ? window.getComputedStyle(badge).fontSize : null;
     });
-    assert.equal(badgeFontSize, "16px");
+    assert.equal(badgeFontSize, "14px");
+    await page.locator('.users-table button:has-text("Sửa")').first().click();
+    const dialog = page.getByRole("dialog");
+    await dialog.waitFor();
+    const formSizes = await dialog
+      .locator("label, input, select, textarea, button, .meta, small")
+      .evaluateAll((elements) =>
+        elements.map((el) => Number.parseFloat(getComputedStyle(el).fontSize)),
+      );
+    assert.ok(
+      formSizes.length > 0 && formSizes.every((size) => size >= 16),
+      "Inline admin dialog retains16px form/body type",
+    );
   } finally {
     await page.close();
   }

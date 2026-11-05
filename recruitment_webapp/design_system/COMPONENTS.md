@@ -159,3 +159,7 @@ User Directory displays `Bound` / `Unbound`. Unbound email typo correction may l
 
 ## 25. MasterUsageGuard
 Referenced master rows show usage/reference state. Structural edits are disabled with guidance to create a new row and Inactive the old record; typo/display-label corrections may remain available under audited policy.
+
+## UniCouncil visual trial — 2026-11-05
+
+`CR-UNICOUNCIL-UI-ADAPTATION-20261105` in MASTER.md supersedes conflicting16px-only list/navigation/filter/pager/badge clauses: these scoped UI elements may use14px/21px; identity names remain16px semibold. Forms, dialog/drawer content and report narratives remain16px, including inline dialogs inside lists. AppShell uses the real aspect-preserved EIU logo and outline SVG icons. The optional demo workspace slot supplies presentation only; its single role/reset/guide dialog never grants production authority. Page explanations move into an accessible context disclosure beside the one main title. Empty bulk controls remain hidden until selection; announcements and safe focus after commands remain available.

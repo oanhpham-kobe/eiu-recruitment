@@ -8,7 +8,7 @@ type HarnessMode = "production" | "locale" | "pending" | "error";
 
 async function bundleHarness() {
   const bundle = await build({
-    loader: { ".ttf": "dataurl" },
+    loader: { ".ttf": "dataurl", ".jpg": "dataurl" },
     absWorkingDir: process.cwd(),
     bundle: true,
     entryPoints: [

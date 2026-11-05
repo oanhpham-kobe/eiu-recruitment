@@ -2077,6 +2077,10 @@ must be mobile-ready.
 
 Internal HR/Admin/Interviewer operations remain desktop-first, then iPad/mobile are designed and UAT-tested after the Desktop prototype revision.
 
+## Owner-authorized UniCouncil visual trial — 2026-11-05
+
+`CR-UNICOUNCIL-UI-ADAPTATION-20261105`, defined in Design System MASTER.md with matching TOKENS/COMPONENTS/ACCESSIBILITY/RESPONSIVE clauses, supersedes conflicting16px-only operational type and demo-control placement. Compact lists/navigation/filters/pagers/badges may use14px/21px; identity names, body/forms, full detail and report narrative remain16px. Mobile inputs/selects remain16px, touch targets44px and contrast/focus requirements unchanged. The existing explicit drawer exposes birth date/gender omitted from narrow Inbox summaries. No business, permission, privacy, ID/version or demo-store behavior is changed. Final Owner visual UAT is pending.
+
 
 
 ---

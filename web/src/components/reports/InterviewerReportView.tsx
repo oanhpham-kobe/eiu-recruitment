@@ -5,6 +5,7 @@ import { useAppLocale } from "@/components/shell/LocaleProvider";
 import { AsyncStatus } from "@/components/ui/AsyncStatus";
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
+import { PageContext } from "@/components/ui/PageContext";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TableScrollContainer } from "@/components/ui/TableScrollContainer";
 import {
@@ -168,16 +169,16 @@ export function InterviewerReportView({
       aria-busy={pending || undefined}
     >
       <div className="interviewer-report__heading">
-        <div>
+        <div className="workflow-page-heading">
           <h1 id="interviewer-report-title">
             {t("Báo cáo phỏng vấn", "Interview Reports")}
           </h1>
-          <p>
+          <PageContext>
             {t(
               "Chỉ hiển thị các vòng phỏng vấn bạn được phân công và còn quyền truy cập.",
               "Only interview rounds you participated in and still have access to are available.",
             )}
-          </p>
+          </PageContext>
         </div>
       </div>
 
