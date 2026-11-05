@@ -866,29 +866,30 @@ owner_feature_work:
   production_deployment_authorized: false
 
 owner_ui_work:
-  id: WORKFLOW-UI-VISUAL-POLISH-20261105
+  id: WORKFLOW-UI-SKILL-V2-20261105
   branch: codex/workflow-ui-visual-polish-20261105
-  base_sha: 2c0b3decc426582763cdf33a8245d1e9efb5a563
+  base_sha: 686b1b19b7c5ce0e5745a0b08ba8cc2962b9c7a0
   status: LOCAL_REVIEWED_NOT_INTEGRATED
-  product_candidate_sha: b95a80e3ef5e04fc1f2f73962e91237dbc881c36
-  independent_review_sha: b95a80e3ef5e04fc1f2f73962e91237dbc881c36
+  product_candidate_sha: 5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab
+  independent_review_sha: 5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab
   independent_review: PASS
   owner_visual_uat: PENDING
   accepted: false
   local_only: true
-  owner_scope: Owner rejected the prior visual result and requested substantially closer skill application for page proportions, consistent tables/layout and attractive typography. Bundle the actual approved font, refine actual screens and responsive composition, inspect populated renders, preserve business/authorization boundaries and update controlled design sources where necessary. Visual acceptance remains subject to Owner trial.
+  owner_scope: Owner supplied the updated workflow-app-ui archive and requested synchronizing the current application interface. Apply shared fluid layout, aligned columns and badges, responsive list/pager and overlay behavior; preserve business/security boundaries. Static demo publication is separately authorized below; application release remains held.
   development_branch_sync_authorized: true
   integration_authorized: false
   production_deployment_authorized: false
 
 owner_site_preview_work:
-  id: OWNER-PRIVATE-STATIC-SITE-20261105
-  status: PUBLISHED_OWNER_PRIVATE_DEMO
+  id: WORKFLOW-UI-SKILL-V2-20261105
+  status: PUBLISHED_STATIC_DEMO
   project_id: appgprj_6aec0970319c8191969353963dc1823e
   url: https://eiu-recruitment-trial-20261105.tidyburl1.chatgpt.site
-  site_source_commit_sha: 827a419e31c5d8ca731bb4a8dbad0bf8c8fdf479
-  application_candidate_sha: b95a80e3ef5e04fc1f2f73962e91237dbc881c36
-  owner_scope: Owner explicitly requested deployment on ChatGPT Sites. Publish only the verified static synthetic demo, keep owner-private access, browser-local storage and disconnected providers. Reuse this Site identity for future updates.
+  audience: PUBLIC_EXISTING_OWNER_CONFIGURATION
+  site_source_commit_sha: 7cd4c181ed6a3c8d7d98d6c2856c21399cc59eba
+  application_candidate_sha: 5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab
+  owner_scope: Update the existing ChatGPT Site with the verified static synthetic demo; preserve its current audience, browser-local storage and disconnected providers. Reuse the Site identity. No access policy change was made.
   static_site_publication_authorized: true
   recruitment_backend_release_authorized: false
   main_integration_authorized: false

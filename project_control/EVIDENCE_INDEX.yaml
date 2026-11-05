@@ -8,6 +8,43 @@ precode_evidence:
   responsive_browser_qa: {status: PASS, result: '108/108'}
   manifest_verification: {status: PASS, result: '563 checks / 0 failures'}
 implementation_evidence:
+  WORKFLOW-UI-SKILL-V2-20261105:
+    operation: OWNER_UPDATED_SKILL_UI_ALIGNMENT_AND_EXISTING_SITE_REFRESH
+    status: LOCALLY_REVIEWED_DEMO_PUBLISHED_NOT_ACCEPTED
+    branch: codex/workflow-ui-visual-polish-20261105
+    base_sha: "686b1b19b7c5ce0e5745a0b08ba8cc2962b9c7a0"
+    product_candidate_sha: "5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab"
+    independent_review_sha: "5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab"
+    independent_review: PASS
+    review_kind: READ_ONLY_CODEX_COLLABORATION_NOT_FORMAL_OMP_ACCEPTANCE
+    independent_focused_browser_tests: "10 PASS"
+    web_tests: "409 PASS; 0 failed; 0 skipped"
+    web_checks: "lint/typecheck/design/build PASS; zero lint warnings; CI fake public environment used for intercepted auth tests"
+    populated_browser_audit: "144 PASS; 81 VI +18 EN +9 laptop +36 long-data; zero global/local-table horizontal overflow or browser errors"
+    rendered_column_ratios: "3 browser regressions RED then GREEN at1393/1440/1920; notes >=120px; fixed command/status targets retained"
+    source_checks: "515 source;73 design;565 manifest checks; control/OMP25 skills PASS"
+    skill_archive_sha256: "aafa6ba53c1d2526c934469c81107c3fb5f512a2b0baabcf6c2db34e33cbe4ae"
+    committed_skill_parity: "9/9 original files byte-identical"
+    artifact_sha256: "4ff36aea2208fdd964fd4d9dbfddd4ec6191292957ae8a3e3dbc0f69c2b3f06e"
+    owner_visual_uat: PENDING
+    backend_changes: false
+    github_ci: NOT_USED_FOR_LOCAL_VERIFICATION
+    accepted: false
+    artifact: project_control/reviews/WORKFLOW_UI_SKILL_V2_2026-11-05.md
+    site:
+      project_id: "appgprj_6aec0970319c8191969353963dc1823e"
+      url: "https://eiu-recruitment-trial-20261105.tidyburl1.chatgpt.site"
+      status: SUCCEEDED
+      audience: PUBLIC_EXISTING_OWNER_CONFIGURATION_PRESERVED
+      access_revision_observed: 2
+      site_source_commit_sha: "7cd4c181ed6a3c8d7d98d6c2856c21399cc59eba"
+      version_id: "appgprj_6aec0970319c8191969353963dc1823e~appgver_1b0e8857c42881918e4ba5689bb65955"
+      version_number: 2
+      deployment_id: "appgdep_6aec1b349b648191b211ea36a3c7a273"
+      archive_content_hash: "sha256:162430dca5ee6bf36984f5581146fd705ce16c5daab3cf3aaa07a0c356b5447c"
+      source_and_archive: VERIFIED_MATCHING_PUSHED_SITE_SOURCE_BY_NATIVE_HELPER
+      application_release: false
+
   OWNER-PRIVATE-STATIC-SITE-20261105:
     operation: CHATGPT_SITES_STATIC_DEMO_PUBLICATION
     status: SUCCEEDED

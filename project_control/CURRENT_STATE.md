@@ -2,15 +2,20 @@
 
 > DERIVED / NON-AUTHORITATIVE. Runtime: AUTONOMY_RUN_STATE.yaml; DAG: TASK_REGISTRY.yaml / SLICE_REGISTRY.yaml; exact code/history: Git.
 
-## Published private ChatGPT Site — 2026-11-05
+## Current workflow UI skill v2 and published demo — 2026-11-05
 
-- Owner explicitly requested online deployment on ChatGPT Sites. Native private publication succeeded: https://eiu-recruitment-trial-20261105.tidyburl1.chatgpt.site
-- Site identity: `appgprj_6aec0970319c8191969353963dc1823e`. Reuse it for updates; do not create another Site. Its separate managed source repository commit is `827a419e31c5d8ca731bb4a8dbad0bf8c8fdf479`.
-- Static HTML is byte-identical to the verified export (`34aa3828234d97867c7133b57973d26fce1e5ca24b44ba6bac4590da3e121ffb`), with bundled-license notices included. Existing UI/workflow verification remains applicable; no application code changed for hosting.
-- Owner-private access; synthetic roles and browser-local state. No real EIU authentication, recruitment database, mail delivery or private document processing was connected. This Site deployment does not release the recruitment application's production/main/recovery gates.
-- Native deployment/version receipt: `EVIDENCE_INDEX.yaml:implementation_evidence.OWNER-PRIVATE-STATIC-SITE-20261105`. Source credentials are not persisted in project records.
+- Owner supplied `workflow-app-ui-2026-11-05.zip` and requested synchronizing the application's interface. All nine installed files match the archive; provenance is recorded in `SKILLS_LOCK.yaml`.
+- Product candidate `5e53d4dfa9f6ec0ce355b6d2a53b00d438da19ab` on `codex/workflow-ui-visual-polish-20261105`: independent exact-SHA Codex local review PASS; pushed to GitHub. Resolve current reporting HEAD directly from Git.
+- Controlled visual trial: `CR-WORKFLOW-UI-SKILL-V2-20261105` in `recruitment_webapp/design_system/RESPONSIVE.md`. Shared gutters, left-aligned header/data axes, centered badge contents, supported fluid column proportions, structured narrow layouts, bounded list scrolling/pagination and viewport-responsive overlays. Edit commands use warning semantic tokens. Owner visual UAT remains pending.
+- Fresh final verification:409/409 web tests, lint/typecheck/design/build PASS;144 populated browser scenes PASS (81 VI widths320–1920,18 EN,9 laptop1366x768,36 long-data). Native column-ratio regressions reproduced RED then GREEN; short-height overlay/focus and invisible accessibility-label overflow are covered.
+- Source515/515, design73/73, manifests565 checks, control-plane and OMP-native25skills PASS. No database or business/security changes.
+- Existing ChatGPT Site updated successfully to version2: https://eiu-recruitment-trial-20261105.tidyburl1.chatgpt.site . Existing public audience (Owner configuration revision2) was preserved; no access setting was changed by this work.
+- Site identity `appgprj_6aec0970319c8191969353963dc1823e`; reuse it. Separate Site source commit `7cd4c181ed6a3c8d7d98d6c2856c21399cc59eba`. Verified HTML SHA-256 `4ff36aea2208fdd964fd4d9dbfddd4ec6191292957ae8a3e3dbc0f69c2b3f06e`.
+- Synthetic personas and browser-local storage remain; no real EIU authentication, database, email delivery or private file processing is connected. No main integration, production application release, accepted checkpoint or Package009 acceptance.
+- Evidence and publication receipt: `EVIDENCE_INDEX.yaml:implementation_evidence.WORKFLOW-UI-SKILL-V2-20261105`; narrative `project_control/reviews/WORKFLOW_UI_SKILL_V2_2026-11-05.md`. Source credentials are never persisted.
+- Standalone preview can be regenerated with `npm run preview:project:build` from `web`. Restart an older already-running local preview process before using it to inspect this revision; this Site is the current published demo.
 
-## Active visual polish after Owner feedback — 2026-11-05
+## Previous visual polish after Owner feedback — 2026-11-05
 
 - Branch: `codex/workflow-ui-visual-polish-20261105`, base `2c0b3decc426582763cdf33a8245d1e9efb5a563`. Product candidate `b95a80e3ef5e04fc1f2f73962e91237dbc881c36`: exact-SHA independent local re-review PASS. Resolve reporting HEAD/remote synchronization directly from Git.
 - Owner found the previous visual result insufficient. Applied `workflow-app-ui` more closely to populated pages, not just shared control styling. Controlled local-trial design amendment: `CR-WORKFLOW-UI-UAT-20261105` in `design_system/RESPONSIVE.md`; final Owner visual UAT remains pending.
