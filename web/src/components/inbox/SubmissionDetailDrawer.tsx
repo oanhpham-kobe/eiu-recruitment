@@ -20,13 +20,13 @@ import {
   updateSubmissionAggregateAction,
   type updateSubmissionHrNoteAction,
 } from "@/app/application-inbox-actions";
+import { AttachmentActions } from "@/components/ui/AttachmentActions";
 import type { SubmissionStatus } from "@/lib/application-inbox/model";
 import type {
   AssignmentOptions,
   SubmissionDetail,
   SubmissionDocumentItem,
 } from "@/lib/application-inbox/submission-detail-model";
-import { isPreviewableDocument } from "@/lib/application-inbox/submission-detail-model";
 
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -1481,9 +1481,6 @@ export function SubmissionDetailDrawer({
                 ) : (
                   <div className="drawer-doc-list">
                     {detail.documents.map((doc) => {
-                      const isPreviewable = isPreviewableDocument(
-                        doc.mime_type,
-                      );
                       return (
                         <div key={doc.document_id} className="drawer-doc-item">
                           <div className="drawer-doc-item__info">
@@ -1498,30 +1495,18 @@ export function SubmissionDetailDrawer({
                               {formatDateTime(doc.uploaded_at)}
                             </span>
                           </div>
-                          <div className="drawer-doc-item__actions">
-                            {isPreviewable ? (
-                              <button
-                                type="button"
-                                className="btn-secondary btn-sm"
-                                disabled={docActionPending}
-                                onClick={() =>
-                                  handleDocumentAction(doc, "preview")
-                                }
-                              >
-                                Xem trực tuyến
-                              </button>
-                            ) : null}
-                            <button
-                              type="button"
-                              className="btn-secondary btn-sm"
-                              disabled={docActionPending}
-                              onClick={() =>
-                                handleDocumentAction(doc, "download")
-                              }
-                            >
-                              Tải xuống
-                            </button>
-                          </div>
+                          <AttachmentActions
+                            filename={doc.original_filename}
+                            mimeType={doc.mime_type}
+                            previewable={doc.previewable}
+                            pending={docActionPending}
+                            onPreview={() =>
+                              handleDocumentAction(doc, "preview")
+                            }
+                            onDownload={() =>
+                              handleDocumentAction(doc, "download")
+                            }
+                          />
                         </div>
                       );
                     })}

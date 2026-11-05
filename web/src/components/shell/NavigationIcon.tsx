@@ -14,6 +14,9 @@ export function NavigationIcon({ path }: { path: string }) {
     "/guide":
       "M4 4h6a3 3 0 0 1 3 3v14a3 3 0 0 0-3-3H4z M13 7a3 3 0 0 1 3-3h5v14h-5a3 3 0 0 0-3 3",
     "/services": "M3 5h18v14H3z M3 6l9 7 9-7",
+    preview:
+      "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12 M15 12a3 3 0 1 0-6 0 3 3 0 0 0 6 0",
+    download: "M12 3v12 M7 10l5 5 5-5 M4 16v5h16v-5",
     menu: "M4 6h16 M4 12h16 M4 18h16",
     workspace: "M4 7h16v13H4z M8 7V4h8v3 M4 12h16 M10 12v3h4v-3",
   };

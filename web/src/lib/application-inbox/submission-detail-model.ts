@@ -55,6 +55,7 @@ export interface SubmissionDocumentItem {
   document_type_name: string | null;
   original_filename: string;
   mime_type: string;
+  previewable?: boolean;
   file_size_bytes: number;
   uploaded_at: string;
 }
